@@ -11,40 +11,33 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-public record ShieldBubbleSyncPacket(UUID shipId, Set<BlockPos> relativeBubbleBlocks) implements CustomPacketPayload {
+// Die Record-Definition bekommt ein Feld mehr: anchorPos
+public record ShieldBubbleSyncPacket(UUID shipId, BlockPos anchorPos, Set<BlockPos> relativeBubbleBlocks) implements CustomPacketPayload {
 
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "shield_bubble_sync");
+    public static final CustomPacketPayload.Type<ShieldBubbleSyncPacket> TYPE =
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "shield_bubble_sync"));
 
     @Override
-    public ResourceLocation id() { return ID; }
+    public CustomPacketPayload.Type<ShieldBubbleSyncPacket> type() { return TYPE; }
 
-    // Wie das Paket komprimiert/dekomprimiert wird
     public static final StreamCodec<FriendlyByteBuf, ShieldBubbleSyncPacket> STREAM_CODEC = StreamCodec.of(
             (buf, packet) -> {
-                // 1. UUID schreiben
                 buf.writeUUID(packet.shipId());
-
-                // 2. Anzahl der Blöcke
+                buf.writeBlockPos(packet.anchorPos()); // NEU: Anker mitsenden
                 buf.writeInt(packet.relativeBubbleBlocks().size());
-
-                // 3. Jede BlockPos als kompakte long-Zahl schreiben (X,Y,Z in 64-Bit)
                 for (BlockPos pos : packet.relativeBubbleBlocks()) {
                     buf.writeLong(pos.asLong());
                 }
             },
             buf -> {
-                // 1. UUID lesen
                 UUID id = buf.readUUID();
-
-                // 2. Anzahl lesen
+                BlockPos anchor = buf.readBlockPos(); // NEU: Anker auslesen
                 int size = buf.readInt();
-
-                // 3. Blöcke lesen
                 Set<BlockPos> blocks = new HashSet<>(size);
                 for (int i = 0; i < size; i++) {
                     blocks.add(BlockPos.of(buf.readLong()));
                 }
-                return new ShieldBubbleSyncPacket(id, blocks);
+                return new ShieldBubbleSyncPacket(id, anchor, blocks);
             }
     );
 }

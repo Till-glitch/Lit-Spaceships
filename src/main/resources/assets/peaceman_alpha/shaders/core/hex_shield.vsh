@@ -3,17 +3,14 @@
 in vec3 Position;
 in vec2 UV0;
 
-uniform mat4 ModelViewMat;
-uniform mat4 ProjMat;
+// Unsere unantastbaren Matrizen
+uniform mat4 HexModelViewMat;
+uniform mat4 HexProjMat;
 
-out vec2 texCoord;
-out vec3 localPos;
+out vec2 uv;
 
 void main() {
-    // Standard-Transformation für Minecraft 3D-Objekte
-    gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
-
-    // Wir geben die Koordinaten an den Fragment-Shader weiter
-    texCoord = UV0;
-    localPos = Position;
+    // Rotation, Position und Sichtwinkel in einem Rutsch anwenden
+    gl_Position = HexProjMat * HexModelViewMat * vec4(Position, 1.0);
+    uv = UV0;
 }

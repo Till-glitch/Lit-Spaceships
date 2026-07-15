@@ -5,6 +5,7 @@ import com.peaceman.alpha.block.entity.SpaceshipControlBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
@@ -34,25 +35,44 @@ public class SpaceshipManager {
 
     // --- 2. SCHIFF ERSTELLEN ---
     public static Spaceship createShip(Level level, BlockPos startPos) {
-        Spaceship newShip;
         if (level.getBlockEntity(startPos) instanceof SpaceshipControlBlockEntity be) {
+
+            // 1. Sicherheitscheck
             if (be.getShipId() != null && ACTIVE_SHIPS.containsKey(be.getShipId())) {
                 System.out.println("Fehler: Block ist bereits mit einem Schiff verknüpft!");
                 return null;
             }
 
-            // Wir nutzen unseren ausgelagerten Scanner
+            // 2. Wir nutzen unseren ausgelagerten Scanner
             Set<BlockPos> shipBlocks = SpaceshipScanner.scan(level, startPos);
-            newShip = new Spaceship(startPos, shipBlocks);
+
+            // 3. Schiffsobjekt grundlegend erschaffen
+            Spaceship newShip = new Spaceship(startPos, shipBlocks);
+
+            // --- HIER PASSIERT DIE NEUE MAGIE ---
+            // 4. Das schwere Struktur-Update aufrufen!
+            // (Das sortiert Reaktoren/Schilde, berechnet die Hitbox und sendet das Shader-Paket an die Spieler)
+            newShip.setBlocks(shipBlocks, level);
+            // ------------------------------------
+
+            // 5. Schiff in die aktive Welt aufnehmen
             ACTIVE_SHIPS.put(newShip.getId(), newShip);
 
+            // 6. Allen Knotenpunkten (Controller, Reaktoren, etc.) die ID mitteilen
             for (BlockPos pos : shipBlocks) {
-                if (level.getBlockEntity(pos) instanceof com.peaceman.alpha.block.ISpaceshipNode node) {
+                BlockEntity entityAtPos = level.getBlockEntity(pos);
+                if (entityAtPos instanceof com.peaceman.alpha.block.ISpaceshipNode node) {
+                    // ID im BlockEntity speichern
                     node.setShipId(newShip.getId());
+                    entityAtPos.setChanged(); // Wichtig fürs Speichern auf die Festplatte
+
+                    // Dem Client (Grafikkarte) mitteilen, dass sich die Daten geändert haben!
+                    // Das ersetzt den fehlerhaften Aufruf im Konstruktor von vorhin.
+                    level.sendBlockUpdated(pos, entityAtPos.getBlockState(), entityAtPos.getBlockState(), 3);
                 }
             }
 
-            System.out.println("Neues Schiff erstellt! UUID: " + newShip.getId());
+            System.out.println("Neues Schiff erstellt! UUID: " + newShip.getId() + " mit " + newShip.getShieldBubble().size() + " Schild-Blöcken.");
             saveData(level);
             return newShip;
         }

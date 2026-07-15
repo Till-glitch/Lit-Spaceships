@@ -23,7 +23,7 @@ public class ShieldVisualActivator {
         if (event.getEntity().isCrouching() && event.getItemStack().is(Items.BLAZE_POWDER)) {
 
             // ... schalten wir den Shader genau an dieser Position ein!
-            ShieldRenderer.shipAnchorPoint = event.getPos();
+            //ShieldRenderer.shipAnchorPoint = event.getPos();
 
             // Kleine Info im Chat für dich
             event.getEntity().displayClientMessage(

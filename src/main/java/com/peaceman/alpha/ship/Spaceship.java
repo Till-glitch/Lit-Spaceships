@@ -1,10 +1,14 @@
 package com.peaceman.alpha.ship;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.peaceman.alpha.block.entity.SpaceshipReactorBlockEntity;
 import com.peaceman.alpha.block.entity.SpaceshipShieldBlockEntity;
+import com.peaceman.alpha.network.ShieldBubbleSyncPacket;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.*;
 
@@ -60,26 +64,53 @@ public class Spaceship {
     // =====================================================================
     // --- 3. DAS SCHWERE STRUKTUR-UPDATE (Beim Bauen / Block abbauen)
     // =====================================================================
+// =====================================================================
+    // --- 3. DAS SCHWERE STRUKTUR-UPDATE (Beim Bauen / Block abbauen)
+    // =====================================================================
     public void setBlocks(Set<BlockPos> blocks, Level level) {
         this.blocks = blocks;
 
-        // Die alten Listen leeren
+        // GANZ WICHTIG: Die alten Listen leeren, bevor das Schiff neu gescannt wird!
         this.reactors.clear();
         this.shields.clear();
 
-        for (BlockPos pos : blocks){
+        for (BlockPos pos : blocks) {
             BlockEntity be = level.getBlockEntity(pos);
+
+            // Reaktoren einsortieren
             if (be instanceof SpaceshipReactorBlockEntity) {
                 this.reactors.add(pos);
-            } else if (be instanceof SpaceshipShieldBlockEntity) {
+            }
+            // Schilde einsortieren
+            else if (be instanceof SpaceshipShieldBlockEntity) {
                 this.shields.add(pos);
             }
         }
 
-        // NEU: Nach dem Scannen berechnen wir einmalig die Schild-Hitbox!
-        // (Radius: 5 Blöcke nach außen - kannst du beliebig anpassen)
+        // --- SCHILDBLASE BERECHNEN UND SYNCEN ---
         if (!this.shields.isEmpty()) {
+
+            // 1. Die Blase mathematisch berechnen (z.B. 5 Blöcke dick)
             this.shieldBubble = ShieldMorphology.calculateShieldBubble(this.blocks, 5);
+
+            // 2. DAS NETZWERK-PAKET SENDEN (Nur wenn wir auf dem Server sind!)
+            if (!level.isClientSide() && level instanceof ServerLevel serverLevel) {
+
+                Set<BlockPos> relativeBlocks = new HashSet<>();
+
+                // Blöcke relativ zum Controller machen, um Traffic zu sparen und beim
+                // Teleportieren nicht das ganze Mesh neu senden zu müssen
+                for (BlockPos absPos : this.shieldBubble) {
+                    relativeBlocks.add(absPos.subtract(this.controllerPos));
+                }
+
+                // Paket erstellen (UUID, Ankerpunkt, Relative Blöcke)
+                ShieldBubbleSyncPacket packet = new ShieldBubbleSyncPacket(this.id, this.controllerPos, relativeBlocks);
+
+                // An alle Spieler senden (NeoForge 1.21 API)
+                PacketDistributor.sendToAllPlayers(packet);
+            }
+
         } else {
             // Kein Schildgenerator auf dem Schiff? Dann leeren wir die Blase.
             if (this.shieldBubble != null) {
@@ -89,8 +120,6 @@ public class Spaceship {
             }
         }
     }
-    // --- HOME-SYSTEM (Schon mal vorbereitet für später) ---
-
     public void addHome(String name, BlockPos pos) {
         this.homes.put(name, pos);
     }

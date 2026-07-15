@@ -9,6 +9,7 @@ public class SpaceshipControlBlockEntity extends AbstractSpaceshipNodeBlockEntit
     public SpaceshipControlBlockEntity(BlockPos pos, BlockState state) {
         // Hier übergibst du den Typ aus deiner Registry an die abstrakte Elternklasse
         super(ModBlockEntities.SPACESHIP_CONTROL_BE.get(), pos, state);
+
     }
 
     // FERTIG! Die gesamte UUID-Logik, das Speichern und Synchronisieren

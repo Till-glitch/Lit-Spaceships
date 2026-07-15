@@ -1,7 +1,11 @@
 package com.peaceman.alpha.ship;
 
+import com.peaceman.alpha.network.ShieldBubbleSyncPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -28,8 +32,9 @@ public class ShieldMorphology {
 
     /**
      * Schritt 2: Die eigentliche morphologische Dilatation.
+     *
      * @param shipBlocks Alle Blöcke des Schiffes
-     * @param radius Wie viele Blöcke dick soll die Schildblase sein?
+     * @param radius     Wie viele Blöcke dick soll die Schildblase sein?
      * @return Ein Set aus ALLEN Blöcken, die vom Schild abgedeckt werden (inklusive Schiff).
      */
     public static Set<BlockPos> calculateShieldBubble(Set<BlockPos> shipBlocks, int radius) {

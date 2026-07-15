@@ -1,31 +1,44 @@
 package com.peaceman.alpha.client.render;
 
+import org.joml.Quaternionf;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.BufferUploader;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import com.peaceman.alpha.Alpha; // Deinen Haupt-Import hinzugefügt
+import com.mojang.blaze3d.vertex.*;
+import com.peaceman.alpha.Alpha;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 import org.joml.Matrix4f;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 public class ShieldRenderer {
 
-    public static BlockPos shipAnchorPoint = null;
+    // Datenstruktur, um die Geometrie pro Schiff zu speichern
+    public static class ClientShieldData {
+        public BlockPos anchorPoint = null;
+        public Set<BlockPos> relativeBubbleBlocks = null;
+        public VertexBuffer vertexBuffer = null;
+    }
+
+    // Wir können jetzt mehrere Schiffe gleichzeitig rendern!
+    public static final Map<UUID, ClientShieldData> ACTIVE_CLIENT_SHIELDS = new HashMap<>();
+
+    // Uniforms für Animationen (global, da Shader-basiert)
     public static Vec3 lastImpactPos = Vec3.ZERO;
     public static float shieldEnergyPercentage = 1.0f;
     public static long lastImpactTick = -1000;
@@ -36,7 +49,6 @@ public class ShieldRenderer {
     public static class ModClientEvents {
         @SubscribeEvent
         public static void onRegisterShaders(RegisterShadersEvent event) throws IOException {
-            // Platzhalter durch Alpha.MODID ersetzt!
             event.registerShader(
                     new ShaderInstance(event.getResourceProvider(), ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "hex_shield"), DefaultVertexFormat.POSITION_TEX),
                     shaderInstance -> hexShieldShader = shaderInstance
@@ -49,101 +61,169 @@ public class ShieldRenderer {
 
         @SubscribeEvent
         public static void onRenderLevelStage(RenderLevelStageEvent event) {
+            // 1. Phasen-Validierung: Limitierung auf die Ziel-Stage
             if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) return;
-            if (shipAnchorPoint == null || hexShieldShader == null) return;
+            if (hexShieldShader == null || ACTIVE_CLIENT_SHIELDS.isEmpty()) return;
 
+            // 2. Extraktion der Kern-Objekte
             Minecraft mc = Minecraft.getInstance();
-            Camera camera = event.getCamera();
             PoseStack poseStack = event.getPoseStack();
+            Camera camera = event.getCamera();
             Vec3 cameraPos = camera.getPosition();
 
-            poseStack.pushPose();
+            Matrix4f projection = event.getProjectionMatrix();
 
-            // 1. Verschiebe Render-Ursprung
-            double offsetX = shipAnchorPoint.getX() - cameraPos.x;
-            double offsetY = shipAnchorPoint.getY() - cameraPos.y;
-            double offsetZ = shipAnchorPoint.getZ() - cameraPos.z;
-            poseStack.translate(offsetX, offsetY, offsetZ);
-
-            Matrix4f matrix = poseStack.last().pose();
-
-            // 2. Transparenz & Shader aktivieren
+            // Render-Pipeline Setup für Volumen-Rendering
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
             RenderSystem.depthMask(false);
+            RenderSystem.disableCull(); // Backface Culling deaktiviert
             RenderSystem.setShader(() -> hexShieldShader);
 
-            // 3. Uniforms übergeben
-            float gameTime = (mc.level.getGameTime() + event.getPartialTick().getGameTimeDeltaTicks()) * 0.05f;
-            if (hexShieldShader.safeGetUniform("GameTime") != null) {
-                hexShieldShader.safeGetUniform("GameTime").set(gameTime);
-            }
-            if (hexShieldShader.safeGetUniform("ImpactPos") != null) {
-                float relImpactX = (float) (lastImpactPos.x - shipAnchorPoint.getX());
-                float relImpactY = (float) (lastImpactPos.y - shipAnchorPoint.getY());
-                float relImpactZ = (float) (lastImpactPos.z - shipAnchorPoint.getZ());
-                hexShieldShader.safeGetUniform("ImpactPos").set(relImpactX, relImpactY, relImpactZ);
-            }
-            if (hexShieldShader.safeGetUniform("EnergyLevel") != null) {
-                hexShieldShader.safeGetUniform("EnergyLevel").set(shieldEnergyPercentage);
-            }
-            // Zeit seit dem letzten Treffer berechnen
-            float impactTimer = 0;
-            if (lastImpactTick > 0) {
-                impactTimer = (mc.level.getGameTime() - lastImpactTick) + event.getPartialTick().getGameTimeDeltaTicks();
-            }
-            if (hexShieldShader.safeGetUniform("ImpactTimer") != null) {
-                hexShieldShader.safeGetUniform("ImpactTimer").set(impactTimer);
+            for (Map.Entry<UUID, ClientShieldData> entry : ACTIVE_CLIENT_SHIELDS.entrySet()) {
+                ClientShieldData data = entry.getValue();
+                if (data.anchorPoint == null || data.vertexBuffer == null) continue;
+
+                // 3. State-Sicherung
+                poseStack.pushPose();
+
+                // 4. DIE MAGIE: Extraktion und Invertierung der Kamera-Rotation!
+                Quaternionf cameraRotation = camera.rotation();
+                Quaternionf inverseCamRot = new Quaternionf(cameraRotation).invert();
+
+                // 5. Applikation der "Ent-Drehung" auf den PoseStack
+                poseStack.mulPose(inverseCamRot);
+
+                // 6. Berechnung und Applikation der relativen World-Translation
+                double deltaX = data.anchorPoint.getX() - cameraPos.x;
+                double deltaY = data.anchorPoint.getY() - cameraPos.y;
+                double deltaZ = data.anchorPoint.getZ() - cameraPos.z;
+                poseStack.translate(deltaX, deltaY, deltaZ);
+
+                // 7. Extraktion der finalen, mathematisch konsistenten Matrix
+                Matrix4f modelView = poseStack.last().pose();
+
+                // 8. Eigene Uniforms füttern (Umgeht das Minecraft-Überschreibungs-Problem)
+                if (hexShieldShader.safeGetUniform("HexModelViewMat") != null) {
+                    hexShieldShader.safeGetUniform("HexModelViewMat").set(modelView);
+                }
+                if (hexShieldShader.safeGetUniform("HexProjMat") != null) {
+                    hexShieldShader.safeGetUniform("HexProjMat").set(projection);
+                }
+
+                // 9. Draw Call ausführen
+                data.vertexBuffer.bind();
+                data.vertexBuffer.drawWithShader(modelView, projection, hexShieldShader);
+                VertexBuffer.unbind();
+
+                // 10. State-Wiederherstellung für dieses Schiff
+                poseStack.popPose();
             }
 
-            // 4. Leinwand-Geometrie aufbauen
-            Tesselator tesselator = Tesselator.getInstance();
-            BufferBuilder bufferbuilder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-
-            // Radius von 20 Blöcken (Muss groß genug für das Schiff sein)
-            float radius = 20.0f;
-            drawBoundingGeometry(bufferbuilder, matrix, radius);
-
-            // HIER IST DIE MAGIE: Den Buffer rendern und an die Grafikkarte schicken!
-            BufferUploader.drawWithShader(bufferbuilder.buildOrThrow());
-
-            // 5. Aufräumen
+            // 11. Globales Cleanup
+            RenderSystem.enableCull();
             RenderSystem.depthMask(true);
             RenderSystem.disableBlend();
-            poseStack.popPose();
         }
 
-        private static void drawBoundingGeometry(BufferBuilder builder, Matrix4f matrix, float r) {
-            // Front
-            builder.addVertex(matrix, -r, -r, -r).setUv(0, 0);
-            builder.addVertex(matrix, -r, r, -r).setUv(0, 1);
-            builder.addVertex(matrix, r, r, -r).setUv(1, 1);
-            builder.addVertex(matrix, r, -r, -r).setUv(1, 0);
-            // Hinten
-            builder.addVertex(matrix, -r, -r, r).setUv(0, 0);
-            builder.addVertex(matrix, r, -r, r).setUv(1, 0);
-            builder.addVertex(matrix, r, r, r).setUv(1, 1);
-            builder.addVertex(matrix, -r, r, r).setUv(0, 1);
-            // Oben
-            builder.addVertex(matrix, -r, r, -r).setUv(0, 0);
-            builder.addVertex(matrix, -r, r, r).setUv(0, 1);
-            builder.addVertex(matrix, r, r, r).setUv(1, 1);
-            builder.addVertex(matrix, r, r, -r).setUv(1, 0);
-            // Unten
-            builder.addVertex(matrix, -r, -r, -r).setUv(0, 0);
-            builder.addVertex(matrix, r, -r, -r).setUv(1, 0);
-            builder.addVertex(matrix, r, -r, r).setUv(1, 1);
-            builder.addVertex(matrix, -r, -r, r).setUv(0, 1);
-            // Links
-            builder.addVertex(matrix, -r, -r, r).setUv(0, 0);
-            builder.addVertex(matrix, -r, r, r).setUv(0, 1);
-            builder.addVertex(matrix, -r, r, -r).setUv(1, 1);
-            builder.addVertex(matrix, -r, -r, -r).setUv(1, 0);
-            // Rechts
-            builder.addVertex(matrix, r, -r, -r).setUv(0, 0);
-            builder.addVertex(matrix, r, r, -r).setUv(0, 1);
-            builder.addVertex(matrix, r, r, r).setUv(1, 1);
-            builder.addVertex(matrix, r, -r, r).setUv(1, 0);
+    }
+
+    /**
+     * Baut ein effizientes Mesh aus den Voxel-Daten.
+     * Nur die Seiten, die nach außen zeigen, werden gezeichnet!
+     */
+    public static MeshData buildShieldMesh(Set<BlockPos> relativeBlocks) {
+        if (relativeBlocks == null || relativeBlocks.isEmpty()) return null;
+
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder bufferbuilder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+
+        for (BlockPos pos : relativeBlocks) {
+
+            // Jeden Voxel prüfen
+            for (Direction dir : Direction.values()) {
+                // Nur Seiten zeichnen, die an Luft grenzen!
+                if (!relativeBlocks.contains(pos.relative(dir))) {
+                    drawFace(bufferbuilder, pos, dir);
+                }
+            }
+        }
+
+        try {
+            return bufferbuilder.buildOrThrow();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * Hilfsfunktion, um eine einzelne Voxel-Seite mit korrekten UVs zu zeichnen
+     */
+    /**
+     * Hilfsfunktion, um eine einzelne Voxel-Seite mit korrekten UVs zu zeichnen.
+     * Nutzt .endVertex(), um Speicherlecks und Textur-Verschiebungen zu verhindern.
+     */
+    /**
+     * Hilfsfunktion, um eine einzelne Voxel-Seite mit korrekten UVs zu zeichnen (Minecraft 1.21+).
+     */
+    private static void drawFace(VertexConsumer buffer, BlockPos pos, Direction dir) {
+        float x1 = pos.getX(); float y1 = pos.getY(); float z1 = pos.getZ();
+        float x2 = x1 + 1.0f;  float y2 = y1 + 1.0f;  float z2 = z1 + 1.0f;
+
+        // UV-Koordinaten basierend auf der Position
+        float scale = 0.1f;
+
+        switch (dir) {
+            case DOWN -> {
+                buffer.addVertex(x1, y1, z2).setUv(x1 * scale, z2 * scale);
+                buffer.addVertex(x1, y1, z1).setUv(x1 * scale, z1 * scale);
+                buffer.addVertex(x2, y1, z1).setUv(x2 * scale, z1 * scale);
+                buffer.addVertex(x2, y1, z2).setUv(x2 * scale, z2 * scale);
+            }
+            case UP -> {
+                buffer.addVertex(x1, y2, z1).setUv(x1 * scale, z1 * scale);
+                buffer.addVertex(x1, y2, z2).setUv(x1 * scale, z2 * scale);
+                buffer.addVertex(x2, y2, z2).setUv(x2 * scale, z2 * scale);
+                buffer.addVertex(x2, y2, z1).setUv(x2 * scale, z1 * scale);
+            }
+            case NORTH -> {
+                buffer.addVertex(x2, y2, z1).setUv(x2 * scale, y2 * scale);
+                buffer.addVertex(x2, y1, z1).setUv(x2 * scale, y1 * scale);
+                buffer.addVertex(x1, y1, z1).setUv(x1 * scale, y1 * scale);
+                buffer.addVertex(x1, y2, z1).setUv(x1 * scale, y2 * scale);
+            }
+            case SOUTH -> {
+                buffer.addVertex(x1, y2, z2).setUv(x1 * scale, y2 * scale);
+                buffer.addVertex(x1, y1, z2).setUv(x1 * scale, y1 * scale);
+                buffer.addVertex(x2, y1, z2).setUv(x2 * scale, y1 * scale);
+                buffer.addVertex(x2, y2, z2).setUv(x2 * scale, y2 * scale);
+            }
+            case WEST -> {
+                buffer.addVertex(x1, y2, z1).setUv(z1 * scale, y2 * scale);
+                buffer.addVertex(x1, y1, z1).setUv(z1 * scale, y1 * scale);
+                buffer.addVertex(x1, y1, z2).setUv(z2 * scale, y1 * scale);
+                buffer.addVertex(x1, y2, z2).setUv(z2 * scale, y2 * scale);
+            }
+            case EAST -> {
+                buffer.addVertex(x2, y2, z2).setUv(z2 * scale, y2 * scale);
+                buffer.addVertex(x2, y1, z2).setUv(z2 * scale, y1 * scale);
+                buffer.addVertex(x2, y1, z1).setUv(z1 * scale, y1 * scale);
+                buffer.addVertex(x2, y2, z1).setUv(z1 * scale, y2 * scale);
+            }
+        }
+    }    @SubscribeEvent
+    public static void onTeleport(ClientTickEvent.Post event) {
+        // Wir gehen alle aktiven Schiffe durch und updaten deren Ankerpunkt basierend auf dem Controller
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) return;
+
+        for (UUID shipId : ACTIVE_CLIENT_SHIELDS.keySet()) {
+            // Wir müssen hier eine globale Map haben, wo wir die ControllerPos speichern,
+            // oder das BlockEntity des Controllers abfragen.
+            // Am einfachsten: Das Spaceship-Objekt hat die ControllerPos und wir synchronisieren die standardmäßig.
+            // Ich gehe davon aus, dass dein Standard-BlockEntity-Sync die ControllerPos auf den Client bringt.
+            // data.anchorPoint = mc.level.getBlockEntity(currentControllerPos).getControllerPos();
         }
     }
 }
