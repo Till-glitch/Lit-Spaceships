@@ -78,7 +78,7 @@ public class ServerPayloadHandler {
                     }
                     ShipMovementService.moveShip(level, ship, dx, 0, dz, player);
                 }
-                case TOGGLE_SHIELD -> ship.toggleShieldActive();
+                case TOGGLE_SHIELD -> ship.toggleShieldActive(level);
                 default -> {}
             }
         });

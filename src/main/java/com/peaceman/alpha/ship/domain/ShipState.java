@@ -2,6 +2,7 @@ package com.peaceman.alpha.ship.domain;
 
 import com.peaceman.alpha.block.entity.SpaceshipReactorBlockEntity;
 import com.peaceman.alpha.block.entity.SpaceshipShieldBlockEntity;
+import com.peaceman.alpha.ship.SpaceshipShieldHandler;
 import com.peaceman.alpha.network.ShieldBubbleSyncPacket;
 import com.peaceman.alpha.ship.ShieldMorphology;
 import net.minecraft.core.BlockPos;
@@ -24,7 +25,7 @@ public class ShipState {
     private final Map<String, BlockPos> homes;
     private List<BlockPos> reactors = new ArrayList<>();
     private List<BlockPos> shields = new ArrayList<>();
-    private boolean isShieldActive = false;
+    private boolean isShieldActive = true;
 
     // Konstruktor für ein neues Schiff
     public ShipState(BlockPos controllerPos, Set<BlockPos> blocks) {
@@ -32,6 +33,7 @@ public class ShipState {
         this.controllerPos = controllerPos;
         this.blocks = blocks != null ? blocks : new HashSet<>();
         this.homes = new HashMap<>();
+        this.isShieldActive = true;
     }
 
     // Konstruktor für geladene Schiffe aus dem Savegame
@@ -101,8 +103,17 @@ public class ShipState {
         this.isShieldActive = shieldActive;
     }
 
+    public void toggleShieldActive(Level level) {
+        SpaceshipShieldHandler.toggleShield(level, this);
+    }
+
     public void toggleShieldActive() {
-        this.isShieldActive = !this.isShieldActive;
+        if (this.shields.isEmpty()) {
+            this.isShieldActive = false;
+        } else {
+            this.isShieldActive = !this.isShieldActive;
+        }
+        com.peaceman.alpha.helper.ShieldLifecycleLogger.logShieldToggled(this.id, this.isShieldActive);
     }
 
     /**
@@ -121,6 +132,10 @@ public class ShipState {
             } else if (be instanceof SpaceshipShieldBlockEntity) {
                 this.shields.add(pos);
             }
+        }
+
+        if (this.shields.isEmpty()) {
+            this.isShieldActive = false;
         }
 
         syncShieldBubbleToClients(level);

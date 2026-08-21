@@ -3,6 +3,7 @@ package com.peaceman.alpha.ship.service;
 import com.peaceman.alpha.Alpha;
 import com.peaceman.alpha.block.ISpaceshipNode;
 import com.peaceman.alpha.block.entity.SpaceshipControlBlockEntity;
+import com.peaceman.alpha.network.ShipPositionSyncPayload;
 import com.peaceman.alpha.ship.SpaceshipEnergyManager;
 import com.peaceman.alpha.ship.domain.ShipState;
 import net.minecraft.core.BlockPos;
@@ -23,6 +24,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.util.*;
@@ -241,6 +243,9 @@ public class ShipMovementService {
                 releaseDestinationChunks(level, destinationChunks);
 
                 ServerShipManager.saveData(level);
+
+                // Bug 2 Fix: Neue Anker-Position an alle Clients synchronisieren (ohne VBO-Rebuild)
+                PacketDistributor.sendToAllPlayers(new ShipPositionSyncPayload(ship.getId(), ship.getControllerPos()));
                 return true; // Fertig!
             }
 

@@ -114,7 +114,7 @@ public class ShipSavedData extends SavedData {
                 }
             }
 
-            boolean isShieldActive = shipTag.getBoolean("ShieldActive");
+            boolean isShieldActive = !shipTag.contains("ShieldActive") || shipTag.getBoolean("ShieldActive");
 
             ShipState loadedShip = new ShipState(id, ctrlPos, blocks, homes, loadedReactors, loadedShields, isShieldActive);
             ServerShipManager.ACTIVE_SHIPS.put(id, loadedShip);

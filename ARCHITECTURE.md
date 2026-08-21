@@ -159,6 +159,12 @@ classDiagram
             +Set~BlockPos~ relativeBubbleBlocks
         }
 
+        class ShipPositionSyncPayload {
+            <<record>>
+            +UUID shipId
+            +BlockPos newAnchorPos
+        }
+
         class ServerPayloadHandler {
             +handleAction(ShipActionPayload payload, IPayloadContext context)$ void
         }
@@ -167,6 +173,7 @@ classDiagram
             +handleShieldBubbleSync(ShieldBubbleSyncPacket packet, IPayloadContext context)$ void
             +handleStructureSync(ShipStructureSyncPayload packet, IPayloadContext context)$ void
             +handleStateSync(ShipStateSyncPayload packet, IPayloadContext context)$ void
+            +handlePositionSync(ShipPositionSyncPayload packet, IPayloadContext context)$ void
         }
     }
 

@@ -1,6 +1,7 @@
 package com.peaceman.alpha.client.state;
 
 import com.peaceman.alpha.Alpha;
+import com.peaceman.alpha.helper.ShieldLifecycleLogger;
 import com.peaceman.alpha.network.ShieldBubbleSyncPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;
@@ -54,26 +55,35 @@ public class ClientShipManager {
     }
 
     public static void updateShipState(UUID shipId, int currentEnergy, boolean isShieldActive) {
+        // Fix: getOrCreateShip statt getShip, damit State-Updates bei schnellem Teleport nicht ins Leere laufen
+        ClientShipState shipState = getOrCreateShip(shipId);
+        shipState.setShieldActive(isShieldActive);
+    }
+
+    public static void updateShipPosition(UUID shipId, BlockPos newAnchorPos) {
         ClientShipState shipState = getShip(shipId);
         if (shipState != null) {
-            shipState.setShieldActive(isShieldActive);
+            shipState.setAnchorPos(newAnchorPos);
         }
     }
 
     public static void addPendingSync(ShieldBubbleSyncPacket packet) {
         if (packet == null || packet.anchorPos() == null) return;
         ChunkPos chunkPos = new ChunkPos(packet.anchorPos());
+        ShieldLifecycleLogger.logClientPendingSyncQueued(packet.shipId(), chunkPos);
         PENDING_SYNCS.computeIfAbsent(chunkPos, k -> new CopyOnWriteArrayList<>()).add(packet);
     }
 
     public static void removeShip(UUID shipId) {
         ClientShipState removed = ACTIVE_CLIENT_SHIPS.remove(shipId);
         if (removed != null) {
+            ShieldLifecycleLogger.logClientVramDisposed(shipId, "Manuelles removeShip()");
             removed.dispose();
         }
     }
 
     public static void clear() {
+        ShieldLifecycleLogger.logClientReset("Client-Logout / Dimension-Wechsel");
         for (ClientShipState state : ACTIVE_CLIENT_SHIPS.values()) {
             state.dispose();
         }
@@ -91,6 +101,7 @@ public class ClientShipManager {
         List<ShieldBubbleSyncPacket> pendingList = PENDING_SYNCS.remove(loadedChunk);
         if (pendingList != null) {
             for (ShieldBubbleSyncPacket packet : pendingList) {
+                ShieldLifecycleLogger.logClientPendingSyncApplied(packet.shipId(), loadedChunk);
                 updateShieldBubble(packet.shipId(), packet.anchorPos(), packet.relativeBubbleBlocks());
             }
         }
@@ -106,6 +117,7 @@ public class ClientShipManager {
 
         for (ClientShipState ship : ACTIVE_CLIENT_SHIPS.values()) {
             if (ship.getAnchorPos() != null && new ChunkPos(ship.getAnchorPos()).equals(unloadedChunk)) {
+                ShieldLifecycleLogger.logClientVramDisposed(ship.getShipId(), "ChunkEvent.Unload fuer Chunk " + unloadedChunk);
                 ship.dispose();
                 ACTIVE_CLIENT_SHIPS.remove(ship.getShipId());
             }

@@ -3,6 +3,7 @@ package com.peaceman.alpha.ship.service;
 import com.peaceman.alpha.Alpha;
 import com.peaceman.alpha.block.ISpaceshipNode;
 import com.peaceman.alpha.block.entity.SpaceshipControlBlockEntity;
+import com.peaceman.alpha.helper.ShieldLifecycleLogger;
 import com.peaceman.alpha.network.ShieldBubbleSyncPacket;
 import com.peaceman.alpha.network.ShipStateSyncPayload;
 import com.peaceman.alpha.network.ShipStructureSyncPayload;
@@ -75,6 +76,7 @@ public class ServerShipManager {
             }
 
             saveData(level);
+            PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(newShip.getId(), 0, newShip.isShieldActive()));
             return newShip;
         }
         return null;
@@ -91,6 +93,7 @@ public class ServerShipManager {
                 }
             }
             saveData(level);
+            PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(ship.getId(), 0, ship.isShieldActive()));
         }
     }
 
@@ -138,11 +141,10 @@ public class ServerShipManager {
                     relative.add(b.subtract(ctrl));
                 }
 
-                // Gezielte Synchronisation nur an diesen einen Spieler
+                ShieldLifecycleLogger.logServerChunkSent(ship.getId(), ctrl, chunkPos, player.getName().getString());
                 PacketDistributor.sendToPlayer(player, new ShipStructureSyncPayload(ship.getId(), ctrl, relative));
                 PacketDistributor.sendToPlayer(player,
                         new ShipStateSyncPayload(ship.getId(), 0, ship.isShieldActive()));
-                Alpha.LOGGER.info("Sending ship structure sync to player {}", player.getName());
                 if (!ship.getShields().isEmpty()) {
                     Set<BlockPos> bubble = ShieldMorphology.calculateShieldBubble(ship.getBlocks(), 5);
                     Set<BlockPos> relBubble = new HashSet<>(bubble.size());
