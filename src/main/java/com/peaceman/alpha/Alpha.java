@@ -29,6 +29,14 @@ public class Alpha {
         ModCreativeTabs.register(modEventBus);
         ModMenuTypes.register(modEventBus);
         ModAttachments.register(modEventBus);
+        modEventBus.addListener(this::registerGameTests);
+    }
+
+    private void registerGameTests(net.neoforged.neoforge.event.RegisterGameTestsEvent event) {
+        event.register(com.peaceman.alpha.tests.SpaceshipGameTests.class);
+        event.register(com.peaceman.alpha.tests.ShipScannerGameTests.class);
+        event.register(com.peaceman.alpha.tests.ShipMovementGameTests.class);
+        event.register(com.peaceman.alpha.tests.ShipAttachmentGameTests.class);
     }
 
     private void registerCapabilities(net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent event) {

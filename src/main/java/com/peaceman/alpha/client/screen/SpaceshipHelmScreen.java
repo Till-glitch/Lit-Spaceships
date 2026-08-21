@@ -101,6 +101,20 @@ public class SpaceshipHelmScreen extends AbstractSpaceshipScreen {
             sendShipAction(ActionType.TP_HOME, 0, this.homeNameInput.getValue());
             this.minecraft.setScreen(null); // GUI nach dem Klick schließen
         }).bounds(rightCol, centerY + 30, 80, 20).build());
+
+        // --- UNTERER BEREICH: WAFFENSTEUERUNG ---
+        int weaponY = centerY + 55;
+        this.addRenderableWidget(Button.builder(Component.literal("§bFeuer (Pulse)"), button -> {
+            sendCombatAction(com.peaceman.alpha.network.ShipCombatActionPayload.CombatAction.FIRE_PULSE);
+        }).bounds(centerX - 130, weaponY, 80, 20).build());
+
+        this.addRenderableWidget(Button.builder(Component.literal("§6Heavy Beam"), button -> {
+            sendCombatAction(com.peaceman.alpha.network.ShipCombatActionPayload.CombatAction.TOGGLE_HEAVY_BEAM);
+        }).bounds(centerX - 40, weaponY, 80, 20).build());
+
+        this.addRenderableWidget(Button.builder(Component.literal("§aMining Laser"), button -> {
+            sendCombatAction(com.peaceman.alpha.network.ShipCombatActionPayload.CombatAction.TOGGLE_MINING_LASER);
+        }).bounds(centerX + 50, weaponY, 80, 20).build());
     }
 
     @Override
@@ -136,7 +150,7 @@ public class SpaceshipHelmScreen extends AbstractSpaceshipScreen {
             double seconds = moveCd / 20.0;
             guiGraphics.drawCenteredString(this.font,
                     Component.literal(String.format("§c[Antrieb-Abklingzeit: %.1fs]", seconds)),
-                    centerX, centerY + 60, 0xFF5555);
+                    centerX, centerY + 80, 0xFF5555);
         }
     }
 }

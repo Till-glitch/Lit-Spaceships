@@ -35,6 +35,18 @@ public class ModBlockEntities {
             BLOCK_ENTITIES.register("spaceship_shield_be", () ->
                     BlockEntityType.Builder.of(SpaceshipShieldBlockEntity::new, ModBlocks.SPACESHIP_SHIELD.get()).build(null));
 
+    public static final Supplier<BlockEntityType<com.peaceman.alpha.block.entity.PulseLaserBlockEntity>> PULSE_LASER_BE =
+            BLOCK_ENTITIES.register("pulse_laser_be", () ->
+                    BlockEntityType.Builder.of(com.peaceman.alpha.block.entity.PulseLaserBlockEntity::new, ModBlocks.PULSE_LASER.get()).build(null));
+
+    public static final Supplier<BlockEntityType<com.peaceman.alpha.block.entity.HeavyBeamBlockEntity>> HEAVY_BEAM_BE =
+            BLOCK_ENTITIES.register("heavy_beam_be", () ->
+                    BlockEntityType.Builder.of(com.peaceman.alpha.block.entity.HeavyBeamBlockEntity::new, ModBlocks.HEAVY_BEAM.get()).build(null));
+
+    public static final Supplier<BlockEntityType<com.peaceman.alpha.block.entity.MiningLaserBlockEntity>> MINING_LASER_BE =
+            BLOCK_ENTITIES.register("mining_laser_be", () ->
+                    BlockEntityType.Builder.of(com.peaceman.alpha.block.entity.MiningLaserBlockEntity::new, ModBlocks.MINING_LASER.get()).build(null));
+
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);
     }

@@ -1,0 +1,43 @@
+[21Aug.2026 21:52:45.249] [Test worker/DEBUG] [io.netty.util.internal.logging.InternalLoggerFactory/]: Using SLF4J as the default logging framework
+[21Aug.2026 21:52:45.257] [Test worker/DEBUG] [io.netty.util.ResourceLeakDetector/]: -Dio.netty.leakDetection.level: simple
+[21Aug.2026 21:52:45.258] [Test worker/DEBUG] [io.netty.util.ResourceLeakDetector/]: -Dio.netty.leakDetection.targetRecords: 4
+[21Aug.2026 21:52:45.274] [Test worker/DEBUG] [io.netty.util.internal.PlatformDependent0/]: -Dio.netty.noUnsafe: false
+[21Aug.2026 21:52:45.274] [Test worker/DEBUG] [io.netty.util.internal.PlatformDependent0/]: Java version: 21
+[21Aug.2026 21:52:45.275] [Test worker/DEBUG] [io.netty.util.internal.PlatformDependent0/]: sun.misc.Unsafe.theUnsafe: available
+[21Aug.2026 21:52:45.275] [Test worker/DEBUG] [io.netty.util.internal.PlatformDependent0/]: sun.misc.Unsafe.copyMemory: available
+[21Aug.2026 21:52:45.276] [Test worker/DEBUG] [io.netty.util.internal.PlatformDependent0/]: sun.misc.Unsafe.storeFence: available
+[21Aug.2026 21:52:45.276] [Test worker/DEBUG] [io.netty.util.internal.PlatformDependent0/]: java.nio.Buffer.address: available
+[21Aug.2026 21:52:45.277] [Test worker/DEBUG] [io.netty.util.internal.PlatformDependent0/]: java.nio.Bits.unaligned: available, true
+[21Aug.2026 21:52:45.278] [Test worker/DEBUG] [io.netty.util.internal.PlatformDependent0/]: java.nio.DirectByteBuffer.<init>(long, {int,long}): unavailable
+[21Aug.2026 21:52:45.278] [Test worker/DEBUG] [io.netty.util.internal.PlatformDependent/]: sun.misc.Unsafe: available
+[21Aug.2026 21:52:45.279] [Test worker/DEBUG] [io.netty.util.internal.PlatformDependent/]: maxDirectMemory: 536870912 bytes (maybe)
+[21Aug.2026 21:52:45.279] [Test worker/DEBUG] [io.netty.util.internal.PlatformDependent/]: -Dio.netty.tmpdir: C:\Users\Till\AppData\Local\Temp (java.io.tmpdir)
+[21Aug.2026 21:52:45.279] [Test worker/DEBUG] [io.netty.util.internal.PlatformDependent/]: -Dio.netty.bitMode: 64 (sun.arch.data.model)
+[21Aug.2026 21:52:45.280] [Test worker/DEBUG] [io.netty.util.internal.PlatformDependent/]: Platform: Windows
+[21Aug.2026 21:52:45.280] [Test worker/DEBUG] [io.netty.util.internal.PlatformDependent/]: -Dio.netty.maxDirectMemory: -1 bytes
+[21Aug.2026 21:52:45.280] [Test worker/DEBUG] [io.netty.util.internal.PlatformDependent/]: -Dio.netty.uninitializedArrayAllocationThreshold: -1
+[21Aug.2026 21:52:45.281] [Test worker/DEBUG] [io.netty.util.internal.CleanerJava9/]: java.nio.ByteBuffer.cleaner(): available
+[21Aug.2026 21:52:45.281] [Test worker/DEBUG] [io.netty.util.internal.PlatformDependent/]: -Dio.netty.noPreferDirect: false
+[21Aug.2026 21:52:45.287] [Test worker/DEBUG] [io.netty.buffer.AbstractByteBuf/]: -Dio.netty.buffer.checkAccessible: true
+[21Aug.2026 21:52:45.287] [Test worker/DEBUG] [io.netty.buffer.AbstractByteBuf/]: -Dio.netty.buffer.checkBounds: true
+[21Aug.2026 21:52:45.288] [Test worker/DEBUG] [io.netty.util.ResourceLeakDetectorFactory/]: Loaded default ResourceLeakDetector: io.netty.util.ResourceLeakDetector@d56aaa6
+[21Aug.2026 21:52:45.292] [Test worker/DEBUG] [io.netty.util.internal.InternalThreadLocalMap/]: -Dio.netty.threadLocalMap.stringBuilder.initialSize: 1024
+[21Aug.2026 21:52:45.293] [Test worker/DEBUG] [io.netty.util.internal.InternalThreadLocalMap/]: -Dio.netty.threadLocalMap.stringBuilder.maxSize: 4096
+[21Aug.2026 21:52:45.294] [Test worker/DEBUG] [io.netty.buffer.PooledByteBufAllocator/]: -Dio.netty.allocator.numHeapArenas: 21
+[21Aug.2026 21:52:45.294] [Test worker/DEBUG] [io.netty.buffer.PooledByteBufAllocator/]: -Dio.netty.allocator.numDirectArenas: 21
+[21Aug.2026 21:52:45.294] [Test worker/DEBUG] [io.netty.buffer.PooledByteBufAllocator/]: -Dio.netty.allocator.pageSize: 8192
+[21Aug.2026 21:52:45.295] [Test worker/DEBUG] [io.netty.buffer.PooledByteBufAllocator/]: -Dio.netty.allocator.maxOrder: 9
+[21Aug.2026 21:52:45.295] [Test worker/DEBUG] [io.netty.buffer.PooledByteBufAllocator/]: -Dio.netty.allocator.chunkSize: 4194304
+[21Aug.2026 21:52:45.295] [Test worker/DEBUG] [io.netty.buffer.PooledByteBufAllocator/]: -Dio.netty.allocator.smallCacheSize: 256
+[21Aug.2026 21:52:45.295] [Test worker/DEBUG] [io.netty.buffer.PooledByteBufAllocator/]: -Dio.netty.allocator.normalCacheSize: 64
+[21Aug.2026 21:52:45.295] [Test worker/DEBUG] [io.netty.buffer.PooledByteBufAllocator/]: -Dio.netty.allocator.maxCachedBufferCapacity: 32768
+[21Aug.2026 21:52:45.295] [Test worker/DEBUG] [io.netty.buffer.PooledByteBufAllocator/]: -Dio.netty.allocator.cacheTrimInterval: 8192
+[21Aug.2026 21:52:45.295] [Test worker/DEBUG] [io.netty.buffer.PooledByteBufAllocator/]: -Dio.netty.allocator.cacheTrimIntervalMillis: 0
+[21Aug.2026 21:52:45.295] [Test worker/DEBUG] [io.netty.buffer.PooledByteBufAllocator/]: -Dio.netty.allocator.useCacheForAllThreads: false
+[21Aug.2026 21:52:45.295] [Test worker/DEBUG] [io.netty.buffer.PooledByteBufAllocator/]: -Dio.netty.allocator.maxCachedByteBuffersPerChunk: 1023
+[21Aug.2026 21:52:45.303] [Test worker/DEBUG] [io.netty.buffer.ByteBufUtil/]: -Dio.netty.allocator.type: pooled
+[21Aug.2026 21:52:45.303] [Test worker/DEBUG] [io.netty.buffer.ByteBufUtil/]: -Dio.netty.threadLocalDirectBufferSize: 0
+[21Aug.2026 21:52:45.303] [Test worker/DEBUG] [io.netty.buffer.ByteBufUtil/]: -Dio.netty.maxThreadLocalCharBufferSize: 16384
+[21Aug.2026 21:52:51.233] [Test worker/INFO] [com.peaceman.alpha.helper.ShieldLifecycleLogger/]: [Alpha-Engine]  [SHIELD-STATE] Schild-Status fuer Schiff 'b1b136ed-f9d1-4a29-b407-ac1d40280b2d' umgeschaltet -> isShieldActive: false. Broadcast StateSync.
+[21Aug.2026 21:52:51.233] [Test worker/INFO] [com.peaceman.alpha.helper.ShieldLifecycleLogger/]: [Alpha-Engine]  [SHIELD-STATE] Schild-Status fuer Schiff 'b1b136ed-f9d1-4a29-b407-ac1d40280b2d' umgeschaltet -> isShieldActive: false. Broadcast StateSync.
+[21Aug.2026 21:52:51.234] [Test worker/INFO] [com.peaceman.alpha.helper.ShieldLifecycleLogger/]: [Alpha-Engine]  [SHIELD-STATE] Schild-Status fuer Schiff 'b1b136ed-f9d1-4a29-b407-ac1d40280b2d' umgeschaltet -> isShieldActive: true. Broadcast StateSync.

@@ -27,6 +27,9 @@ public class ModCreativeTabs {
                         output.accept(ModItems.SPACESHIP_HELM_ITEM.get());
                         output.accept(ModItems.SPACESHIP_REACTOR_ITEM.get());
                         output.accept(ModItems.SPACESHIP_SHIELD_ITEM.get());
+                        output.accept(ModItems.PULSE_LASER_ITEM.get());
+                        output.accept(ModItems.HEAVY_BEAM_ITEM.get());
+                        output.accept(ModItems.MINING_LASER_ITEM.get());
                         output.accept(ModItems.BACKFLIP_TOOL.get());
 
                     }).build());

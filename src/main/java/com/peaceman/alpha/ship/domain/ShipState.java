@@ -24,6 +24,7 @@ public class ShipState {
     private final Map<String, BlockPos> homes;
     private List<BlockPos> reactors = new ArrayList<>();
     private List<BlockPos> shields = new ArrayList<>();
+    private List<BlockPos> weapons = new ArrayList<>();
     private boolean isShieldActive = true;
 
     // Cooldown-Timer (absolute Weltzeit via level.getGameTime())
@@ -183,6 +184,7 @@ public class ShipState {
         this.blocks = newBlocks != null ? newBlocks : new HashSet<>();
         this.reactors.clear();
         this.shields.clear();
+        this.weapons.clear();
 
         for (BlockPos pos : this.blocks) {
             BlockEntity be = level.getBlockEntity(pos);
@@ -190,6 +192,8 @@ public class ShipState {
                 this.reactors.add(pos);
             } else if (be instanceof SpaceshipShieldBlockEntity) {
                 this.shields.add(pos);
+            } else if (be instanceof com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity) {
+                this.weapons.add(pos);
             }
         }
 
@@ -201,6 +205,14 @@ public class ShipState {
 
         recalculateHullBounds();
         syncShieldBubbleToClients(level);
+    }
+
+    public List<BlockPos> getWeapons() {
+        return weapons;
+    }
+
+    public void setWeapons(List<BlockPos> weapons) {
+        this.weapons = weapons != null ? weapons : new ArrayList<>();
     }
 
     /**

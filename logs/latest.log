@@ -1,0 +1,3 @@
+[21Aug.2026 21:52:51.233] [Test worker/INFO] [com.peaceman.alpha.helper.ShieldLifecycleLogger/]: [Alpha-Engine]  [SHIELD-STATE] Schild-Status fuer Schiff 'b1b136ed-f9d1-4a29-b407-ac1d40280b2d' umgeschaltet -> isShieldActive: false. Broadcast StateSync.
+[21Aug.2026 21:52:51.233] [Test worker/INFO] [com.peaceman.alpha.helper.ShieldLifecycleLogger/]: [Alpha-Engine]  [SHIELD-STATE] Schild-Status fuer Schiff 'b1b136ed-f9d1-4a29-b407-ac1d40280b2d' umgeschaltet -> isShieldActive: false. Broadcast StateSync.
+[21Aug.2026 21:52:51.234] [Test worker/INFO] [com.peaceman.alpha.helper.ShieldLifecycleLogger/]: [Alpha-Engine]  [SHIELD-STATE] Schild-Status fuer Schiff 'b1b136ed-f9d1-4a29-b407-ac1d40280b2d' umgeschaltet -> isShieldActive: true. Broadcast StateSync.

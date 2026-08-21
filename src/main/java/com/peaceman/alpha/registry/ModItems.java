@@ -22,6 +22,12 @@ public class ModItems {
             ModBlocks.SPACESHIP_REACTOR);
     public static final DeferredItem<BlockItem> SPACESHIP_SHIELD_ITEM = ITEMS.registerSimpleBlockItem("spaceship_shield",
             ModBlocks.SPACESHIP_SHIELD);
+    public static final DeferredItem<BlockItem> PULSE_LASER_ITEM = ITEMS.registerSimpleBlockItem("pulse_laser",
+            ModBlocks.PULSE_LASER);
+    public static final DeferredItem<BlockItem> HEAVY_BEAM_ITEM = ITEMS.registerSimpleBlockItem("heavy_beam",
+            ModBlocks.HEAVY_BEAM);
+    public static final DeferredItem<BlockItem> MINING_LASER_ITEM = ITEMS.registerSimpleBlockItem("mining_laser",
+            ModBlocks.MINING_LASER);
 
     // Items
     public static final DeferredItem<Item> BACKFLIP_TOOL = ITEMS.register("backflip_tool",

@@ -50,6 +50,13 @@ public abstract class AbstractSpaceshipScreen extends Screen {
         sendShipAction(actionType, 0, "");
     }
 
+    protected void sendCombatAction(com.peaceman.alpha.network.ShipCombatActionPayload.CombatAction combatAction) {
+        updateShipIdFromBlock();
+        if (this.shipId != null) {
+            PacketDistributor.sendToServer(new com.peaceman.alpha.network.ShipCombatActionPayload(this.shipId, combatAction));
+        }
+    }
+
     protected com.peaceman.alpha.client.state.ClientShipState getClientShipState() {
         if (this.shipId == null) {
             updateShipIdFromBlock();

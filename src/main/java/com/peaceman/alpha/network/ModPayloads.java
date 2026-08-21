@@ -20,6 +20,12 @@ public class ModPayloads {
                 ServerPayloadHandler::handleAction
         );
 
+        registrar.playToServer(
+                ShipCombatActionPayload.TYPE,
+                ShipCombatActionPayload.STREAM_CODEC,
+                ServerPayloadHandler::handleCombatAction
+        );
+
         registrar.playToClient(
                 ShieldBubbleSyncPacket.TYPE,
                 ShieldBubbleSyncPacket.STREAM_CODEC,
@@ -54,6 +60,18 @@ public class ModPayloads {
                 ShipStructureDeltaPayload.TYPE,
                 ShipStructureDeltaPayload.STREAM_CODEC,
                 ClientPayloadHandler::handleStructureDelta
+        );
+
+        registrar.playToClient(
+                LaserFirePayload.TYPE,
+                LaserFirePayload.STREAM_CODEC,
+                ClientPayloadHandler::handleLaserFire
+        );
+
+        registrar.playToClient(
+                LaserStateSyncPayload.TYPE,
+                LaserStateSyncPayload.STREAM_CODEC,
+                ClientPayloadHandler::handleLaserStateSync
         );
     }
 }

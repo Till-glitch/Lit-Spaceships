@@ -5,10 +5,13 @@ import com.peaceman.alpha.ship.SpaceshipNavigationManager;
 import com.peaceman.alpha.ship.domain.ShipState;
 import com.peaceman.alpha.ship.service.ServerShipManager;
 import com.peaceman.alpha.ship.service.ShipMovementService;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
+
+import java.util.List;
 
 public class ServerPayloadHandler {
 
@@ -80,6 +83,47 @@ public class ServerPayloadHandler {
                 }
                 case TOGGLE_SHIELD -> ship.toggleShieldActive(level);
                 default -> {}
+            }
+        });
+    }
+
+    public static void handleCombatAction(final ShipCombatActionPayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> {
+            Player player = context.player();
+            if (player == null) return;
+            Level level = player.level();
+            if (payload.shipId() == null) return;
+
+            ShipState ship = ServerShipManager.getShip(payload.shipId());
+            if (ship == null) return;
+
+            List<BlockPos> weapons = ship.getWeapons();
+            if (weapons.isEmpty()) return;
+
+            for (BlockPos weaponPos : weapons) {
+                var be = level.getBlockEntity(weaponPos);
+                if (be instanceof com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity laserBe) {
+                    switch (payload.action()) {
+                        case FIRE_PULSE -> {
+                            if (laserBe instanceof com.peaceman.alpha.block.entity.PulseLaserBlockEntity) {
+                                com.peaceman.alpha.ship.combat.LaserCombatService.fireWeapon(level, ship, weaponPos);
+                            }
+                        }
+                        case TOGGLE_HEAVY_BEAM -> {
+                            if (laserBe instanceof com.peaceman.alpha.block.entity.HeavyBeamBlockEntity) {
+                                com.peaceman.alpha.ship.combat.LaserCombatService.fireWeapon(level, ship, weaponPos);
+                            }
+                        }
+                        case TOGGLE_MINING_LASER -> {
+                            if (laserBe instanceof com.peaceman.alpha.block.entity.MiningLaserBlockEntity) {
+                                com.peaceman.alpha.ship.combat.LaserCombatService.fireWeapon(level, ship, weaponPos);
+                            }
+                        }
+                        case FIRE_ALL -> {
+                            com.peaceman.alpha.ship.combat.LaserCombatService.fireWeapon(level, ship, weaponPos);
+                        }
+                    }
+                }
             }
         });
     }

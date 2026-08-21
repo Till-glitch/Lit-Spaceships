@@ -59,6 +59,12 @@ public class ShipSavedData extends SavedData {
             }
             shipTag.put("Shields", shieldList);
 
+            ListTag weaponList = new ListTag();
+            for (BlockPos pos : ship.getWeapons()) {
+                weaponList.add(new IntArrayTag(new int[]{pos.getX(), pos.getY(), pos.getZ()}));
+            }
+            shipTag.put("Weapons", weaponList);
+
             // 5. Status
             shipTag.putBoolean("ShieldActive", ship.isShieldActive());
 
@@ -118,9 +124,19 @@ public class ShipSavedData extends SavedData {
                 }
             }
 
+            List<BlockPos> loadedWeapons = new ArrayList<>();
+            if (shipTag.contains("Weapons")) {
+                ListTag wList = shipTag.getList("Weapons", Tag.TAG_INT_ARRAY);
+                for (int j = 0; j < wList.size(); j++) {
+                    int[] arr = wList.getIntArray(j);
+                    loadedWeapons.add(new BlockPos(arr[0], arr[1], arr[2]));
+                }
+            }
+
             boolean isShieldActive = !shipTag.contains("ShieldActive") || shipTag.getBoolean("ShieldActive");
 
             ShipState loadedShip = new ShipState(id, ctrlPos, blocks, homes, loadedReactors, loadedShields, isShieldActive);
+            loadedShip.setWeapons(loadedWeapons);
 
             // Cooldowns wiederherstellen
             if (shipTag.contains("ShieldCooldownUntil")) {

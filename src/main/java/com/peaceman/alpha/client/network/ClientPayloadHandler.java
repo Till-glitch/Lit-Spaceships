@@ -75,4 +75,24 @@ public class ClientPayloadHandler {
             });
         }
     }
+
+    public static void handleLaserFire(final com.peaceman.alpha.network.LaserFirePayload packet, final IPayloadContext context) {
+        if (context.flow().isClientbound()) {
+            context.enqueueWork(() -> {
+                com.peaceman.alpha.client.render.LaserBeamRenderer.addPulseBeam(
+                        packet.shooterShipId(), packet.startPos(), packet.endPos(), packet.tier()
+                );
+            });
+        }
+    }
+
+    public static void handleLaserStateSync(final com.peaceman.alpha.network.LaserStateSyncPayload packet, final IPayloadContext context) {
+        if (context.flow().isClientbound()) {
+            context.enqueueWork(() -> {
+                com.peaceman.alpha.client.render.LaserBeamRenderer.setContinuousBeam(
+                        packet.shooterShipId(), packet.weaponPos(), packet.isFiring(), packet.tier()
+                );
+            });
+        }
+    }
 }
