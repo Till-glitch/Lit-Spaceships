@@ -43,5 +43,11 @@ public class ModPayloads {
                 ShipPositionSyncPayload.STREAM_CODEC,
                 ClientPayloadHandler::handlePositionSync
         );
+
+        registrar.playToClient(
+                ShipImpactEventPayload.TYPE,
+                ShipImpactEventPayload.STREAM_CODEC,
+                ClientPayloadHandler::handleShipImpact
+        );
     }
 }

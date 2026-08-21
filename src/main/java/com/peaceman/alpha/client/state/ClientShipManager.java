@@ -5,6 +5,7 @@ import com.peaceman.alpha.helper.ShieldLifecycleLogger;
 import com.peaceman.alpha.network.ShieldBubbleSyncPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -58,6 +59,9 @@ public class ClientShipManager {
                                         long shieldCooldownTicks, long movementCooldownTicks) {
         ClientShipState shipState = getOrCreateShip(shipId);
         shipState.setShieldActive(isShieldActive);
+        if (currentEnergy > 0) {
+            shipState.setShieldEnergyPercentage(Math.min(1.0f, (float) currentEnergy / 1000000.0f));
+        }
         long clientTick = net.minecraft.client.Minecraft.getInstance().level != null
                 ? net.minecraft.client.Minecraft.getInstance().level.getGameTime() : 0L;
         shipState.updateCooldowns(shieldCooldownTicks, movementCooldownTicks, clientTick);
@@ -67,6 +71,15 @@ public class ClientShipManager {
         ClientShipState shipState = getShip(shipId);
         if (shipState != null) {
             shipState.setAnchorPos(newAnchorPos);
+        }
+    }
+
+    public static void addImpact(UUID shipId, Vec3 localPos) {
+        ClientShipState shipState = getShip(shipId);
+        if (shipState != null) {
+            long clientTick = net.minecraft.client.Minecraft.getInstance().level != null
+                    ? net.minecraft.client.Minecraft.getInstance().level.getGameTime() : 0L;
+            shipState.addImpact(localPos, clientTick);
         }
     }
 

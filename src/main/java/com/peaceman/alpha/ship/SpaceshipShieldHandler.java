@@ -4,14 +4,17 @@ import com.peaceman.alpha.Alpha;
 import com.peaceman.alpha.block.entity.SpaceshipShieldBlockEntity;
 import com.peaceman.alpha.helper.ShieldLifecycleLogger;
 import com.peaceman.alpha.network.ShieldBubbleSyncPacket;
+import com.peaceman.alpha.network.ShipImpactEventPayload;
 import com.peaceman.alpha.network.ShipStateSyncPayload;
 import com.peaceman.alpha.ship.domain.ShipState;
 import com.peaceman.alpha.ship.service.ServerShipManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.BlockEvent;
@@ -175,6 +178,7 @@ public class SpaceshipShieldHandler {
             }
 
             int radius = getShieldRadius(ship);
+            List<BlockPos> shipProtectedBlocks = new ArrayList<>();
 
             // 2. Betroffene Blöcke gegen den Schild prüfen
             for (BlockPos affectedBlock : event.getAffectedBlocks()) {
@@ -187,8 +191,32 @@ public class SpaceshipShieldHandler {
                     // 4. Energieverbrauch prüfen
                     if (SpaceshipEnergyManager.tryConsumeEnergyAmount(level, ship, ENERGY_COST_PER_BLOCK)) {
                         protectedBlocks.add(affectedBlock);
+                        shipProtectedBlocks.add(affectedBlock);
                     }
                 }
+            }
+
+            // Wenn Blöcke dieses Schiffs geschützt wurden: Impact-Welle & Energiestatus senden
+            if (!shipProtectedBlocks.isEmpty() && level instanceof ServerLevel serverLevel) {
+                BlockPos ctrl = ship.getControllerPos();
+                BlockPos hitPos = shipProtectedBlocks.get(0);
+                Vec3 localImpact = Vec3.atCenterOf(hitPos.subtract(ctrl));
+
+                // Schicke Einschlagswelle an alle Spieler im Chunk-Bereich
+                PacketDistributor.sendToPlayersTrackingChunk(
+                        serverLevel,
+                        new ChunkPos(ctrl),
+                        new ShipImpactEventPayload(ship.getId(), localImpact, 1.0f)
+                );
+
+                // Neuer Energie-Status an alle Clients broadcasten
+                PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(
+                        ship.getId(),
+                        SpaceshipEnergyManager.getTotalAvailableEnergy(level, ship),
+                        true,
+                        ship.getShieldCooldownRemaining(level.getGameTime()),
+                        ship.getMovementCooldownRemaining(level.getGameTime())
+                ));
             }
         }
 

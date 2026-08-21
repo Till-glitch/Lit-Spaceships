@@ -12,6 +12,12 @@
   ],
   "uniforms": [
     { "name": "HexModelViewMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
-    { "name": "HexProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] }
+    { "name": "HexProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+    { "name": "u_EnergyLevel", "type": "float", "count": 1, "values": [ 1.0 ] },
+    { "name": "u_GameTime", "type": "float", "count": 1, "values": [ 0.0 ] },
+    { "name": "u_Impact0", "type": "float", "count": 4, "values": [ 0.0, 0.0, 0.0, -1.0 ] },
+    { "name": "u_Impact1", "type": "float", "count": 4, "values": [ 0.0, 0.0, 0.0, -1.0 ] },
+    { "name": "u_Impact2", "type": "float", "count": 4, "values": [ 0.0, 0.0, 0.0, -1.0 ] },
+    { "name": "u_Impact3", "type": "float", "count": 4, "values": [ 0.0, 0.0, 0.0, -1.0 ] }
   ]
 }

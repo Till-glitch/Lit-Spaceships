@@ -57,4 +57,13 @@ public class ClientPayloadHandler {
             });
         }
     }
+
+    public static void handleShipImpact(final com.peaceman.alpha.network.ShipImpactEventPayload packet, final IPayloadContext context) {
+        if (context.flow().isClientbound()) {
+            context.enqueueWork(() -> {
+                ShieldLifecycleLogger.logClientPayloadReceived("ShipImpactEventPayload", packet.shipId(), null, true);
+                ClientShipManager.addImpact(packet.shipId(), packet.impactPos());
+            });
+        }
+    }
 }

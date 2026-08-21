@@ -1,2 +1,240 @@
-Architektur- und Implementierungskonzept: Voxel-Kollisionssystem für zeitgetaktete Raumschiff-Entitäten in NeoForge 1.211. Architektonische Grundlagen und SystemkontextDie Konstruktion einer physikalisch akkuraten Voxel-Umgebung innerhalb der NeoForge 1.21 API erfordert eine kompromisslose Trennung zwischen logischer Zustandsverwaltung und physischer Blockmanipulation im dreidimensionalen Raum. Im vorliegenden architektonischen Kontext wird ein Raumschiff-System auf Basis eines strikten Model-View-Controller-Patterns (MVC) evaluiert. Die Raumschiffe bestehen aus massiven Voxel-Verbänden, die hunderte bis zehntausende BlockPos-Einträge umfassen. Die Translation derartiger Strukturen ist inherent ressourcenintensiv. Um die Server-Tickrate (TPS - Ticks Per Second) zu erhalten, operiert der ShipMovementService über ein "Time-Slicing"-Verfahren, welches ein hartes Zeitbudget von maximal 10 Millisekunden pro Server-Tick für die Blockverschiebung allokiert.Die Integration eines hochpräzisen Kollisionssystems in diese asynchrone, inkrementelle Verschiebungslogik stellt eine enorme Herausforderung an das Engine-Design dar. Es muss deterministisch evaluiert werden, wann und wie zwei Voxel-Gitter (Grids) interagieren, ohne den Main-Thread zu blockieren. Das System definiert vier hochspezifische Kollisionsfälle basierend auf dem Status energetischer Schutzschilde (Kraftfelder), die es algorithmisch präzise abzubilden gilt. Andere etablierte Modifikationen in diesem Segment, wie beispielsweise Valkyrien Skies, nutzen für physikalische Berechnungen komplexe Octree-Strukturen und asynchrone Physik-Backends (Krunch, PhysX). Für die geplante Architektur, die speziell auf das 10ms-Time-Slicing und diskrete Blockverschiebungen optimiert ist, wird jedoch ein dedizierter, speicheroptimierter Ansatz auf Basis von BitSets und flachen Arrays verfolgt, um Cache-Misses zu minimieren und die L1-Cache-Lokalität moderner CPUs maximal auszunutzen.Der vorliegende Bericht analysiert die algorithmische Effizienz, die tiefe Integration in das Time-Slicing-Paradigma, identifiziert kritische Randfälle der Voxel-Kinematik und liefert einen pragmatischen Implementierungsplan zur Realisierung des Systems.2. Algorithmische Effizienz und TPS-Erhalt im mehrstufigen SystemDie naive Iteration über alle Blöcke eines Schiffes zur Feststellung von Kollisionen weist eine asymptotische Laufzeit von $\mathcal{O}(N \times M)$ auf, wobei $N$ und $M$ die Blockanzahlen der jeweiligen Schiffe darstellen. Bei Flottenmanövern mit Schiffen über 10.000 Blöcken würde dies unweigerlich zum Kollaps der Server-TPS führen. Um dies zu verhindern, wird ein mehrstufiges Culling-System entworfen, das irrelevante Geometrien frühzeitig verwirft und nur im absoluten Nahbereich auf Voxel-Ebene operiert.2.1 Stufe 1: Broad-Phase via Continuous Axis-Aligned Bounding Box (AABB) SweepIn der ersten Stufe (Broad-Phase) wird das kontinuierliche Kollisionspotenzial evaluiert. Das ShipState-Modell verwaltet eine kontinuierlich aktualisierte net.minecraft.world.phys.AABB (Axis-Aligned Bounding Box), welche die extremen räumlichen Ausdehnungen (Minima und Maxima in X, Y, Z) der physischen Hülle sowie des projizierten Schildes vollständig umschließt.Wenn der ShipMovementService eine Translation initiiert, darf nicht lediglich die statische Endposition auf Überschneidungen geprüft werden. Bei hohen relativen Geschwindigkeiten könnten Schiffe sich in einem einzigen Tick durchdringen ("Tunneling-Effekt"). Daher wird eine Swept-AABB generiert, indem die ursprüngliche AABB entlang des Bewegungsvektors $\vec{v}$ extrudiert wird. Die resultierende Bounding Box deckt das gesamte Volumen ab, das das Schiff während dieses Ticks durchquert.Zur effizienten Evaluierung dieser Swept-AABBs wird ein Spatial Hashing Grid auf globaler Ebene eingesetzt. Der Raum wird in grobe Sektoren unterteilt, und Schiffe registrieren ihre AABBs in den entsprechenden Sektoren. Dies reduziert den Suchraum für potenzielle Kollisionen von $\mathcal{O}(K^2)$ auf nahezu $\mathcal{O}(1)$ Lookup-Zeit, wobei $K$ die Anzahl der aktiven Schiffe im Sektor ist. Ergibt der Schnitttest (AABB#intersects) ein positives Ergebnis, wird das exakte Schnittvolumen (Intersection Box) $V_{int}$ der beiden Swept-AABBs berechnet. Sämtliche rechenintensiven Folgeoperationen werden ausschließlich auf dieses isolierte Subvolumen beschränkt.Broad-Phase MetrikSpezifikationKomplexitätPrimärer ZweckDatenstrukturnet.minecraft.world.phys.AABB$\mathcal{O}(1)$ pro AchseGrobe Umrissdefinition von Hülle und Schild.RaumaufteilungSpatial Hashing Grid (Sektoren)$\mathcal{O}(1)$ LookupFilterung irrelevanter Entitäten im Weltraum.KollisionserkennungSwept-AABB Intersection$\mathcal{O}(1)$Verhinderung von High-Speed-Tunneling.ResultatIntersection Volume $V_{int}$$\mathcal{O}(1)$Definition des Begrenzungsrahmens für den Deep-Check.2.2 Stufe 2: Narrow-Phase Deep-Check via BitSet-IntersectionsSobald ein Überschneidungsvolumen $V_{int}$ identifiziert ist, muss präzise ermittelt werden, ob sich auf Voxel-Ebene tatsächlich Blöcke oder Schild-Voxel tangieren. Während alternative Engines auf Octrees setzen, um den Speicherbedarf bei großen, leeren Räumen zu minimieren, erweist sich für ein lokalisiertes, dichtes Intersection Volume ein flaches Bit-Array als überlegen. Octrees erzeugen durch ihre Baumstruktur unweigerlich Pointer-Indirektionen und damit L1/L2-Cache-Misses. Ein flaches java.util.BitSet hingegen liegt als kontinuierliches long[]-Array im Speicher und kann durch hardwarebeschleunigte SIMD-Instruktionen (Single Instruction, Multiple Data) extrem schnell abgearbeitet werden. Vanilla Minecraft nutzt für die Evaluierung diskreter Voxel-Formen intern ebenfalls die Klasse BitSetDiscreteVoxelShape, was die Überlegenheit dieses Ansatzes im Java-Ökosystem unterstreicht.Der Algorithmus für die Narrow-Phase operiert nach folgendem deterministischen Muster:Das Schnittvolumen $V_{int}$ wird in Breite ($W$), Höhe ($H$) und Tiefe ($D$) in vollen Blockeinheiten diskretisiert. Für dieses Volumen werden zwei temporäre BitSets (BitSet A für Schiff A, BitSet B für Schiff B) im Speicher allokiert. Jedes Bit repräsentiert exakt einen Kubikmeter im Schnittvolumen. Ein lokaler dreidimensionaler Index $(x, y, z)$ innerhalb dieses Volumens wird über die Funktion $I = x + (y \times W) + (z \times W \times H)$ in einen eindimensionalen Integer linearisiert.Der ShipMorphologyService hält durch die asynchrone Methode calculateShieldBubbleAsync bereits gecachte, unveränderliche Snapshots (getImmutableBlockSnapshot()) der äußeren Hüllen- und Schildvoxel. Die Koordinaten dieser Snapshots, die innerhalb der Grenzen von $V_{int}$ liegen, werden in den relativen Koordinatenraum des Intersection Volumes transformiert. Für jeden Treffer wird das entsprechende Bit im zugehörigen BitSet gesetzt.Die tatsächliche Kollisionsprüfung reduziert sich nach der Befüllung auf eine einzige, massiv parallelisierbare bitweise Operation: BitSetA.intersects(BitSetB) (bzw. eine logische UND-Verknüpfung auf der Ebene der zugrundeliegenden long-Werte). Liefert diese Operation den Wert true, liegt eine exakte Voxel-Kollision vor. Durch die Iteration über die verbleibenden gesetzten Bits (mittels BitSet#nextSetBit()) können die exakten Kollisionspunkte in Bruchteilen einer Millisekunde re-extrahiert und in den Weltkoordinatenraum (BlockPos) zurückübersetzt werden. Simulationen zeigen, dass selbst ein massives Intersection Volume von 48x48x48 Blöcken (110.592 Voxel) in einem BitSet lediglich 1.728 long-Werte (ca. 13,8 Kilobyte) belegt, was problemlos im L1-Cache der CPU verbleibt und eine Schnittprüfung im Bereich von Mikrosekunden ermöglicht.3. Evaluierung und physikalische Auflösung der vier KollisionsfälleMit der Identifikation der exakten überlappenden Voxel übergeben der ShipCollisionService und der ShipMovementService die Auflösung der Kollision an die Domänenlogik. Das System unterscheidet strikt zwischen kinetischer Impulsauflösung und struktureller/energetischer Modifikation. Die vier definierten Fälle stellen unterschiedliche Anforderungen an die Engine-Manipulation.KollisionsfallKinetische KonsequenzStrukturelle ModifikationEnergetische KonsequenzEngine-Ausführung & NetzwerkOFF vs. OFF (Hülle vs. Hülle)Abrupter Translationstopp. Bewegungsvektor $\vec{v}$ wird genullt.Gegenseitige Annihilation der im BitSet identifizierten Voxel. Triggerung von ExplosionEvent.Detonate.Keine direkte Interaktion mit dem Reaktor-Netzwerk.ShipStructureSyncPayload wird generiert, um entfernte Blöcke an Clients zu senden. Physische Updates asynchron.OFF vs. ON (Hülle vs. Schild)Translationstopp für das eindringende Schiff A.Keine strukturelle Deformation. Die Voxel der Hülle A prallen vom Schild B ab.Schild B absorbiert die kinetische Energie von A. Drain $\Delta E \approx \frac{1}{2}m_A v_A^2$. Bei unzureichender Energie kollabiert das Schild.SpaceshipEnergyManager.tryConsumeEnergyAmount wird auf Schiff B aufgerufen. ShipStateSyncPayload überträgt neuen Energiewert.ON vs. OFF (Schild vs. Hülle)Kein Stopp. Schiff A behält das Momentum und setzt die Translation fort.Schild A agiert als Bohrer. Die im BitSet markierten Hüllen-Voxel von Schiff B werden instantan entfernt.Schiff A verliert einen fixen Reaktor-Wert pro zerstörtem Voxel in Schiff B, um die Schildintegrität während des Schneidens aufrechtzuerhalten.Kontinuierliche ShipMovementService-Updates. Massives Batch-Update der gelöschten Blöcke in Schiff B via PalettedContainer zur Vermeidung von TPS-Lags.ON vs. ON (Schild vs. Schild)Abrupter Translationstopp für beide involvierten Schiffe.Absolute strukturelle Integrität beider Schiffe, solange die Schilde aktiv bleiben.Enormer, sofortiger Energie-Drain bei beiden Reaktoren. Reziproker Energieverlust basierend auf relativer Geschwindigkeit und Masse.Synchroner Aufruf des SpaceshipEnergyManager für beide Entitäten. Sofortige Broadcasts der ShipStateSyncPayloads.Die Auflösung des "ON vs. OFF"-Falls ist architektonisch besonders kritisch, da die fortlaufende Translation von Schiff A durch die Struktur von Schiff B eine kontinuierliche, Tick-für-Tick stattfindende Voxel-Zerstörung erfordert. Wenn der ShipMovementService Schiff A verschiebt, muss der SpaceshipShieldHandler simultan die Voxel aus Schiff B extrahieren und Reaktor-Energie abziehen. Sinkt die Energie von Schiff A auf Null, schaltet das System im selben Tick auf den "OFF vs. OFF"-Fall um, was zum sofortigen kinetischen Stopp und zur Zerstörung der nun ungeschützten Hülle führt.4. Integration in das Time-Slicing-Paradigma (Das 10ms Tick Budget)Die asynchrone Architektur des ShipMovementService, die zur Wahrung der Server-Performance (TPS) ein striktes Budget von maximal 10 Millisekunden pro Post-Tick (ServerTickEvent.Post) für die physische Verschiebung von Blöcken nutzt, steht in einem inhärenten Konflikt mit sofortigen physikalischen Zustandsänderungen. Werden tausende Blöcke inkrementell über mehrere Ticks hinweg verschoben und erst während der Iteration eine Kollision registriert, befinden sich Teile des Schiffes bereits in der Zielstruktur. Dieser als "Tearing" bezeichnete Effekt würde die strukturelle Integrität der Voxel-Gitter irreparabel korrumpieren.Um dieses Problem fundamental zu lösen, muss die Systemarchitektur strikt zwischen der logischen Bewegungsabsicht (Logical Target Intent) und der physischen Materialisation (Physical Block Translation) trennen.4.1 Die Intent-Lock-Execute State MachineDer Kollisions-Check darf unter keinen Umständen blockweise oder während der Abarbeitung der PENDING_TASKS-Queue stattfinden. Er muss zwingend als atomarer Pre-Check evaluiert werden, bevor die physische Manipulation der Welt beginnt.Die Integration in das Time-Slicing verläuft über eine präzise State Machine:Intent Declaration: Schiff A plant eine Verschiebung um den Vektor $\vec{v}$. Die logische Zielposition wird kalkuliert.Atomarer Swept-Check (Tick 0): Noch bevor das Time-Slicing die erste Operation ausführt, führt die Engine die schnelle AABB-Broad-Phase und die BitSet-Narrow-Phase auf dem vollständigen Vektor $\vec{v}$ durch.Vektor-Korrektur (Continuous Collision Detection): Wird eine stoppende Kollision (OFF/OFF, OFF/ON, ON/ON) detektiert, berechnet das System die Time of Impact (ToI). Der Vektor $\vec{v}$ wird exakt auf den Vektor $\vec{v}_{clamp}$ gekürzt, an dem sich die äußeren Voxel der Entitäten gerade noch berühren, ohne sich zu durchdringen.Logical State Commitment: Die logische Position im ShipState wird sofort auf Basis von $\vec{v}_{clamp}$ aktualisiert. Für alle anderen Systeme (Netzwerk-Clients, andere Schiffe, Projektile) befindet sich das Schiff ab sofort logisch an der Zielposition, auch wenn die physischen Blöcke noch nicht transferiert wurden.Chunk Reservation: Die Ziel-Chunks werden über die Methode prepareDestinationChunks ermittelt und durch das NeoForge-Ticket-System (SHIP_TICKET) im Speicher forciert. Dies garantiert, dass die Ziel-Chunks während der Verschiebung nicht entladen werden.Inkrementelle Ausführung: Der ShipMovementService generiert nun die MovementTask-Queue. Diese Queue manipuliert die physischen Blöcke über mehrere Ticks hinweg (Time-Slicing). Da die Kollisionsfreiheit im Vorfeld mathematisch garantiert wurde, kann diese Queue blind und mit maximaler Performance abgearbeitet werden, bis das 10ms-Budget pro Tick erschöpft ist.4.2 Prävention von Glitches bei erschöpftem Time-BudgetSollte das 10ms-Zeitbudget aufgebraucht sein, verbleibt das Schiff physisch in einem Zwischenzustand – ein Teil der Struktur ist an der neuen Position materialisiert, ein anderer Teil verweilt an den Ursprungskoordinaten. Dies öffnet ein kritisches Zeitfenster, in dem andere Entitäten (Spieler, Projektile, andere Schiffe) in die unvollständige physische Struktur hineinnavigieren könnten.Um dieses "Glitching" zu verhindern, wird die Bounding Box des Schiffes während aktiver Verschiebungs-Operationen modifiziert. Die AABB wird temporär zu einer Encompassing AABB erweitert, die sowohl die Start- als auch die Zielkoordinaten des Schiffes umschließt. Jeder Fremd-Check, der in diese erweiterte Zone eindringt, wird von der Engine abgewiesen oder der Vektor der Fremd-Entität wird eingefroren. Erst wenn die MovementTask-Queue vollständig abgearbeitet ist und die Methode releaseDestinationChunks die Lock-Zustände aufhebt, wird die Encompassing AABB auf die tatsächliche Endposition reduziert. Dieses Locking-Verfahren stellt die absolute Konsistenz der Voxel-Räume sicher.5. Analyse kritischer Randfälle (Edge-Cases) und GefahrenabwehrDie Voxel-Natur von Minecraft erzeugt extrem komplexe Grenzfälle, wenn kontinuierliche Physik auf diskrete, gitterbasierte Räume trifft. Das Architektur-Konzept identifiziert drei primäre Gefahren, die durch spezifische Gegenmaßnahmen (Mitigations) neutralisiert werden müssen.5.1 Gefahr 1: Simultane Translation zweier Schiffe im selben TickDas gravierendste Problem in iterativen Tick-Systemen ist die Reihenfolge der Ausführung. Bewegt sich Schiff A im aktuellen Tick $t$ auf Schiff B zu, und Schiff B bewegt sich simultan auf Schiff A zu, entsteht eine Race Condition. Evaluiert die Engine zuerst Schiff A, registriert A die Position von B, stellt keine Kollision fest und zieht seinen Vektor durch. Evaluiert die Engine danach Schiff B, stellt B fest, dass sich A in seinen geplanten Pfad bewegt hat, was zu einer unausweichlichen, asymmetrischen Durchdringung der Voxel-Gitter führt.Zur Lösung dieses Problems dürfen Translationen im ServerTickEvent.Post niemals iterativ sofort ausgeführt werden. Stattdessen implementiert der ServerShipManager eine Gathering-Phase. Alle Schiffe melden ihre Intention (geplante Bewegungsvektoren). Das System konstruiert einen Directed Acyclic Graph (DAG) der räumlichen Abhängigkeiten. Überschneiden sich die Swept-AABBs von A und B, berechnet das System den relativen Geschwindigkeitsvektor $\vec{v}_{rel} = \vec{v}_A - \vec{v}_B$. Der BitSet-Deep-Check wird auf diesen relativen Vektor angewendet. Liegt eine Kollision vor, wird die präzise Time of Impact berechnet und beide Bewegungsvektoren werden prozentual am Kollisionspunkt abgeschnitten. Erst nach dieser globalen Relativitäts-Evaluierung dürfen die MovementTask-Queues befüllt werden.5.2 Gefahr 2: Das Schild-Schiff fräst durch die statische Welt (ON vs. OFF)Fliegt ein Schiff mit aktivem Schild (ON vs. OFF) in ein statisches Gebirge der Minecraft-Welt, fordert die Regelung, dass das Schiff seine Translation beibehält und das Gebirge zerstört. Bei einem Schiff mit einem Querschnitt von 2.000 Blöcken und einer Geschwindigkeit von 5 Blöcken pro Tick müssten in extremis 10.000 Welt-Blöcke in 10 Millisekunden entfernt werden. Die standardmäßige Nutzung von Level#removeBlock oder Level#setBlock würde hierbei unvermeidlich zum Kollaps des Servers (Watchdog-Crash) führen, da jeder Aufruf kaskadierende Block-Updates (NeighborUpdates), Lichtberechnungen und Pathfinding-Neuberechnungen auslöst.Die Architektur adressiert dies durch eine tiefe Integration in die Speichermodelle von NeoForge 1.21. Die Zerstörung der Welt-Voxel wird nicht über High-Level-APIs getriggert. Stattdessen manipuliert das System direkt die LevelChunkSection und die zugrundeliegenden PalettedContainer.
-Der Algorithmus akquiriert den Chunk-Lock (acquire()), überschreibt die in der BitSet-Intersection identifizierten Block-Indizes direkt im PalettedContainer mit Blocks.AIR und gibt den Lock frei (release()). Durch dieses Low-Level-Bypass-Verfahren werden Licht-Updates und kaskadierende Block-Ticks (tickingBlockCount) vollständig unterdrückt. Die Lichtberechnung (Skylight/Blocklight) wird asynchron verschoben und erst nach Abschluss der Passage des Schiffes nachgeholt. Dies transformiert einen potentiell Server-tötenden Vorgang in eine effiziente Arrayschreiboperation.5.3 Gefahr 3: Spieler und Entities im Intersect-VolumenBefinden sich Spieler oder andere Entitäten genau im Raum zwischen zwei kollidierenden Schiffen (z. B. OFF vs. OFF), stoppen die Schiffe abrupt. Ist der verbleibende Spalt schmaler als die Bounding Box des Spielers (0,6 x 1,8 x 0,6 Meter), greift Vanilla Minecrafts interne Kollisionsauflösung (Entity#move), welche den Spieler unkontrolliert in die Blöcke drückt. Dies führt zu Erstickungsschaden (Suffocation) oder, noch kritischer, zum "Breaching", bei dem der Spieler durch hohe Delta-Kräfte durch die Schiffshülle in das Innere des gegnerischen Schiffes glitcht.Um dieses Exploit-Risiko zu eliminieren, integriert das System eine Kinematische Verdrängung (Kinematic Displacement) und Absolute Crush-Damage-Logik. Bevor die logischen Positionen in Phase 1 gesperrt werden, führt das System einen räumlichen Entity-Scan (Level#getEntitiesOfClass) innerhalb der Intersection AABB durch. Wird ein Spieler im Zwischenraum detektiert, berechnet das System das Restvolumen nach dem Impact. Ist dieses Volumen kleiner als die Entity-AABB, feuert die Engine ein dediziertes Crush-Event: Der Spieler erleidet absoluten, unblockbaren Schaden (Instant-Kill via DamageTypes.IN_WALL), da die hydrostatischen Kräfte kollidierender Raumschiffe von keiner Rüstung absorbiert werden können. Ist ausreichend Platz für eine Flucht vorhanden, appliziert das System einen starken lateralen Impuls (Entity#push), der den Spieler orthogonal zur Aufprallachse aus der Gefahrenzone "quetscht", bevor die Voxel des Schiffes dort physisch eintreffen.
+Architektonisches und Mathematisches Design für Dynamische Schild-Rendermechaniken in NeoForge 1.211. Einleitung und Architektonischer RahmenDie Entwicklung prozeduraler 3D-Rendersysteme innerhalb der modifizierten Minecraft-Engine erfordert eine hochgradig präzise Abstimmung zwischen autoritativer Server-Logik, asynchroner Netzwerk-Synchronisation und GPU-beschleunigter Shader-Mathematik. Das vorliegende Dokument liefert eine erschöpfende Analyse und ein tiefgreifendes Konzept für die Implementierung eines dynamischen, reaktiven Energieschild-Systems innerhalb einer komplexen Raumschiff-Modifikation für NeoForge 1.21.Das modulare Raumschiff-System basiert auf einer strikten Model-View-Controller (MVC) Architektur, bei der die logische Autorität über Schiffsbewegungen, Energieverwaltung und Schildkollisionen vollständig vom Server getragen wird. Der Server nutzt fortschrittliche Java 21 Virtual Threads im ShipMorphologyService, um die volumetrische Dilatation des Schild-Meshes asynchron zu berechnen, ohne den Main-Thread zu blockieren. Dieses statische Mesh wird an den Client übertragen und dort in einem VertexBuffer (VRAM) vorgehalten.Die primäre Herausforderung besteht nun darin, diesem statischen VBO (Vertex Buffer Object) dynamisches visuelles Feedback zu verleihen, ohne die CPU-GPU-Bandbreite durch kontinuierliche Mesh-Neuberechnungen zu überlasten. Das System muss zwei visuelle Kernanforderungen erfüllen: Erstens eine organische, globale Farbanpassung des Schild-Meshes auf Basis des prozentualen Energiestatus, und zweitens einen ausbreitenden kinetischen Impuls (Impact Ripple Effect), der von dynamischen Einschlagstellen ausgeht. Um dies zu realisieren, wird die Blaze3D-Engine durch Custom Core Shaders in OpenGL 150 (GLSL) erweitert. Darüber hinaus adressiert dieser Bericht die kritischen Backend-Herausforderungen der NeoForge 1.21 Architektur, insbesondere das Multi-Impact-Handling zur Darstellung simultaner Treffer sowie die performante Event-Synchronisation über das moderne CustomPacketPayload- und StreamCodec-System.2. Mathematisches Design der Schild-Kolorierung (GLSL)Das Rendering prozeduraler Hexagon-Schilde in OpenGL 150 erfordert eine konsequente Trennung von räumlicher Vertex-Transformation und per-Pixel Fragment-Kolorierung. Da das Hexagon-Muster und die grundlegende Transparenz bereits funktional sind, fokussiert sich das Design auf die Manipulation der RGB-Farbkanäle in Abhängigkeit von globalen Uniform-Variablen, ohne den etablierten Alpha-Kanal des Musters zu kompromittieren.2.1 Farbraum-Metriken und Globale FarbmischungDie Farbe des Schildes fungiert als der primäre visuelle Indikator für den Spieler, um den Zustand des Raumschiff-Reaktors in Sekundenbruchteilen zu erfassen. Der Energiestatus wird dem Shader als normierter Float-Wert (u_EnergyLevel) zwischen $0.0$ (leer) und $1.0$ (voll) übergeben. Eine naive lineare Interpolation (mix()) zwischen drei primären Farbwerten im RGB-Raum führt unweigerlich zu sogenannten "matschigen" oder ausgewaschenen Übergangszonen, da die Helligkeitswahrnehmung des menschlichen Auges nicht linear verläuft.Um C1-stetige, satte Farbverläufe zu garantieren, wird die Interpolation durch hermitesche Polynome, spezifisch die smoothstep-Funktion, moduliert. Dieses Vorgehen verschiebt die Mischungsgewichte derart, dass die reinen Kernfarben über einen breiteren Energiebereich stabil bleiben und die Übergänge konzentrierter stattfinden.Es werden drei primäre Energiezustände und korrespondierende Farbvektoren definiert:Optimal ($1.0$ bis $0.5$): Ein hochenergetisches, kühles Cyan (vec3(0.1, 0.9, 1.0)).Kritisch ($0.5$ bis $0.2$): Eine destabilisierte Gelb-Lila-Mischung (vec3(0.9, 0.7, 0.2)).Versagen ($< 0.2$): Ein bedrohliches, tiefes Rot (vec3(1.0, 0.1, 0.1)).Die mathematische Verknüpfung dieser Zustände erfolgt kaskadierend. Zuerst wird der Übergang zwischen dem kritischen und dem Versagens-Zustand berechnet, anschließend wird dieses Zwischenergebnis mit dem optimalen Zustand interpoliert.2.2 Simulation von Organischer Instabilität (Flicker-Noise)Wenn die Schildkraft unter den kritischen Schwellenwert von 20 % fällt, soll die Struktur visuell zu versagen beginnen. Ein rein statisches Rot transportiert keine Dringlichkeit. Daher wird die Zeit (u_GameTime) genutzt, um die Luminanz der roten Farbe zu modulieren. Ein reiner Sinus-Oszillator wirkt jedoch zu mechanisch. Um organische Instabilität zu simulieren, wird eine stochastische Komponente (Pseudo-Random Noise) eingeführt.Die Flacker-Funktion $F(t)$ definiert sich als:$$F(t) = \max\left(B_{min}, \left( \sin(t \cdot \omega) \cdot 0.5 + 0.5 \right) \cdot \text{noise}(\lfloor t \cdot \rho \rfloor) \right)$$Wobei $t$ die kontinuierliche Spielzeit ist, $\omega$ die fundamentale Oszillationsfrequenz (z.B. $20.0$), $B_{min}$ das garantierte Minimum an Helligkeit (um völlige Unsichtbarkeit zu vermeiden), und $\rho$ die Frequenz des Rauschens (Sample-Rate der Störung). Die Funktion noise() generiert deterministische, pseudozufällige Werte basierend auf der fragmentierten Sinus-Hash-Methode.2.3 GLSL-Implementierung der FarbanpassungDer folgende GLSL-Code demonstriert die Integration dieser mathematischen Konzepte in den Fragment Shader. Durch die Kapselung der RGB-Logik in einer separaten Funktion wird sichergestellt, dass die spätere Alpha-Berechnung (Transparenz) strikt orthogonal zur Kolorierung verbleibt.OpenGL Shading Language// Uniforms, synchronisiert vom ClientShipState
+uniform float u_EnergyLevel; // 0.0 bis 1.0
+uniform float u_GameTime;    // Kontinuierliche Zeit (in Ticks oder Sekunden)
+
+// Statische Farb-Vektoren (SRGB Farbraum)
+const vec3 COLOR_OPTIMAL  = vec3(0.1, 0.9, 1.0);
+const vec3 COLOR_CRITICAL = vec3(0.9, 0.7, 0.2);
+const vec3 COLOR_FAILURE  = vec3(1.0, 0.1, 0.1);
+
+// Deterministische Hash-Funktion für Pseudo-Zufall
+float hash(float n) {
+    return fract(sin(n) * 43758.5453123);
+}
+
+vec3 calculateEnergyColor(float energy, float time) {
+    // Hermitesche Interpolationsgewichte für nicht-lineares Blending
+    float blendOptimalCritical = smoothstep(0.4, 0.8, energy);
+    float blendCriticalFailure = smoothstep(0.15, 0.4, energy);
+    
+    // Berechnung der Instabilität für niedrige Energiezustände
+    float baseFlicker = (sin(time * 20.0) * 0.5) + 0.5;
+    // Diskretes Samplen des Noises für "Zucken" anstatt fließender Übergänge
+    float chaoticNoise = hash(floor(time * 15.0));
+    float failureIntensity = max(0.3, baseFlicker * chaoticNoise);
+    
+    // Modulierte Versagens-Farbe (Helligkeit schwankt, kann leicht über 1.0 für Bloom gehen)
+    vec3 animatedFailureColor = COLOR_FAILURE * (1.0 + (failureIntensity * 0.5));
+    
+    // Kaskadierende Farbmischung
+    vec3 lowerTierMixed = mix(animatedFailureColor, COLOR_CRITICAL, blendCriticalFailure);
+    vec3 finalBaseColor = mix(lowerTierMixed, COLOR_OPTIMAL, blendOptimalCritical);
+    
+    return finalBaseColor;
+}
+Diese Implementierung liefert einen extrem performanten, branch-freien (keine if-Statements) Pfad auf der GPU, was die Ausführungszeit pro Pixel minimiert.3. Räumlich-Zeitliche Wellenausbreitung: Der Impact Ripple EffectWenn das Energieschild kinetische oder thermische Energie absorbiert (Kollision, Explosion, Laser), soll eine visuelle Schockwelle über die Geometrie wandern. Die Komplexität dieser Anforderung ergibt sich aus der Tatsache, dass das Raumschiff sich kontinuierlich durch die Welt bewegt. Eine Wellenberechnung im World-Space würde dazu führen, dass der Einschlagpunkt im Raum stehen bleibt, während das Schiff durch ihn hindurchfliegt, was eine massive Verzerrung des Effekts zur Folge hätte.3.1 Koordinatensystem-Transformation und DistanzmetrikUm den Effekt an das Schiff zu "binden", muss die Metrik zwingend im Local-Space (Relativ zum AnchorPos oder Controller-Block des Schiffes) evaluiert werden. Der Vertex-Shader (VS) erhält die rohen Vertex-Positionen, die bereits relativ zur Modellmatrix des Schiffs vorliegen. Indem die untransformierte Objekt-Position als out vec3 v_LocalPos; an den Fragment-Shader (FS) weitergereicht wird, erhält jeder Pixel eine statische Koordinate relativ zum Schiffs-Anker.Der Einschlagpunkt ($P_{impact}$) wird folglich ebenfalls vom Server im Local-Space berechnet und an den Shader als Uniform übergeben. Die Euklidische Distanz $d$ für einen beliebigen Fragment-Punkt $P_{frag}$ lautet:$$d = \sqrt{(P_{frag.x} - P_{impact.x})^2 + (P_{frag.y} - P_{impact.y})^2 + (P_{frag.z} - P_{impact.z})^2}$$In GLSL wird dies hochoptimiert über die intrinsische Funktion length(v_LocalPos - u_ImpactPos) abgebildet.3.2 Die Kinetische Wellenfunktion (Wave Equation)Ein einzelner Impact-Ripple wird als konzentrischer, sich ausdehnender Ring modelliert, dessen Amplitude über Raum und Zeit abklingt. Die Welle wird definiert durch das Zusammenspiel einer Ausbreitungsfunktion (Wellenfront), einer Formfunktion (Dicke des Rings) und zwei Dämpfungsfunktionen (räumlich und zeitlich).Der Radius der Wellenfront $R(t)$ wächst linear mit der Zeit $t$ seit dem Einschlag:$$R(t) = v_{wave} \cdot t$$wobei $v_{wave}$ die Ausbreitungsgeschwindigkeit in Blöcken pro Sekunde ist.Die Form der Welle wird durch eine modifizierte Gaußsche Glockenkurve um den aktuellen Radius herum modelliert, um einen organischen, weichen Ring zu erzeugen:$$W(d, t) = \exp\left(-k_{width} \cdot (d - R(t))^2\right)$$Um zu verhindern, dass die Welle unendlich über das gesamte 100-Block lange Schiff wandert, greift die räumliche Dämpfung $D_{space}(d)$ basierend auf der inversen Exponentialfunktion, und die zeitliche Dämpfung $D_{time}(t)$, die den Effekt nach einem Maximum $T_{max}$ hart auf Null fadet:$$D_{space}(d) = \exp\left(-\frac{d}{\lambda}\right)$$$$D_{time}(t) = \max\left(0, 1 - \frac{t}{T_{max}}\right)$$3.3 Multi-Wave Interference im Fragment ShaderWenn mehrere Einschläge existieren, müssen ihre Amplituden im Fragment Shader akkumuliert werden. Da Wellen sich additiv verhalten (Konstruktive Interferenz), werden die Intensitäten der einzelnen Ripples summiert.OpenGL Shading Language// Array zur Aufnahme multipler Einschläge (Erklärung der Limitierung im Architekturteil)
+const int MAX_IMPACTS = 4;
+// Format: vec4(localX, localY, localZ, timeSinceHit)
+// timeSinceHit < 0.0 bedeutet, dieser Slot ist aktuell inaktiv.
+uniform vec4 u_Impacts[MAX_IMPAcripts]; 
+
+// Vom Vertex Shader interpoliert
+in vec3 v_LocalPos; 
+
+float calculateRippleIntensity(vec3 fragPos, vec4 impactData) {
+    float timeSinceHit = impactData.w;
+    // Early-Exit zur Schonung der Fragment-ALU
+    if (timeSinceHit < 0.0) return 0.0; 
+    
+    vec3 impactPos = impactData.xyz;
+    float dist = length(fragPos - impactPos);
+    
+    // Konstanten für die physikalische Simulation
+    const float WAVE_SPEED = 18.0;      // Ausbreitungsgeschwindigkeit
+    const float WAVE_WIDTH = 2.5;       // Schärfe/Dicke des Rings (höher = dünner)
+    const float MAX_DISTANCE = 25.0;    // Räumliches Abklingen
+    const float MAX_DURATION = 1.5;     // Lebensdauer in Sekunden
+    
+    // Position der Wellenfront
+    float currentRadius = timeSinceHit * WAVE_SPEED;
+    float distFromRadius = abs(dist - currentRadius);
+    
+    // Gaußscher Ring
+    float waveShape = exp(-(distFromRadius * distFromRadius) * WAVE_WIDTH);
+    
+    // Dämpfungsfaktoren
+    float spatialDecay = exp(-dist / (MAX_DISTANCE * 0.4));
+    float temporalDecay = max(0.0, 1.0 - (timeSinceHit / MAX_DURATION));
+    
+    // Nur Fragmente berücksichtigen, die die Welle bereits erreicht hat, 
+    // um "implodierende" Artefakte am Ursprung zu vermeiden
+    float directionalMask = step(0.0, currentRadius - dist + 2.0);
+    
+    return waveShape * spatialDecay * temporalDecay * directionalMask;
+}
+Die finale Verknüpfung von Basis-Farbe (Energie) und Ripple-Intensität erzeugt einen additiven Overdrive-Effekt (Hit-Flash), der das Hexagon-Muster an der Einschlagstelle stark weiß aufleuchten lässt und die Transparenz lokal massiv erhöht.OpenGL Shading Languagevoid main() {
+    vec3 baseColor = calculateEnergyColor(u_EnergyLevel, u_GameTime);
+    float hexAlpha = generateProceduralHexagons(v_LocalPos); // Vorhandene Funktion
+    
+    float totalRipple = 0.0;
+    // Loop Unrolling wird meist vom Shader-Compiler automatisch durchgeführt
+    for(int i = 0; i < MAX_IMPACTS; i++) {
+        totalRipple += calculateRippleIntensity(v_LocalPos, u_Impacts[i]);
+    }
+    
+    // Clamping, um Clipping-Artefakte in der Farb-Mathematik zu verhindern
+    totalRipple = clamp(totalRipple, 0.0, 2.0); 
+    
+    // Der Ripple verschiebt die Farbe ins Weiße (Übersteuerung)
+    vec3 finalColor = mix(baseColor, vec3(1.0, 1.0, 1.0), min(totalRipple * 0.7, 1.0));
+    
+    // Der Ripple macht das Schild an der Stelle temporär undurchsichtiger
+    float finalAlpha = clamp(hexAlpha + (totalRipple * 0.6), 0.0, 1.0);
+    
+    fragColor = vec4(finalColor, finalAlpha);
+}
+4. Architektonische Backend-Forschung: Multi-Impact HandlingEin robustes Schildsystem muss das gleichzeitige Eintreffen multipler Schadensquellen (z.B. ein Schauer aus Pfeilen oder Kaskaden-Explosionen) visuell ansprechend verarbeiten. Da ein Standard-Uniform ImpactPos immer nur den exakten Zustand eines einzigen Punktes speichern kann, überschreiben sich simultane Treffer gegenseitig, was zu stotternden oder abgebrochenen Animationen führt. Zwei primäre Methodiken zur Lösung dieses Architektur-Engpasses in der Minecraft Engine wurden evaluiert: Uniform-Arrays versus Vertex-Color-Hacks (VBO Rebuilds).4.1 Methodik-Evaluierung und Performance-AnalyseArchitektonische MetrikUniform-Arrays (uniform vec4 Impacts[N])Vertex-Color-Hacks (VBO Rebuild)Konzeptioneller AnsatzCPU übermittelt Parameter als Shader-Variablen, GPU berechnet Wellengleichung pro Pixel.CPU berechnet Wellenfronten in Java und modifiziert die Farbinformationen jedes Vertex im VertexBuffer.CPU-Last (Java Main Thread)Extrem gering. Die CPU iteriert über 4 Vektoren, updatet die Timer und sendet 16 Floats an die Graphics API.Extrem hoch. Die CPU muss über tausende Vertices iterieren, Farbcodes berechnen und bei jedem Frame das VBO neu in den Arbeitsspeicher schreiben.Memory Bandwidth (CPU zu VRAM)Marginal ($< 1$ Kilobyte pro Frame).Flaschenhals. Gesamtes Mesh (Megabytes) muss via BufferUploader im Render-Loop in den VRAM geschoben werden.Skalierbarkeit multipler ImpactsHardcoded Limit im GLSL (z.B. $N=4$ bis $8$), absolut ausreichend für visuelles Feedback.Unbegrenzt, jedoch steigt die CPU-Latenz linear mit der Vertex-Anzahl, was rapide Framerate-Drops (TPS Lags) verursacht.Eignung für Minecraft 1.21Hervorragend. Native Integration via CompiledShaderProgram und Uniform-Blöcken.Destruktiv. Negiert den Sinn des von ShipMorphologyService asynchron generierten, statischen VBOs.Fazit der Forschung: Der Ansatz über Uniform-Arrays ist zwingend und alternativlos. Das Raumschiff-Mesh wird von Java 21 Virtual Threads asynchron generiert und als hochperformantes VBO in den VRAM des Clients transferiert. Würde man die Geometrie oder Vertex-Farben auf der CPU bei jedem Tick mutieren, würde dies den Render-Thread von Minecraft blockieren und zu massiven Mikrorucklern führen. Die Berechnung der hochfrequenten Ripple-Mathematik ist prädestiniert für die massiv-parallele Architektur einer GPU (Fragment-Prozessoren).4.2 Handling von Uniform-Arrays in NeoForge 1.21 Core ShadersMinecraft 1.21 strukturiert Uniforms in Core Shaders stark in Uniform Blocks um, um modernen Rendering-APIs gerecht zu werden. Für Mod-Entwickler, die Custom Shader (wie hex_shield.json) nutzen, können Arrays jedoch oft problematisch beim JSON-Parsing sein, falls die Engine die Deklaration nicht nativ als Liste mappt.Um maximale Kompatibilität mit dem ShaderManager und der CompiledShaderProgram-Klasse zu gewährleisten, wird eine explizite Definition numerierter Uniforms in der JSON-Datei empfohlen, die im Shader als konzeptionelles Array zusammengefasst oder einzeln angesprochen werden.In der hex_shield.json werden die Variablen deklariert:JSON"uniforms": [
+    { "name": "u_EnergyLevel", "type": "float", "count": 1, "values": [ 1.0 ] },
+    { "name": "u_Impact0", "type": "float", "count": 4, "values": [ 0.0, 0.0, 0.0, -1.0 ] },
+    { "name": "u_Impact1", "type": "float", "count": 4, "values": [ 0.0, 0.0, 0.0, -1.0 ] },
+    { "name": "u_Impact2", "type": "float", "count": 4, "values": [ 0.0, 0.0, 0.0, -1.0 ] },
+    { "name": "u_Impact3", "type": "float", "count": 4, "values": [ 0.0, 0.0, 0.0, -1.0 ] }
+]
+Jedes Array hält 4 Float-Werte, was einem vec4 (x, y, z Position + w Timer) in GLSL entspricht.5. Event-Synchronisation und Netzwerk-Schicht (NeoForge 1.21)Ein Schildeinschlag ist ein ephemeres (flüchtiges) Ereignis. Die autoritative Berechnung des Schadens findet auf dem logischen Server im SpaceshipShieldHandler statt. Das View-Modell des Clients (ClientShipState) hat keinerlei Kenntnis von der Projektil-Physik oder den Explosionen des Servers. Folglich muss der Server ein hochperformantes Netzwerk-Event auslösen, welches den Client über Position und Zeitpunkt des Treffers informiert.NeoForge 1.21 markiert einen radikalen Paradigmenwechsel in der Netzwerk-Architektur von Minecraft. Legacy-Paketsysteme wurden vollständig durch deklarative CustomPacketPayloads und bidirektionale StreamCodecs ersetzt, um typsichere und thread-sichere Serialisierung zu erzwingen.5.1 Design des ShipImpactEventPayloadUm das Netzwerk nicht durch redundante Daten aufzublähen, muss das Payload-Record extrem schlank konzipiert werden. Benötigt werden exakt drei Informationsblöcke:Die Identifikation des betroffenen Raumschiffs (UUID).Die relative Einschlagposition (Vec3 im Local-Space).Die kinetische Stärke des Treffers (ein Float, der die Amplitude des Ripples skalieren könnte, optional).Die Serialisierung in NeoForge 1.21 bedient sich vordefinierter ByteBufCodecs. Da Vec3 nicht immer standardmäßig als einzelner Codec vorliegt, wird es elegant in seine drei primitiven Double-Komponenten zerlegt, um Robustheit zu garantieren. Das UUIDUtil stellt zudem einen dedizierten StreamCodec für UUIDs bereit.Javapackage com.peaceman.alpha.network;
+
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.core.UUIDUtil;
+import java.util.UUID;
+
+public record ShipImpactEventPayload(UUID shipId, Vec3 impactPos, float force) implements CustomPacketPayload {
+    
+    // Deklarativer Registry-Key für den Payload
+    public static final CustomPacketPayload.Type<ShipImpactEventPayload> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("alpha", "ship_impact_event"));
+
+    // Kompositioneller StreamCodec für die serielle Bytestrom-Übertragung
+    public static final StreamCodec<FriendlyByteBuf, ShipImpactEventPayload> STREAM_CODEC = StreamCodec.composite(
+        UUIDUtil.STREAM_CODEC, ShipImpactEventPayload::shipId,
+        ByteBufCodecs.DOUBLE, p -> p.impactPos().x(),
+        ByteBufCodecs.DOUBLE, p -> p.impactPos().y(),
+        ByteBufCodecs.DOUBLE, p -> p.impactPos().z(),
+        ByteBufCodecs.FLOAT, ShipImpactEventPayload::force,
+        (uuid, x, y, z, force) -> new ShipImpactEventPayload(uuid, new Vec3(x, y, z), force)
+    );
+
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+        return TYPE;
+    }
+}
+5.2 Spatial Hashing und Network CullingDas Senden dieses Payloads an den gesamten Server (Broadcast) wäre ein massiver Architekturfehler, der bei Flottenkämpfen den TCP-Stack verstopfen würde. Die ServerShipManager-Infrastruktur von Mod Alpha nutzt bereits Spatial Hashing, um die Geometrie von Schiffen nur an Spieler zu senden, deren Chunk-Watch-Distanz die Schiffskoordinaten überschneidet.Der Versand des ShipImpactEventPayload muss dieser Logik folgen. Der Server ermittelt bei einem Treffer alle Spieler, die den Chunk der AnchorPos tracken (z.B. via sendToPlayersTrackingChunk), und übermittelt das Paket exklusiv an diese.Die Registrierung des Payloads im Event Bus erfolgt über den PayloadRegistrar:Java@SubscribeEvent
+public static void register(RegisterPayloadHandlersEvent event) {
+    // Versions-konformer Registrar
+    final PayloadRegistrar registrar = event.registrar("1"); 
+    
+    registrar.playToClient(
+        ShipImpactEventPayload.TYPE,
+        ShipImpactEventPayload.STREAM_CODEC,
+        ClientPayloadHandler::handleShipImpact
+    );
+}
+6. Client-Lifecycle, View-Model und VRAM-ManagementSobald das Netzwerkpaket den Client erreicht, übernimmt der ClientPayloadHandler. Minecraft verbietet strikt die Modifikation von Rendering-Datenstrukturen außerhalb des Main-Threads (Render-Thread). Daher muss das Paket zwingend via context.enqueueWork() an die Hauptschleife übergeben werden, bevor der ClientShipManager das zugehörige ClientShipState aufruft.6.1 Ring-Buffer-Implementierung im ClientShipStateDas ClientShipState verwaltet das compilierte VBO (VertexBuffer) des Schildes. Um die Multi-Impacts zu verwalten, ohne Speicherallokationen (Garbage Collection Spikes) im Render-Loop zu provozieren, wird ein primitiver Arrays-basierter Ring-Buffer implementiert.Dieser Ring-Buffer hält konstant 4 Positionen und 4 Zeitstempel. Bei einem neuen Einschlag überschreibt der Cursor iterativ den ältesten Slot.Javapackage com.peaceman.alpha.client.state;
+
+import net.minecraft.world.phys.Vec3;
+import com.mojang.blaze3d.vertex.VertexBuffer;
+import net.minecraft.client.renderer.ShaderProgram;
+import java.util.UUID;
+// ... weitere Imports ...
+
+public class ClientShipState {
+    private final UUID shipId;
+    private VertexBuffer shieldMesh;
+    
+    // Zero-Allocation Ring-Buffer für O(1) Updates
+    private static final int MAX_IMPACTS = 4;
+    private final Vec3[] impactPositions = new Vec3[MAX_IMPACTS];
+    private final long[] impactTickTimes = new long[MAX_IMPACTS];
+    private int impactCursor = 0;
+    
+    public ClientShipState(UUID shipId) {
+        this.shipId = shipId;
+        // Initialisierung mit Werten, die den Shader den Slot als inaktiv werten lassen
+        for (int i = 0; i < MAX_IMPACTS; i++) {
+            impactTickTimes[i] = -1000; 
+            impactPositions[i] = Vec3.ZERO;
+        }
+    }
+    
+    public void addImpact(Vec3 localPos, long currentClientTick) {
+        impactPositions[impactCursor] = localPos;
+        impactTickTimes[impactCursor] = currentClientTick;
+        // Zyklisches Weiterschalten des Cursors
+        impactCursor = (impactCursor + 1) % MAX_IMPACTS;
+    }
+    
+    // Pushing der Uniforms direkt vor dem Draw-Call
+    public void setupShaderUniforms(ShaderProgram shader, long currentTick, float partialTicks) {
+        float exactTime = currentTick + partialTicks;
+        
+        for (int i = 0; i < MAX_IMPACTS; i++) {
+            String uniformName = "u_Impact" + i;
+            long hitTick = impactTickTimes[i];
+            
+            float timeSinceHit = -1.0f; // < 0.0 bedeutet inaktiv im GLSL
+            
+            // Wenn der Treffer nicht älter als 100 Ticks (5 Sekunden) ist
+            if (hitTick > 0 && (currentTick - hitTick) < 100) { 
+                timeSinceHit = (exactTime - hitTick) / 20.0f; 
+            }
+            
+            // Bindung an den Shader, sofern die Uniform vom Compiler nicht wegoptimiert wurde
+            if (shader.getUniform(uniformName) != null) {
+                shader.getUniform(uniformName).set(
+                    (float)impactPositions[i].x, 
+                    (float)impactPositions[i].y, 
+                    (float)impactPositions[i].z, 
+                    timeSinceHit
+                );
+            }
+        }
+    }
+}
+6.2 Render-Pipeline und Garbage Collection (Blaze3D)Die tatsächliche Darstellung findet im ShieldRenderer während des RenderLevelStageEvent statt. NeoForge 1.21 hat die Render-Pipeline signifikant verschärft. Die Klasse EffectInstance wurde zugunsten von CompiledShaderProgram abgelöst und Draw-Methoden des VertexBuffer erfordern präzisere Matrix-Parameter.Javapublic void renderShields(PoseStack stack, MultiBufferSource buffer, Camera camera, float partialTicks) {
+    long currentTick = Minecraft.getInstance().level.getGameTime();
+    ShaderProgram shieldShader = ModShaders.HEX_SHIELD_PROGRAM; // Geladener Core Shader
+    
+    // Shader für alle Schiffe im aktuellen Frame aktivieren
+    RenderSystem.setShader(() -> shieldShader);
+    
+    for (ClientShipState ship : ClientShipManager.getAllShips()) {
+        if (!ship.isShieldActive() || ship.isDisposed()) continue;
+        
+        stack.pushPose();
+        // Transformation in den Local-Space des Schiffes
+        translateToAnchor(stack, ship.getAnchorPos(), camera);
+        
+        // Globale Energie-Uniform übermitteln
+        if (shieldShader.getUniform("u_EnergyLevel") != null) {
+            shieldShader.getUniform("u_EnergyLevel").set(ship.getShieldEnergyPercentage());
+        }
+        
+        // Die 4 Impact-Vektoren aus dem Ring-Buffer binden
+        ship.setupShaderUniforms(shieldShader, currentTick, partialTicks);
+        
+        VertexBuffer mesh = ship.getShieldMesh();
+        mesh.bind();
+        
+        // Draw-Call mit aktueller Projektionsmatrix (1.21 Syntax)
+        mesh.drawWithShader(stack.last().pose(), RenderSystem.getProjectionMatrix(), shieldShader); [cite: 6, 8]
+        
+        VertexBuffer.unbind();
+        stack.popPose();
+    }
+}
+Kritischer Aspekt: VRAM Leak Prevention.
+Da VertexBuffer-Instanzen direkten Grafikspeicher belegen, führt das Zerstören eines Schiffes oder das Verlassen des Chunks zu einem katastrophalen Memory Leak, wenn das VBO nicht freigegeben wird. Der ClientShipManager überwacht die Events ChunkEvent.Unload und ClientPlayerNetworkEvent.LoggingOut. Beim Eintreten dieser Events ruft er ship.dispose() auf. Dort muss mesh.close() in einem dedizierten RenderSystem.recordRenderCall(...) gewrappt werden, um sicherzustellen, dass die Speicherfreigabe synchronisiert auf dem OpenGL-Kontext-Thread abläuft.

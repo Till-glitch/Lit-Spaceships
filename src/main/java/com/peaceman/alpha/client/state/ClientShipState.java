@@ -4,6 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.peaceman.alpha.client.render.ShieldRenderer;
+import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 
@@ -30,8 +31,19 @@ public class ClientShipState implements AutoCloseable {
     private long movementCooldownRemainingTicks = 0L;
     private long lastSyncClientTick = 0L;
 
+    // Zero-Allocation Ring-Buffer für O(1) Multi-Impact Updates
+    public static final int MAX_IMPACTS = 4;
+    private final Vec3[] impactPositions = new Vec3[MAX_IMPACTS];
+    private final long[] impactTickTimes = new long[MAX_IMPACTS];
+    private int impactCursor = 0;
+    private float shieldEnergyPercentage = 1.0f;
+
     public ClientShipState(UUID shipId) {
         this.shipId = shipId;
+        for (int i = 0; i < MAX_IMPACTS; i++) {
+            this.impactTickTimes[i] = -1000L;
+            this.impactPositions[i] = Vec3.ZERO;
+        }
     }
 
     public UUID getShipId() {
@@ -110,6 +122,63 @@ public class ClientShipState implements AutoCloseable {
 
     public boolean isMovementOnCooldown(long currentClientTick) {
         return getMovementCooldownDisplay(currentClientTick) > 0;
+    }
+
+    public float getShieldEnergyPercentage() {
+        return shieldEnergyPercentage;
+    }
+
+    public void setShieldEnergyPercentage(float shieldEnergyPercentage) {
+        this.shieldEnergyPercentage = Math.clamp(shieldEnergyPercentage, 0.0f, 1.0f);
+    }
+
+    /**
+     * Fügt einen neuen Einschlagspunkt im Local-Space in den Ring-Buffer ein.
+     */
+    public void addImpact(Vec3 localPos, long currentClientTick) {
+        this.impactPositions[this.impactCursor] = localPos != null ? localPos : Vec3.ZERO;
+        this.impactTickTimes[this.impactCursor] = currentClientTick;
+        this.impactCursor = (this.impactCursor + 1) % MAX_IMPACTS;
+    }
+
+    /**
+     * Bindet die Shader-Uniforms für Energie, Zeit und die 4 Multi-Impact-Vektoren vor dem Draw-Call.
+     */
+    public void setupShaderUniforms(ShaderInstance shader, long currentTick, float partialTicks) {
+        if (shader == null) return;
+
+        float exactTime = currentTick + partialTicks;
+
+        // 1. Globale Energie- und Zeit-Uniforms übermitteln
+        if (shader.getUniform("u_EnergyLevel") != null) {
+            shader.getUniform("u_EnergyLevel").set(this.shieldEnergyPercentage);
+        }
+        if (shader.getUniform("u_GameTime") != null) {
+            shader.getUniform("u_GameTime").set(exactTime / 20.0f);
+        }
+
+        // 2. Die 4 Impact-Vektoren aus dem Ring-Buffer binden
+        for (int i = 0; i < MAX_IMPACTS; i++) {
+            String uniformName = "u_Impact" + i;
+            long hitTick = this.impactTickTimes[i];
+
+            float timeSinceHit = -1.0f; // < 0.0 bedeutet inaktiv im GLSL
+
+            // Wenn der Treffer nicht älter als 100 Ticks (5 Sekunden) ist
+            if (hitTick > 0 && (currentTick - hitTick) < 100) {
+                timeSinceHit = (exactTime - hitTick) / 20.0f;
+            }
+
+            if (shader.getUniform(uniformName) != null) {
+                Vec3 pos = this.impactPositions[i] != null ? this.impactPositions[i] : Vec3.ZERO;
+                shader.getUniform(uniformName).set(
+                        (float) pos.x,
+                        (float) pos.y,
+                        (float) pos.z,
+                        timeSinceHit
+                );
+            }
+        }
     }
 
     /**

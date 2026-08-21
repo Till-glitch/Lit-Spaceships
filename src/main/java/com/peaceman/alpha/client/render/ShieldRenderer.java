@@ -121,6 +121,11 @@ public class ShieldRenderer {
                     hexShieldShader.safeGetUniform("HexProjMat").set(projection);
                 }
 
+                // 8b. Dynamische Shader-Uniforms (Energielevel, GameTime, Multi-Impacts) übergeben
+                long currentTick = mc.level != null ? mc.level.getGameTime() : 0L;
+                float partialTicks = event.getPartialTick().getGameTimeDeltaPartialTick(false);
+                shipState.setupShaderUniforms(hexShieldShader, currentTick, partialTicks);
+
                 // 9. Draw Call ausführen
                 mesh.bind();
                 mesh.drawWithShader(modelView, projection, hexShieldShader);

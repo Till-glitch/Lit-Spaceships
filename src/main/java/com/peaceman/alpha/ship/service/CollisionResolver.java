@@ -2,6 +2,7 @@ package com.peaceman.alpha.ship.service;
 
 import com.peaceman.alpha.Alpha;
 import com.peaceman.alpha.network.ShieldBubbleSyncPacket;
+import com.peaceman.alpha.network.ShipImpactEventPayload;
 import com.peaceman.alpha.network.ShipStateSyncPayload;
 import com.peaceman.alpha.network.ShipStructureSyncPayload;
 import com.peaceman.alpha.ship.SpaceshipEnergyManager;
@@ -9,6 +10,7 @@ import com.peaceman.alpha.ship.SpaceshipShieldHandler;
 import com.peaceman.alpha.ship.domain.ShipState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
@@ -105,6 +107,13 @@ public class CollisionResolver {
                 com.peaceman.alpha.helper.ShieldLifecycleLogger.logCollisionResolved("OFF_vs_ON", shipA.getId(), shipB.getId(),
                         voxelCount, true, "Schild B zusammengebrochen! Energiemangel bei Absorption von " + drain + " FE");
             } else {
+                // Einschlagswelle auf Schild B auslösen
+                if (!collidingVoxels.isEmpty()) {
+                    Vec3 localB = Vec3.atCenterOf(collidingVoxels.get(0).subtract(shipB.getControllerPos()));
+                    PacketDistributor.sendToPlayersTrackingChunk(level, new ChunkPos(shipB.getControllerPos()),
+                            new ShipImpactEventPayload(shipB.getId(), localB, 1.0f));
+                }
+
                 PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(shipB.getId(), SpaceshipEnergyManager.getTotalAvailableEnergy(level, shipB), true,
                         shipB.getShieldCooldownRemaining(level.getGameTime()),
                         shipB.getMovementCooldownRemaining(level.getGameTime())));
@@ -135,6 +144,13 @@ public class CollisionResolver {
                 ServerShipManager.saveData(level);
                 syncShipStructure(shipB);
 
+                // Einschlagswelle auf Schild A (Bohrwirkung)
+                if (!collidingVoxels.isEmpty()) {
+                    Vec3 localA = Vec3.atCenterOf(collidingVoxels.get(0).subtract(shipA.getControllerPos()));
+                    PacketDistributor.sendToPlayersTrackingChunk(level, new ChunkPos(shipA.getControllerPos()),
+                            new ShipImpactEventPayload(shipA.getId(), localA, 1.0f));
+                }
+
                 PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(shipA.getId(), SpaceshipEnergyManager.getTotalAvailableEnergy(level, shipA), true,
                         shipA.getShieldCooldownRemaining(level.getGameTime()),
                         shipA.getMovementCooldownRemaining(level.getGameTime())));
@@ -161,6 +177,21 @@ public class CollisionResolver {
             int clashCost = voxelCount * ENERGY_PER_VOXEL_SHIELD_CLASH;
             boolean absorbedA = SpaceshipEnergyManager.tryConsumeEnergyAmount(level, shipA, clashCost);
             boolean absorbedB = SpaceshipEnergyManager.tryConsumeEnergyAmount(level, shipB, clashCost);
+
+            // Einschlagswellen auf beiden Schilden
+            if (!collidingVoxels.isEmpty()) {
+                BlockPos hit = collidingVoxels.get(0);
+                if (absorbedA) {
+                    Vec3 localA = Vec3.atCenterOf(hit.subtract(shipA.getControllerPos()));
+                    PacketDistributor.sendToPlayersTrackingChunk(level, new ChunkPos(shipA.getControllerPos()),
+                            new ShipImpactEventPayload(shipA.getId(), localA, 1.5f));
+                }
+                if (absorbedB) {
+                    Vec3 localB = Vec3.atCenterOf(hit.subtract(shipB.getControllerPos()));
+                    PacketDistributor.sendToPlayersTrackingChunk(level, new ChunkPos(shipB.getControllerPos()),
+                            new ShipImpactEventPayload(shipB.getId(), localB, 1.5f));
+                }
+            }
 
             if (!absorbedA) {
                 SpaceshipShieldHandler.toggleShield(level, shipA);
