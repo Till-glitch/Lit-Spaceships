@@ -76,7 +76,7 @@ public class ServerShipManager {
             }
 
             saveData(level);
-            PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(newShip.getId(), 0, newShip.isShieldActive()));
+            PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(newShip.getId(), 0, newShip.isShieldActive(), 0L, 0L));
             return newShip;
         }
         return null;
@@ -93,7 +93,9 @@ public class ServerShipManager {
                 }
             }
             saveData(level);
-            PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(ship.getId(), 0, ship.isShieldActive()));
+            PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(ship.getId(), 0, ship.isShieldActive(),
+                    ship.getShieldCooldownRemaining(level.getGameTime()),
+                    ship.getMovementCooldownRemaining(level.getGameTime())));
         }
     }
 
@@ -144,7 +146,9 @@ public class ServerShipManager {
                 ShieldLifecycleLogger.logServerChunkSent(ship.getId(), ctrl, chunkPos, player.getName().getString());
                 PacketDistributor.sendToPlayer(player, new ShipStructureSyncPayload(ship.getId(), ctrl, relative));
                 PacketDistributor.sendToPlayer(player,
-                        new ShipStateSyncPayload(ship.getId(), 0, ship.isShieldActive()));
+                        new ShipStateSyncPayload(ship.getId(), 0, ship.isShieldActive(),
+                                ship.getShieldCooldownRemaining(player.serverLevel().getGameTime()),
+                                ship.getMovementCooldownRemaining(player.serverLevel().getGameTime())));
                 if (!ship.getShields().isEmpty()) {
                     Set<BlockPos> bubble = ShieldMorphology.calculateShieldBubble(ship.getBlocks(), 5);
                     Set<BlockPos> relBubble = new HashSet<>(bubble.size());

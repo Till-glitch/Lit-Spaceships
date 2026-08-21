@@ -21,6 +21,8 @@ public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
         return false;
     }
 
+    private Button shieldButton;
+
     @Override
     protected void init() {
         super.init();
@@ -54,14 +56,34 @@ public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
         }).bounds(btnLeft, centerY + 45, btnWidth, btnHeight).build());
 
         // 5. Schild An/Aus (Sendet Action an Server)
-        this.addRenderableWidget(Button.builder(Component.literal("Schild An/Aus"), button -> {
+        this.shieldButton = Button.builder(Component.literal("Schild An/Aus"), button -> {
             sendShipAction(ActionType.TOGGLE_SHIELD);
-        }).bounds(btnLeft, centerY + 70, btnWidth, btnHeight).build());
+        }).bounds(btnLeft, centerY + 70, btnWidth, btnHeight).build();
+        this.addRenderableWidget(this.shieldButton);
     }
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+
+        // Cooldown- & Status-Prüfung für Schild-Button
+        var clientState = getClientShipState();
+        if (clientState != null && this.shieldButton != null) {
+            long gameTime = getClientGameTime();
+            long shieldCd = clientState.getShieldCooldownDisplay(gameTime);
+            if (shieldCd > 0) {
+                this.shieldButton.active = false;
+                double seconds = shieldCd / 20.0;
+                this.shieldButton.setMessage(Component.literal(String.format("Schild (%.1fs)", seconds)));
+                guiGraphics.drawCenteredString(this.font,
+                        Component.literal(String.format("§c[Schild-Abklingzeit: %.1fs]", seconds)),
+                        this.width / 2, this.height / 2 + 95, 0xFF5555);
+            } else {
+                this.shieldButton.active = true;
+                this.shieldButton.setMessage(Component.literal(clientState.isShieldActive() ? "Schild: Aktiv" : "Schild: Inaktiv"));
+            }
+        }
+
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, this.height / 2 - 75, 16777215);
     }

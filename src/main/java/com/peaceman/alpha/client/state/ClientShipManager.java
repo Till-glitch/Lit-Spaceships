@@ -54,10 +54,13 @@ public class ClientShipManager {
         shipState.setRelativeStructureBlocks(relativeBlocks);
     }
 
-    public static void updateShipState(UUID shipId, int currentEnergy, boolean isShieldActive) {
-        // Fix: getOrCreateShip statt getShip, damit State-Updates bei schnellem Teleport nicht ins Leere laufen
+    public static void updateShipState(UUID shipId, int currentEnergy, boolean isShieldActive,
+                                        long shieldCooldownTicks, long movementCooldownTicks) {
         ClientShipState shipState = getOrCreateShip(shipId);
         shipState.setShieldActive(isShieldActive);
+        long clientTick = net.minecraft.client.Minecraft.getInstance().level != null
+                ? net.minecraft.client.Minecraft.getInstance().level.getGameTime() : 0L;
+        shipState.updateCooldowns(shieldCooldownTicks, movementCooldownTicks, clientTick);
     }
 
     public static void updateShipPosition(UUID shipId, BlockPos newAnchorPos) {

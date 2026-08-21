@@ -62,6 +62,10 @@ public class ShipSavedData extends SavedData {
             // 5. Status
             shipTag.putBoolean("ShieldActive", ship.isShieldActive());
 
+            // 6. Cooldowns (absolute Weltzeit)
+            shipTag.putLong("ShieldCooldownUntil", ship.getShieldCooldownUntil());
+            shipTag.putLong("MovementCooldownUntil", ship.getMovementCooldownUntil());
+
             shipList.add(shipTag);
         }
 
@@ -117,6 +121,15 @@ public class ShipSavedData extends SavedData {
             boolean isShieldActive = !shipTag.contains("ShieldActive") || shipTag.getBoolean("ShieldActive");
 
             ShipState loadedShip = new ShipState(id, ctrlPos, blocks, homes, loadedReactors, loadedShields, isShieldActive);
+
+            // Cooldowns wiederherstellen
+            if (shipTag.contains("ShieldCooldownUntil")) {
+                loadedShip.setShieldCooldownUntil(shipTag.getLong("ShieldCooldownUntil"));
+            }
+            if (shipTag.contains("MovementCooldownUntil")) {
+                loadedShip.setMovementCooldownUntil(shipTag.getLong("MovementCooldownUntil"));
+            }
+
             ServerShipManager.ACTIVE_SHIPS.put(id, loadedShip);
         }
         return data;

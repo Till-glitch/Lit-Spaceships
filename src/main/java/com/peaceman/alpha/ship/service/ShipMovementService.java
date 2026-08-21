@@ -337,6 +337,19 @@ public class ShipMovementService {
         if (!(level instanceof ServerLevel serverLevel) || ship == null) return;
         if (dx == 0 && dy == 0 && dz == 0) return;
 
+        // Bewegungs-Cooldown prüfen
+        long gameTime = level.getGameTime();
+        if (ship.isMovementOnCooldown(gameTime)) {
+            long remaining = ship.getMovementCooldownRemaining(gameTime);
+            if (player != null) {
+                player.displayClientMessage(
+                        Component.literal("§c[Antrieb] §fAbklingzeit aktiv! Noch " + (remaining / 20) + "." + (remaining % 20 * 5) + " Sekunden."),
+                        true
+                );
+            }
+            return;
+        }
+
         Vec3 moveVec = new Vec3(dx, dy, dz);
 
         // 1. Broad-Phase: Suche potenzielle Kollisions-Kandidaten
@@ -383,6 +396,9 @@ public class ShipMovementService {
         int finalDx = (int) finalMoveVec.x;
         int finalDy = (int) finalMoveVec.y;
         int finalDz = (int) finalMoveVec.z;
+
+        // Bewegungs-Cooldown sofort setzen (blockiert weitere Befehle während der Abklingzeit)
+        ship.setMovementCooldownUntil(gameTime + ShipState.MOVEMENT_COOLDOWN_TICKS);
 
         PENDING_TASKS.add(new MovementTask(serverLevel, ship, finalDx, finalDy, finalDz, player));
     }

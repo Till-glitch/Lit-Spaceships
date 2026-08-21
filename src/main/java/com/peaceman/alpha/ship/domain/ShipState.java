@@ -26,6 +26,12 @@ public class ShipState {
     private List<BlockPos> shields = new ArrayList<>();
     private boolean isShieldActive = true;
 
+    // Cooldown-Timer (absolute Weltzeit via level.getGameTime())
+    public static final long SHIELD_COOLDOWN_TICKS = 200L;    // 10 Sekunden
+    public static final long MOVEMENT_COOLDOWN_TICKS = 20L;   // 1 Sekunde
+    private long shieldCooldownUntil = 0L;
+    private long movementCooldownUntil = 0L;
+
     // Geometrische Caches für Kollisions-Broad- und Narrow-Phase (Schritt 1)
     private volatile AABB hullBoundingBox;
     private volatile AABB shieldBoundingBox;
@@ -133,6 +139,40 @@ public class ShipState {
             this.isShieldActive = !this.isShieldActive;
         }
         com.peaceman.alpha.helper.ShieldLifecycleLogger.logShieldToggled(this.id, this.isShieldActive);
+    }
+
+    // --- Cooldown-Methoden ---
+
+    public long getShieldCooldownUntil() {
+        return shieldCooldownUntil;
+    }
+
+    public void setShieldCooldownUntil(long shieldCooldownUntil) {
+        this.shieldCooldownUntil = shieldCooldownUntil;
+    }
+
+    public boolean isShieldOnCooldown(long currentGameTime) {
+        return currentGameTime < shieldCooldownUntil;
+    }
+
+    public long getShieldCooldownRemaining(long currentGameTime) {
+        return Math.max(0L, shieldCooldownUntil - currentGameTime);
+    }
+
+    public long getMovementCooldownUntil() {
+        return movementCooldownUntil;
+    }
+
+    public void setMovementCooldownUntil(long movementCooldownUntil) {
+        this.movementCooldownUntil = movementCooldownUntil;
+    }
+
+    public boolean isMovementOnCooldown(long currentGameTime) {
+        return currentGameTime < movementCooldownUntil;
+    }
+
+    public long getMovementCooldownRemaining(long currentGameTime) {
+        return Math.max(0L, movementCooldownUntil - currentGameTime);
     }
 
     /**

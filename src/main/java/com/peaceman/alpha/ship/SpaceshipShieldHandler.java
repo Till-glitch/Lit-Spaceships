@@ -67,10 +67,24 @@ public class SpaceshipShieldHandler {
             ship.setShieldActive(false);
             ShieldLifecycleLogger.logShieldToggled(ship.getId(), false);
             if (!level.isClientSide() && level instanceof ServerLevel) {
-                PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(ship.getId(), 0, false));
+                PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(ship.getId(), 0, false,
+                        ship.getShieldCooldownRemaining(level.getGameTime()),
+                        ship.getMovementCooldownRemaining(level.getGameTime())));
                 ServerShipManager.saveData(level);
             }
             return false;
+        }
+
+        // Cooldown-Check: Soll das Schild aktiviert werden?
+        boolean wantsToActivate = !ship.isShieldActive();
+        if (wantsToActivate && !level.isClientSide()) {
+            long gameTime = level.getGameTime();
+            if (ship.isShieldOnCooldown(gameTime)) {
+                long remaining = ship.getShieldCooldownRemaining(gameTime);
+                Alpha.LOGGER.info("[SpaceshipShieldHandler] Schild-Aktivierung fuer Schiff '{}' blockiert! Cooldown laeuft noch {} Ticks ({} Sek.)",
+                        ship.getId(), remaining, remaining / 20);
+                return false;
+            }
         }
 
         // Generator vorhanden: Zustand umschalten
@@ -79,7 +93,16 @@ public class SpaceshipShieldHandler {
         ShieldLifecycleLogger.logShieldToggled(ship.getId(), newState);
 
         if (!level.isClientSide() && level instanceof ServerLevel) {
-            PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(ship.getId(), 0, newState));
+            // Bei Deaktivierung: Cooldown setzen
+            if (!newState) {
+                long cooldownEnd = level.getGameTime() + ShipState.SHIELD_COOLDOWN_TICKS;
+                ship.setShieldCooldownUntil(cooldownEnd);
+                Alpha.LOGGER.info("[SpaceshipShieldHandler] Schild-Cooldown fuer Schiff '{}' gesetzt bis Tick {} ({} Sek.)",
+                        ship.getId(), cooldownEnd, ShipState.SHIELD_COOLDOWN_TICKS / 20);
+            }
+            PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(ship.getId(), 0, newState,
+                    ship.getShieldCooldownRemaining(level.getGameTime()),
+                    ship.getMovementCooldownRemaining(level.getGameTime())));
             ServerShipManager.saveData(level);
         }
         return newState;
@@ -102,8 +125,12 @@ public class SpaceshipShieldHandler {
         if (ship.getShields().isEmpty()) {
             // Letzter Generator zerstört: Schild sofort deaktivieren und leeres Mesh an alle Clients senden!
             ship.setShieldActive(false);
+            long cooldownEnd = level.getGameTime() + ShipState.SHIELD_COOLDOWN_TICKS;
+            ship.setShieldCooldownUntil(cooldownEnd);
             ShieldLifecycleLogger.logShieldToggled(ship.getId(), false);
-            PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(ship.getId(), 0, false));
+            PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(ship.getId(), 0, false,
+                    ship.getShieldCooldownRemaining(level.getGameTime()),
+                    ship.getMovementCooldownRemaining(level.getGameTime())));
             PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(ship.getId(), ship.getControllerPos(), Collections.emptySet()));
         } else {
             // Noch weitere Generatoren vorhanden: Schildblase neu berechnen

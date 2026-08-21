@@ -49,4 +49,15 @@ public abstract class AbstractSpaceshipScreen extends Screen {
     protected void sendShipAction(ActionType actionType) {
         sendShipAction(actionType, 0, "");
     }
+
+    protected com.peaceman.alpha.client.state.ClientShipState getClientShipState() {
+        if (this.shipId == null) {
+            updateShipIdFromBlock();
+        }
+        return this.shipId != null ? com.peaceman.alpha.client.state.ClientShipManager.getShip(this.shipId) : null;
+    }
+
+    protected long getClientGameTime() {
+        return this.minecraft != null && this.minecraft.level != null ? this.minecraft.level.getGameTime() : 0L;
+    }
 }

@@ -105,7 +105,9 @@ public class CollisionResolver {
                 com.peaceman.alpha.helper.ShieldLifecycleLogger.logCollisionResolved("OFF_vs_ON", shipA.getId(), shipB.getId(),
                         voxelCount, true, "Schild B zusammengebrochen! Energiemangel bei Absorption von " + drain + " FE");
             } else {
-                PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(shipB.getId(), SpaceshipEnergyManager.getTotalAvailableEnergy(level, shipB), true));
+                PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(shipB.getId(), SpaceshipEnergyManager.getTotalAvailableEnergy(level, shipB), true,
+                        shipB.getShieldCooldownRemaining(level.getGameTime()),
+                        shipB.getMovementCooldownRemaining(level.getGameTime())));
                 com.peaceman.alpha.helper.ShieldLifecycleLogger.logCollisionResolved("OFF_vs_ON", shipA.getId(), shipB.getId(),
                         voxelCount, true, "Schild B hat Aufprall absorbiert (-" + drain + " FE). Translation von Schiff A gestoppt.");
             }
@@ -133,7 +135,9 @@ public class CollisionResolver {
                 ServerShipManager.saveData(level);
                 syncShipStructure(shipB);
 
-                PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(shipA.getId(), SpaceshipEnergyManager.getTotalAvailableEnergy(level, shipA), true));
+                PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(shipA.getId(), SpaceshipEnergyManager.getTotalAvailableEnergy(level, shipA), true,
+                        shipA.getShieldCooldownRemaining(level.getGameTime()),
+                        shipA.getMovementCooldownRemaining(level.getGameTime())));
 
                 com.peaceman.alpha.helper.ShieldLifecycleLogger.logCollisionResolved("ON_vs_OFF_DRILL", shipA.getId(), shipB.getId(),
                         voxelCount, false, "Schild A fraest durch B (-" + drillCost + " FE). " + destroyedB.size() + " Bloecke in B zerstoert. Momentum beibehalten.");
@@ -162,14 +166,18 @@ public class CollisionResolver {
                 SpaceshipShieldHandler.toggleShield(level, shipA);
                 PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(shipA.getId(), shipA.getControllerPos(), Collections.emptySet()));
             } else {
-                PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(shipA.getId(), SpaceshipEnergyManager.getTotalAvailableEnergy(level, shipA), true));
+                PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(shipA.getId(), SpaceshipEnergyManager.getTotalAvailableEnergy(level, shipA), true,
+                        shipA.getShieldCooldownRemaining(level.getGameTime()),
+                        shipA.getMovementCooldownRemaining(level.getGameTime())));
             }
 
             if (!absorbedB) {
                 SpaceshipShieldHandler.toggleShield(level, shipB);
                 PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(shipB.getId(), shipB.getControllerPos(), Collections.emptySet()));
             } else {
-                PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(shipB.getId(), SpaceshipEnergyManager.getTotalAvailableEnergy(level, shipB), true));
+                PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(shipB.getId(), SpaceshipEnergyManager.getTotalAvailableEnergy(level, shipB), true,
+                        shipB.getShieldCooldownRemaining(level.getGameTime()),
+                        shipB.getMovementCooldownRemaining(level.getGameTime())));
             }
 
             com.peaceman.alpha.helper.ShieldLifecycleLogger.logCollisionResolved("ON_vs_ON", shipA.getId(), shipB.getId(),

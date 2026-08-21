@@ -25,10 +25,10 @@ public class ClientShipState implements AutoCloseable {
     private boolean isShieldActive = true;
     private boolean isDisposed = false;
 
-    // Uniforms und Animationszustände für den Hex-Shield Shader
-    private Vec3 lastImpactPos = Vec3.ZERO;
-    private float shieldEnergyPercentage = 1.0f;
-    private long lastImpactTick = -1000L;
+    // Cooldown-Ticks (Rest-Ticks zum Zeitpunkt des letzten Syncs, dekrementiert auf Client-Seite)
+    private long shieldCooldownRemainingTicks = 0L;
+    private long movementCooldownRemainingTicks = 0L;
+    private long lastSyncClientTick = 0L;
 
     public ClientShipState(UUID shipId) {
         this.shipId = shipId;
@@ -74,28 +74,42 @@ public class ClientShipState implements AutoCloseable {
         return isDisposed;
     }
 
-    public Vec3 getLastImpactPos() {
-        return lastImpactPos;
+    public long getShieldCooldownRemainingTicks() {
+        return shieldCooldownRemainingTicks;
     }
 
-    public void setLastImpactPos(Vec3 lastImpactPos) {
-        this.lastImpactPos = lastImpactPos;
+    public long getMovementCooldownRemainingTicks() {
+        return movementCooldownRemainingTicks;
     }
 
-    public float getShieldEnergyPercentage() {
-        return shieldEnergyPercentage;
+    /**
+     * Aktualisiert Cooldown-Werte bei empfangenem Server-Sync.
+     */
+    public void updateCooldowns(long shieldCooldownTicks, long movementCooldownTicks, long clientTick) {
+        this.shieldCooldownRemainingTicks = shieldCooldownTicks;
+        this.movementCooldownRemainingTicks = movementCooldownTicks;
+        this.lastSyncClientTick = clientTick;
     }
 
-    public void setShieldEnergyPercentage(float shieldEnergyPercentage) {
-        this.shieldEnergyPercentage = shieldEnergyPercentage;
+    /**
+     * Berechnet die aktuellen Rest-Ticks unter Berücksichtigung der seit dem letzten Sync vergangenen Client-Ticks.
+     */
+    public long getShieldCooldownDisplay(long currentClientTick) {
+        long elapsed = currentClientTick - lastSyncClientTick;
+        return Math.max(0L, shieldCooldownRemainingTicks - elapsed);
     }
 
-    public long getLastImpactTick() {
-        return lastImpactTick;
+    public long getMovementCooldownDisplay(long currentClientTick) {
+        long elapsed = currentClientTick - lastSyncClientTick;
+        return Math.max(0L, movementCooldownRemainingTicks - elapsed);
     }
 
-    public void setLastImpactTick(long lastImpactTick) {
-        this.lastImpactTick = lastImpactTick;
+    public boolean isShieldOnCooldown(long currentClientTick) {
+        return getShieldCooldownDisplay(currentClientTick) > 0;
+    }
+
+    public boolean isMovementOnCooldown(long currentClientTick) {
+        return getMovementCooldownDisplay(currentClientTick) > 0;
     }
 
     /**

@@ -43,7 +43,8 @@ public class ClientPayloadHandler {
         if (context.flow().isClientbound()) {
             context.enqueueWork(() -> {
                 ShieldLifecycleLogger.logClientPayloadReceived("ShipStateSyncPayload", packet.shipId(), null, true);
-                ClientShipManager.updateShipState(packet.shipId(), packet.currentEnergy(), packet.isShieldActive());
+                ClientShipManager.updateShipState(packet.shipId(), packet.currentEnergy(), packet.isShieldActive(),
+                        packet.shieldCooldownRemainingTicks(), packet.movementCooldownRemainingTicks());
             });
         }
     }

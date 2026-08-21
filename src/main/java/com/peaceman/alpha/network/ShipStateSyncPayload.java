@@ -11,12 +11,14 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.UUID;
 
 /**
- * Hochfrequentes Delta-Update für dynamische Schiffsdaten (Energie, Schild-Status).
+ * Hochfrequentes Delta-Update für dynamische Schiffsdaten (Energie, Schild-Status, Cooldowns).
  */
 public record ShipStateSyncPayload(
         UUID shipId,
         int currentEnergy,
-        boolean isShieldActive
+        boolean isShieldActive,
+        long shieldCooldownRemainingTicks,
+        long movementCooldownRemainingTicks
 ) implements CustomPacketPayload {
 
     public static final Type<ShipStateSyncPayload> TYPE =
@@ -26,6 +28,8 @@ public record ShipStateSyncPayload(
             UUIDUtil.STREAM_CODEC, ShipStateSyncPayload::shipId,
             ByteBufCodecs.VAR_INT, ShipStateSyncPayload::currentEnergy,
             ByteBufCodecs.BOOL, ShipStateSyncPayload::isShieldActive,
+            ByteBufCodecs.VAR_LONG, ShipStateSyncPayload::shieldCooldownRemainingTicks,
+            ByteBufCodecs.VAR_LONG, ShipStateSyncPayload::movementCooldownRemainingTicks,
             ShipStateSyncPayload::new
     );
 
