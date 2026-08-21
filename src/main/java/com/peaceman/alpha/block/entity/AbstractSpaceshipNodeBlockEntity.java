@@ -1,6 +1,7 @@
 package com.peaceman.alpha.block.entity;
 
 import com.peaceman.alpha.block.ISpaceshipNode;
+import com.peaceman.alpha.registry.ModAttachments;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -11,49 +12,32 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.UUID;
 
-// Die Klasse ist abstract, weil wir sie nie direkt in der Welt platzieren,
-// sondern nur davon erben wollen.
+/**
+ * Basis-Klasse für alle Schiffs-Knotenpunkte.
+ * Nutzt moderne NeoForge 1.21 Data Attachments für die typsichere Speicherung der Schiffs-UUID.
+ */
 public abstract class AbstractSpaceshipNodeBlockEntity extends BlockEntity implements ISpaceshipNode {
 
-    private UUID shipId;
-
-    // Der Konstruktor zwingt die Kind-Klassen, ihren spezifischen BlockEntityType zu übergeben
     public AbstractSpaceshipNodeBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
     }
 
-    // --- GETTER & SETTER (Aus dem Interface) ---
+    // --- GETTER & SETTER via Data Attachment ---
     @Override
     public UUID getShipId() {
-        return this.shipId;
+        return this.hasData(ModAttachments.SHIP_ID) ? this.getData(ModAttachments.SHIP_ID) : null;
     }
 
     @Override
     public void setShipId(UUID shipId) {
-        this.shipId = shipId;
+        if (shipId != null) {
+            this.setData(ModAttachments.SHIP_ID, shipId);
+        } else {
+            this.removeData(ModAttachments.SHIP_ID);
+        }
         setChanged();
         if (this.level != null && !this.level.isClientSide) {
-            // Synchronisiert die ID automatisch an den Client
             this.level.sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), 3);
-        }
-    }
-
-    // --- NBT SPEICHERN & LADEN ---
-    @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        if (this.shipId != null) {
-            tag.putUUID("ShipId", this.shipId);
-        }
-    }
-
-    @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        if (tag.hasUUID("ShipId")) {
-            this.shipId = tag.getUUID("ShipId");
-        } else {
-            this.shipId = null; // Wichtig für gelöschte Schiffe
         }
     }
 

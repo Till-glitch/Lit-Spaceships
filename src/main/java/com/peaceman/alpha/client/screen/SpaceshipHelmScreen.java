@@ -1,6 +1,7 @@
 package com.peaceman.alpha.client.screen;
 
 import com.peaceman.alpha.helper.TickScheduler;
+import com.peaceman.alpha.network.ShipActionPayload.ActionType;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -46,31 +47,31 @@ public class SpaceshipHelmScreen extends AbstractSpaceshipScreen {
         this.addRenderableWidget(this.distanceInput);
 
         this.addRenderableWidget(Button.builder(Component.literal("Hoch"), button -> {
-            sendShipCommand("MOVE_UP", getDist.get(), "");
+            sendShipAction(ActionType.MOVE_UP, getDist.get(), "");
         }).bounds(leftCol, centerY + 5, 80, 20).build());
 
         this.addRenderableWidget(Button.builder(Component.literal("Runter"), button -> {
             TickScheduler.runAfterSeconds(5, () -> {
-                sendShipCommand("MOVE_DOWN", getDist.get(), "");
+                sendShipAction(ActionType.MOVE_DOWN, getDist.get(), "");
             });
         }).bounds(leftCol, centerY + 30, 80, 20).build());
 
 
         // --- MITTE: RICHTUNGS-STEUERUNG (WASD) ---
         this.addRenderableWidget(Button.builder(Component.literal("W"), button -> {
-            sendShipCommand("MOVE_FORWARD", getDist.get(), "");
+            sendShipAction(ActionType.MOVE_FORWARD, getDist.get(), "");
         }).bounds(centerX - 17, centerY - 20, 35, 20).build());
 
         this.addRenderableWidget(Button.builder(Component.literal("A"), button -> {
-            sendShipCommand("MOVE_LEFT", getDist.get(), "");
+            sendShipAction(ActionType.MOVE_LEFT, getDist.get(), "");
         }).bounds(centerX - 57, centerY + 5, 35, 20).build());
 
         this.addRenderableWidget(Button.builder(Component.literal("S"), button -> {
-            sendShipCommand("MOVE_BACKWARD", getDist.get(), "");
+            sendShipAction(ActionType.MOVE_BACKWARD, getDist.get(), "");
         }).bounds(centerX - 17, centerY + 5, 35, 20).build());
 
         this.addRenderableWidget(Button.builder(Component.literal("D"), button -> {
-            sendShipCommand("MOVE_RIGHT", getDist.get(), "");
+            sendShipAction(ActionType.MOVE_RIGHT, getDist.get(), "");
         }).bounds(centerX + 23, centerY + 5, 35, 20).build());
 
 
@@ -82,11 +83,11 @@ public class SpaceshipHelmScreen extends AbstractSpaceshipScreen {
         this.addRenderableWidget(this.homeNameInput);
 
         this.addRenderableWidget(Button.builder(Component.literal("Speichern"), button -> {
-            sendShipCommand("SAVE_HOME", 0, this.homeNameInput.getValue());
+            sendShipAction(ActionType.SAVE_HOME, 0, this.homeNameInput.getValue());
         }).bounds(rightCol, centerY + 5, 80, 20).build());
 
         this.addRenderableWidget(Button.builder(Component.literal("Anfliegen"), button -> {
-            sendShipCommand("TP_HOME", 0, this.homeNameInput.getValue());
+            sendShipAction(ActionType.TP_HOME, 0, this.homeNameInput.getValue());
             this.minecraft.setScreen(null); // GUI nach dem Klick schließen
         }).bounds(rightCol, centerY + 30, 80, 20).build());
     }

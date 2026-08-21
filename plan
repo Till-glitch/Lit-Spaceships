@@ -1,0 +1,133 @@
+Architektur- und Refactoring-Plan: Skalierbare Raumschiff-Mod in NeoForge 1.21
+
+1. High-Level Architektur-Muster
+
+Für dieses Projekt empfehle ich eine Kombination aus Domain-Driven Design (DDD) und einer strikten Model-View-Controller (MVC)-ähnlichen Schichtentrennung zwischen Server und Client.
+
+Ein reines Entity-Component-System (ECS) wird hier verworfen. ECS ist ideal für tausende unabhängige, physikalisch simulierte Entitäten. Raumschiffe in Minecraft bestehen jedoch aus strukturierten Voxel-Mengen (BlockPos), die deterministisch manipuliert werden. Ein ECS würde hier massiven Boilerplate-Code und Synchronisationsprobleme mit dem Minecraft-Tick-System erzeugen.
+
+Das Service-Oriented Manager-Pattern (MVC-ähnlich) erzwingt die nötige Entkopplung:
+
+Model (Server-Side Domain): Reine Datenklassen ohne Game-Engine-Logik (z.B. ShipState).
+
+Controller (Services/Manager): Single-Responsibility-Klassen, die Logik ausführen (Scanner, Mover, Energy).
+
+View Model (Client Cache): Eine isolierte, stark reduzierte Repräsentation der Schiffe, die ausschließlich für Blaze3D und Custom Shaders auf dem logischen Client existiert.
+
+2. Kernbereiche & Deep Research Evaluierung
+
+A. Data Management & State (Server-Side Truth)
+
+Bewertung der NeoForge 1.21 Optionen:
+
+WorldSavedData: Ideal für die globale Spaceship-Registry (Server). Raumschiffe sind logische Konstrukte, die unabhängig von geladenen Chunks existieren müssen.
+
+Data Attachments (Attachment Types): Der moderne Nachfolger von NBT-Hacks. Ideal für die physischen Knoten (ISpaceshipNode). Jedes BlockEntity speichert typsicher seine Zugehörigkeit (Ship-UUID) als Attachment.
+
+Capabilities: Weniger für reine Datenspeicherung gedacht, eher für Verhaltens-Schnittstellen (z.B. Energie-Transfer mit Fremd-Mods).
+
+Umsetzung: Die "Source of Truth" (ShipState) liegt im globalen ServerShipManager (gespeichert via WorldSavedData in der Overworld). Wenn ein BlockEntity mit der Welt interagiert, liest es seine UUID aus dem NeoForge Data Attachment, kontaktiert den Manager und fordert ein Logik-Update an.
+
+B. Client/Server Synchronisation & Networking
+
+Das aktuelle string-basierte Command-System ist fehleranfällig. NeoForge 1.21 erfordert typisierte Payloads.
+
+CustomPacketPayload & StreamCodec: Erstellung dedizierter Records (z.B. ShipStateSyncPayload, ShipActionPayload) mit hochperformanten StreamCodec.composite Serialisierern.
+
+Bandbreiten-Optimierung (Spatial Hashing): Ein Raumschiff mit 5.000 Blöcken darf beim Einloggen nicht sofort an alle Spieler gesendet werden. Der Server abonniert das ChunkWatchEvent.Sent. Nur wenn ein Client einen Chunk lädt, der Schiffs-Attachments enthält, wird die schwere ShipStructureSyncPayload (mit komprimierten, relativen Koordinaten) exakt an diesen Spieler gesendet.
+
+Delta-Updates: Hochfrequente Daten (Energie, Schild-Status) erhalten ein eigenes, winziges Payload-Paket, das unabhängig von den Geometriedaten gesendet wird.
+
+C. Rendering Decoupling (Client-Side State)
+
+Der aktuelle ShieldRenderer greift zu tief in die Server-Logik ein.
+
+Lösung: Einführung eines ClientShipManager und ClientShipState. Wenn das Netzwerk-Paket mit den Schild-Voxeln ankommt, wird auf dem Client einmalig das 3D-Mesh berechnet und in einen VertexBuffer (VRAM) geladen.
+
+Der ShieldRenderer liest ausschließlich aus diesem Client-Cache. Custom Shader Uniforms (HexModelViewMat) werden aus dem ClientShipState gefüttert. Fällt der Server unter Last (TPS-Drops), bleibt das Rendering auf dem Client dank dieser Entkopplung bei flüssigen 60+ FPS.
+
+D. Lifecycle & Thread-Sicherheit
+
+Die Minecraft-Welt ist fundamental nicht thread-safe.
+
+Tick-Scheduling (SpaceshipMover): Raumschiffe dürfen nicht in einem einzigen asynchronen Thread bewegt werden, da Welt-Updates crashen würden. Wir nutzen "Time-Slicing". Eine Bewegung wird als Task in eine Queue gelegt. Ein Scheduler im ServerTickEvent gibt dem Mover z.B. 10ms pro Tick Zeit, Blöcke zu verschieben. Ist das Budget aufgebraucht, pausiert der Iterator bis zum nächsten Tick.
+
+Virtual Threads (ShieldMorphology): Die Schildberechnung verändert die Welt nicht, sie ist rein mathematisch (Dilatation). Wir nutzen Java 21 Virtual Threads (via CompletableFuture). Auf dem Main-Thread wird ein Snapshot der Hülle erstellt und an den Virtual Thread übergeben. Das Ergebnis wird sicher in eine Queue gelegt und vom Main-Thread im nächsten Tick verarbeitet.
+
+3. Komponenten-Diagramm (Datenfluss)
+
+ ** Siehe @Target_architecture.md **
+
+4. Konkrete Klassen-Struktur & Packages
+
+com.peaceman.alpha.ship.domain (Pure Data):
+
+ShipState: Reines Server-DTO (Identität, BlockPos-Listen, Status). Keine Render-Abhängigkeiten.
+
+ShipSavedData: NeoForge persistenz (Mapped ShipState via MapCodec).
+
+com.peaceman.alpha.ship.service (Controller):
+
+ServerShipManager: Koordiniert den Lifecycle und feuert Netzwerk-Syncs.
+
+ShipScannerService: Isoliert die Breitensuche (BFS).
+
+ShipMorphologyService: Handhabt das Java 21 CompletableFuture-Threading.
+
+ShipMovementService: Implementiert das Time-Slicing Tick-Budget.
+
+com.peaceman.alpha.network:
+
+ModPayloads: Registriert alle Payloads (RegisterPayloadHandlersEvent).
+
+ShipStructureSyncPayload, ShipStateSyncPayload, ShipActionPayload (Records).
+
+com.peaceman.alpha.client.state:
+
+ClientShipManager & ClientShipState: Halten den Blaze3D VertexBuffer und interpolieren Animationswerte für Shader.
+
+com.peaceman.alpha.block:
+
+ModAttachments: Definiert den AttachmentType<UUID> für die Zuweisung.
+
+AbstractSpaceshipNodeBlockEntity: Nutzt getData() / setData() des Attachments.
+
+5. Schritt-für-Schritt Migrationsplan (Der 5-Stufen-Plan)
+
+Um das Projekt kompilierbar zu halten, iterieren wir in isolierten Schritten:
+
+Stufe 1: Modernisierung des Payload-Systems (Netzwerk-Upgrade)
+
+Ersetze die string-basierten Befehle durch dedizierte CustomPacketPayload Records.
+
+Baue die StreamCodec Serialisierung und registriere sie.
+
+Das System funktioniert logisch wie bisher, ist nun aber typsicher.
+
+Stufe 2: Einführung des ClientShip Cache und Rendering-Entkopplung
+
+Erstelle ClientShipManager und ClientShipState.
+
+Leite empfangene Shield-Sync-Pakete in den Client-Cache statt in eine rohe Map.
+
+Schreibe den ShieldRenderer so um, dass er nur noch auf den ClientShipState zugreift.
+
+Stufe 3: Bereinigung der Domain und Umstellung der Persistenz
+
+Entferne die shieldBubble (Render-Daten) komplett aus dem serverseitigen ShipState und aus der Festplattenspeicherung (ShipSavedData).
+
+Die Schildberechnung sendet ihr Ergebnis nun direkt als Payload an das Netzwerk, statt es im Server-Objekt zu speichern.
+
+Stufe 4: Modernisierung der BlockEntities und Spatial Hashing
+
+Führe den AttachmentType<UUID> ein. Refactore ISpaceshipNode so, dass es auf das Attachment statt auf rohe NBT-Tags zugreift.
+
+Implementiere das ChunkWatchEvent.Sent im ServerShipManager, um Sync-Pakete nur bei Bedarf zu senden.
+
+Stufe 5: Threading, Scheduling und Performance-Tuning
+
+Implementiere das Time-Slicing (Tick-Budget) im ShipMovementService.
+
+Kapsele die Schild-Berechnung in CompletableFuture.supplyAsync() mit Virtual Threads.
+
+Führe Stresstests mit massiven Schiffen durch, um die Stabilität der TPS zu validieren.

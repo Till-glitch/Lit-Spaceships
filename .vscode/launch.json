@@ -28,11 +28,11 @@
       "projectName": "NeoForge-Alpha",
       "mainClass": "net.neoforged.devlaunch.Main",
       "args": [
-        "@C:\\Users\\tillf\\Documents\\test\\NeoForge-Alpha\\build\\moddev\\clientRunProgramArgs.txt"
+        "@C:\\Users\\Till\\IdeaProjects\\NeoForge-Alpha\\build\\moddev\\clientRunProgramArgs.txt"
       ],
       "vmArgs": [
-        "@C:\\Users\\tillf\\Documents\\test\\NeoForge-Alpha\\build\\moddev\\clientRunVmArgs.txt",
-        "-Dfml.modFolders\u003dpeaceman_alpha%%C:\\Users\\tillf\\Documents\\test\\NeoForge-Alpha\\bin\\main"
+        "@C:\\Users\\Till\\IdeaProjects\\NeoForge-Alpha\\build\\moddev\\clientRunVmArgs.txt",
+        "-Dfml.modFolders\u003dpeaceman_alpha%%C:\\Users\\Till\\IdeaProjects\\NeoForge-Alpha\\bin\\main"
       ],
       "cwd": "${workspaceFolder}\\run",
       "env": {},
@@ -50,11 +50,11 @@
       "projectName": "NeoForge-Alpha",
       "mainClass": "net.neoforged.devlaunch.Main",
       "args": [
-        "@C:\\Users\\tillf\\Documents\\test\\NeoForge-Alpha\\build\\moddev\\dataRunProgramArgs.txt"
+        "@C:\\Users\\Till\\IdeaProjects\\NeoForge-Alpha\\build\\moddev\\dataRunProgramArgs.txt"
       ],
       "vmArgs": [
-        "@C:\\Users\\tillf\\Documents\\test\\NeoForge-Alpha\\build\\moddev\\dataRunVmArgs.txt",
-        "-Dfml.modFolders\u003dpeaceman_alpha%%C:\\Users\\tillf\\Documents\\test\\NeoForge-Alpha\\bin\\main"
+        "@C:\\Users\\Till\\IdeaProjects\\NeoForge-Alpha\\build\\moddev\\dataRunVmArgs.txt",
+        "-Dfml.modFolders\u003dpeaceman_alpha%%C:\\Users\\Till\\IdeaProjects\\NeoForge-Alpha\\bin\\main"
       ],
       "cwd": "${workspaceFolder}\\run",
       "env": {},
@@ -72,11 +72,11 @@
       "projectName": "NeoForge-Alpha",
       "mainClass": "net.neoforged.devlaunch.Main",
       "args": [
-        "@C:\\Users\\tillf\\Documents\\test\\NeoForge-Alpha\\build\\moddev\\gameTestServerRunProgramArgs.txt"
+        "@C:\\Users\\Till\\IdeaProjects\\NeoForge-Alpha\\build\\moddev\\gameTestServerRunProgramArgs.txt"
       ],
       "vmArgs": [
-        "@C:\\Users\\tillf\\Documents\\test\\NeoForge-Alpha\\build\\moddev\\gameTestServerRunVmArgs.txt",
-        "-Dfml.modFolders\u003dpeaceman_alpha%%C:\\Users\\tillf\\Documents\\test\\NeoForge-Alpha\\bin\\main"
+        "@C:\\Users\\Till\\IdeaProjects\\NeoForge-Alpha\\build\\moddev\\gameTestServerRunVmArgs.txt",
+        "-Dfml.modFolders\u003dpeaceman_alpha%%C:\\Users\\Till\\IdeaProjects\\NeoForge-Alpha\\bin\\main"
       ],
       "cwd": "${workspaceFolder}\\run",
       "env": {},
@@ -94,11 +94,11 @@
       "projectName": "NeoForge-Alpha",
       "mainClass": "net.neoforged.devlaunch.Main",
       "args": [
-        "@C:\\Users\\tillf\\Documents\\test\\NeoForge-Alpha\\build\\moddev\\serverRunProgramArgs.txt"
+        "@C:\\Users\\Till\\IdeaProjects\\NeoForge-Alpha\\build\\moddev\\serverRunProgramArgs.txt"
       ],
       "vmArgs": [
-        "@C:\\Users\\tillf\\Documents\\test\\NeoForge-Alpha\\build\\moddev\\serverRunVmArgs.txt",
-        "-Dfml.modFolders\u003dpeaceman_alpha%%C:\\Users\\tillf\\Documents\\test\\NeoForge-Alpha\\bin\\main"
+        "@C:\\Users\\Till\\IdeaProjects\\NeoForge-Alpha\\build\\moddev\\serverRunVmArgs.txt",
+        "-Dfml.modFolders\u003dpeaceman_alpha%%C:\\Users\\Till\\IdeaProjects\\NeoForge-Alpha\\bin\\main"
       ],
       "cwd": "${workspaceFolder}\\run",
       "env": {},

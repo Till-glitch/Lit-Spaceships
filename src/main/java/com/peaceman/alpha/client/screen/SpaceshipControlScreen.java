@@ -1,40 +1,24 @@
 package com.peaceman.alpha.client.screen;
 
-import com.peaceman.alpha.block.entity.SpaceshipControlBlockEntity;
 import com.peaceman.alpha.client.render.ShipHighlightRenderer;
-import com.peaceman.alpha.network.ShipCommandPayload;
+import com.peaceman.alpha.network.ShipActionPayload.ActionType;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.neoforged.neoforge.network.PacketDistributor;
 
-import java.util.Optional;
 import java.util.UUID;
 
-public class SpaceshipControlScreen extends Screen {
+public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
 
-    // NEU: Die shipId Variable (darf null sein, wenn das Schiff noch nicht existiert)
-    private UUID shipId;
-    private final net.minecraft.core.BlockPos blockPos;
-
-    // Konstruktor nimmt jetzt UUID und BlockPos an
-    public SpaceshipControlScreen(UUID shipId, net.minecraft.core.BlockPos pos) {
-        super(Component.literal("Raumschiff Steuerung"));
+    public SpaceshipControlScreen(UUID shipId, BlockPos pos) {
+        super(Component.literal("Raumschiff Steuerung"), pos);
         this.shipId = shipId;
-        this.blockPos = pos;
     }
 
     @Override
     public boolean isPauseScreen() {
         return false;
-    }
-    private void updateShipIdFromBlock() {
-        if (this.minecraft != null && this.minecraft.level != null) {
-            if (this.minecraft.level.getBlockEntity(this.blockPos) instanceof SpaceshipControlBlockEntity be) {
-                this.shipId = be.getShipId(); // Aktualisiert die Klassenvariable mit dem neuesten Stand vom Server
-            }
-        }
     }
 
     @Override
@@ -47,35 +31,32 @@ public class SpaceshipControlScreen extends Screen {
         int btnHeight = 20;
         int btnLeft = centerX - (btnWidth / 2);
 
-        // Initiale Abfrage beim Öffnen des Screens (Nutzt jetzt direkt deine neue Methode!)
-        updateShipIdFromBlock();
-
         // 1. Schiff erstellen
         this.addRenderableWidget(Button.builder(Component.literal("Schiff erstellen"), button -> {
-            updateShipIdFromBlock(); // Zur Sicherheit nochmal aktualisieren
-            Optional<UUID> optionalShipId = Optional.ofNullable(this.shipId);
-            PacketDistributor.sendToServer(new ShipCommandPayload(optionalShipId, this.blockPos, "CREATE", 0, ""));
+            sendShipAction(ActionType.CREATE);
         }).bounds(btnLeft, centerY - 45, btnWidth, btnHeight).build());
 
         // 2. Struktur aktualisieren
         this.addRenderableWidget(Button.builder(Component.literal("Struktur updaten"), button -> {
-            updateShipIdFromBlock(); // WICHTIG: Frischen Stand vor dem Klick holen!
-            Optional<UUID> optionalShipId = Optional.ofNullable(this.shipId);
-            PacketDistributor.sendToServer(new ShipCommandPayload(optionalShipId, this.blockPos, "UPDATE_BLOCKS", 0, ""));
+            sendShipAction(ActionType.UPDATE_BLOCKS);
         }).bounds(btnLeft, centerY - 15, btnWidth, btnHeight).build());
 
         // 3. Schiff auflösen
         this.addRenderableWidget(Button.builder(Component.literal("Schiff auflösen"), button -> {
-            updateShipIdFromBlock(); // Frischen Stand vor dem Klick holen!
-            Optional<UUID> optionalShipId = Optional.ofNullable(this.shipId);
-            System.out.println("Sende DELETE_SHIP. Aktuelle UUID: " + this.shipId);
-            PacketDistributor.sendToServer(new ShipCommandPayload(optionalShipId, this.blockPos, "DELETE_SHIP", 0, ""));
+            sendShipAction(ActionType.DELETE_SHIP);
         }).bounds(btnLeft, centerY + 15, btnWidth, btnHeight).build());
 
-        // 4. Markierung An/Aus (Braucht kein Update, da rein Client-seitig)
+        // 4. Markierung An/Aus (rein Client-seitig)
         this.addRenderableWidget(Button.builder(Component.literal("Markierung An/Aus"), button -> {
-            ShipHighlightRenderer.toggleHighlight(this.minecraft.level, this.blockPos);
+            if (this.minecraft != null && this.minecraft.level != null) {
+                ShipHighlightRenderer.toggleHighlight(this.minecraft.level, this.blockPos);
+            }
         }).bounds(btnLeft, centerY + 45, btnWidth, btnHeight).build());
+
+        // 5. Schild An/Aus (Sendet Action an Server)
+        this.addRenderableWidget(Button.builder(Component.literal("Schild An/Aus"), button -> {
+            sendShipAction(ActionType.TOGGLE_SHIELD);
+        }).bounds(btnLeft, centerY + 70, btnWidth, btnHeight).build());
     }
 
     @Override

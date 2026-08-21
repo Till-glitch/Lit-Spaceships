@@ -1,9 +1,8 @@
-package com.peaceman.alpha.event;
+package com.peaceman.alpha.ship;
 
 import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.ship.Spaceship;
-import com.peaceman.alpha.ship.SpaceshipManager;
-import com.peaceman.alpha.ship.SpaceshipEnergyManager;
+import com.peaceman.alpha.ship.domain.ShipState;
+import com.peaceman.alpha.ship.service.ServerShipManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -16,49 +15,46 @@ import java.util.List;
 @EventBusSubscriber(modid = Alpha.MODID, bus = EventBusSubscriber.Bus.GAME)
 public class SpaceshipShieldHandler {
 
-    // Der Radius wird jetzt von der ShieldMorphology bestimmt,
-    // wir brauchen hier also nur noch die Energiekosten!
     public static final int ENERGY_COST_PER_BLOCK = 50;
+    public static final int SHIELD_RADIUS = 5;
 
     @SubscribeEvent
     public static void onExplosion(ExplosionEvent.Detonate event) {
         Level level = event.getLevel();
 
         // Logik passiert IMMER nur auf dem Server
-        if (level.isClientSide()) return;
+        if (level.isClientSide()) {
+            return;
+        }
 
         List<BlockPos> protectedBlocks = new ArrayList<>();
 
-        // 1. Wir gehen alle aktiven Schiffe durch
-        for (Spaceship ship : SpaceshipManager.ACTIVE_SHIPS.values()) {
+        // 1. Alle aktiven Schiffe durchgehen
+        for (ShipState ship : ServerShipManager.ACTIVE_SHIPS.values()) {
+            // Nur Schiffe mit aktiven Schilden und Generatoren schützen Blöcke
+            if (!ship.isShieldActive() || ship.getShields().isEmpty()) {
+                continue;
+            }
 
-            // Performance-Boost: Keine Schildblase berechnet? Direkt überspringen!
-            if (ship.getShieldBubble() == null || ship.getShieldBubble().isEmpty()) continue;
-
-            // 2. Wir prüfen alle Blöcke, die die Explosion zerstören will
+            // 2. Betroffene Blöcke gegen den Schild prüfen
             for (BlockPos affectedBlock : event.getAffectedBlocks()) {
+                if (protectedBlocks.contains(affectedBlock)) {
+                    continue;
+                }
 
-                // Wenn der Block schon gerettet wurde (z.B. von einem überlappenden Schiff), überspringen
-                if (protectedBlocks.contains(affectedBlock)) continue;
-
-                // 3. DIE MAGIE: Ein einziger O(1) Check gegen unsere morphologische Blase!
-                if (ship.getShieldBubble().contains(affectedBlock)) {
-
-                    // 4. Zieht das Schiff erfolgreich Energie aus dem Reaktor?
+                // 3. Algorithmischer Check gegen die Schildmorphologie
+                if (ShieldMorphology.isBlockProtected(ship.getBlocks(), affectedBlock, SHIELD_RADIUS)) {
+                    // 4. Energieverbrauch prüfen
                     if (SpaceshipEnergyManager.tryConsumeEnergyAmount(level, ship, ENERGY_COST_PER_BLOCK)) {
-                        // Block ist gerettet!
                         protectedBlocks.add(affectedBlock);
                     }
                 }
             }
         }
 
-        // 5. Am Ende streichen wir alle geretteten Blöcke aus der Zerstörungs-Liste der Explosion!
+        // 5. Gerettete Blöcke aus der Zerstörungsliste entfernen
         if (!protectedBlocks.isEmpty()) {
             event.getAffectedBlocks().removeAll(protectedBlocks);
-
-            // HIER KOMMT SPÄTER DER FUNKSPRUCH AN DEN SHADER HIN!
-            // z.B. NetworkManager.sendToClients(new ShieldImpactPacket(event.getExplosion().center()));
         }
     }
 }

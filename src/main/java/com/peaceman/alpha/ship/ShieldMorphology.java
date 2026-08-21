@@ -64,4 +64,24 @@ public class ShieldMorphology {
 
         return shieldBubble;
     }
+
+    /**
+     * Prüft effizient, ob sich eine Position innerhalb der Schildblase des Schiffs befindet.
+     */
+    public static boolean isBlockProtected(Set<BlockPos> shipBlocks, BlockPos target, int radius) {
+        if (shipBlocks == null || shipBlocks.isEmpty() || target == null) return false;
+        if (shipBlocks.contains(target)) return true;
+
+        int rSqr = radius * radius;
+        for (BlockPos block : shipBlocks) {
+            if (Math.abs(block.getX() - target.getX()) <= radius &&
+                Math.abs(block.getY() - target.getY()) <= radius &&
+                Math.abs(block.getZ() - target.getZ()) <= radius) {
+                if (block.distSqr(target) <= rSqr) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }

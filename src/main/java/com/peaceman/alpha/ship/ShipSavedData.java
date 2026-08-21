@@ -1,5 +1,7 @@
 package com.peaceman.alpha.ship;
 
+import com.peaceman.alpha.ship.domain.ShipState;
+import com.peaceman.alpha.ship.service.ServerShipManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -11,13 +13,17 @@ import net.minecraft.world.level.saveddata.SavedData;
 
 import java.util.*;
 
+/**
+ * Persistenzschicht für Raumschiffdaten auf dem Server (Overworld).
+ * Speichert ausschließlich reine Domain-Daten ohne flüchtige Render-Geometrien (wie shieldBubble).
+ */
 public class ShipSavedData extends SavedData {
 
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
         ListTag shipList = new ListTag();
 
-        for (Spaceship ship : SpaceshipManager.ACTIVE_SHIPS.values()) {
+        for (ShipState ship : ServerShipManager.ACTIVE_SHIPS.values()) {
             CompoundTag shipTag = new CompoundTag();
 
             // 1. UUID & Controller
@@ -40,7 +46,7 @@ public class ShipSavedData extends SavedData {
             }
             shipTag.put("Homes", homesTag);
 
-            // 4. Reaktoren und Schilde speichern
+            // 4. Reaktoren und Schilde
             ListTag reactorList = new ListTag();
             for (BlockPos pos : ship.getReactors()) {
                 reactorList.add(new IntArrayTag(new int[]{pos.getX(), pos.getY(), pos.getZ()}));
@@ -53,14 +59,8 @@ public class ShipSavedData extends SavedData {
             }
             shipTag.put("Shields", shieldList);
 
-            // --- NEU: 5. Die vorberechnete Schildblase speichern ---
-            ListTag bubbleList = new ListTag();
-            if (ship.getShieldBubble() != null) {
-                for (BlockPos pos : ship.getShieldBubble()) {
-                    bubbleList.add(new IntArrayTag(new int[]{pos.getX(), pos.getY(), pos.getZ()}));
-                }
-            }
-            shipTag.put("ShieldBubble", bubbleList);
+            // 5. Status
+            shipTag.putBoolean("ShieldActive", ship.isShieldActive());
 
             shipList.add(shipTag);
         }
@@ -71,7 +71,7 @@ public class ShipSavedData extends SavedData {
 
     public static ShipSavedData load(CompoundTag tag, HolderLookup.Provider registries) {
         ShipSavedData data = new ShipSavedData();
-        SpaceshipManager.ACTIVE_SHIPS.clear();
+        ServerShipManager.ACTIVE_SHIPS.clear();
 
         ListTag shipList = tag.getList("ActiveShips", Tag.TAG_COMPOUND);
         for (int i = 0; i < shipList.size(); i++) {
@@ -96,7 +96,6 @@ public class ShipSavedData extends SavedData {
                 homes.put(key, new BlockPos(hpArray[0], hpArray[1], hpArray[2]));
             }
 
-            // Reaktoren und Schilde laden
             List<BlockPos> loadedReactors = new ArrayList<>();
             if (shipTag.contains("Reactors")) {
                 ListTag rList = shipTag.getList("Reactors", Tag.TAG_INT_ARRAY);
@@ -115,23 +114,10 @@ public class ShipSavedData extends SavedData {
                 }
             }
 
-            // --- NEU: Schildblase laden ---
-            Set<BlockPos> loadedBubble = new HashSet<>();
-            if (shipTag.contains("ShieldBubble")) {
-                ListTag bList = shipTag.getList("ShieldBubble", Tag.TAG_INT_ARRAY);
-                for (int j = 0; j < bList.size(); j++) {
-                    int[] arr = bList.getIntArray(j);
-                    loadedBubble.add(new BlockPos(arr[0], arr[1], arr[2]));
-                }
-            }
+            boolean isShieldActive = shipTag.getBoolean("ShieldActive");
 
-            // Das neue Schiff erstellen
-            Spaceship loadedShip = new Spaceship(id, ctrlPos, blocks, homes, loadedReactors, loadedShields);
-
-            // Die vorberechnete Blase einfach über den Setter injizieren!
-            loadedShip.setShieldBubble(loadedBubble);
-
-            SpaceshipManager.ACTIVE_SHIPS.put(id, loadedShip);
+            ShipState loadedShip = new ShipState(id, ctrlPos, blocks, homes, loadedReactors, loadedShields, isShieldActive);
+            ServerShipManager.ACTIVE_SHIPS.put(id, loadedShip);
         }
         return data;
     }

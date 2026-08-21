@@ -1,6 +1,7 @@
 package com.peaceman.alpha.client.screen; // Passe das Package an deine Struktur an
 
-import com.peaceman.alpha.network.ShipCommandPayload;
+import com.peaceman.alpha.network.ShipActionPayload;
+import com.peaceman.alpha.network.ShipActionPayload.ActionType;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -29,24 +30,23 @@ public abstract class AbstractSpaceshipScreen extends Screen {
     // Die Methode, die sich immer den neuesten Stand holt
     protected void updateShipIdFromBlock() {
         if (this.minecraft != null && this.minecraft.level != null) {
-
-            // NEU: Wir prüfen auf dein Interface ISpaceshipNode!
-            // So funktioniert es beim Control-Block, beim Helm-Block und bei allen
-            // zukünftigen Schiffs-Blöcken, die du noch baust!
+            // Prüfung auf ISpaceshipNode
             if (this.minecraft.level.getBlockEntity(this.blockPos) instanceof com.peaceman.alpha.block.ISpaceshipNode node) {
                 this.shipId = node.getShipId();
             }
-
         }
     }
 
     /**
-     * Ein genialer kleiner Helfer:
-     * Diese Methode nimmt dir in deinen Buttons die komplette Arbeit ab!
+     * Sendet eine typisierte Aktion an den Server.
      */
-    protected void sendShipCommand(String command, int value, String homeName) {
+    protected void sendShipAction(ActionType actionType, int value, String targetName) {
         updateShipIdFromBlock(); // Zieht sich live die aktuellste UUID
         Optional<UUID> optionalShipId = Optional.ofNullable(this.shipId);
-        PacketDistributor.sendToServer(new ShipCommandPayload(optionalShipId, this.blockPos, command, value, homeName));
+        PacketDistributor.sendToServer(new ShipActionPayload(optionalShipId, this.blockPos, actionType, value, targetName));
+    }
+
+    protected void sendShipAction(ActionType actionType) {
+        sendShipAction(actionType, 0, "");
     }
 }

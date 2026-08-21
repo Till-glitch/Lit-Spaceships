@@ -4,6 +4,8 @@ import org.joml.Quaternionf;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.peaceman.alpha.Alpha;
+import com.peaceman.alpha.client.state.ClientShipManager;
+import com.peaceman.alpha.client.state.ClientShipState;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
@@ -15,33 +17,21 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 import org.joml.Matrix4f;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collection;
 import java.util.Set;
 import java.util.UUID;
 
 public class ShieldRenderer {
 
-    // Datenstruktur, um die Geometrie pro Schiff zu speichern
-    public static class ClientShieldData {
-        public BlockPos anchorPoint = null;
-        public Set<BlockPos> relativeBubbleBlocks = null;
-        public VertexBuffer vertexBuffer = null;
-    }
-
-    // Wir können jetzt mehrere Schiffe gleichzeitig rendern!
-    public static final Map<UUID, ClientShieldData> ACTIVE_CLIENT_SHIELDS = new HashMap<>();
-
-    // Uniforms für Animationen (global, da Shader-basiert)
+    // Uniforms für Animationen (global / Fallback)
     public static Vec3 lastImpactPos = Vec3.ZERO;
     public static float shieldEnergyPercentage = 1.0f;
-    public static long lastImpactTick = -1000;
+    public static long lastImpactTick = -1000L;
 
     private static ShaderInstance hexShieldShader;
 
@@ -61,9 +51,12 @@ public class ShieldRenderer {
 
         @SubscribeEvent
         public static void onRenderLevelStage(RenderLevelStageEvent event) {
-            // 1. Phasen-Validierung: Limitierung auf die Ziel-Stage
+            // 1. Phasen-Validierung: Limitierung auf die Translucent-Stage
             if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) return;
-            if (hexShieldShader == null || ACTIVE_CLIENT_SHIELDS.isEmpty()) return;
+            if (hexShieldShader == null) return;
+
+            Collection<ClientShipState> ships = ClientShipManager.getAllShips();
+            if (ships.isEmpty()) return;
 
             // 2. Extraktion der Kern-Objekte
             Minecraft mc = Minecraft.getInstance();
@@ -80,30 +73,34 @@ public class ShieldRenderer {
             RenderSystem.disableCull(); // Backface Culling deaktiviert
             RenderSystem.setShader(() -> hexShieldShader);
 
-            for (Map.Entry<UUID, ClientShieldData> entry : ACTIVE_CLIENT_SHIELDS.entrySet()) {
-                ClientShieldData data = entry.getValue();
-                if (data.anchorPoint == null || data.vertexBuffer == null) continue;
+            for (ClientShipState shipState : ships) {
+                if (!shipState.isShieldActive() || shipState.getAnchorPos() == null || shipState.getShieldMesh() == null) {
+                    continue;
+                }
+
+                BlockPos anchor = shipState.getAnchorPos();
+                VertexBuffer mesh = shipState.getShieldMesh();
 
                 // 3. State-Sicherung
                 poseStack.pushPose();
 
-                // 4. DIE MAGIE: Extraktion und Invertierung der Kamera-Rotation!
+                // 4. Extraktion und Invertierung der Kamera-Rotation
                 Quaternionf cameraRotation = camera.rotation();
                 Quaternionf inverseCamRot = new Quaternionf(cameraRotation).invert();
 
-                // 5. Applikation der "Ent-Drehung" auf den PoseStack
+                // 5. Applikation der Ent-Drehung auf den PoseStack
                 poseStack.mulPose(inverseCamRot);
 
                 // 6. Berechnung und Applikation der relativen World-Translation
-                double deltaX = data.anchorPoint.getX() - cameraPos.x;
-                double deltaY = data.anchorPoint.getY() - cameraPos.y;
-                double deltaZ = data.anchorPoint.getZ() - cameraPos.z;
+                double deltaX = anchor.getX() - cameraPos.x;
+                double deltaY = anchor.getY() - cameraPos.y;
+                double deltaZ = anchor.getZ() - cameraPos.z;
                 poseStack.translate(deltaX, deltaY, deltaZ);
 
-                // 7. Extraktion der finalen, mathematisch konsistenten Matrix
+                // 7. Extraktion der konsistenten Matrix
                 Matrix4f modelView = poseStack.last().pose();
 
-                // 8. Eigene Uniforms füttern (Umgeht das Minecraft-Überschreibungs-Problem)
+                // 8. Eigene Uniforms füttern
                 if (hexShieldShader.safeGetUniform("HexModelViewMat") != null) {
                     hexShieldShader.safeGetUniform("HexModelViewMat").set(modelView);
                 }
@@ -112,11 +109,11 @@ public class ShieldRenderer {
                 }
 
                 // 9. Draw Call ausführen
-                data.vertexBuffer.bind();
-                data.vertexBuffer.drawWithShader(modelView, projection, hexShieldShader);
+                mesh.bind();
+                mesh.drawWithShader(modelView, projection, hexShieldShader);
                 VertexBuffer.unbind();
 
-                // 10. State-Wiederherstellung für dieses Schiff
+                // 10. State-Wiederherstellung
                 poseStack.popPose();
             }
 
@@ -125,7 +122,6 @@ public class ShieldRenderer {
             RenderSystem.depthMask(true);
             RenderSystem.disableBlend();
         }
-
     }
 
     /**
@@ -211,19 +207,6 @@ public class ShieldRenderer {
                 buffer.addVertex(x2, y1, z1).setUv(z1 * scale, y1 * scale);
                 buffer.addVertex(x2, y2, z1).setUv(z1 * scale, y2 * scale);
             }
-        }
-    }    @SubscribeEvent
-    public static void onTeleport(ClientTickEvent.Post event) {
-        // Wir gehen alle aktiven Schiffe durch und updaten deren Ankerpunkt basierend auf dem Controller
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) return;
-
-        for (UUID shipId : ACTIVE_CLIENT_SHIELDS.keySet()) {
-            // Wir müssen hier eine globale Map haben, wo wir die ControllerPos speichern,
-            // oder das BlockEntity des Controllers abfragen.
-            // Am einfachsten: Das Spaceship-Objekt hat die ControllerPos und wir synchronisieren die standardmäßig.
-            // Ich gehe davon aus, dass dein Standard-BlockEntity-Sync die ControllerPos auf den Client bringt.
-            // data.anchorPoint = mc.level.getBlockEntity(currentControllerPos).getControllerPos();
         }
     }
 }
