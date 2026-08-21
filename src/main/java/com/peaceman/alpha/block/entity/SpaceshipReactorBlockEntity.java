@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 public class SpaceshipReactorBlockEntity extends AbstractSpaceshipNodeBlockEntity implements MenuProvider {
 
     // Kapazität: 1.000.000 FE, maxReceive: 10.000 FE, maxExtract: 10.000 FE
-    private final EnergyStorage energyStorage = new EnergyStorage(1000000, 10000, 10000) {
+    private final EnergyStorage energyStorage = new EnergyStorage(1000000, 100000, 10000) {
         @Override
         public int receiveEnergy(int maxReceive, boolean simulate) {
             int received = super.receiveEnergy(maxReceive, simulate);
@@ -43,9 +43,12 @@ public class SpaceshipReactorBlockEntity extends AbstractSpaceshipNodeBlockEntit
         @Override
         public int get(int index) {
             switch (index) {
-                case 0: return energyStorage.getEnergyStored();
-                case 1: return energyStorage.getMaxEnergyStored();
-                default: return 0;
+                case 0:
+                    return energyStorage.getEnergyStored();
+                case 1:
+                    return energyStorage.getMaxEnergyStored();
+                default:
+                    return 0;
             }
         }
 

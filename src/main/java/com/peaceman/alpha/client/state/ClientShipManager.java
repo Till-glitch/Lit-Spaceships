@@ -129,4 +129,9 @@ public class ClientShipManager {
     public static void onClientLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
         clear();
     }
+
+    @SubscribeEvent
+    public static void onClientPlayerClone(ClientPlayerNetworkEvent.Clone event) {
+        clear();
+    }
 }

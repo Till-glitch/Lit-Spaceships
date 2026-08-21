@@ -15,11 +15,12 @@ import java.util.Queue;
 import java.util.Set;
 
 /**
- * Service für die Breitensuche (BFS) zur Erkennung zusammenhängender Raumschiff-Strukturen in der Welt.
+ * Service für die Breitensuche (BFS) zur Erkennung zusammenhängender
+ * Raumschiff-Strukturen in der Welt.
  */
 public class ShipScannerService {
 
-    public static final int MAX_SHIP_BLOCKS = 5000;
+    public static final int MAX_SHIP_BLOCKS = 10000;
 
     public static Set<BlockPos> scan(Level level, BlockPos startPos) {
         Set<BlockPos> shipBlocks = new HashSet<>();
@@ -80,7 +81,8 @@ public class ShipScannerService {
                                 neighborState.hasProperty(BlockStateProperties.CHEST_TYPE) &&
                                 neighborState.getValue(BlockStateProperties.CHEST_TYPE) != ChestType.SINGLE) {
 
-                            if (neighborState.getValue(BlockStateProperties.HORIZONTAL_FACING) == state.getValue(BlockStateProperties.HORIZONTAL_FACING)) {
+                            if (neighborState.getValue(BlockStateProperties.HORIZONTAL_FACING) == state
+                                    .getValue(BlockStateProperties.HORIZONTAL_FACING)) {
                                 toAdd.add(neighbor);
                             }
                         }

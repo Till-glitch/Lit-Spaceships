@@ -79,6 +79,19 @@ public class ShieldRenderer {
                 }
 
                 BlockPos anchor = shipState.getAnchorPos();
+
+                // 1. Nur rendern, wenn der Chunk auf dem Client geladen ist
+                if (mc.level == null || !mc.level.isLoaded(anchor)) {
+                    continue;
+                }
+
+                // 2. Maximaler Render-Abstand basierend auf der Render-Distanz des Spielers
+                double maxRenderDist = (mc.options.getEffectiveRenderDistance() + 2) * 16.0;
+                double distSq = anchor.distToCenterSqr(cameraPos.x, cameraPos.y, cameraPos.z);
+                if (distSq > maxRenderDist * maxRenderDist) {
+                    continue;
+                }
+
                 VertexBuffer mesh = shipState.getShieldMesh();
 
                 // 3. State-Sicherung

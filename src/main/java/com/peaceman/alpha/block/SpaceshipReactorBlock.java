@@ -55,7 +55,7 @@ public class SpaceshipReactorBlock extends BaseEntityBlock  {
         if (stack.is(net.minecraft.world.item.Items.REDSTONE)) {
             if (!level.isClientSide()) {
                 if (level.getBlockEntity(pos) instanceof SpaceshipReactorBlockEntity be) {
-                    be.getEnergyStorage().receiveEnergy(50000, false);
+                    be.getEnergyStorage().receiveEnergy(500000, false);
                     be.setChanged();
                     level.sendBlockUpdated(pos, state, state, 3);
                     player.sendSystemMessage(
