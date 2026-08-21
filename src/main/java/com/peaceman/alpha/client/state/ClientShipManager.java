@@ -103,6 +103,7 @@ public class ClientShipManager {
             ShieldLifecycleLogger.logClientVramDisposed(shipId, "Manuelles removeShip()");
             removed.dispose();
         }
+        ClientLaserState.removeBeamsForShip(shipId);
     }
 
     public static void clear() {
@@ -112,6 +113,7 @@ public class ClientShipManager {
         }
         ACTIVE_CLIENT_SHIPS.clear();
         PENDING_SYNCS.clear();
+        ClientLaserState.clearAll();
     }
 
     /**

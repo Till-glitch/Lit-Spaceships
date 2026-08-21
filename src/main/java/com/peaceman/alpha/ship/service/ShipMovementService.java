@@ -46,6 +46,10 @@ public class ShipMovementService {
     private static final Queue<MovementTask> PENDING_TASKS = new ConcurrentLinkedQueue<>();
     private static MovementTask currentTask = null;
 
+    public static boolean isShipMoving(UUID shipId) {
+        return currentTask != null && currentTask.ship != null && currentTask.ship.getId().equals(shipId);
+    }
+
     public record BlockData(BlockState state, CompoundTag nbt) {}
 
     public static class MovementTask {
@@ -223,6 +227,12 @@ public class ShipMovementService {
                     newShields.add(pos.offset(dx, dy, dz));
                 }
                 ship.setShields(newShields);
+
+                List<BlockPos> newWeapons = new ArrayList<>(ship.getWeapons().size());
+                for (BlockPos pos : ship.getWeapons()) {
+                    newWeapons.add(pos.offset(dx, dy, dz));
+                }
+                ship.setWeapons(newWeapons);
 
                 // Passagiere / Entities teleportieren
                 for (Entity entity : entitiesToMove) {

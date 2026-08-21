@@ -52,11 +52,11 @@ public class ClientLaserState {
     }
 
     public static void setContinuousBeam(UUID shooterShipId, BlockPos weaponPos, boolean isFiring, LaserWeaponTier tier) {
-        String key = shooterShipId + "_" + weaponPos.asLong();
+        ClientShipState ship = ClientShipManager.getShip(shooterShipId);
+        BlockPos anchor = ship != null && ship.getAnchorPos() != null ? ship.getAnchorPos() : BlockPos.ZERO;
+        BlockPos relativePos = weaponPos.subtract(anchor);
+        String key = shooterShipId + "_" + relativePos.asLong();
         if (isFiring) {
-            ClientShipState ship = ClientShipManager.getShip(shooterShipId);
-            BlockPos anchor = ship != null && ship.getAnchorPos() != null ? ship.getAnchorPos() : BlockPos.ZERO;
-            BlockPos relativePos = weaponPos.subtract(anchor);
             ACTIVE_CONTINUOUS_BEAMS.put(key, new ActiveContinuousBeam(shooterShipId, relativePos, tier, System.currentTimeMillis()));
         } else {
             ACTIVE_CONTINUOUS_BEAMS.remove(key);
@@ -73,6 +73,12 @@ public class ClientLaserState {
 
     public static void cleanExpired(long currentMs) {
         ACTIVE_PULSES.removeIf(pulse -> pulse.isExpired(currentMs));
+    }
+
+    public static void removeBeamsForShip(UUID shipId) {
+        if (shipId == null) return;
+        ACTIVE_PULSES.removeIf(p -> shipId.equals(p.shooterShipId()));
+        ACTIVE_CONTINUOUS_BEAMS.entrySet().removeIf(entry -> shipId.equals(entry.getValue().shooterShipId()));
     }
 
     public static void clearAll() {

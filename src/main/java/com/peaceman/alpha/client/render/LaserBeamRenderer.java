@@ -99,7 +99,38 @@ public class LaserBeamRenderer {
 
             Vec3 dir = Vec3.atLowerCornerOf(facing.getNormal()).normalize();
             Vec3 start = Vec3.atCenterOf(weaponWorldPos).add(dir.scale(0.55));
-            Vec3 end = start.add(dir.scale(entry.tier().getMaxRange()));
+            Vec3 maxTarget = start.add(dir.scale(entry.tier().getMaxRange()));
+
+            // Raycast gegen Vanilla-Terrain / Blöcke: Strahl stoppt direkt auf der Block-Oberfläche
+            net.minecraft.world.phys.BlockHitResult blockHit = level.clip(new net.minecraft.world.level.ClipContext(
+                    start, maxTarget, net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                    net.minecraft.world.level.ClipContext.Fluid.NONE,
+                    net.minecraft.world.phys.shapes.CollisionContext.empty()
+            ));
+
+            Vec3 end = (blockHit.getType() != net.minecraft.world.phys.HitResult.Type.MISS) ? blockHit.getLocation() : maxTarget;
+            double closestDistSq = start.distanceToSqr(end);
+
+            // Prüfung gegen Hüllenblöcke anderer Schiffe
+            for (ClientShipState otherShip : ClientShipManager.getAllShips()) {
+                if (otherShip == null || otherShip.isDisposed() || otherShip.getShipId().equals(entry.shooterShipId()) || otherShip.getAnchorPos() == null) {
+                    continue;
+                }
+
+                BlockPos otherAnchor = otherShip.getAnchorPos();
+                for (BlockPos relPos : otherShip.getRelativeStructureBlocks()) {
+                    BlockPos worldVoxel = otherAnchor.offset(relPos);
+                    net.minecraft.world.phys.AABB voxelBox = new net.minecraft.world.phys.AABB(worldVoxel);
+                    java.util.Optional<Vec3> hit = voxelBox.clip(start, end);
+                    if (hit.isPresent()) {
+                        double dSq = start.distanceToSqr(hit.get());
+                        if (dSq < closestDistSq) {
+                            closestDistSq = dSq;
+                            end = hit.get();
+                        }
+                    }
+                }
+            }
 
             // Oszillierendes leichtes Pulsieren des Dauerstrahls
             float pulseMod = (float) (0.85 + 0.15 * Math.sin(now * 0.02));

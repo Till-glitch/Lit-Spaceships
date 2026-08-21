@@ -122,4 +122,23 @@ public class CombatLogicTest {
         assertFalse(block.isShipHit());
         assertEquals(RaycastHitResult.HitType.BLOCK, block.type());
     }
+
+    @Test
+    @DisplayName("Dauerstrahl- und Impulswaffen-Unterscheidungen und Energiekonfigurationen")
+    void testContinuousAndPulseWeaponConfigurations() {
+        // Pulse Laser: Hoher Einzelverbrauch, Abklingzeit, 1-Block-Zerstörung
+        assertEquals(250, LaserWeaponTier.PULSE_LASER.getEnergyCost());
+        assertEquals(20, LaserWeaponTier.PULSE_LASER.getCooldownTicks());
+        assertEquals(20.0f, LaserWeaponTier.PULSE_LASER.getBaseDamage());
+
+        // Heavy Beam: Mittlerer Tick-Verbrauch, Dauerstrahl (0 Cooldown)
+        assertEquals(50, LaserWeaponTier.HEAVY_BEAM.getEnergyCost());
+        assertEquals(0, LaserWeaponTier.HEAVY_BEAM.getCooldownTicks());
+        assertEquals(3.0f, LaserWeaponTier.HEAVY_BEAM.getBaseDamage());
+
+        // Mining Laser: Geringer Tick-Verbrauch, 0 Basisschaden gegen Entities
+        assertEquals(25, LaserWeaponTier.MINING_LASER.getEnergyCost());
+        assertEquals(0, LaserWeaponTier.MINING_LASER.getCooldownTicks());
+        assertEquals(0.0f, LaserWeaponTier.MINING_LASER.getBaseDamage());
+    }
 }

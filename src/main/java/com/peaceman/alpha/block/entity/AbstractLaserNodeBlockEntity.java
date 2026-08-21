@@ -42,4 +42,35 @@ public abstract class AbstractLaserNodeBlockEntity extends AbstractSpaceshipNode
     }
 
     public abstract void serverTick(Level level, BlockPos pos, BlockState state);
+
+    protected BlockPos currentDrillPos = null;
+    protected float drillProgress = 0.0f;
+
+    public BlockPos getCurrentDrillPos() {
+        return currentDrillPos;
+    }
+
+    public void setCurrentDrillPos(BlockPos pos) {
+        this.currentDrillPos = pos;
+    }
+
+    public float getDrillProgress() {
+        return drillProgress;
+    }
+
+    public void addDrillProgress(float amount) {
+        this.drillProgress += amount;
+    }
+
+    public void resetDrillProgress() {
+        this.drillProgress = 0.0f;
+    }
+
+    public void clearDrillProgress(Level level) {
+        if (this.currentDrillPos != null && level != null && !level.isClientSide()) {
+            level.destroyBlockProgress(this.getBlockPos().hashCode(), this.currentDrillPos, -1);
+            this.currentDrillPos = null;
+            this.drillProgress = 0.0f;
+        }
+    }
 }
