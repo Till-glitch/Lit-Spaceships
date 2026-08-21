@@ -7,16 +7,20 @@ import com.peaceman.alpha.ship.SpaceshipEnergyManager;
 import com.peaceman.alpha.ship.domain.ShipState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -25,13 +29,16 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
- * Service für translatorische Schiffsbewegungen mit Time-Slicing Tick-Budget (max. 10ms pro Tick),
- * um Server-Lags (TPS-Drops) bei großen Schiffskonstruktionen zu verhindern.
+ * Service für translatorische Schiffsbewegungen mit Time-Slicing Tick-Budget (max. 10ms pro Tick)
+ * und automatischem Chunk-Forceloading / Ticket-Management (Blueprint 4).
  */
 @EventBusSubscriber(modid = Alpha.MODID, bus = EventBusSubscriber.Bus.GAME)
 public class ShipMovementService {
 
     public static final long TICK_BUDGET_NANOS = 10_000_000L; // 10 Millisekunden Budget pro Server-Tick
+
+    public static final TicketType<ChunkPos> SHIP_TICKET =
+            TicketType.create("peaceman_alpha:ship_movement", Comparator.comparing(ChunkPos::toLong));
 
     private static final Queue<MovementTask> PENDING_TASKS = new ConcurrentLinkedQueue<>();
     private static MovementTask currentTask = null;
@@ -55,6 +62,7 @@ public class ShipMovementService {
 
         Set<BlockPos> newShipBlocks = new HashSet<>();
         List<Entity> entitiesToMove = new ArrayList<>();
+        Set<ChunkPos> destinationChunks = new HashSet<>();
         BlockPos startPos;
 
         public MovementTask(ServerLevel level, ShipState ship, int dx, int dy, int dz, Player player) {
@@ -72,16 +80,19 @@ public class ShipMovementService {
          * @return true wenn die Task vollständig abgeschlossen ist, false wenn sie im nächsten Tick fortgesetzt werden muss.
          */
         public boolean tick(long deadlineNanos) {
-            // Phase 0: Vorbereitung & Snapshot (Einmalig zu Beginn)
+            // Phase 0: Vorbereitung, Chunk-Loading & Snapshot
             if (phase == 0) {
                 Set<BlockPos> shipBlocks = ship.getBlocks();
 
-                // Energieprüfung
+                // 1. Energieprüfung
                 if (!SpaceshipEnergyManager.tryConsumeFlightEnergy(level, ship, dx, dy, dz, player)) {
                     return true; // Abbruch wegen Energiemangel
                 }
 
-                // Entities erfassen
+                // 2. Blueprint 4: Chunks im Zielgebiet vorbereiten und forceloaden
+                destinationChunks = prepareDestinationChunks(level, ship, new Vec3(dx, dy, dz));
+
+                // 3. Bounding Box & Passagier-Matrix erfassen
                 int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
                 int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
                 for (BlockPos pos : shipBlocks) {
@@ -104,7 +115,7 @@ public class ShipMovementService {
                     return false;
                 }).toList();
 
-                // Snapshot erstellen
+                // 4. Snapshot erstellen
                 for (BlockPos pos : shipBlocks) {
                     BlockState state = level.getBlockState(pos);
                     BlockEntity be = level.getBlockEntity(pos);
@@ -112,33 +123,33 @@ public class ShipMovementService {
                     snapshot.put(pos, new BlockData(state, nbt));
                 }
 
-                // Inventare sichern
+                // 5. Inventare sichern
                 for (BlockPos pos : shipBlocks) {
                     if (level.getBlockEntity(pos) != null) {
                         level.removeBlockEntity(pos);
                     }
                 }
 
-                // Zielpositionen berechnen
+                // 6. Zielpositionen berechnen
                 for (BlockPos pos : shipBlocks) {
                     newShipBlocks.add(pos.offset(dx, dy, dz));
                 }
 
-                // Vorabbereinigung im Weg stehender Blöcke
+                // 7. Vorabbereinigung im Weg stehender Blöcke
                 for (BlockPos newPos : newShipBlocks) {
                     if (!shipBlocks.contains(newPos) && !level.getBlockState(newPos).isAir()) {
                         level.destroyBlock(newPos, true);
                     }
                 }
 
-                // Controller entkoppeln
+                // 8. Controller entkoppeln
                 if (level.getBlockEntity(startPos) instanceof SpaceshipControlBlockEntity be) {
                     be.setShipId(null);
                 }
                 BlockPos newStartPos = startPos.offset(dx, dy, dz);
                 ship.setControllerPos(newStartPos);
 
-                // Blöcke sortieren: Erst feste, dann zerbrechliche
+                // 9. Blöcke sortieren: Erst feste, dann zerbrechliche
                 List<Map.Entry<BlockPos, BlockData>> solid = new ArrayList<>();
                 List<Map.Entry<BlockPos, BlockData>> fragile = new ArrayList<>();
 
@@ -152,7 +163,7 @@ public class ShipMovementService {
                 blocksToPlace.addAll(solid);
                 blocksToPlace.addAll(fragile);
 
-                // Alte Blöcke zur Löschung vormerken
+                // 10. Alte Blöcke zur Löschung vormerken
                 List<BlockPos> solidOld = new ArrayList<>();
                 List<BlockPos> fragileOld = new ArrayList<>();
                 for (BlockPos pos : shipBlocks) {
@@ -207,7 +218,7 @@ public class ShipMovementService {
                 }
                 ship.setShields(newShields);
 
-                // Entities teleportieren
+                // Passagiere / Entities teleportieren
                 for (Entity entity : entitiesToMove) {
                     double newX = entity.getX() + dx;
                     double newY = entity.getY() + dy;
@@ -225,6 +236,9 @@ public class ShipMovementService {
                 for (BlockPos pos : newShipBlocks) {
                     level.updateNeighborsAt(pos, level.getBlockState(pos).getBlock());
                 }
+
+                // Blueprint 4: Chunks wieder freigeben
+                releaseDestinationChunks(level, destinationChunks);
 
                 ServerShipManager.saveData(level);
                 return true; // Fertig!
@@ -254,6 +268,57 @@ public class ShipMovementService {
                 node.setShipId(shipId);
             }
         }
+    }
+
+    /**
+     * Blueprint 4: Berechnet und forceloaded Chunks für das Zielgebiet.
+     */
+    public static Set<ChunkPos> prepareDestinationChunks(ServerLevel level, ShipState ship, Vec3 movementVector) {
+        Set<BlockPos> blocks = ship.getBlocks();
+        int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
+        for (BlockPos pos : blocks) {
+            if (pos.getX() < minX) minX = pos.getX();
+            if (pos.getY() < minY) minY = pos.getY();
+            if (pos.getZ() < minZ) minZ = pos.getZ();
+            if (pos.getX() > maxX) maxX = pos.getX();
+            if (pos.getY() > maxY) maxY = pos.getY();
+            if (pos.getZ() > maxZ) maxZ = pos.getZ();
+        }
+
+        AABB currentBounds = new AABB(minX, minY, minZ, maxX + 1, maxY + 1, maxZ + 1);
+        AABB destinationBounds = currentBounds.move(movementVector);
+
+        Set<ChunkPos> requiredChunks = getChunksInAABB(destinationBounds);
+        for (ChunkPos pos : requiredChunks) {
+            level.getChunkSource().addRegionTicket(SHIP_TICKET, pos, 2, pos);
+        }
+        return requiredChunks;
+    }
+
+    /**
+     * Blueprint 4: Gibt Forceloading-Tickets nach Bewegungsabschluss wieder frei.
+     */
+    public static void releaseDestinationChunks(ServerLevel level, Set<ChunkPos> previouslyLoadedChunks) {
+        if (previouslyLoadedChunks == null) return;
+        for (ChunkPos pos : previouslyLoadedChunks) {
+            level.getChunkSource().removeRegionTicket(SHIP_TICKET, pos, 2, pos);
+        }
+    }
+
+    public static Set<ChunkPos> getChunksInAABB(AABB aabb) {
+        Set<ChunkPos> chunks = new HashSet<>();
+        int minChunkX = SectionPos.blockToSectionCoord((int) Math.floor(aabb.minX));
+        int maxChunkX = SectionPos.blockToSectionCoord((int) Math.floor(aabb.maxX));
+        int minChunkZ = SectionPos.blockToSectionCoord((int) Math.floor(aabb.minZ));
+        int maxChunkZ = SectionPos.blockToSectionCoord((int) Math.floor(aabb.maxZ));
+
+        for (int x = minChunkX; x <= maxChunkX; x++) {
+            for (int z = minChunkZ; z <= maxChunkZ; z++) {
+                chunks.add(new ChunkPos(x, z));
+            }
+        }
+        return chunks;
     }
 
     /**

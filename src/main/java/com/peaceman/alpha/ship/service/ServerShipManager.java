@@ -49,6 +49,10 @@ public class ServerShipManager {
         return ACTIVE_SHIPS.get(shipId);
     }
 
+    public static boolean hasShip(UUID shipId) {
+        return shipId != null && ACTIVE_SHIPS.containsKey(shipId);
+    }
+
     public static ShipState createShip(Level level, BlockPos startPos) {
         if (level.getBlockEntity(startPos) instanceof SpaceshipControlBlockEntity be) {
             if (be.getShipId() != null && ACTIVE_SHIPS.containsKey(be.getShipId())) {

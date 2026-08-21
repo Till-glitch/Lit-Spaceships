@@ -61,6 +61,10 @@ public class ShipState {
         return blocks;
     }
 
+    public Set<BlockPos> getImmutableBlockSnapshot() {
+        return Set.copyOf(this.blocks);
+    }
+
     public void setBlocksRaw(Set<BlockPos> blocks) {
         this.blocks = blocks;
     }

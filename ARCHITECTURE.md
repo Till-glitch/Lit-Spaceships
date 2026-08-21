@@ -1,6 +1,6 @@
 # NeoForge-Alpha: Mod-Architektur & Klassendesign
 
-Dieses Dokument beschreibt die Architektur, Datenflüsse und Klassenhierarchien des Spaceship- und Schutzschildsystems für **Minecraft 1.21 (NeoForge)**.
+Dieses Dokument beschreibt die Architektur, Datenflüsse und Klassenhierarchien des Spaceship- und Schutzschildsystems für **Minecraft 1.21 (NeoForge)** inklusive der Lifecycle- und Concurrency-Absicherungen aus `plan2`.
 
 ---
 
@@ -8,10 +8,10 @@ Dieses Dokument beschreibt die Architektur, Datenflüsse und Klassenhierarchien 
 
 Das System folgt einer strikten **MVC-/Service-Architektur** mit vollständiger Trennung zwischen logischem Server und Client:
 
-* **Server (Domain & Services)**: Hält die Autorität über alle Schiffe (`ShipState`), persistiert nur echte Daten (`ShipSavedData`) und delegiert rechenintensive Aufgaben (Schild-Dilatation) an Java 21 Virtual Threads (`ShipMorphologyService`) sowie Bewegungsoperationen an ein Time-Slicing Tick-Budget (`ShipMovementService`).
-* **Network (Typisierte Payloads)**: Alle Netzwerkinteraktionen nutzen moderne `CustomPacketPayload`-Records mit deklarativen `StreamCodec`-Definitionen.
-* **Spatial Hashing**: Geometriedaten und Schildnetze werden über `ChunkWatchEvent.Sent` gezielt nur an Spieler gesendet, die den entsprechenden Chunk laden.
-* **Client (View Model & Rendering)**: Der Client verwaltet seine Sicht auf Schiffe im `ClientShipManager` und rendert Schilde über VBOs (`VertexBuffer`) im `ClientShipState` mit 60+ FPS ohne Server-Render-Kopplung.
+* **Server (Domain & Services)**: Hält die Autorität über alle Schiffe (`ShipState`), persistiert nur echte Daten (`ShipSavedData`) und delegiert rechenintensive Aufgaben (Schild-Dilatation) an Java 21 Virtual Threads (`ShipMorphologyService`) mit unmodifizierbaren Snapshots (`getImmutableBlockSnapshot()`). Bewegungsoperationen nutzen ein Time-Slicing Tick-Budget (`ShipMovementService`) mit automatischem Chunk-Forceloading via Region-Tickets (`TicketType`).
+* **Network (Typisierte Payloads & Thread-Safety)**: Alle Netzwerkinteraktionen nutzen moderne `CustomPacketPayload`-Records mit deklarativen `StreamCodec`-Definitionen. Client-Payloads werden strikt über `context.enqueueWork()` auf dem Render-Main-Thread ausgeführt.
+* **Spatial Hashing & Lifecycle-Sync**: Schilde und Strukturdaten werden bei Chunk-Load abgeglichen. Falls Chunks auf dem Client noch nicht geladen sind, puffert `ClientShipManager` die Pakete in einer Pending-Queue (`PENDING_SYNCS`) und wendet sie bei `ChunkEvent.Load` verzögerungsfrei an.
+* **Client (View Model & VRAM Lifecycle)**: Der Client verwaltet seine Sicht auf Schiffe im `ClientShipManager` und rendert Schilde über VBOs (`VertexBuffer`) im `ClientShipState`. Beim Entladen von Chunks (`ChunkEvent.Unload`) oder Logout werden VRAM-Buffer über `RenderSystem.recordRenderCall()` bzw. `dispose()` sofort freigegeben, um Memory Leaks zu verhindern.
 
 ---
 
@@ -57,6 +57,7 @@ classDiagram
             +getControllerPos() BlockPos
             +setControllerPos(BlockPos pos) void
             +getBlocks() Set~BlockPos~
+            +getImmutableBlockSnapshot() Set~BlockPos~
             +setBlocks(Set~BlockPos~ blocks, Level level) void
             +isShieldActive() boolean
             +setShieldActive(boolean active) void
@@ -67,6 +68,7 @@ classDiagram
         class ServerShipManager {
             +Map~UUID, ShipState~ ACTIVE_SHIPS$
             +getShip(UUID shipId)$ ShipState
+            +hasShip(UUID shipId)$ boolean
             +createShip(Level level, BlockPos startPos)$ ShipState
             +updateShipBlocks(Level level, ShipState ship)$ void
             +deleteShip(Level level, ShipState ship)$ void
@@ -87,15 +89,18 @@ classDiagram
         }
 
         class ShipMorphologyService {
-            -ExecutorService VIRTUAL_THREAD_EXECUTOR$
             +calculateShieldBubbleAsync(Set~BlockPos~ shipBlocks, int radius)$ CompletableFuture~Set~BlockPos~~
+            +performVolumetricDilation(Set~BlockPos~ immutableBlocks, int radius)$ Set~BlockPos~
             +calculateAndSyncShieldAsync(ShipState ship, ServerLevel level, int radius)$ void
         }
 
         class ShipMovementService {
             +TICK_BUDGET_NANOS long$
+            +SHIP_TICKET TicketType~ChunkPos~$
             -Queue~MovementTask~ PENDING_TASKS$
             +moveShip(Level level, ShipState ship, int dx, int dy, int dz, Player player)$ void
+            +prepareDestinationChunks(ServerLevel level, ShipState ship, Vec3 movementVector)$ Set~ChunkPos~
+            +releaseDestinationChunks(ServerLevel level, Set~ChunkPos~ loadedChunks)$ void
             +onServerTick(ServerTickEvent.Post event)$ void
         }
 
@@ -176,6 +181,7 @@ classDiagram
             -Set~BlockPos~ relativeStructureBlocks
             -VertexBuffer shieldMesh
             -boolean isShieldActive
+            -boolean isDisposed
             -Vec3 lastImpactPos
             -float shieldEnergyPercentage
             -long lastImpactTick
@@ -184,20 +190,26 @@ classDiagram
             +setAnchorPos(BlockPos pos) void
             +getShieldMesh() VertexBuffer
             +isShieldActive() boolean
+            +isDisposed() boolean
             +updateMesh(Set~BlockPos~ relativeBlocks) void
+            +dispose() void
             +close() void
         }
 
         class ClientShipManager {
             -Map~UUID, ClientShipState~ ACTIVE_CLIENT_SHIPS$
+            -Map~ChunkPos, List~ShieldBubbleSyncPacket~~ PENDING_SYNCS$
             +getOrCreateShip(UUID shipId)$ ClientShipState
             +getShip(UUID shipId)$ ClientShipState
             +getAllShips()$ Collection~ClientShipState~
             +updateShieldBubble(UUID id, BlockPos anchor, Set~BlockPos~ bubble)$ void
             +updateShipStructure(UUID id, BlockPos anchor, Set~BlockPos~ structure)$ void
             +updateShipState(UUID id, int energy, boolean active)$ void
+            +addPendingSync(ShieldBubbleSyncPacket packet)$ void
             +removeShip(UUID id)$ void
             +clear()$ void
+            +onClientChunkLoad(ChunkEvent.Load event)$ void
+            +onClientChunkUnload(ChunkEvent.Unload event)$ void
             +onClientLoggingOut(LoggingOut event)$ void
         }
 
@@ -231,8 +243,8 @@ classDiagram
     ServerShipManager o-- "0..*" ShipState : manages
     ServerShipManager ..> ShipSavedData : persists via
     ServerShipManager ..> ShipScannerService : scans with
-    ShipState ..> ShipMorphologyService : async shield morphology
-    ServerShipManager ..> ShipMovementService : time-sliced mover
+    ShipState ..> ShipMorphologyService : requests async calculation (Immutable Snapshot)
+    ServerShipManager ..> ShipMovementService : time-sliced mover with chunk tickets
     SpaceshipNavigationManager ..> ShipMovementService : delegates travel
     SpaceshipNavigationManager ..> ServerShipManager : saves waypoint
 
@@ -244,7 +256,7 @@ classDiagram
     ServerPayloadHandler ..> ShipMovementService : invokes movement
 
     %% Network to Client
-    ClientPayloadHandler ..> ClientShipManager : updates
+    ClientPayloadHandler ..> ClientShipManager : updates (enqueued to Main Thread)
     ClientShipManager *-- "0..*" ClientShipState : contains
     ClientShipState o-- "0..1" VertexBuffer : owns (VRAM)
     ShieldRenderer ..> ClientShipManager : reads view models
@@ -262,7 +274,8 @@ classDiagram
 | Aktion | Auslöser / Schicht | Ausführung | Netzwerk / Persistenz |
 | :--- | :--- | :--- | :--- |
 | **Schiff registrieren** | Spieler klickt UI `CREATE` | `ServerPayloadHandler` -> `ServerShipManager.createShip()` | Scan via `ShipScannerService`, UUID-Attachment via `ModAttachments.SHIP_ID`, Speichern via `ShipSavedData.setDirty()`. |
-| **Schild-Berechnung** | Schildblock platziert / Scan | `ShipState.syncShieldBubbleToClients()` -> `ShipMorphologyService` | Berechnet asynchron auf Java 21 **Virtual Threads**, sendet `ShieldBubbleSyncPacket` thread-sicher via Main-Thread. |
+| **Schild-Berechnung** | Schildblock platziert / Scan | `ShipState.syncShieldBubbleToClients()` -> `ShipMorphologyService` | Erstellt `getImmutableBlockSnapshot()`, berechnet asynchron auf Java 21 **Virtual Threads**, sendet `ShieldBubbleSyncPacket` thread-sicher via Server-Main-Thread. |
 | **Schild-Rendering** | Render-Frame (Client) | `ShieldRenderer.renderShields()` | Liest ausschließlich aus `ClientShipManager` / `ClientShipState.getShieldMesh()` (direkter VRAM VBO Zugriff). |
-| **Spatial Hashing** | Chunk lädt für Spieler | `ServerShipManager.onChunkSent(ChunkWatchEvent.Sent)` | Prüft Schnittmenge, sendet `ShipStructureSyncPayload`, `ShipStateSyncPayload` und `ShieldBubbleSyncPacket` **nur** an betroffenen Spieler. |
-| **Schiffsbewegung** | Spieler steuert Schiff | `ShipMovementService.moveShip()` | Rechnet im `ServerTickEvent.Post` mit max. **10ms Tick-Budget** pro Tick, verhindert TPS-Lag bei großen Konstruktionen. |
+| **Näherungs-Sync & Chunk-Handling** | Chunk lädt für Spieler | `ClientPayloadHandler` -> `ClientShipManager` | Falls Chunk geladen: Mesh sofort gebaut. Falls nicht geladen: In `PENDING_SYNCS` gepuffert und bei `ChunkEvent.Load` angewendet. |
+| **VRAM Freigabe** | Chunk entlädt / Ship zerstört | `ClientShipManager.onClientChunkUnload()` | Ruft `ClientShipState.dispose()`, schließt VBO über `RenderSystem.recordRenderCall()` sofort im Render-Kontext. |
+| **Schiffsbewegung & Forceloading** | Spieler steuert Schiff | `ShipMovementService.moveShip()` | Forceloaded Ziel-Chunks mit `SHIP_TICKET`, rechnet im `ServerTickEvent.Post` mit max. **10ms Tick-Budget** pro Tick und gibt Tickets nach Abschluss wieder frei. |

@@ -1,5 +1,6 @@
 package com.peaceman.alpha.client.state;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.peaceman.alpha.client.render.ShieldRenderer;
@@ -22,6 +23,7 @@ public class ClientShipState implements AutoCloseable {
     private Set<BlockPos> relativeStructureBlocks = Collections.emptySet();
     private VertexBuffer shieldMesh;
     private boolean isShieldActive = true;
+    private boolean isDisposed = false;
 
     // Uniforms und Animationszustände für den Hex-Shield Shader
     private Vec3 lastImpactPos = Vec3.ZERO;
@@ -68,6 +70,10 @@ public class ClientShipState implements AutoCloseable {
         isShieldActive = shieldActive;
     }
 
+    public boolean isDisposed() {
+        return isDisposed;
+    }
+
     public Vec3 getLastImpactPos() {
         return lastImpactPos;
     }
@@ -97,6 +103,7 @@ public class ClientShipState implements AutoCloseable {
      * Bestehender VRAM-Speicher wird ordnungsgemäß freigegeben.
      */
     public synchronized void updateMesh(Set<BlockPos> relativeBlocks) {
+        if (isDisposed) return;
         this.relativeBubbleBlocks = relativeBlocks != null ? relativeBlocks : Collections.emptySet();
 
         if (this.shieldMesh != null) {
@@ -117,11 +124,27 @@ public class ClientShipState implements AutoCloseable {
         }
     }
 
-    @Override
-    public synchronized void close() {
+    /**
+     * Gibt native OpenGL-Ressourcen (VBO) thread-sicher frei (Blueprint 2).
+     */
+    public synchronized void dispose() {
+        if (isDisposed) return;
+        isDisposed = true;
+
         if (this.shieldMesh != null) {
-            this.shieldMesh.close();
+            VertexBuffer meshToClose = this.shieldMesh;
             this.shieldMesh = null;
+
+            if (RenderSystem.isOnRenderThread()) {
+                meshToClose.close();
+            } else {
+                RenderSystem.recordRenderCall(meshToClose::close);
+            }
         }
+    }
+
+    @Override
+    public void close() {
+        dispose();
     }
 }

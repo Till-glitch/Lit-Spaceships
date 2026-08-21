@@ -10,17 +10,14 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Kapselt die asynchronen mathematischen Berechnungen für Schild-Morphologien.
- * Nutzt Java 21 Virtual Threads, um den Minecraft Main-Thread (TPS) nicht zu blockieren.
+ * Nutzt Java 21 Virtual Threads und unmodifizierbare Snapshots gegen Concurrency-Kollaps (Blueprint 3).
  */
 public class ShipMorphologyService {
-
-    private static final ExecutorService VIRTUAL_THREAD_EXECUTOR = Executors.newVirtualThreadPerTaskExecutor();
 
     /**
      * Führt die volumetrische Dilatation asynchron auf einem Virtual Thread aus.
@@ -30,32 +27,47 @@ public class ShipMorphologyService {
             return CompletableFuture.completedFuture(Collections.emptySet());
         }
 
-        // Snapshot erstellen zur Thread-Sicherheit
         final Set<BlockPos> snapshot = Set.copyOf(shipBlocks);
+        return CompletableFuture.supplyAsync(() -> performVolumetricDilation(snapshot, radius));
+    }
 
-        return CompletableFuture.supplyAsync(() -> ShieldMorphology.calculateShieldBubble(snapshot, radius), VIRTUAL_THREAD_EXECUTOR);
+    public static Set<BlockPos> performVolumetricDilation(Set<BlockPos> immutableBlocks, int radius) {
+        return ShieldMorphology.calculateShieldBubble(immutableBlocks, radius);
     }
 
     /**
-     * Berechnet die Schildblase asynchron und synchronisiert das Ergebnis thread-sicher auf dem Server-Main-Thread.
+     * Berechnet die Schildblase asynchron via Java 21 Virtual Thread und synchronisiert
+     * das Ergebnis nach Validierung thread-sicher auf dem Server-Main-Thread (Blueprint 3).
      */
     public static void calculateAndSyncShieldAsync(ShipState ship, ServerLevel serverLevel, int radius) {
+        if (ship == null || serverLevel == null) return;
+
         if (ship.getShields().isEmpty()) {
             PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(ship.getId(), ship.getControllerPos(), Collections.emptySet()));
             return;
         }
 
-        final BlockPos controllerPos = ship.getControllerPos();
-        calculateShieldBubbleAsync(ship.getBlocks(), radius).thenAccept(calculatedBubble -> {
-            // Rückkehr zum Minecraft Server Main-Thread
-            serverLevel.getServer().execute(() -> {
-                Set<BlockPos> relativeBlocks = new HashSet<>(calculatedBubble.size());
-                for (BlockPos absPos : calculatedBubble) {
-                    relativeBlocks.add(absPos.subtract(controllerPos));
-                }
+        // 1. Unveränderlichen Snapshot auf dem Main-Thread erstellen
+        final Set<BlockPos> immutableStructureSnapshot = ship.getImmutableBlockSnapshot();
+        final UUID targetId = ship.getId();
+        final BlockPos targetAnchor = ship.getControllerPos();
 
-                PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(ship.getId(), controllerPos, relativeBlocks));
-            });
-        });
+        // 2. Auslagerung auf einen Java 21 Virtual Thread
+        Thread.ofVirtual().name("Morphology-Calc-" + targetId.toString().substring(0, 8))
+                .start(() -> {
+                    Set<BlockPos> calculatedBubble = performVolumetricDilation(immutableStructureSnapshot, radius);
+
+                    // 3. Rückführung auf den Main Server Thread
+                    serverLevel.getServer().execute(() -> {
+                        ShipState currentShip = ServerShipManager.getShip(targetId);
+                        if (currentShip != null) {
+                            Set<BlockPos> relativeBlocks = new HashSet<>(calculatedBubble.size());
+                            for (BlockPos absPos : calculatedBubble) {
+                                relativeBlocks.add(absPos.subtract(targetAnchor));
+                            }
+                            PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(targetId, targetAnchor, relativeBlocks));
+                        }
+                    });
+                });
     }
 }

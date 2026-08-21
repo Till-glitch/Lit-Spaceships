@@ -1,0 +1,120 @@
+classDiagram
+    direction TB
+
+    %% ==========================================
+    %% SERVER SIDE DOMAIN & SERVICES
+    %% ==========================================
+    namespace Server_Side {
+        class ISpaceshipNode {
+            <<interface>>
+            +getShipId() UUID
+            +setShipId(UUID shipId) void
+            +getShip() ShipState
+        }
+
+        class AbstractSpaceshipNodeBlockEntity {
+            <<abstract>>
+            +getShipId() UUID
+            +setShipId(UUID shipId) void
+        }
+
+        class ModAttachments {
+            +Supplier~AttachmentType~UUID~~ SHIP_ID
+            %% Nativer Sync aktiviert, ersetzt manuelles ChunkWatchEvent
+        }
+
+        class ShipState {
+            -UUID id
+            -BlockPos controllerPos
+            -Set~BlockPos~ blocks
+            -Map~String, BlockPos~ homes
+            -List~BlockPos~ reactors
+            -List~BlockPos~ shields
+            -boolean isShieldActive
+            +getImmutableBlockSnapshot() Set~BlockPos~
+            +syncShieldBubbleToClients(Level level) void
+        }
+
+        class ServerShipManager {
+            +Map~UUID, ShipState~ ACTIVE_SHIPS$
+            +getShip(UUID shipId)$ ShipState
+            +createShip(Level level, BlockPos startPos)$ ShipState
+            +updateShipBlocks(Level level, ShipState ship)$ void
+            +deleteShip(Level level, ShipState ship)$ void
+            %% onChunkSent wurde entfernt (durch nativen Sync abgelöst)
+        }
+
+        class ShipMorphologyService {
+            +calculateAndSyncShieldAsync(ShipState ship, ServerLevel level, int radius)$ void
+            -performVolumetricDilation(Set~BlockPos~ immutableBlocks, int radius)$ Set~BlockPos~
+        }
+
+        class ShipMovementService {
+            +moveShip(Level level, ShipState ship, int dx, int dy, int dz, Player player)$ void
+            +onServerTick(ServerTickEvent.Post event)$ void
+            +prepareDestinationChunks(ServerLevel level, ShipState ship, Vec3 movementVector)$ void
+            +releaseDestinationChunks(ServerLevel level, Set~ChunkPos~ chunks)$ void
+            -movePassengers(Level level, AABB shipBounds, Vec3 offset)$ void
+        }
+
+        class SpaceshipNavigationManager {
+            +saveHome(Level level, ShipState ship, String homeName)$ void
+            +teleportToHome(Level level, ShipState ship, String homeName, Player player)$ void
+            +initiateDimensionTravel(ShipState ship, DimensionTransition transition)$ void
+        }
+    }
+
+    %% ==========================================
+    %% NETWORK LAYER
+    %% ==========================================
+    namespace Network_Layer {
+        class ClientPayloadHandler {
+            +handleShieldBubbleSync(ShieldBubbleSyncPacket packet, IPayloadContext context)$ void
+            +handleStructureSync(ShipStructureSyncPayload packet, IPayloadContext context)$ void
+            %% Nutzt nun context.enqueueWork() für Thread-Sicherheit
+        }
+    }
+
+    %% ==========================================
+    %% CLIENT SIDE VIEW & RENDERING
+    %% ==========================================
+    namespace Client_Side {
+        class ClientShipState {
+            -UUID shipId
+            -BlockPos anchorPos
+            -VertexBuffer shieldMesh
+            -boolean isShieldActive
+            -boolean isDisposed
+            +updateMesh(Set~BlockPos~ relativeBlocks) void
+            +dispose() void 
+            %% Sicheres VBO Cleanup via RenderSystem
+        }
+
+        class ClientShipManager {
+            -Map~UUID, ClientShipState~ ACTIVE_CLIENT_SHIPS$
+            -Queue~ShieldBubbleSyncPacket~ PENDING_SYNCS$
+            +getOrCreateShip(UUID shipId)$ ClientShipState
+            +getAllShips()$ Collection~ClientShipState~
+            +updateShieldBubble(UUID id, BlockPos anchor, Set~BlockPos~ bubble)$ void
+            +addPendingSync(ShieldBubbleSyncPacket packet)$ void
+            +onClientChunkUnload(ChunkEvent.Unload event)$ void
+            +onClientChunkLoad(ChunkEvent.Load event)$ void
+        }
+
+        class ShieldRenderer {
+            +renderShields(PoseStack stack, MultiBufferSource buffer, Camera camera, float partialTicks)$ void
+        }
+    }
+
+    %% Relationships
+    AbstractSpaceshipNodeBlockEntity ..|> ISpaceshipNode : implements
+    AbstractSpaceshipNodeBlockEntity ..> ModAttachments : bound via Attachment
+    ServerShipManager o-- "0..*" ShipState : manages
+    ShipState ..> ShipMorphologyService : requests calculation (provides Immutable Set)
+    ServerShipManager ..> ShipMovementService : time-sliced mover (with chunk force-loading)
+    SpaceshipNavigationManager ..> ShipMovementService : navigates via
+
+    ClientPayloadHandler ..> ClientShipManager : updates (enqueued to Main Thread)
+    ClientShipManager *-- "0..*" ClientShipState : holds
+    ClientShipState o-- "0..1" VertexBuffer : owns (VRAM)
+    ShieldRenderer ..> ClientShipManager : renders from cache
