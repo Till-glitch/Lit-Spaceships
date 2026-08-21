@@ -3,19 +3,18 @@ package com.peaceman.alpha.ship.domain;
 import com.peaceman.alpha.block.entity.SpaceshipReactorBlockEntity;
 import com.peaceman.alpha.block.entity.SpaceshipShieldBlockEntity;
 import com.peaceman.alpha.ship.SpaceshipShieldHandler;
-import com.peaceman.alpha.network.ShieldBubbleSyncPacket;
-import com.peaceman.alpha.ship.ShieldMorphology;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.minecraft.world.phys.AABB;
 
 import java.util.*;
 
 /**
  * Reines Server-Domain-DTO für den logischen Zustand eines Raumschiffs.
- * Enthält keinerlei Render-Daten (wie shieldBubble) oder Client-Abhängigkeiten.
+ * Enthält geometrische Caches (AABBs und VoxelGridCaches mit BitSets) für
+ * deterministische, hochperformante Kollisionsprüfungen (Schritt 1).
  */
 public class ShipState {
 
@@ -27,6 +26,12 @@ public class ShipState {
     private List<BlockPos> shields = new ArrayList<>();
     private boolean isShieldActive = true;
 
+    // Geometrische Caches für Kollisions-Broad- und Narrow-Phase (Schritt 1)
+    private volatile AABB hullBoundingBox;
+    private volatile AABB shieldBoundingBox;
+    private volatile VoxelGridCache hullVoxelCache = VoxelGridCache.EMPTY;
+    private volatile VoxelGridCache shieldVoxelCache = VoxelGridCache.EMPTY;
+
     // Konstruktor für ein neues Schiff
     public ShipState(BlockPos controllerPos, Set<BlockPos> blocks) {
         this.id = UUID.randomUUID();
@@ -34,6 +39,7 @@ public class ShipState {
         this.blocks = blocks != null ? blocks : new HashSet<>();
         this.homes = new HashMap<>();
         this.isShieldActive = true;
+        recalculateHullBounds();
     }
 
     // Konstruktor für geladene Schiffe aus dem Savegame
@@ -45,6 +51,7 @@ public class ShipState {
         if (reactors != null) this.reactors.addAll(reactors);
         if (shields != null) this.shields.addAll(shields);
         this.isShieldActive = isShieldActive;
+        recalculateHullBounds();
     }
 
     public UUID getId() {
@@ -55,8 +62,19 @@ public class ShipState {
         return controllerPos;
     }
 
-    public void setControllerPos(BlockPos controllerPos) {
-        this.controllerPos = controllerPos;
+    public void setControllerPos(BlockPos newPos) {
+        if (this.controllerPos != null && newPos != null && !this.controllerPos.equals(newPos)) {
+            int dx = newPos.getX() - this.controllerPos.getX();
+            int dy = newPos.getY() - this.controllerPos.getY();
+            int dz = newPos.getZ() - this.controllerPos.getZ();
+            if (this.hullBoundingBox != null) {
+                this.hullBoundingBox = this.hullBoundingBox.move(dx, dy, dz);
+            }
+            if (this.shieldBoundingBox != null) {
+                this.shieldBoundingBox = this.shieldBoundingBox.move(dx, dy, dz);
+            }
+        }
+        this.controllerPos = newPos;
     }
 
     public Set<BlockPos> getBlocks() {
@@ -68,7 +86,8 @@ public class ShipState {
     }
 
     public void setBlocksRaw(Set<BlockPos> blocks) {
-        this.blocks = blocks;
+        this.blocks = blocks != null ? blocks : new HashSet<>();
+        recalculateHullBounds();
     }
 
     public List<BlockPos> getReactors() {
@@ -76,7 +95,7 @@ public class ShipState {
     }
 
     public void setReactors(List<BlockPos> reactors) {
-        this.reactors = reactors;
+        this.reactors = reactors != null ? reactors : new ArrayList<>();
     }
 
     public List<BlockPos> getShields() {
@@ -84,7 +103,7 @@ public class ShipState {
     }
 
     public void setShields(List<BlockPos> shields) {
-        this.shields = shields;
+        this.shields = shields != null ? shields : new ArrayList<>();
     }
 
     public Map<String, BlockPos> getHomes() {
@@ -117,8 +136,8 @@ public class ShipState {
     }
 
     /**
-     * Aktualisiert die Blockstruktur, kategorisiert Funktionsblöcke (Reaktoren, Schilde)
-     * und triggert bei Bedarf die Netzwerk-Synchronisation der Schildblase.
+     * Aktualisiert die Blockstruktur, kategorisiert Funktionsblöcke (Reaktoren, Schilde),
+     * berechnet Hüll-Caches neu und triggert die Netzwerk-Synchronisation der Schildblase.
      */
     public void setBlocks(Set<BlockPos> newBlocks, Level level) {
         this.blocks = newBlocks != null ? newBlocks : new HashSet<>();
@@ -136,9 +155,99 @@ public class ShipState {
 
         if (this.shields.isEmpty()) {
             this.isShieldActive = false;
+            this.shieldVoxelCache = VoxelGridCache.EMPTY;
+            this.shieldBoundingBox = null;
         }
 
+        recalculateHullBounds();
         syncShieldBubbleToClients(level);
+    }
+
+    /**
+     * Berechnet die AABB der Hülle sowie den linearen hullVoxelCache neu.
+     */
+    public synchronized void recalculateHullBounds() {
+        if (this.blocks == null || this.blocks.isEmpty()) {
+            this.hullBoundingBox = this.controllerPos != null
+                    ? new AABB(this.controllerPos)
+                    : new AABB(0, 0, 0, 1, 1, 1);
+            this.hullVoxelCache = VoxelGridCache.EMPTY;
+            return;
+        }
+
+        int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
+
+        for (BlockPos pos : this.blocks) {
+            if (pos.getX() < minX) minX = pos.getX();
+            if (pos.getY() < minY) minY = pos.getY();
+            if (pos.getZ() < minZ) minZ = pos.getZ();
+            if (pos.getX() > maxX) maxX = pos.getX();
+            if (pos.getY() > maxY) maxY = pos.getY();
+            if (pos.getZ() > maxZ) maxZ = pos.getZ();
+        }
+
+        this.hullBoundingBox = new AABB(minX, minY, minZ, maxX + 1, maxY + 1, maxZ + 1);
+
+        if (this.controllerPos != null) {
+            this.hullVoxelCache = VoxelGridCache.buildFromAbsolute(this.blocks, this.controllerPos);
+        }
+    }
+
+    /**
+     * Aktualisiert den Schild-Voxel-Cache und die zugehörige BoundingBox.
+     */
+    public synchronized void updateShieldCache(VoxelGridCache cache, Set<BlockPos> absoluteShieldPositions) {
+        this.shieldVoxelCache = cache != null ? cache : VoxelGridCache.EMPTY;
+        if (absoluteShieldPositions != null && !absoluteShieldPositions.isEmpty()) {
+            int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
+            int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
+            for (BlockPos pos : absoluteShieldPositions) {
+                if (pos.getX() < minX) minX = pos.getX();
+                if (pos.getY() < minY) minY = pos.getY();
+                if (pos.getZ() < minZ) minZ = pos.getZ();
+                if (pos.getX() > maxX) maxX = pos.getX();
+                if (pos.getY() > maxY) maxY = pos.getY();
+                if (pos.getZ() > maxZ) maxZ = pos.getZ();
+            }
+            this.shieldBoundingBox = new AABB(minX, minY, minZ, maxX + 1, maxY + 1, maxZ + 1);
+        } else {
+            this.shieldBoundingBox = null;
+        }
+    }
+
+    public AABB getHullBoundingBox() {
+        if (this.hullBoundingBox == null) {
+            recalculateHullBounds();
+        }
+        return this.hullBoundingBox;
+    }
+
+    public AABB getShieldBoundingBox() {
+        return this.shieldBoundingBox;
+    }
+
+    public AABB getTotalBoundingBox() {
+        if (isShieldActive() && this.shieldBoundingBox != null) {
+            return this.shieldBoundingBox;
+        }
+        return getHullBoundingBox();
+    }
+
+    public VoxelGridCache getHullVoxelCache() {
+        return this.hullVoxelCache;
+    }
+
+    public void setHullVoxelCache(VoxelGridCache hullVoxelCache) {
+        this.hullVoxelCache = hullVoxelCache != null ? hullVoxelCache : VoxelGridCache.EMPTY;
+    }
+
+    public VoxelGridCache getShieldVoxelCache() {
+        return this.shieldVoxelCache;
+    }
+
+    public void setShieldVoxelCache(VoxelGridCache shieldVoxelCache) {
+        this.shieldVoxelCache = shieldVoxelCache != null ? shieldVoxelCache : VoxelGridCache.EMPTY;
     }
 
     /**
@@ -147,7 +256,7 @@ public class ShipState {
      */
     public void syncShieldBubbleToClients(Level level) {
         if (!level.isClientSide() && level instanceof ServerLevel serverLevel) {
-            com.peaceman.alpha.ship.service.ShipMorphologyService.calculateAndSyncShieldAsync(this, serverLevel, 5);
+            com.peaceman.alpha.ship.service.ShipMorphologyService.calculateAndSyncShieldAsync(this, serverLevel, SpaceshipShieldHandler.getShieldRadius(this));
         }
     }
 }

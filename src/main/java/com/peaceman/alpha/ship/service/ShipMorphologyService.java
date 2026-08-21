@@ -4,6 +4,7 @@ import com.peaceman.alpha.helper.ShieldLifecycleLogger;
 import com.peaceman.alpha.network.ShieldBubbleSyncPacket;
 import com.peaceman.alpha.ship.ShieldMorphology;
 import com.peaceman.alpha.ship.domain.ShipState;
+import com.peaceman.alpha.ship.domain.VoxelGridCache;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -19,8 +20,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Kapselt die asynchronen mathematischen Berechnungen für Schild-Morphologien.
- * Nutzt Java 21 Virtual Threads, unmodifizierbare Snapshots und Generation-Tracking
- * zur Vermeidung von Concurrency-Kollaps und Out-of-Order-Race-Conditions (Blueprint 3 & Szenario 3).
+ * Nutzt Java 21 Virtual Threads, unmodifizierbare Snapshots, Generation-Tracking
+ * und asynchrone BitSet-VoxelGrid-Generierung (Schritt 1).
  */
 public class ShipMorphologyService {
 
@@ -44,8 +45,8 @@ public class ShipMorphologyService {
     }
 
     /**
-     * Berechnet die Schildblase asynchron via Java 21 Virtual Thread und synchronisiert
-     * das Ergebnis nach Validierung thread-sicher auf dem Server-Main-Thread.
+     * Berechnet die Schildblase asynchron via Java 21 Virtual Thread, generiert das BitSet
+     * und synchronisiert das Ergebnis atomar auf dem Server-Main-Thread.
      */
     public static void calculateAndSyncShieldAsync(ShipState ship, ServerLevel serverLevel, int radius) {
         if (ship == null || serverLevel == null) return;
@@ -54,6 +55,7 @@ public class ShipMorphologyService {
         final BlockPos targetAnchor = ship.getControllerPos();
 
         if (ship.getShields().isEmpty()) {
+            ship.updateShieldCache(VoxelGridCache.EMPTY, Collections.emptySet());
             PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(targetId, targetAnchor, Collections.emptySet()));
             return;
         }
@@ -69,17 +71,20 @@ public class ShipMorphologyService {
         Thread.ofVirtual().name("Morphology-Calc-" + targetId.toString().substring(0, 8) + "-v" + version)
                 .start(() -> {
                     Set<BlockPos> calculatedBubble = performVolumetricDilation(immutableStructureSnapshot, radius);
+                    VoxelGridCache shieldCache = VoxelGridCache.buildFromAbsolute(calculatedBubble, targetAnchor);
 
                     // 4. Rückführung auf den Main Server Thread
                     serverLevel.getServer().execute(() -> {
                         AtomicLong latestVersion = CALCULATION_VERSIONS.get(targetId);
                         boolean isLatest = (latestVersion != null && latestVersion.get() == version);
-                        boolean shipExists = ServerShipManager.hasShip(targetId);
+                        ShipState currentShip = ServerShipManager.getShip(targetId);
 
-                        ShieldLifecycleLogger.logMorphologyCompleted(targetId, version, calculatedBubble.size(), isLatest && shipExists);
+                        ShieldLifecycleLogger.logMorphologyCompleted(targetId, version, calculatedBubble.size(), isLatest && currentShip != null);
 
                         // Nur anwenden, wenn in der Zwischenzeit keine neuere Berechnung gestartet wurde
-                        if (isLatest && shipExists) {
+                        if (isLatest && currentShip != null) {
+                            currentShip.updateShieldCache(shieldCache, calculatedBubble);
+
                             Set<BlockPos> relativeBlocks = new HashSet<>(calculatedBubble.size());
                             for (BlockPos absPos : calculatedBubble) {
                                 relativeBlocks.add(absPos.subtract(targetAnchor));

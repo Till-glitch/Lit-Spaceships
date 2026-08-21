@@ -10,6 +10,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.TicketType;
@@ -24,15 +25,15 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
- * Service für translatorische Schiffsbewegungen mit Time-Slicing Tick-Budget (max. 10ms pro Tick)
- * und automatischem Chunk-Forceloading / Ticket-Management (Blueprint 4).
+ * Service für translatorische Schiffsbewegungen mit Time-Slicing Tick-Budget (max. 10ms pro Tick),
+ * atomarem Pre-Collision-Check (Intent-Lock-Execute) und Ticket-Management (Schritt 5).
  */
 @EventBusSubscriber(modid = Alpha.MODID, bus = EventBusSubscriber.Bus.GAME)
 public class ShipMovementService {
@@ -79,9 +80,12 @@ public class ShipMovementService {
 
         /**
          * Führt die Task scheibchenweise bis zum Ablauf des Zeitbudgets aus.
-         * @return true wenn die Task vollständig abgeschlossen ist, false wenn sie im nächsten Tick fortgesetzt werden muss.
          */
         public boolean tick(long deadlineNanos) {
+            if (dx == 0 && dy == 0 && dz == 0) {
+                return true; // Keine Bewegung erforderlich
+            }
+
             // Phase 0: Vorbereitung, Chunk-Loading & Snapshot
             if (phase == 0) {
                 Set<BlockPos> shipBlocks = ship.getBlocks();
@@ -91,7 +95,7 @@ public class ShipMovementService {
                     return true; // Abbruch wegen Energiemangel
                 }
 
-                // 2. Blueprint 4: Chunks im Zielgebiet vorbereiten und forceloaden
+                // 2. Chunks im Zielgebiet vorbereiten und forceloaden
                 destinationChunks = prepareDestinationChunks(level, ship, new Vec3(dx, dy, dz));
 
                 // 3. Bounding Box & Passagier-Matrix erfassen
@@ -239,12 +243,12 @@ public class ShipMovementService {
                     level.updateNeighborsAt(pos, level.getBlockState(pos).getBlock());
                 }
 
-                // Blueprint 4: Chunks wieder freigeben
+                // Chunks wieder freigeben
                 releaseDestinationChunks(level, destinationChunks);
 
                 ServerShipManager.saveData(level);
 
-                // Bug 2 Fix: Neue Anker-Position an alle Clients synchronisieren (ohne VBO-Rebuild)
+                // Synchronisation der neuen Anker-Position an alle Clients
                 PacketDistributor.sendToAllPlayers(new ShipPositionSyncPayload(ship.getId(), ship.getControllerPos()));
                 return true; // Fertig!
             }
@@ -276,7 +280,7 @@ public class ShipMovementService {
     }
 
     /**
-     * Blueprint 4: Berechnet und forceloaded Chunks für das Zielgebiet.
+     * Berechnet und forceloaded Chunks für das Zielgebiet.
      */
     public static Set<ChunkPos> prepareDestinationChunks(ServerLevel level, ShipState ship, Vec3 movementVector) {
         Set<BlockPos> blocks = ship.getBlocks();
@@ -302,7 +306,7 @@ public class ShipMovementService {
     }
 
     /**
-     * Blueprint 4: Gibt Forceloading-Tickets nach Bewegungsabschluss wieder frei.
+     * Gibt Forceloading-Tickets nach Bewegungsabschluss wieder frei.
      */
     public static void releaseDestinationChunks(ServerLevel level, Set<ChunkPos> previouslyLoadedChunks) {
         if (previouslyLoadedChunks == null) return;
@@ -327,11 +331,60 @@ public class ShipMovementService {
     }
 
     /**
-     * Stellt eine Bewegungsanfrage in die Warteschlange.
+     * Stellt eine Bewegungsanfrage in die Warteschlange nach erfolgreichem Intent-Lock-Pre-Check (Schritt 5).
      */
     public static void moveShip(Level level, ShipState ship, int dx, int dy, int dz, Player player) {
         if (!(level instanceof ServerLevel serverLevel) || ship == null) return;
-        PENDING_TASKS.add(new MovementTask(serverLevel, ship, dx, dy, dz, player));
+        if (dx == 0 && dy == 0 && dz == 0) return;
+
+        Vec3 moveVec = new Vec3(dx, dy, dz);
+
+        // 1. Broad-Phase: Suche potenzielle Kollisions-Kandidaten
+        List<ShipCollisionService.BroadPhaseCandidate> candidates =
+                ShipCollisionService.findPotentialCollisions(ship, moveVec);
+
+        Vec3 finalMoveVec = moveVec;
+
+        // 2. Narrow-Phase: Voxel-genaue Prüfung & Physik-Resolving
+        //    WICHTIG: Für das bewegte Schiff muss die projizierte Zielposition als Origin
+        //    übergeben werden, da die Swept-AABB den Zukunftsraum abdeckt, der VoxelGridCache
+        //    aber die Blöcke relativ zur aktuellen Controller-Position speichert.
+        BlockPos projectedOriginA = ship.getControllerPos().offset(dx, dy, dz);
+
+        for (ShipCollisionService.BroadPhaseCandidate candidate : candidates) {
+            ShipCollisionService.VoxelCollisionResult collision =
+                    ShipCollisionService.calculateVoxelIntersection(
+                            candidate.movingShip(), projectedOriginA,
+                            candidate.otherShip(), candidate.otherShip().getControllerPos(),
+                            candidate.intersectionBox());
+
+            if (collision.isColliding()) {
+                CollisionResolver.CollisionResolution resolution =
+                        CollisionResolver.resolve(serverLevel, collision, finalMoveVec);
+
+                if (resolution.movementStopped()) {
+                    finalMoveVec = resolution.clampedVector();
+                    if (player != null) {
+                        player.displayClientMessage(
+                                Component.literal("§c[Kollisionswarnung] §fKollision erkannt (" + resolution.resolutionCase() + ")! Bewegung gestoppt."),
+                                true
+                        );
+                    }
+                    break;
+                }
+            }
+        }
+
+        // Falls die Bewegung komplett durch Kollision gestoppt wurde
+        if (finalMoveVec.lengthSqr() == 0) {
+            return;
+        }
+
+        int finalDx = (int) finalMoveVec.x;
+        int finalDy = (int) finalMoveVec.y;
+        int finalDz = (int) finalMoveVec.z;
+
+        PENDING_TASKS.add(new MovementTask(serverLevel, ship, finalDx, finalDy, finalDz, player));
     }
 
     @SubscribeEvent

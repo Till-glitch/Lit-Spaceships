@@ -114,8 +114,35 @@ classDiagram
             +teleportToHome(Level level, ShipState ship, String homeName, Player player)$ void
         }
 
+        class VoxelGridCache {
+            +BlockPos minOffset
+            +int sizeX
+            +int sizeY
+            +int sizeZ
+            +BitSet bitSet
+            +isSet(int x, int y, int z) boolean
+            +buildFromRelative(Collection~BlockPos~ rel)$ VoxelGridCache
+            +buildFromAbsolute(Collection~BlockPos~ abs, BlockPos ctrl)$ VoxelGridCache
+        }
+
+        class ShipCollisionService {
+            +calculateSweptAABB(AABB box, double dx, double dy, double dz)$ AABB
+            +calculateIntersection(AABB a, AABB b)$ Optional~AABB~
+            +findPotentialCollisions(ShipState movingShip, Vec3 moveVec)$ List~BroadPhaseCandidate~
+            +calculateVoxelIntersection(ShipState a, BlockPos origA, ShipState b, BlockPos origB, AABB box)$ VoxelCollisionResult
+        }
+
+        class CollisionResolver {
+            +resolve(ServerLevel level, VoxelCollisionResult collision, Vec3 moveVec)$ CollisionResolution
+        }
+
         class SpaceshipShieldHandler {
             +ENERGY_COST_PER_BLOCK int$
+            +DEFAULT_SHIELD_RADIUS int$
+            +hasShieldGenerator(ShipState ship)$ boolean
+            +getShieldRadius(ShipState ship)$ int
+            +toggleShield(Level level, ShipState ship)$ boolean
+            +onShieldBlockDestroyed(Level level, BlockPos pos, UUID shipId)$ void
             +onBlockBreak(BreakEvent event)$ void
             +onExplosion(ExplosionEvent.Detonate event)$ void
         }
