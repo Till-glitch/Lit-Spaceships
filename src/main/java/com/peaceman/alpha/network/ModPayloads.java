@@ -49,5 +49,11 @@ public class ModPayloads {
                 ShipImpactEventPayload.STREAM_CODEC,
                 ClientPayloadHandler::handleShipImpact
         );
+
+        registrar.playToClient(
+                ShipStructureDeltaPayload.TYPE,
+                ShipStructureDeltaPayload.STREAM_CODEC,
+                ClientPayloadHandler::handleStructureDelta
+        );
     }
 }

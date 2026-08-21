@@ -66,4 +66,13 @@ public class ClientPayloadHandler {
             });
         }
     }
+
+    public static void handleStructureDelta(final com.peaceman.alpha.network.ShipStructureDeltaPayload packet, final IPayloadContext context) {
+        if (context.flow().isClientbound()) {
+            context.enqueueWork(() -> {
+                ShieldLifecycleLogger.logClientPayloadReceived("ShipStructureDeltaPayload", packet.shipId(), null, true);
+                ClientShipManager.removeStructureBlocks(packet.shipId(), packet.removedBlocks());
+            });
+        }
+    }
 }

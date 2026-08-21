@@ -2,12 +2,14 @@
 
 in vec2 uv;
 in vec3 v_LocalPos;
+in vec3 v_ViewPos;
 
 out vec4 fragColor;
 
 // Uniforms
 uniform float u_EnergyLevel; // 0.0 bis 1.0
 uniform float u_GameTime;    // Kontinuierliche Zeit (in Ticks oder Sekunden)
+uniform mat4 HexModelViewMat;
 
 uniform vec4 u_Impact0;
 uniform vec4 u_Impact1;
@@ -76,38 +78,43 @@ float calculateRippleIntensity(vec3 fragPos, vec4 impactData) {
     return waveShape * spatialDecay * temporalDecay * directionalMask;
 }
 
-float hexGrid(vec2 p) {
-    p *= 50.0;
-    vec2 q = vec2(p.x * 1.1547005, p.y + p.x * 0.5773502);
-    vec2 pi = floor(q);
-    vec2 pf = fract(q);
-    float v = mod(pi.x + pi.y, 3.0);
-    float ca = step(1.0, v);
-    float cb = step(2.0, v);
-    vec2  ma = step(pf.xy, pf.yx);
-    float d = dot(ma, 1.0 - pf.yx) + (1.0 - ca) - cb;
-    return fract(d);
-}
-
 void main() {
-    float hexPattern = hexGrid(uv);
-    float edge = smoothstep(0.0, 0.15, hexPattern) * smoothstep(1.0, 0.85, hexPattern);
-    float hexAlpha = 0.15 + (1.0 - edge) * 0.65;
+    // 1. Blickrichtungsvektor (View-Vektor zur Kamera im View-Space)
+    vec3 V = normalize(-v_ViewPos);
 
-    vec3 baseColor = calculateEnergyColor(u_EnergyLevel, u_GameTime);
+    // 2. Normalenvektor berechnen:
+    // Der Normalenvektor zeigt von der Mitte des Schildes (Local Origin) nach außen
+    vec3 localNormal = length(v_LocalPos) > 0.001 ? normalize(v_LocalPos) : vec3(0.0, 1.0, 0.0);
+    vec3 N = normalize(mat3(HexModelViewMat) * localNormal);
 
+    // 3. Physik-basierter Fresnel-Effekt (Rim-Lighting)
+    // In der Mitte (dot(N,V) ~ 1) -> fresnel ~ 0 (nahezu vollkommen transparent)
+    // Am Rand (dot(N,V) ~ 0) -> fresnel ~ 1 (intensives Glühen)
+    float NdotV = clamp(abs(dot(N, V)), 0.0, 1.0);
+    float fresnel = pow(1.0 - NdotV, 3.5);
+
+    // 4. Energie-Farbe bestimmen
+    vec3 energyColor = calculateEnergyColor(u_EnergyLevel, u_GameTime);
+
+    // 5. Multi-Impact-Schockwellen akkumulieren
     float totalRipple = 0.0;
     totalRipple += calculateRippleIntensity(v_LocalPos, u_Impact0);
     totalRipple += calculateRippleIntensity(v_LocalPos, u_Impact1);
     totalRipple += calculateRippleIntensity(v_LocalPos, u_Impact2);
     totalRipple += calculateRippleIntensity(v_LocalPos, u_Impact3);
-    totalRipple = clamp(totalRipple, 0.0, 2.0);
+    totalRipple = clamp(totalRipple, 0.0, 2.5);
 
-    // Der Ripple verschiebt die Farbe ins Weiße (Übersteuerung / Flash)
-    vec3 finalColor = mix(baseColor, vec3(1.0, 1.0, 1.0), min(totalRipple * 0.7, 1.0));
+    // 6. Farbe und Rim-Glow kombinieren
+    // Am Rand leuchtet die Energiefarbe kräftig auf
+    vec3 rimGlowColor = energyColor * (1.0 + fresnel * 0.8);
+    // Bei Treffern blitzt die Schockwelle weiß/hell über die Kugel
+    vec3 finalColor = mix(rimGlowColor, vec3(1.0, 1.0, 1.0), min(totalRipple * 0.85, 1.0));
 
-    // Der Ripple erhöht lokal die Opazität
-    float finalAlpha = clamp(hexAlpha + (totalRipple * 0.6), 0.0, 1.0);
+    // 7. Transparenz-Berechnung (minimalistischer Clean-Look)
+    // Im Ruhezustand: extrem dezente Basis-Transparenz in der Mitte (~0.02) und sanfter Rand (~0.60)
+    float baseAlpha = fresnel * 0.60 + 0.02;
+    // Einschlagswellen überlagern die Kugel und machen sie temporär sichtbar/leuchtend
+    float finalAlpha = clamp(baseAlpha + (totalRipple * 0.85), 0.0, 1.0);
 
     fragColor = vec4(finalColor, finalAlpha);
 }

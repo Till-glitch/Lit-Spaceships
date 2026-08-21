@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
@@ -68,6 +69,19 @@ public class ClientShipState implements AutoCloseable {
 
     public void setRelativeStructureBlocks(Set<BlockPos> relativeStructureBlocks) {
         this.relativeStructureBlocks = relativeStructureBlocks != null ? relativeStructureBlocks : Collections.emptySet();
+    }
+
+    public void removeStructureBlocks(Collection<BlockPos> removedBlocks) {
+        if (removedBlocks == null || removedBlocks.isEmpty() || this.relativeStructureBlocks.isEmpty()) {
+            return;
+        }
+        java.util.Set<BlockPos> updated = new java.util.HashSet<>(this.relativeStructureBlocks);
+        BlockPos anchor = this.anchorPos != null ? this.anchorPos : BlockPos.ZERO;
+        for (BlockPos pos : removedBlocks) {
+            updated.remove(pos);
+            updated.remove(pos.subtract(anchor));
+        }
+        this.relativeStructureBlocks = updated;
     }
 
     public VertexBuffer getShieldMesh() {

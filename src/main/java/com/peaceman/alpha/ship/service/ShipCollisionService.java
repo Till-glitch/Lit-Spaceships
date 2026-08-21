@@ -10,12 +10,17 @@ import java.util.*;
 
 /**
  * Service für das zweistufige Voxel-Kollisionssystem (Broad-Phase & Narrow-Phase).
- * Implementiert Continuous Swept-AABBs, Spatial Filtering (Schritt 2)
- * und lokalisierte BitSet-Voxel-Intersektionen in der Narrow-Phase (Schritt 3).
+ * Implementiert Continuous Swept-AABBs, Spatial Filtering, Time of Impact (TOI)
+ * und lokalisierte, allokationsfreie ThreadLocal BitSet-Intersektionen.
  */
 public class ShipCollisionService {
 
     public static final double SECTOR_SIZE = 64.0; // Sektor-Größe für Spatial Hashing
+
+    // Initialisierung Thread-lokaler BitSets mit expansiver Basiskapazität (1 MB BitSpace),
+    // um Object Churn in der Server-Tick-Schleife auf O(0) zu reduzieren.
+    private static final ThreadLocal<BitSet> SHARED_BITSET_A = ThreadLocal.withInitial(() -> new BitSet(1024 * 1024));
+    private static final ThreadLocal<BitSet> SHARED_BITSET_B = ThreadLocal.withInitial(() -> new BitSet(1024 * 1024));
 
     public record BroadPhaseCandidate(
             ShipState movingShip,
@@ -53,6 +58,62 @@ public class ShipCollisionService {
         double maxY = Math.max(currentBox.maxY, currentBox.maxY + dy);
         double maxZ = Math.max(currentBox.maxZ, currentBox.maxZ + dz);
         return new AABB(minX, minY, minZ, maxX, maxY, maxZ);
+    }
+
+    /**
+     * Berechnet den Time of Impact (TOI, Skalar 0.0 .. 1.0) zweier Bounding-Boxen entlang eines Bewegungsvektors.
+     * Verhindert statische Lückenbildung beim kinetischen Stopp.
+     */
+    public static double calculateTimeOfImpact(AABB movingBox, AABB targetBox, Vec3 velocity) {
+        if (movingBox == null || targetBox == null || velocity == null) {
+            return 1.0;
+        }
+
+        double tEntryX = -Double.MAX_VALUE, tExitX = Double.MAX_VALUE;
+        double tEntryY = -Double.MAX_VALUE, tExitY = Double.MAX_VALUE;
+        double tEntryZ = -Double.MAX_VALUE, tExitZ = Double.MAX_VALUE;
+
+        // X-Achse
+        if (velocity.x > 0) {
+            tEntryX = (targetBox.minX - movingBox.maxX) / velocity.x;
+            tExitX = (targetBox.maxX - movingBox.minX) / velocity.x;
+        } else if (velocity.x < 0) {
+            tEntryX = (targetBox.maxX - movingBox.minX) / velocity.x;
+            tExitX = (targetBox.minX - movingBox.maxX) / velocity.x;
+        } else {
+            if (movingBox.maxX <= targetBox.minX || movingBox.minX >= targetBox.maxX) return 1.0;
+        }
+
+        // Y-Achse
+        if (velocity.y > 0) {
+            tEntryY = (targetBox.minY - movingBox.maxY) / velocity.y;
+            tExitY = (targetBox.maxY - movingBox.minY) / velocity.y;
+        } else if (velocity.y < 0) {
+            tEntryY = (targetBox.maxY - movingBox.minY) / velocity.y;
+            tExitY = (targetBox.minY - movingBox.maxY) / velocity.y;
+        } else {
+            if (movingBox.maxY <= targetBox.minY || movingBox.minY >= targetBox.maxY) return 1.0;
+        }
+
+        // Z-Achse
+        if (velocity.z > 0) {
+            tEntryZ = (targetBox.minZ - movingBox.maxZ) / velocity.z;
+            tExitZ = (targetBox.maxZ - movingBox.minZ) / velocity.z;
+        } else if (velocity.z < 0) {
+            tEntryZ = (targetBox.maxZ - movingBox.minZ) / velocity.z;
+            tExitZ = (targetBox.minZ - movingBox.maxZ) / velocity.z;
+        } else {
+            if (movingBox.maxZ <= targetBox.minZ || movingBox.minZ >= targetBox.maxZ) return 1.0;
+        }
+
+        double tEntry = Math.max(tEntryX, Math.max(tEntryY, tEntryZ));
+        double tExit = Math.min(tExitX, Math.min(tExitY, tExitZ));
+
+        if (tEntry > tExit || (tEntryX < 0 && tEntryY < 0 && tEntryZ < 0) || tEntry > 1.0) {
+            return 1.0;
+        }
+
+        return Math.max(0.0, tEntry);
     }
 
     /**
@@ -113,19 +174,21 @@ public class ShipCollisionService {
     }
 
     /**
-     * Narrow-Phase: Führt die Voxel-genaue Kollisionsprüfung im Schnittvolumen mittels BitSets durch (Schritt 3).
+     * Narrow-Phase: Führt die Voxel-genaue Kollisionsprüfung im Schnittvolumen mittels gepoolter BitSets durch.
      */
     public static VoxelCollisionResult calculateVoxelIntersection(ShipState shipA, BlockPos originA, ShipState shipB, BlockPos originB, AABB intersectionBox) {
         if (shipA == null || shipB == null || originA == null || originB == null || intersectionBox == null) {
             return VoxelCollisionResult.NO_COLLISION;
         }
 
-        int minX = (int) Math.floor(intersectionBox.minX);
-        int minY = (int) Math.floor(intersectionBox.minY);
-        int minZ = (int) Math.floor(intersectionBox.minZ);
-        int maxX = (int) Math.ceil(intersectionBox.maxX);
-        int maxY = (int) Math.ceil(intersectionBox.maxY);
-        int maxZ = (int) Math.ceil(intersectionBox.maxZ);
+        // Schutz gegen IEEE 754 Float-Drift
+        double epsilon = 1.0E-5;
+        int minX = (int) Math.floor(intersectionBox.minX + epsilon);
+        int minY = (int) Math.floor(intersectionBox.minY + epsilon);
+        int minZ = (int) Math.floor(intersectionBox.minZ + epsilon);
+        int maxX = (int) Math.ceil(intersectionBox.maxX - epsilon);
+        int maxY = (int) Math.ceil(intersectionBox.maxY - epsilon);
+        int maxZ = (int) Math.ceil(intersectionBox.maxZ - epsilon);
 
         int width = Math.max(1, maxX - minX);
         int height = Math.max(1, maxY - minY);
@@ -143,9 +206,14 @@ public class ShipCollisionService {
             return VoxelCollisionResult.NO_COLLISION;
         }
 
-        // Subvolumen-BitSets extrahieren
-        BitSet bitSetA = extractSubVolumeBitSet(cacheA, originA, minX, minY, minZ, width, height, depth, totalVolume);
-        BitSet bitSetB = extractSubVolumeBitSet(cacheB, originB, minX, minY, minZ, width, height, depth, totalVolume);
+        // Allokationsfreies ThreadLocal-BitSet-Pooling
+        BitSet bitSetA = SHARED_BITSET_A.get();
+        BitSet bitSetB = SHARED_BITSET_B.get();
+        bitSetA.clear(0, Math.max(bitSetA.size(), totalVolume));
+        bitSetB.clear(0, Math.max(bitSetB.size(), totalVolume));
+
+        fillSubVolumeBitSet(bitSetA, cacheA, originA, minX, minY, minZ, width, height, depth);
+        fillSubVolumeBitSet(bitSetB, cacheB, originB, minX, minY, minZ, width, height, depth);
 
         // Hardwarebeschleunigte BitSet-Schnittprüfung
         if (!bitSetA.intersects(bitSetB)) {
@@ -185,11 +253,9 @@ public class ShipCollisionService {
     }
 
     /**
-     * Extrahiert ein Subvolumen aus dem Master-VoxelGridCache in ein lineares BitSet für die Narrow-Phase.
+     * Befüllt ein gepooltes BitSet für das angefragte Subvolumen mit Boundary-Prüfungen.
      */
-    private static BitSet extractSubVolumeBitSet(VoxelGridCache cache, BlockPos origin, int minX, int minY, int minZ, int width, int height, int depth, int totalVolume) {
-        BitSet bitSet = new BitSet(totalVolume);
-
+    private static void fillSubVolumeBitSet(BitSet bitSet, VoxelGridCache cache, BlockPos origin, int minX, int minY, int minZ, int width, int height, int depth) {
         for (int x = 0; x < width; x++) {
             int worldX = minX + x;
             int relX = worldX - origin.getX();
@@ -209,7 +275,5 @@ public class ShipCollisionService {
                 }
             }
         }
-
-        return bitSet;
     }
 }

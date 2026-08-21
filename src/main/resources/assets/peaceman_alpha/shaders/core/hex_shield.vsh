@@ -9,10 +9,13 @@ uniform mat4 HexProjMat;
 
 out vec2 uv;
 out vec3 v_LocalPos;
+out vec3 v_ViewPos;
 
 void main() {
-    // Rotation, Position und Sichtwinkel in einem Rutsch anwenden
-    gl_Position = HexProjMat * HexModelViewMat * vec4(Position, 1.0);
+    vec4 viewPos = HexModelViewMat * vec4(Position, 1.0);
+    gl_Position = HexProjMat * viewPos;
+    
     uv = UV0;
     v_LocalPos = Position;
+    v_ViewPos = viewPos.xyz;
 }

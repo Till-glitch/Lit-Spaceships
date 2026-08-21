@@ -83,6 +83,13 @@ public class ClientShipManager {
         }
     }
 
+    public static void removeStructureBlocks(UUID shipId, List<BlockPos> removedBlocks) {
+        ClientShipState shipState = getShip(shipId);
+        if (shipState != null && removedBlocks != null) {
+            shipState.removeStructureBlocks(removedBlocks);
+        }
+    }
+
     public static void addPendingSync(ShieldBubbleSyncPacket packet) {
         if (packet == null || packet.anchorPos() == null) return;
         ChunkPos chunkPos = new ChunkPos(packet.anchorPos());
