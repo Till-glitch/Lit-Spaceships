@@ -1,0 +1,268 @@
+# NeoForge-Alpha: Mod-Architektur & Klassendesign
+
+Dieses Dokument beschreibt die Architektur, Datenflüsse und Klassenhierarchien des Spaceship- und Schutzschildsystems für **Minecraft 1.21 (NeoForge)**.
+
+---
+
+## 1. Architektur-Übersicht & Design-Prinzipien
+
+Das System folgt einer strikten **MVC-/Service-Architektur** mit vollständiger Trennung zwischen logischem Server und Client:
+
+* **Server (Domain & Services)**: Hält die Autorität über alle Schiffe (`ShipState`), persistiert nur echte Daten (`ShipSavedData`) und delegiert rechenintensive Aufgaben (Schild-Dilatation) an Java 21 Virtual Threads (`ShipMorphologyService`) sowie Bewegungsoperationen an ein Time-Slicing Tick-Budget (`ShipMovementService`).
+* **Network (Typisierte Payloads)**: Alle Netzwerkinteraktionen nutzen moderne `CustomPacketPayload`-Records mit deklarativen `StreamCodec`-Definitionen.
+* **Spatial Hashing**: Geometriedaten und Schildnetze werden über `ChunkWatchEvent.Sent` gezielt nur an Spieler gesendet, die den entsprechenden Chunk laden.
+* **Client (View Model & Rendering)**: Der Client verwaltet seine Sicht auf Schiffe im `ClientShipManager` und rendert Schilde über VBOs (`VertexBuffer`) im `ClientShipState` mit 60+ FPS ohne Server-Render-Kopplung.
+
+---
+
+## 2. Detailliertes Mermaid Klassendiagramm
+
+```mermaid
+classDiagram
+    direction TB
+
+    %% ==========================================
+    %% SERVER SIDE DOMAIN & SERVICES
+    %% ==========================================
+    namespace Server_Side {
+        class ISpaceshipNode {
+            <<interface>>
+            +getShipId() UUID
+            +setShipId(UUID shipId) void
+            +getShip() ShipState
+        }
+
+        class AbstractSpaceshipNodeBlockEntity {
+            <<abstract>>
+            +getShipId() UUID
+            +setShipId(UUID shipId) void
+            +getUpdateTag(Provider registries) CompoundTag
+            +getUpdatePacket() ClientboundBlockEntityDataPacket
+        }
+
+        class ModAttachments {
+            +Supplier~AttachmentType~UUID~~ SHIP_ID
+            +register(IEventBus bus) void
+        }
+
+        class ShipState {
+            -UUID id
+            -BlockPos controllerPos
+            -Set~BlockPos~ blocks
+            -Map~String, BlockPos~ homes
+            -List~BlockPos~ reactors
+            -List~BlockPos~ shields
+            -boolean isShieldActive
+            +getId() UUID
+            +getControllerPos() BlockPos
+            +setControllerPos(BlockPos pos) void
+            +getBlocks() Set~BlockPos~
+            +setBlocks(Set~BlockPos~ blocks, Level level) void
+            +isShieldActive() boolean
+            +setShieldActive(boolean active) void
+            +toggleShieldActive() void
+            +syncShieldBubbleToClients(Level level) void
+        }
+
+        class ServerShipManager {
+            +Map~UUID, ShipState~ ACTIVE_SHIPS$
+            +getShip(UUID shipId)$ ShipState
+            +createShip(Level level, BlockPos startPos)$ ShipState
+            +updateShipBlocks(Level level, ShipState ship)$ void
+            +deleteShip(Level level, ShipState ship)$ void
+            +saveData(Level level)$ void
+            +onServerStarted(ServerStartedEvent event)$ void
+            +onChunkSent(ChunkWatchEvent.Sent event)$ void
+        }
+
+        class ShipSavedData {
+            +get(ServerLevel level)$ ShipSavedData
+            +save(CompoundTag tag, Provider registries) CompoundTag
+            +load(CompoundTag tag, Provider registries)$ ShipSavedData
+        }
+
+        class ShipScannerService {
+            +MAX_SHIP_BLOCKS int$
+            +scan(Level level, BlockPos startPos)$ Set~BlockPos~
+        }
+
+        class ShipMorphologyService {
+            -ExecutorService VIRTUAL_THREAD_EXECUTOR$
+            +calculateShieldBubbleAsync(Set~BlockPos~ shipBlocks, int radius)$ CompletableFuture~Set~BlockPos~~
+            +calculateAndSyncShieldAsync(ShipState ship, ServerLevel level, int radius)$ void
+        }
+
+        class ShipMovementService {
+            +TICK_BUDGET_NANOS long$
+            -Queue~MovementTask~ PENDING_TASKS$
+            +moveShip(Level level, ShipState ship, int dx, int dy, int dz, Player player)$ void
+            +onServerTick(ServerTickEvent.Post event)$ void
+        }
+
+        class SpaceshipEnergyManager {
+            +tryConsumeFlightEnergy(Level level, ShipState ship, int dx, int dy, int dz, Player player)$ boolean
+            +tryConsumeEnergyAmount(Level level, ShipState ship, int amount)$ boolean
+        }
+
+        class SpaceshipNavigationManager {
+            +saveHome(Level level, ShipState ship, String homeName)$ void
+            +teleportToHome(Level level, ShipState ship, String homeName, Player player)$ void
+        }
+
+        class SpaceshipShieldHandler {
+            +ENERGY_COST_PER_BLOCK int$
+            +onBlockBreak(BreakEvent event)$ void
+            +onExplosion(ExplosionEvent.Detonate event)$ void
+        }
+    }
+
+    %% ==========================================
+    %% NETWORK LAYER
+    %% ==========================================
+    namespace Network_Layer {
+        class ModPayloads {
+            +register(IEventBus bus)$ void
+        }
+
+        class ShipActionPayload {
+            <<record>>
+            +ActionType actionType
+            +Optional~UUID~ shipId
+            +BlockPos pos
+            +int value
+            +String targetName
+        }
+
+        class ShipStructureSyncPayload {
+            <<record>>
+            +UUID shipId
+            +BlockPos controllerPos
+            +Set~BlockPos~ relativeBlocks
+        }
+
+        class ShipStateSyncPayload {
+            <<record>>
+            +UUID shipId
+            +int currentEnergy
+            +boolean isShieldActive
+        }
+
+        class ShieldBubbleSyncPacket {
+            <<record>>
+            +UUID shipId
+            +BlockPos anchorPos
+            +Set~BlockPos~ relativeBubbleBlocks
+        }
+
+        class ServerPayloadHandler {
+            +handleAction(ShipActionPayload payload, IPayloadContext context)$ void
+        }
+
+        class ClientPayloadHandler {
+            +handleShieldBubbleSync(ShieldBubbleSyncPacket packet, IPayloadContext context)$ void
+            +handleStructureSync(ShipStructureSyncPayload packet, IPayloadContext context)$ void
+            +handleStateSync(ShipStateSyncPayload packet, IPayloadContext context)$ void
+        }
+    }
+
+    %% ==========================================
+    %% CLIENT SIDE VIEW & RENDERING
+    %% ==========================================
+    namespace Client_Side {
+        class ClientShipState {
+            -UUID shipId
+            -BlockPos anchorPos
+            -Set~BlockPos~ relativeBubbleBlocks
+            -Set~BlockPos~ relativeStructureBlocks
+            -VertexBuffer shieldMesh
+            -boolean isShieldActive
+            -Vec3 lastImpactPos
+            -float shieldEnergyPercentage
+            -long lastImpactTick
+            +getShipId() UUID
+            +getAnchorPos() BlockPos
+            +setAnchorPos(BlockPos pos) void
+            +getShieldMesh() VertexBuffer
+            +isShieldActive() boolean
+            +updateMesh(Set~BlockPos~ relativeBlocks) void
+            +close() void
+        }
+
+        class ClientShipManager {
+            -Map~UUID, ClientShipState~ ACTIVE_CLIENT_SHIPS$
+            +getOrCreateShip(UUID shipId)$ ClientShipState
+            +getShip(UUID shipId)$ ClientShipState
+            +getAllShips()$ Collection~ClientShipState~
+            +updateShieldBubble(UUID id, BlockPos anchor, Set~BlockPos~ bubble)$ void
+            +updateShipStructure(UUID id, BlockPos anchor, Set~BlockPos~ structure)$ void
+            +updateShipState(UUID id, int energy, boolean active)$ void
+            +removeShip(UUID id)$ void
+            +clear()$ void
+            +onClientLoggingOut(LoggingOut event)$ void
+        }
+
+        class ShieldRenderer {
+            +renderShields(PoseStack stack, MultiBufferSource buffer, Camera camera, float partialTicks)$ void
+            +buildShieldMesh(Set~BlockPos~ bubbleBlocks)$ MeshData
+        }
+
+        class AbstractSpaceshipScreen {
+            <<abstract>>
+            #sendShipAction(ActionType type) void
+            #sendShipAction(ActionType type, int val, String target) void
+        }
+
+        class SpaceshipControlScreen {
+            +init() void
+            +render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) void
+        }
+
+        class SpaceshipHelmScreen {
+            +init() void
+            +render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) void
+        }
+    }
+
+    %% ==========================================
+    %% RELATIONSHIPS & DEPENDENCIES
+    %% ==========================================
+    AbstractSpaceshipNodeBlockEntity ..|> ISpaceshipNode : implements
+    AbstractSpaceshipNodeBlockEntity ..> ModAttachments : uses AttachmentType
+    ServerShipManager o-- "0..*" ShipState : manages
+    ServerShipManager ..> ShipSavedData : persists via
+    ServerShipManager ..> ShipScannerService : scans with
+    ShipState ..> ShipMorphologyService : async shield morphology
+    ServerShipManager ..> ShipMovementService : time-sliced mover
+    SpaceshipNavigationManager ..> ShipMovementService : delegates travel
+    SpaceshipNavigationManager ..> ServerShipManager : saves waypoint
+
+    %% Server to Network
+    ServerShipManager ..> ShipStructureSyncPayload : dispatches (Spatial Hashing)
+    ServerShipManager ..> ShipStateSyncPayload : dispatches (Delta Telemetry)
+    ShipMorphologyService ..> ShieldBubbleSyncPacket : dispatches
+    ServerPayloadHandler ..> ServerShipManager : invokes CRUD
+    ServerPayloadHandler ..> ShipMovementService : invokes movement
+
+    %% Network to Client
+    ClientPayloadHandler ..> ClientShipManager : updates
+    ClientShipManager *-- "0..*" ClientShipState : contains
+    ClientShipState o-- "0..1" VertexBuffer : owns (VRAM)
+    ShieldRenderer ..> ClientShipManager : reads view models
+
+    %% UI to Network
+    AbstractSpaceshipScreen <|-- SpaceshipControlScreen : extends
+    AbstractSpaceshipScreen <|-- SpaceshipHelmScreen : extends
+    AbstractSpaceshipScreen ..> ShipActionPayload : sends to server
+```
+
+---
+
+## 3. Datenfluss & Lebenszyklus-Matrix
+
+| Aktion | Auslöser / Schicht | Ausführung | Netzwerk / Persistenz |
+| :--- | :--- | :--- | :--- |
+| **Schiff registrieren** | Spieler klickt UI `CREATE` | `ServerPayloadHandler` -> `ServerShipManager.createShip()` | Scan via `ShipScannerService`, UUID-Attachment via `ModAttachments.SHIP_ID`, Speichern via `ShipSavedData.setDirty()`. |
+| **Schild-Berechnung** | Schildblock platziert / Scan | `ShipState.syncShieldBubbleToClients()` -> `ShipMorphologyService` | Berechnet asynchron auf Java 21 **Virtual Threads**, sendet `ShieldBubbleSyncPacket` thread-sicher via Main-Thread. |
+| **Schild-Rendering** | Render-Frame (Client) | `ShieldRenderer.renderShields()` | Liest ausschließlich aus `ClientShipManager` / `ClientShipState.getShieldMesh()` (direkter VRAM VBO Zugriff). |
+| **Spatial Hashing** | Chunk lädt für Spieler | `ServerShipManager.onChunkSent(ChunkWatchEvent.Sent)` | Prüft Schnittmenge, sendet `ShipStructureSyncPayload`, `ShipStateSyncPayload` und `ShieldBubbleSyncPacket` **nur** an betroffenen Spieler. |
+| **Schiffsbewegung** | Spieler steuert Schiff | `ShipMovementService.moveShip()` | Rechnet im `ServerTickEvent.Post` mit max. **10ms Tick-Budget** pro Tick, verhindert TPS-Lag bei großen Konstruktionen. |

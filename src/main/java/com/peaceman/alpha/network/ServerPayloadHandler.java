@@ -1,10 +1,10 @@
 package com.peaceman.alpha.network;
 
 import com.peaceman.alpha.block.entity.SpaceshipControlBlockEntity;
-import com.peaceman.alpha.ship.SpaceshipMover;
 import com.peaceman.alpha.ship.SpaceshipNavigationManager;
 import com.peaceman.alpha.ship.domain.ShipState;
 import com.peaceman.alpha.ship.service.ServerShipManager;
+import com.peaceman.alpha.ship.service.ShipMovementService;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -49,8 +49,8 @@ public class ServerPayloadHandler {
                 case TP_HOME -> SpaceshipNavigationManager.teleportToHome(level, ship, targetName, player);
                 case UPDATE_BLOCKS -> ServerShipManager.updateShipBlocks(level, ship);
                 case DELETE_SHIP -> ServerShipManager.deleteShip(level, ship);
-                case MOVE_UP -> SpaceshipMover.moveShip(level, ship, 0, dist, 0, player);
-                case MOVE_DOWN -> SpaceshipMover.moveShip(level, ship, 0, -dist, 0, player);
+                case MOVE_UP -> ShipMovementService.moveShip(level, ship, 0, dist, 0, player);
+                case MOVE_DOWN -> ShipMovementService.moveShip(level, ship, 0, -dist, 0, player);
                 case MOVE_FORWARD, MOVE_BACKWARD, MOVE_LEFT, MOVE_RIGHT -> {
                     Direction forward = player.getDirection();
                     Direction right = forward.getClockWise();
@@ -76,7 +76,7 @@ public class ServerPayloadHandler {
                         }
                         default -> {}
                     }
-                    SpaceshipMover.moveShip(level, ship, dx, 0, dz, player);
+                    ShipMovementService.moveShip(level, ship, dx, 0, dz, player);
                 }
                 case TOGGLE_SHIELD -> ship.toggleShieldActive();
                 default -> {}

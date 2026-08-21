@@ -2,6 +2,7 @@ package com.peaceman.alpha.ship;
 
 import com.peaceman.alpha.ship.domain.ShipState;
 import com.peaceman.alpha.ship.service.ServerShipManager;
+import com.peaceman.alpha.ship.service.ShipMovementService;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -17,7 +18,7 @@ public class SpaceshipNavigationManager {
         }
     }
 
-    // 2. Berechnet die Route und gibt sie an den SpaceshipMover weiter
+    // 2. Berechnet die Route und gibt sie an den ShipMovementService weiter
     public static void teleportToHome(Level level, ShipState ship, String homeName, Player player) {
         if (ship != null && ship.getHomes().containsKey(homeName)) {
             BlockPos targetPos = ship.getHomes().get(homeName);
@@ -27,7 +28,7 @@ public class SpaceshipNavigationManager {
             int dy = targetPos.getY() - currentPos.getY();
             int dz = targetPos.getZ() - currentPos.getZ();
 
-            SpaceshipMover.moveShip(level, ship, dx, dy, dz, player);
+            ShipMovementService.moveShip(level, ship, dx, dy, dz, player);
         } else {
             if (player != null) {
                 player.displayClientMessage(Component.literal("§cFehler: Wegpunkt '" + homeName + "' existiert nicht!"), true);
