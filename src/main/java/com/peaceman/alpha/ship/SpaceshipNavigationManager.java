@@ -35,4 +35,9 @@ public class SpaceshipNavigationManager {
             }
         }
     }
+
+    // 3. Führt einen dimensionalen Sprung durch
+    public static boolean jumpToDimension(net.minecraft.server.level.ServerLevel originLevel, net.minecraft.server.level.ServerLevel targetLevel, ShipState ship, BlockPos targetPos, Player player) {
+        return com.peaceman.alpha.ship.service.ShipTeleportationService.teleportShip(originLevel, targetLevel, ship, targetPos, player);
+    }
 }

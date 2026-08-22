@@ -95,4 +95,12 @@ public class ClientPayloadHandler {
             });
         }
     }
+
+    public static void handleDimensionSync(final com.peaceman.alpha.network.ShipDimensionSyncPayload packet, final IPayloadContext context) {
+        if (context.flow().isClientbound()) {
+            context.enqueueWork(() -> {
+                ClientShipManager.updateShipDimension(packet.shipId(), packet.dimension());
+            });
+        }
+    }
 }

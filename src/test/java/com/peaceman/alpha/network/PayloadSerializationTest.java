@@ -185,4 +185,18 @@ public class PayloadSerializationTest {
         assertEquals(original.value(), decoded.value());
         assertEquals(original.targetName(), decoded.targetName());
     }
+
+    @Test
+    @DisplayName("ShipDimensionSyncPayload serialisiert und deserialisiert fehlerfrei")
+    void testShipDimensionSyncPayload_Codec() {
+        UUID shipId = UUID.randomUUID();
+        ShipDimensionSyncPayload original = new ShipDimensionSyncPayload(shipId, net.minecraft.world.level.Level.NETHER);
+
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        ShipDimensionSyncPayload.STREAM_CODEC.encode(buf, original);
+        ShipDimensionSyncPayload decoded = ShipDimensionSyncPayload.STREAM_CODEC.decode(buf);
+
+        assertEquals(original.shipId(), decoded.shipId());
+        assertEquals(original.dimension(), decoded.dimension());
+    }
 }

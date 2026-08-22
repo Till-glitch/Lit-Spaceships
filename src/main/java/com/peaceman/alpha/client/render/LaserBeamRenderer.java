@@ -86,7 +86,7 @@ public class LaserBeamRenderer {
         // 3. Kontinuierliche Strahlen rendern (Client-Side-Prediction)
         for (var entry : continuous.values()) {
             ClientShipState ship = ClientShipManager.getShip(entry.shooterShipId());
-            if (ship == null || ship.isDisposed() || ship.getAnchorPos() == null) continue;
+            if (ship == null || ship.isDisposed() || ship.getAnchorPos() == null || (ship.getDimension() != null && !ship.getDimension().equals(level.dimension()))) continue;
 
             BlockPos weaponWorldPos = ship.getAnchorPos().offset(entry.relativeWeaponPos());
             Direction facing = Direction.NORTH;

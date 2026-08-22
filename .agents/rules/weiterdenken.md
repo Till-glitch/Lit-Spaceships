@@ -16,6 +16,8 @@ Prüfe bei jedem Feature zwingend diese 4 Edge Cases:
 
     Skalierung (Scaling & Performance): Funktioniert die Logik auch bei gigantischen Schiffen (z. B. 10.000 Blöcke)? Drohen Server-Freezes (TPS-Drops)? (Prüfe, ob Time-Slicing, Tick-Budgets oder Virtual Threads nötig sind).
 
+    Multiplayerkompatibilität (Multiuser usecase & compability): Funktioniert die Logik für mehrere Nutzer auf einem Server und bleibt der Spiellsinn behalten. 
+
 Verhaltensvorgabe für die Umsetzung:
 
     Proaktive Implementierung: Wenn das logische und sichere Verhalten technisch eindeutig ist (z. B. NBT-Speicherung hinzufügen, Listen beim Löschen des Schiffs leeren), implementiere es direkt und ohne Umschweife.

@@ -74,6 +74,23 @@ public class ClientShipManager {
         }
     }
 
+    public static void updateShipDimension(UUID shipId, net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimension) {
+        net.minecraft.world.level.Level clientLevel = net.minecraft.client.Minecraft.getInstance().level;
+        if (clientLevel != null && dimension != null && !dimension.equals(clientLevel.dimension())) {
+            // Schiff hat Dimension verlassen -> VBOs sofort freigeben
+            removeShip(shipId);
+        } else {
+            ClientShipState shipState = getShip(shipId);
+            if (shipState != null) {
+                shipState.setDimension(dimension);
+            }
+        }
+    }
+
+    public static void clearAllVBOs() {
+        clear();
+    }
+
     public static void addImpact(UUID shipId, Vec3 localPos) {
         ClientShipState shipState = getShip(shipId);
         if (shipState != null) {

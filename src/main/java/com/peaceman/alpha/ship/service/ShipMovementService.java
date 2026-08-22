@@ -344,7 +344,7 @@ public class ShipMovementService {
      * Stellt eine Bewegungsanfrage in die Warteschlange nach erfolgreichem Intent-Lock-Pre-Check (Schritt 5).
      */
     public static void moveShip(Level level, ShipState ship, int dx, int dy, int dz, Player player) {
-        if (!(level instanceof ServerLevel serverLevel) || ship == null) return;
+        if (!(level instanceof ServerLevel serverLevel) || ship == null || ship.isJumping()) return;
         if (dx == 0 && dy == 0 && dz == 0) return;
 
         // Bewegungs-Cooldown prüfen

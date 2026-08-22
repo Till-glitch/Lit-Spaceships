@@ -80,8 +80,11 @@ public class ShieldRenderer {
 
                 BlockPos anchor = shipState.getAnchorPos();
 
-                // 1. Nur rendern, wenn der Chunk auf dem Client geladen ist
+                // 1. Nur rendern, wenn der Chunk auf dem Client geladen ist und die Dimension übereinstimmt
                 if (mc.level == null || !mc.level.isLoaded(anchor)) {
+                    continue;
+                }
+                if (shipState.getDimension() != null && !mc.level.dimension().equals(shipState.getDimension())) {
                     continue;
                 }
 

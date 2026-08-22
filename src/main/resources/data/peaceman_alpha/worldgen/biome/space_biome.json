@@ -1,0 +1,22 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.0,
+  "downfall": 0.0,
+  "effects": {
+    "sky_color": 0,
+    "fog_color": 0,
+    "water_color": 328981,
+    "water_fog_color": 328981,
+    "grass_color": 0,
+    "foliage_color": 0
+  },
+  "spawners": {},
+  "spawn_costs": {},
+  "carvers": {},
+  "features": [
+    [
+      "peaceman_alpha:asteroid_placed",
+      "peaceman_alpha:space_wreck_placed"
+    ]
+  ]
+}

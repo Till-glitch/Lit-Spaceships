@@ -29,6 +29,7 @@ public class Alpha {
         ModCreativeTabs.register(modEventBus);
         ModMenuTypes.register(modEventBus);
         ModAttachments.register(modEventBus);
+        com.peaceman.alpha.registry.ModFeatures.register(modEventBus);
         modEventBus.addListener(this::registerGameTests);
     }
 

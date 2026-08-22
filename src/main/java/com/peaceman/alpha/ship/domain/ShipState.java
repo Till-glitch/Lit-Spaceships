@@ -4,6 +4,7 @@ import com.peaceman.alpha.block.entity.SpaceshipReactorBlockEntity;
 import com.peaceman.alpha.block.entity.SpaceshipShieldBlockEntity;
 import com.peaceman.alpha.ship.SpaceshipShieldHandler;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -26,6 +27,8 @@ public class ShipState {
     private List<BlockPos> shields = new ArrayList<>();
     private List<BlockPos> weapons = new ArrayList<>();
     private boolean isShieldActive = true;
+    private ResourceKey<Level> dimension = Level.OVERWORLD;
+    private volatile boolean isJumping = false;
 
     // Cooldown-Timer (absolute Weltzeit via level.getGameTime())
     public static final long SHIELD_COOLDOWN_TICKS = 200L;    // 10 Sekunden
@@ -41,16 +44,25 @@ public class ShipState {
 
     // Konstruktor für ein neues Schiff
     public ShipState(BlockPos controllerPos, Set<BlockPos> blocks) {
+        this(controllerPos, blocks, Level.OVERWORLD);
+    }
+
+    public ShipState(BlockPos controllerPos, Set<BlockPos> blocks, ResourceKey<Level> dimension) {
         this.id = UUID.randomUUID();
         this.controllerPos = controllerPos;
         this.blocks = blocks != null ? blocks : new HashSet<>();
         this.homes = new HashMap<>();
         this.isShieldActive = true;
+        this.dimension = dimension != null ? dimension : Level.OVERWORLD;
         recalculateHullBounds();
     }
 
     // Konstruktor für geladene Schiffe aus dem Savegame
     public ShipState(UUID id, BlockPos controllerPos, Set<BlockPos> blocks, Map<String, BlockPos> homes, List<BlockPos> reactors, List<BlockPos> shields, boolean isShieldActive) {
+        this(id, controllerPos, blocks, homes, reactors, shields, isShieldActive, Level.OVERWORLD);
+    }
+
+    public ShipState(UUID id, BlockPos controllerPos, Set<BlockPos> blocks, Map<String, BlockPos> homes, List<BlockPos> reactors, List<BlockPos> shields, boolean isShieldActive, ResourceKey<Level> dimension) {
         this.id = id;
         this.controllerPos = controllerPos;
         this.blocks = blocks != null ? blocks : new HashSet<>();
@@ -58,7 +70,24 @@ public class ShipState {
         if (reactors != null) this.reactors.addAll(reactors);
         if (shields != null) this.shields.addAll(shields);
         this.isShieldActive = isShieldActive;
+        this.dimension = dimension != null ? dimension : Level.OVERWORLD;
         recalculateHullBounds();
+    }
+
+    public ResourceKey<Level> getDimension() {
+        return dimension;
+    }
+
+    public void setDimension(ResourceKey<Level> dimension) {
+        this.dimension = dimension != null ? dimension : Level.OVERWORLD;
+    }
+
+    public boolean isJumping() {
+        return isJumping;
+    }
+
+    public void setJumping(boolean jumping) {
+        this.isJumping = jumping;
     }
 
     public UUID getId() {

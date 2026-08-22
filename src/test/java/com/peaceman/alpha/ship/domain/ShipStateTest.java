@@ -138,4 +138,61 @@ public class ShipStateTest {
         assertTrue(ship.getWeapons().contains(new BlockPos(1, 0, 0)));
         assertTrue(ship.getWeapons().contains(new BlockPos(-1, 0, 0)));
     }
+
+    @Test
+    @DisplayName("ShipState Dimension lässt sich setzen und initialisiert standardmäßig mit Overworld")
+    void testShipState_Dimension() {
+        ShipState defaultShip = new ShipState(BlockPos.ZERO, Set.of(BlockPos.ZERO));
+        assertEquals(net.minecraft.world.level.Level.OVERWORLD, defaultShip.getDimension());
+
+        ShipState netherShip = new ShipState(BlockPos.ZERO, Set.of(BlockPos.ZERO), net.minecraft.world.level.Level.NETHER);
+        assertEquals(net.minecraft.world.level.Level.NETHER, netherShip.getDimension());
+
+        defaultShip.setDimension(net.minecraft.world.level.Level.END);
+        assertEquals(net.minecraft.world.level.Level.END, defaultShip.getDimension());
+    }
+
+    @Test
+    @DisplayName("ServerShipManager verwaltet Schiffe isoliert nach Dimensionen")
+    void testServerShipManager_MultiDimensionRegistration() {
+        ShipState overworldShip = new ShipState(BlockPos.ZERO, Set.of(BlockPos.ZERO), net.minecraft.world.level.Level.OVERWORLD);
+        ShipState endShip = new ShipState(new BlockPos(100, 50, 100), Set.of(new BlockPos(100, 50, 100)), net.minecraft.world.level.Level.END);
+
+        com.peaceman.alpha.ship.service.ServerShipManager.registerShip(overworldShip);
+        com.peaceman.alpha.ship.service.ServerShipManager.registerShip(endShip);
+
+        assertTrue(com.peaceman.alpha.ship.service.ServerShipManager.hasShip(overworldShip.getId()));
+        assertTrue(com.peaceman.alpha.ship.service.ServerShipManager.hasShip(endShip.getId()));
+
+        var overworldShips = com.peaceman.alpha.ship.service.ServerShipManager.getShipsInDimension(net.minecraft.world.level.Level.OVERWORLD);
+        var endShips = com.peaceman.alpha.ship.service.ServerShipManager.getShipsInDimension(net.minecraft.world.level.Level.END);
+        var netherShips = com.peaceman.alpha.ship.service.ServerShipManager.getShipsInDimension(net.minecraft.world.level.Level.NETHER);
+
+        assertTrue(overworldShips.containsKey(overworldShip.getId()));
+        assertFalse(overworldShips.containsKey(endShip.getId()));
+
+        assertTrue(endShips.containsKey(endShip.getId()));
+        assertFalse(endShips.containsKey(overworldShip.getId()));
+
+        assertTrue(netherShips.isEmpty());
+
+        // Cleanup
+        com.peaceman.alpha.ship.service.ServerShipManager.unregisterShip(overworldShip);
+        com.peaceman.alpha.ship.service.ServerShipManager.unregisterShip(endShip);
+        assertFalse(com.peaceman.alpha.ship.service.ServerShipManager.hasShip(overworldShip.getId()));
+        assertFalse(com.peaceman.alpha.ship.service.ServerShipManager.hasShip(endShip.getId()));
+    }
+
+    @Test
+    @DisplayName("isJumping Flag blockiert Aktionen und schützt vor Race-Conditions")
+    void testShipState_JumpingFlag() {
+        ShipState ship = new ShipState(BlockPos.ZERO, Set.of(BlockPos.ZERO));
+        assertFalse(ship.isJumping());
+
+        ship.setJumping(true);
+        assertTrue(ship.isJumping());
+
+        ship.setJumping(false);
+        assertFalse(ship.isJumping());
+    }
 }

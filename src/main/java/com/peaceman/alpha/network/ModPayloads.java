@@ -73,5 +73,11 @@ public class ModPayloads {
                 LaserStateSyncPayload.STREAM_CODEC,
                 ClientPayloadHandler::handleLaserStateSync
         );
+
+        registrar.playToClient(
+                ShipDimensionSyncPayload.TYPE,
+                ShipDimensionSyncPayload.STREAM_CODEC,
+                ClientPayloadHandler::handleDimensionSync
+        );
     }
 }

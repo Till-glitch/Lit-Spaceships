@@ -26,6 +26,7 @@ public class ClientShipState implements AutoCloseable {
     private VertexBuffer shieldMesh;
     private boolean isShieldActive = true;
     private boolean isDisposed = false;
+    private net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimension = net.minecraft.world.level.Level.OVERWORLD;
 
     // Cooldown-Ticks (Rest-Ticks zum Zeitpunkt des letzten Syncs, dekrementiert auf Client-Seite)
     private long shieldCooldownRemainingTicks = 0L;
@@ -61,6 +62,14 @@ public class ClientShipState implements AutoCloseable {
 
     public Set<BlockPos> getRelativeBubbleBlocks() {
         return relativeBubbleBlocks;
+    }
+
+    public net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> getDimension() {
+        return dimension;
+    }
+
+    public void setDimension(net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimension) {
+        this.dimension = dimension != null ? dimension : net.minecraft.world.level.Level.OVERWORLD;
     }
 
     public Set<BlockPos> getRelativeStructureBlocks() {

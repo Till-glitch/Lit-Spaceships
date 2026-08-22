@@ -4,18 +4,22 @@ import com.peaceman.alpha.ship.domain.ShipState;
 import com.peaceman.alpha.ship.service.ServerShipManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntArrayTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
 
 import java.util.*;
 
 /**
  * Persistenzschicht für Raumschiffdaten auf dem Server (Overworld).
- * Speichert ausschließlich reine Domain-Daten ohne flüchtige Render-Geometrien (wie shieldBubble).
+ * Speichert reine Domain-Daten inklusive dimensionaler Zuordnung.
  */
 public class ShipSavedData extends SavedData {
 
@@ -65,8 +69,9 @@ public class ShipSavedData extends SavedData {
             }
             shipTag.put("Weapons", weaponList);
 
-            // 5. Status
+            // 5. Status & Dimension
             shipTag.putBoolean("ShieldActive", ship.isShieldActive());
+            shipTag.putString("Dimension", ship.getDimension().location().toString());
 
             // 6. Cooldowns (absolute Weltzeit)
             shipTag.putLong("ShieldCooldownUntil", ship.getShieldCooldownUntil());
@@ -135,7 +140,13 @@ public class ShipSavedData extends SavedData {
 
             boolean isShieldActive = !shipTag.contains("ShieldActive") || shipTag.getBoolean("ShieldActive");
 
-            ShipState loadedShip = new ShipState(id, ctrlPos, blocks, homes, loadedReactors, loadedShields, isShieldActive);
+            ResourceKey<Level> dimension = Level.OVERWORLD;
+            if (shipTag.contains("Dimension")) {
+                ResourceLocation dimLoc = ResourceLocation.parse(shipTag.getString("Dimension"));
+                dimension = ResourceKey.create(Registries.DIMENSION, dimLoc);
+            }
+
+            ShipState loadedShip = new ShipState(id, ctrlPos, blocks, homes, loadedReactors, loadedShields, isShieldActive, dimension);
             loadedShip.setWeapons(loadedWeapons);
 
             // Cooldowns wiederherstellen
@@ -146,7 +157,7 @@ public class ShipSavedData extends SavedData {
                 loadedShip.setMovementCooldownUntil(shipTag.getLong("MovementCooldownUntil"));
             }
 
-            ServerShipManager.ACTIVE_SHIPS.put(id, loadedShip);
+            ServerShipManager.registerShip(loadedShip);
         }
         return data;
     }
