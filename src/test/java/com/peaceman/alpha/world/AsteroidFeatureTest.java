@@ -1,12 +1,21 @@
 package com.peaceman.alpha.world;
 
 import com.peaceman.alpha.registry.ModFeatures;
+import net.minecraft.SharedConstants;
+import net.minecraft.server.Bootstrap;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class AsteroidFeatureTest {
+
+    @BeforeAll
+    static void initMinecraft() {
+        SharedConstants.tryDetectVersion();
+        Bootstrap.bootStrap();
+    }
 
     @Test
     @DisplayName("ModFeatures hält Registrierungs-Holder für Asteroiden und Wracks")

@@ -94,6 +94,8 @@ classDiagram
             -List~BlockPos~ shields
             -List~BlockPos~ weapons
             -boolean isShieldActive
+            -ResourceKey~Level~ dimension
+            -boolean isJumping
             -long shieldCooldownUntil
             -long movementCooldownUntil
             -VoxelGridCache hullVoxelCache
@@ -101,20 +103,52 @@ classDiagram
             +getImmutableBlockSnapshot() Set~BlockPos~
             +setBlocks(Set~BlockPos~ blocks, Level level) void
             +recalculateHullBounds() void
+            +isInsideHull(BlockPos pos) boolean
+            +isInsideShield(BlockPos pos) boolean
             +isShieldOnCooldown(long gameTime) boolean
             +isMovementOnCooldown(long gameTime) boolean
         }
 
         class ServerShipManager {
             +Map~UUID, ShipState~ ACTIVE_SHIPS$
+            +Map~ResourceKey~Level~, Map~UUID, ShipState~~ SHIPS_BY_DIMENSION$
             +getShip(UUID shipId)$ ShipState
             +hasShip(UUID shipId)$ boolean
+            +getShipsInDimension(ResourceKey~Level~ dim)$ Map~UUID, ShipState~
+            +registerShip(ShipState ship)$ void
+            +unregisterShip(ShipState ship)$ void
+            +changeShipDimension(Level level, ShipState ship, ResourceKey~Level~ newDim)$ void
             +createShip(Level level, BlockPos startPos)$ ShipState
             +updateShipBlocks(Level level, ShipState ship)$ void
             +deleteShip(Level level, ShipState ship)$ void
             +saveData(Level level)$ void
             +onServerStarted(ServerStartedEvent event)$ void
             +onChunkSent(ChunkWatchEvent.Sent event)$ void
+        }
+
+        class ShipTeleportationService {
+            +teleportShip(ServerLevel originLevel, ServerLevel targetLevel, ShipState ship, BlockPos targetPos, Player initiator)$ boolean
+        }
+
+        class ModDimensions {
+            +ResourceKey~Level~ SPACE_LEVEL$
+            +ResourceKey~DimensionType~ SPACE_DIM_TYPE$
+            +ResourceKey~Biome~ SPACE_BIOME$
+            +ResourceKey~NoiseGeneratorSettings~ SPACE_NOISE_SETTINGS$
+            +ResourceKey~LevelStem~ SPACE_STEM$
+        }
+
+        class SpaceEnvironmentService {
+            +onEntityTick(EntityTickEvent.Pre event)$ void
+            +isProtectedFromVacuum(LivingEntity entity)$ boolean
+        }
+
+        class AsteroidFeature {
+            +place(FeaturePlaceContext context) boolean
+        }
+
+        class SpaceWreckFeature {
+            +place(FeaturePlaceContext context) boolean
         }
 
         class ShipSavedData {

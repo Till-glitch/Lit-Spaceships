@@ -14,6 +14,17 @@ An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21*
   * **Pulse Laser:** High-energy burst cannon (250 FE/shot, 20 ticks cooldown). Instantly vaporizes 1 block on hit or inflicts massive shield drain with kinetic shockwaves.
   * **Heavy Beam:** High-intensity continuous combat beam (50 FE/tick). Progressively melts and burns through hull blocks and terrain with visual breaking animations.
   * **Mining Laser:** Continuous industrial excavation laser (25 FE/tick). Rapidly drills through asteroid stone, ores, and terrain without causing entity damage.
+* **Deep Space Dimension (`peaceman_alpha:space`):**
+  * **Infinite Void Environment:** Custom procedural dimension from $Y = -64$ to $Y = 320$ with permanent cosmic night, zero natural monster spawns, and no vanilla bedrock floors.
+  * **Asteroid Fields & Ice Comets:** 3D procedural asteroid generation with diverse crusts (Stone, Basalt, Tuff, Deepslate) containing rich ore cores (Iron, Gold, Redstone, Diamond, Netherite Debris) and frozen ice comets.
+  * **Derelict Spacecraft Wrecks:** Rare abandoned shipwrecks featuring intact spaceship reactor cores and ancient treasure chests (`END_CITY_TREASURE`).
+* **Cross-Dimensional Ship Travel (Core Teleportation Service):**
+  * Fully transactional 6-phase warp travel (Suspension, Forceloading, Clipboard Serialization, Excision, Materialization, Passenger Entity Transition) across any dimension with ticket locking and zero chunk-boundary ghosting.
+* **Space Environment & Life Support:**
+  * **Zero-G Physics:** Seamless continuous drift and low-gravity physics for all entities in deep space.
+  * **Vacuum & Asphyxiation:** Fatal vacuum damage for unsuited players outside protected zones.
+  * **Space Suit:** Full armor set (`SpaceSuitHelmet`, `Chestplate`, `Leggings`, `Boots`) providing mobile life support and oxygen filtration.
+  * **Atmosphere Inside Ships:** Intact ship hulls and active hexagonal shield bubbles automatically generate a pressurized life support zone.
 * **Backflip Tool (Klasingscher Degen):** Developer item demonstrating entity manipulation by launching targets into the air with forced backflips.
 
 ---

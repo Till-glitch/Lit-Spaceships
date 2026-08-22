@@ -30,6 +30,7 @@ public class Alpha {
         ModMenuTypes.register(modEventBus);
         ModAttachments.register(modEventBus);
         com.peaceman.alpha.registry.ModFeatures.register(modEventBus);
+        com.peaceman.alpha.registry.ModArmorMaterials.register(modEventBus);
         modEventBus.addListener(this::registerGameTests);
     }
 

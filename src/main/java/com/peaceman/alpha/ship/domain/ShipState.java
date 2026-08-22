@@ -331,6 +331,16 @@ public class ShipState {
         this.shieldVoxelCache = shieldVoxelCache != null ? shieldVoxelCache : VoxelGridCache.EMPTY;
     }
 
+    public boolean isInsideHull(BlockPos pos) {
+        if (pos == null || getHullBoundingBox() == null) return false;
+        return getHullBoundingBox().contains(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
+    }
+
+    public boolean isInsideShield(BlockPos pos) {
+        if (pos == null || !isShieldActive() || getShieldBoundingBox() == null) return false;
+        return getShieldBoundingBox().contains(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
+    }
+
     /**
      * Berechnet die Schildblase asynchron auf Virtual Threads und synchronisiert sie direkt
      * als Netzwerkpaket an die Clients, ohne sie permanent im Server-Zustand zu speichern.

@@ -31,6 +31,10 @@ public class ModCreativeTabs {
                         output.accept(ModItems.HEAVY_BEAM_ITEM.get());
                         output.accept(ModItems.MINING_LASER_ITEM.get());
                         output.accept(ModItems.BACKFLIP_TOOL.get());
+                        output.accept(ModItems.SPACE_SUIT_HELMET.get());
+                        output.accept(ModItems.SPACE_SUIT_CHESTPLATE.get());
+                        output.accept(ModItems.SPACE_SUIT_LEGGINGS.get());
+                        output.accept(ModItems.SPACE_SUIT_BOOTS.get());
 
                     }).build());
 
