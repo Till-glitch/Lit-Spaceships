@@ -1,15 +1,19 @@
 # Mod Alpha (NeoForge Spaceship Mod)
 
-An advanced spaceship and energy shield mod for **Minecraft 1.21** built on **NeoForge**. It allows players to construct modular, functional spaceships from arbitrary blocks, fly them across the world with collision and passenger handling, and protect them using procedurally generated energy shields.
+An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21** built on **NeoForge**. It allows players to construct modular, functional spaceships from arbitrary blocks, fly them across the world with continuous swept collision and passenger handling, defend them using procedurally generated hexagonal energy shields, and engage in tactical space combat with pulse lasers, heavy continuous beams, and mining lasers.
 
 ---
 
 ## Features
 
 * **Spaceship Control Block:** The heart and core of every ship. Detects connected blocks via breadth-first search (BFS), binds them to a ship entity, and manages lifecycle operations (creation, structure update, deletion) with real-time hull highlighting.
-* **Spaceship Helm (Navigation Console):** Full 6-axis flight controls (Forward, Backward, Left, Right, Up, Down) and an integrated waypoint system for persistent bookmarks and automated teleportation navigation.
-* **Spaceship Reactor:** Energy storage supporting standard **Forge Energy (FE)** with up to 1,000,000 FE capacity. Powers flight maneuvers and shield absorption. *(Dev-Tip: Right-click with Redstone to charge 50,000 FE!)*
+* **Spaceship Helm (Navigation & Combat Console):** Full 6-axis flight controls (Forward, Backward, Left, Right, Up, Down), integrated waypoint bookmarks for automated navigation, and cockpit tactical weapon triggers.
+* **Spaceship Reactor:** Energy storage supporting standard **Forge Energy (FE)** with up to 1,000,000 FE capacity. Powers flight maneuvers, shield absorption, and laser weapon systems. *(Dev-Tip: Right-click with Redstone to charge 50,000 FE!)*
 * **Shield Generator & Hex-Shader:** Protects ship blocks against explosive damage (TNT, Creepers) and unauthorized block manipulation. Shields consume reactor energy upon impact and are rendered as procedural hexagon bubble meshes via custom shaders with impact ripples and low-energy alerts.
+* **Shipborne Laser Weapon System:**
+  * **Pulse Laser:** High-energy burst cannon (250 FE/shot, 20 ticks cooldown). Instantly vaporizes 1 block on hit or inflicts massive shield drain with kinetic shockwaves.
+  * **Heavy Beam:** High-intensity continuous combat beam (50 FE/tick). Progressively melts and burns through hull blocks and terrain with visual breaking animations.
+  * **Mining Laser:** Continuous industrial excavation laser (25 FE/tick). Rapidly drills through asteroid stone, ores, and terrain without causing entity damage.
 * **Backflip Tool (Klasingscher Degen):** Developer item demonstrating entity manipulation by launching targets into the air with forced backflips.
 
 ---
@@ -39,6 +43,14 @@ classDiagram
             +setShipId(UUID shipId) void
         }
 
+        class AbstractLaserNodeBlockEntity {
+            <<abstract>>
+            +getTier() LaserWeaponTier
+            +isContinuous() boolean
+            +getFacing() Direction
+            +clearDrillProgress(Level level) void
+        }
+
         class ModAttachments {
             +Supplier~AttachmentType~UUID~~ SHIP_ID
         }
@@ -50,7 +62,11 @@ classDiagram
             -Map~String, BlockPos~ homes
             -List~BlockPos~ reactors
             -List~BlockPos~ shields
+            -List~BlockPos~ weapons
             -boolean isShieldActive
+            -VoxelGridCache hullVoxelCache
+            -VoxelGridCache shieldVoxelCache
+            +recalculateHullBounds() void
             +syncShieldBubbleToClients(Level level) void
         }
 
@@ -63,31 +79,29 @@ classDiagram
             +onChunkSent(ChunkWatchEvent.Sent event)$ void
         }
 
-        class ShipSavedData {
-            +get(ServerLevel level)$ ShipSavedData
+        class LaserCombatService {
+            +fireWeapon(Level level, ShipState shooter, BlockPos pos)$ boolean
+            +tickContinuousWeapon(Level level, ShipState shooter, BlockPos pos, AbstractLaserNodeBE be)$ void
         }
 
-        class ShipScannerService {
-            +scan(Level level, BlockPos startPos)$ Set~BlockPos~
+        class LaserRaycastUtil {
+            +raycast(Level level, UUID shooterId, Vec3 origin, Vec3 dir, double range, boolean terrain)$ RaycastHitResult
         }
 
-        class ShipMorphologyService {
-            +calculateShieldBubbleAsync(Set~BlockPos~ shipBlocks, int radius)$ CompletableFuture
-            +calculateAndSyncShieldAsync(ShipState ship, ServerLevel level, int radius)$ void
+        class FastVoxelTraversal {
+            +traverse(VoxelGridCache cache, Vec3 origin, Vec3 dir, double maxDist)$ Optional~VoxelHit~
         }
 
         class ShipMovementService {
             +moveShip(Level level, ShipState ship, int dx, int dy, int dz, Player player)$ void
+            +isShipMoving(UUID shipId)$ boolean
             +onServerTick(ServerTickEvent.Post event)$ void
         }
 
         class SpaceshipEnergyManager {
             +tryConsumeFlightEnergy(Level level, ShipState ship, int dx, int dy, int dz, Player player)$ boolean
-        }
-
-        class SpaceshipNavigationManager {
-            +saveHome(Level level, ShipState ship, String homeName)$ void
-            +teleportToHome(Level level, ShipState ship, String homeName, Player player)$ void
+            +tryConsumeEnergyAmount(Level level, ShipState ship, int amount)$ boolean
+            +getTotalAvailableEnergy(Level level, ShipState ship)$ int
         }
     }
 
@@ -99,20 +113,32 @@ classDiagram
             +register(IEventBus bus)$ void
         }
 
-        class ShipActionPayload {
-            <<record>>
-            +ActionType actionType
-            +Optional~UUID~ shipId
-            +BlockPos pos
-            +int value
-            +String targetName
-        }
-
-        class ShipStructureSyncPayload {
+        class ShipCombatActionPayload {
             <<record>>
             +UUID shipId
-            +BlockPos controllerPos
-            +Set~BlockPos~ relativeBlocks
+            +CombatAction action
+        }
+
+        class LaserFirePayload {
+            <<record>>
+            +UUID shooterShipId
+            +Vec3 startPos
+            +Vec3 endPos
+            +LaserWeaponTier tier
+        }
+
+        class LaserStateSyncPayload {
+            <<record>>
+            +UUID shooterShipId
+            +BlockPos weaponPos
+            +boolean isFiring
+            +LaserWeaponTier tier
+        }
+
+        class ShipStructureDeltaPayload {
+            <<record>>
+            +UUID shipId
+            +List~BlockPos~ removedBlocks
         }
 
         class ShipStateSyncPayload {
@@ -120,23 +146,8 @@ classDiagram
             +UUID shipId
             +int currentEnergy
             +boolean isShieldActive
-        }
-
-        class ShieldBubbleSyncPacket {
-            <<record>>
-            +UUID shipId
-            +BlockPos anchorPos
-            +Set~BlockPos~ relativeBubbleBlocks
-        }
-
-        class ServerPayloadHandler {
-            +handleAction(ShipActionPayload payload, IPayloadContext context)$ void
-        }
-
-        class ClientPayloadHandler {
-            +handleShieldBubbleSync(ShieldBubbleSyncPacket packet, IPayloadContext context)$ void
-            +handleStructureSync(ShipStructureSyncPayload packet, IPayloadContext context)$ void
-            +handleStateSync(ShipStateSyncPayload packet, IPayloadContext context)$ void
+            +long shieldCooldownRemainingTicks
+            +long movementCooldownRemainingTicks
         }
     }
 
@@ -150,46 +161,39 @@ classDiagram
             -VertexBuffer shieldMesh
             -boolean isShieldActive
             +updateMesh(Set~BlockPos~ relativeBlocks) void
-            +close() void
+            +dispose() void
         }
 
-        class ClientShipManager {
-            -Map~UUID, ClientShipState~ ACTIVE_CLIENT_SHIPS$
-            +getOrCreateShip(UUID shipId)$ ClientShipState
-            +getAllShips()$ Collection~ClientShipState~
-            +updateShieldBubble(UUID id, BlockPos anchor, Set~BlockPos~ bubble)$ void
-            +clear()$ void
+        class ClientLaserState {
+            +addPulse(UUID shooterId, Vec3 start, Vec3 end, LaserWeaponTier tier)$ void
+            +setContinuousBeam(UUID shooterId, BlockPos pos, boolean firing, LaserWeaponTier tier)$ void
+            +removeBeamsForShip(UUID shipId)$ void
+            +clearAll()$ void
+        }
+
+        class LaserBeamRenderer {
+            +onRenderLevelStage(RenderLevelStageEvent event)$ void
         }
 
         class ShieldRenderer {
             +renderShields(PoseStack stack, MultiBufferSource buffer, Camera camera, float partialTicks)$ void
         }
-
-        class AbstractSpaceshipScreen {
-            <<abstract>>
-            #sendShipAction(ActionType type) void
-        }
     }
 
     %% Relationships
     AbstractSpaceshipNodeBlockEntity ..|> ISpaceshipNode : implements
-    AbstractSpaceshipNodeBlockEntity ..> ModAttachments : uses Data Attachment
+    AbstractLaserNodeBlockEntity --|> AbstractSpaceshipNodeBlockEntity : extends
     ServerShipManager o-- "0..*" ShipState : manages
-    ServerShipManager ..> ShipSavedData : persists via
-    ServerShipManager ..> ShipScannerService : scans with
-    ShipState ..> ShipMorphologyService : async morphology
-    ServerShipManager ..> ShipMovementService : time-sliced mover
-    SpaceshipNavigationManager ..> ShipMovementService : navigates via
+    ServerShipManager ..> LaserCombatService : combat coordination
+    LaserCombatService ..> LaserRaycastUtil : raycasts via
+    LaserRaycastUtil ..> FastVoxelTraversal : 3D-DDA Voxel Scan
+    LaserCombatService ..> LaserFirePayload : broadcasts pulse
+    LaserCombatService ..> LaserStateSyncPayload : broadcasts beam state
+    LaserCombatService ..> ShipStructureDeltaPayload : syncs block damage
 
-    ServerShipManager ..> ShipStructureSyncPayload : Spatial Hashing
-    ServerShipManager ..> ShipStateSyncPayload : Telemetry
-    ShipMorphologyService ..> ShieldBubbleSyncPacket : Shield Mesh Sync
-
-    ClientPayloadHandler ..> ClientShipManager : updates
-    ClientShipManager *-- "0..*" ClientShipState : holds
-    ClientShipState o-- "0..1" VertexBuffer : owns (VRAM)
-    ShieldRenderer ..> ClientShipManager : renders from cache
-    AbstractSpaceshipScreen ..> ShipActionPayload : sends actions
+    LaserBeamRenderer ..> ClientLaserState : reads active beams
+    LaserBeamRenderer ..> ClientShipManager : anchors to ships
+    ClientLaserState ..> ClientShipManager : relative anchor offsets
 ```
 
 ---
@@ -197,26 +201,52 @@ classDiagram
 ### Key Architectural Highlights
 
 #### 1. Server-Side Domain & Services (`com.peaceman.alpha.ship.*`)
-* **`ShipState`**: Pure domain Model/DTO holding authoritative ship data (UUID, controller position, functional block lists, reactor/shield associations, waypoints). Contains **zero** render/client dependencies.
-* **`ServerShipManager`**: Central lifecycle and CRUD controller. Manages the active server ship registry and synchronizes with world storage.
-* **`ShipSavedData`**: Lightweight `SavedData` persisted in the Overworld. Persists only raw domain data, keeping disk footprint minimal.
-* **`ShipScannerService`**: Isolated breadth-first search (BFS) algorithm to detect continuous multi-block structures including multipart blocks (doors, beds, double chests).
-* **`ShipMorphologyService`**: Utilizes **Java 21 Virtual Threads** (`Executors.newVirtualThreadPerTaskExecutor()`) to compute heavy 3D volumetric dilation of shield meshes asynchronously without blocking the Minecraft main thread.
-* **`ShipMovementService`**: Translates blocks and passengers using an incremental **Time-Slicing Tick-Budget (10ms per tick)** executed during `ServerTickEvent.Post`. Prevents server TPS drops during large ship displacements.
+* **`ShipState`**: Pure domain Model holding authoritative ship data (UUID, controller position, functional block lists, reactor/shield associations, weapons list, waypoints, and `VoxelGridCache` bitsets). Contains **zero** client/rendering dependencies.
+* **`ServerShipManager`**: Central lifecycle and CRUD controller. Coordinates ship creation, updates, and spatial hashing distribution.
+* **`LaserCombatService`**: Handles combat routing for pulse weapons and continuous beams, energy transactions, kinetic shield shockwaves, and progressive block destruction with `destroyBlockProgress` scaling by block hardness.
+* **`LaserRaycastUtil` & `FastVoxelTraversal`**: High-performance Amanatides & Woo 3D Digital Differential Analyzer (3D-DDA) traversing voxels in $O(\text{Ray Length})$ time, protected by broadphase AABB intersection filters and step bounds (1024 steps).
+* **`ShipMovementService`**: Translates blocks and passengers using an incremental **Time-Slicing Tick-Budget (10ms per tick)** executed during `ServerTickEvent.Post`, with chunk region tickets (`TicketType`) and translation-invariant weapon tracking.
 
-#### 2. Data Attachments & Block Entities (`com.peaceman.alpha.block.*`, `registry`)
-* **`ModAttachments.SHIP_ID`**: Replaces legacy NBT parsing with NeoForge 1.21 **Data Attachments** (`AttachmentType<UUID>`), providing clean, type-safe serialization.
-* **`AbstractSpaceshipNodeBlockEntity`**: Base class for all spaceship nodes (`SpaceshipControlBlockEntity`, `SpaceshipHelmBlockEntity`, `SpaceshipReactorBlockEntity`, `SpaceshipShieldBlockEntity`), reading and writing ship UUIDs via Data Attachments.
+#### 2. Network Layer (`com.peaceman.alpha.network.*`)
+* **`CustomPacketPayload` Records**: 100% typed payload definitions using Mojang/NeoForge `StreamCodec` composites.
+* **`ShipCombatActionPayload`**: Dispatches pilot weapon commands (`FIRE_PULSE`, `TOGGLE_HEAVY_BEAM`, `TOGGLE_MINING_LASER`, `FIRE_ALL`).
+* **`LaserFirePayload` & `LaserStateSyncPayload`**: Broadcasts visual laser events and continuous beam states to chunk-tracking clients.
+* **`ShipStructureDeltaPayload`**: Transmits destroyed voxel lists during combat to update client highlight meshes without re-sending the entire ship structure.
 
-#### 3. Network Layer (`com.peaceman.alpha.network.*`)
-* **`ShipActionPayload`**: Unified client-to-server action packet parameterized by the `ActionType` enum (replacing brittle string-based commands).
-* **`ShipStructureSyncPayload` & `ShipStateSyncPayload`**: High-efficiency packets with VarInt relative coordinate compression and delta telemetry.
-* **Spatial Hashing**: `ServerShipManager` intercepts `ChunkWatchEvent.Sent` to stream ship structure and shield geometry **only** to players who have the relevant chunks in active render distance.
+#### 3. Client View Model & Rendering (`com.peaceman.alpha.client.*`)
+* **`ClientLaserState`**: Thread-safe collection (`ConcurrentHashMap`, `CopyOnWriteArrayList`) managing pulse fadeouts and continuous beams keyed by invariant relative offsets (`shooterShipId + "_" + relativePos.asLong()`).
+* **`LaserBeamRenderer`**: Volumetric Blaze3D billboard beam rendering with additive blending (`GL_ONE`), core/glow dual-cylinder quads, oscillating pulses, and client-side block surface clipping (`level.clip`) preventing laser pass-through.
+* **`ShieldRenderer`**: Blaze3D rendering pipeline consuming compiled VBOs (`VertexBuffer`) from `ClientShipState`.
+* **VRAM Lifecycle Safety**: `ClientShipManager` and `ClientLaserState` guarantee immediate GPU buffer disposal on chunk unload, ship deletion, or client logout.
 
-#### 4. Client View Model & Rendering (`com.peaceman.alpha.client.*`)
-* **`ClientShipState`**: Client-side View Model holding compiled **Vertex Buffer Objects (VBOs)** in VRAM and shader uniform parameters (energy levels, impact ripples, timestamps).
-* **`ClientShipManager`**: Manages the collection of visible client ships and handles automatic VRAM disposal on server disconnect/logout (`ClientPlayerNetworkEvent.LoggingOut`).
-* **`ShieldRenderer`**: Blaze3D rendering pipeline that reads exclusively from `ClientShipManager`, delivering stable 60+ FPS performance decoupled from server tick rates.
+---
+
+## Testing & Quality Assurance
+
+The project enforces continuous testing according to the **70/20 Rule** (70% Unit / Math Tests, 20% Engine GameTests, 10% Manual QA).
+
+### Automated Test Matrix (33 Unit Tests & 4 GameTest Suites)
+
+| Test-Suite | Typ | Abdeckung |
+| :--- | :--- | :--- |
+| **`ShipCollisionMathTest`** | JUnit 5 | Continuous Swept-AABB Extrusion (positive/negative/zero), VoxelGridCache BitSet Indexing & Bounds. |
+| **`ShipStateTest`** | JUnit 5 | Domain-Zustand, AABB-Neuberechnung bei Blockmutation, Controller-Translation, Cooldown-Arithmetik. |
+| **`CombatLogicTest`** | JUnit 5 | FastVoxelTraversal 3D-DDA Treffererkennung, Normalenflächen (`WEST`, `DOWN`), Reichweiten- & Tier-Konstanten. |
+| **`PayloadSerializationTest`** | JUnit 5 | Symmetrische Serialisierung & Deserialisierung aller 10 CustomPacketPayload-Records via StreamCodecs. |
+| **`SpaceshipEnergyManagerTest`** | JUnit 5 (Mockito) | Reaktor-Bündelung, sequenzieller Energieabzug, Rollback bei Energiemangel, Flugkosten-Berechnung. |
+| **`ShipScannerGameTests`** | GameTest | Orthogonale BFS-Erkennung, Ausschluss diagonaler Blöcke, Multipart-Erfassung (Türen, Betten, Truhen). |
+| **`ShipMovementGameTests`** | GameTest | Physische Welt-Translation, `AIR`-Hinterlassung und Zielblock-Präsenzprüfung. |
+| **`ShipAttachmentGameTests`** | GameTest | Typsichere Persistenz von `ModAttachments.SHIP_ID` an BlockEntities. |
+| **`SpaceshipGameTests`** | GameTest | Schiffserstellung und UUID-Verknüpfung via Kontrollblock. |
+
+### CI/CD Pipeline (`.github/workflows/ci.yml`)
+
+The repository runs an automated GitHub Actions CI/CD pipeline on every `push` and `pull_request` to `main`:
+1. **JDK 21 (Temurin)** & Gradle Setup with Dependency Caching (`setup-gradle@v3`).
+2. **Compile:** `./gradlew compileJava`
+3. **Unit Tests:** `./gradlew test` (JUnit 5 & Mockito)
+4. **GameTests:** `./gradlew runGameTestServer` (Headless Minecraft Server GameTests)
+5. **Package & Artifact:** `./gradlew build` and automated upload of `peaceman_alpha-*.jar` via `upload-artifact@v4`.
 
 ---
 
@@ -224,25 +254,30 @@ classDiagram
 
 ```text
 src/main/java/com/peaceman/alpha/
-├── Alpha.java                       # Main mod initialization & capability registration
-├── Config.java                      # Common & client configurations
-├── block/                           # Block declarations & ISpaceshipNode interface
-│   └── entity/                      # AbstractSpaceshipNodeBE and specialized BlockEntities
-├── client/                          # Client-only lifecycle & event hooks
-│   ├── network/                     # ClientPayloadHandler (dispatches to ClientShipManager)
-│   ├── render/                      # ShieldRenderer (VBO/Blaze3D) & ShipHighlightRenderer
+├── Alpha.java                       # Main mod initialization & GameTest registration
+├── Config.java                      # Mod configuration
+├── block/                           # Blocks & ISpaceshipNode interface
+│   ├── entity/                      # AbstractSpaceshipNodeBE, Laser BEs, Reactor BE, Shield BE
+│   ├── HeavyBeamBlock.java          # Heavy Beam Laser Block
+│   ├── MiningLaserBlock.java        # Mining Laser Block
+│   ├── PulseLaserBlock.java         # Pulse Laser Cannon Block
+│   ├── SpaceshipControlBlock.java   # Central Ship Core Block
+│   ├── SpaceshipHelmBlock.java      # Navigation Console Block
+│   ├── SpaceshipReactorBlock.java   # FE Energy Reactor Block
+│   └── SpaceshipShieldBlock.java    # Shield Generator Block
+├── client/                          # Client-only lifecycle & rendering
+│   ├── network/                     # ClientPayloadHandler
+│   ├── render/                      # LaserBeamRenderer, ShieldRenderer, ShipHighlightRenderer
 │   ├── screen/                      # UI Screens (Control, Helm, Reactor)
-│   └── state/                       # ClientShipState (VBO lifecycle) & ClientShipManager
-├── effect/                          # Custom animations & visual effects
-├── helper/                          # Event listeners & utilities (AutoOpEvent, TickScheduler)
-├── item/                            # Mod items (BackflipToolItem)
+│   └── state/                       # ClientShipState, ClientShipManager, ClientLaserState
 ├── menu/                            # Container menus (SpaceshipReactorMenu)
 ├── network/                         # CustomPacketPayload definitions & ServerPayloadHandler
 ├── registry/                        # DeferredRegisters (Blocks, Items, BlockEntities, ModAttachments)
-├── ship/                            # Domain models, services & managers
-│   ├── domain/                      # ShipState (Pure Server Domain DTO)
-│   └── service/                     # ServerShipManager, ShipMovementService, ShipMorphologyService, ShipScannerService
-└── tests/                           # NeoForge GameTests & debugging handlers
+├── ship/                            # Domain models, combat & movement services
+│   ├── combat/                      # FastVoxelTraversal (3D-DDA), LaserCombatService, LaserRaycastUtil, LaserWeaponTier
+│   ├── domain/                      # ShipState (Domain Model), VoxelGridCache
+│   └── service/                     # ServerShipManager, ShipMovementService, ShipScannerService, ShipCollisionService
+└── tests/                           # NeoForge GameTests (Scanner, Movement, Attachments, Lifecycle)
 ```
 
 ---
@@ -251,17 +286,23 @@ src/main/java/com/peaceman/alpha/
 
 ### Requirements
 * **Java 21** (JDK)
-* **Gradle 8.8+** (or included Gradle wrapper)
+* **Gradle 8.8+** (or included Gradle wrapper `./gradlew`)
 * **NeoForge 1.21**
 
 ### Build Commands
 
 ```bash
-# Windows
-./gradlew compileJava    # Compile source code
-./gradlew build          # Compile & generate distribution JAR
+# Compile and run test suite
+./gradlew compileJava
+./gradlew test --rerun
 
-# Run Client / Server for testing
+# Run GameTests on headless test server
+./gradlew runGameTestServer
+
+# Build production JAR
+./gradlew build
+
+# Run Client / Server for local gameplay testing
 ./gradlew runClient
 ./gradlew runServer
 ```

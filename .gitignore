@@ -21,8 +21,9 @@ build
 eclipse
 run
 runs
-run-data
+logs/
 logs
+*.log
 
 repo
 .vscode

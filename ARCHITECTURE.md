@@ -1,21 +1,32 @@
 # NeoForge-Alpha: Mod-Architektur & Klassendesign
 
-Dieses Dokument beschreibt die Architektur, Datenflüsse und Klassenhierarchien des Spaceship- und Schutzschildsystems für **Minecraft 1.21 (NeoForge)** inklusive der Lifecycle- und Concurrency-Absicherungen aus `plan2`.
+Dieses Dokument beschreibt die Architektur, Datenflüsse, Klassenhierarchien und mathematischen Modelle des Spaceship-, Schutzschild- und Raumkampf-Systems für **Minecraft 1.21 (NeoForge)** inklusive aller Concurrency-, Lifecycle- und Edge-Case-Absicherungen.
 
 ---
 
 ## 1. Architektur-Übersicht & Design-Prinzipien
 
-Das System folgt einer strikten **MVC-/Service-Architektur** mit vollständiger Trennung zwischen logischem Server und Client:
+Das Gesamtsystem folgt einer strikten **Model-View-Controller (MVC) / Service-Architektur** mit vollständiger Entkopplung zwischen logischem Server und Client:
 
-* **Server (Domain & Services)**: Hält die Autorität über alle Schiffe (`ShipState`), persistiert nur echte Daten (`ShipSavedData`) und delegiert rechenintensive Aufgaben (Schild-Dilatation) an Java 21 Virtual Threads (`ShipMorphologyService`) mit unmodifizierbaren Snapshots (`getImmutableBlockSnapshot()`). Bewegungsoperationen nutzen ein Time-Slicing Tick-Budget (`ShipMovementService`) mit automatischem Chunk-Forceloading via Region-Tickets (`TicketType`).
-* **Network (Typisierte Payloads & Thread-Safety)**: Alle Netzwerkinteraktionen nutzen moderne `CustomPacketPayload`-Records mit deklarativen `StreamCodec`-Definitionen. Client-Payloads werden strikt über `context.enqueueWork()` auf dem Render-Main-Thread ausgeführt.
-* **Spatial Hashing & Lifecycle-Sync**: Schilde und Strukturdaten werden bei Chunk-Load abgeglichen. Falls Chunks auf dem Client noch nicht geladen sind, puffert `ClientShipManager` die Pakete in einer Pending-Queue (`PENDING_SYNCS`) und wendet sie bei `ChunkEvent.Load` verzögerungsfrei an.
-* **Client (View Model & VRAM Lifecycle)**: Der Client verwaltet seine Sicht auf Schiffe im `ClientShipManager` und rendert Schilde über VBOs (`VertexBuffer`) im `ClientShipState`. Beim Entladen von Chunks (`ChunkEvent.Unload`) oder Logout werden VRAM-Buffer über `RenderSystem.recordRenderCall()` bzw. `dispose()` sofort freigegeben, um Memory Leaks zu verhindern.
+1. **Server (Domain & Authoritative Services)**:
+   * Hält die alleinige Autorität über alle Schiffe (`ShipState`), persistiert ausschließlich reine Domain-Daten (`ShipSavedData`) und berechnet komplexe Schiffsgeometrien asynchron oder zeitbegrenzt.
+   * **Kampf- & Raycast-Mathematik (`com.peaceman.alpha.ship.combat.*`)**: Nutzt den **Amanatides-and-Woo 3D-DDA-Algorithmus** (`FastVoxelTraversal`) in Kombination mit einer zweistufigen Broadphase-/Narrowphase-Filterung (`LaserRaycastUtil`), um Strahlen kollisionsgenau in $O(\text{Ray-Länge})$ anstelle von $O(\text{Blockanzahl})$ zu berechnen.
+   * **Time-Sliced Mover (`ShipMovementService`)**: Führt translatorische Schiffsbewegungen mit einem festen **10ms Tick-Budget** pro Server-Tick aus und forceloaded Ziel-Chunks via `TicketType` (`SHIP_TICKET`).
+2. **Network (Deklarative StreamCodecs & Thread-Safety)**:
+   * Alle Netzwerkinteraktionen sind als unveränderliche `CustomPacketPayload`-Records mit Mojang/NeoForge `StreamCodec`-Composites implementiert.
+   * Client-Payloads werden strikt über `context.enqueueWork()` auf dem Render-Main-Thread synchronisiert.
+3. **Spatial Hashing & Lifecycle-Synchronisation**:
+   * Struktur- und Schilddaten werden via `ChunkWatchEvent.Sent` gezielt nur an Spieler gestreamt, die den entsprechenden Chunk laden.
+   * Wenn Chunks clientseitig noch nicht geladen sind, puffert `ClientShipManager` die Pakete in einer Queue (`PENDING_SYNCS`) und wendet sie bei `ChunkEvent.Load` verzögerungsfrei an.
+4. **Client (View Model, Predictive State & VRAM-Management)**:
+   * Verwaltet Client-Sichten in `ClientShipManager` und `ClientLaserState`.
+   * **Laserstrahlen-Rendering (`LaserBeamRenderer`)**: Rendert volumetrisch leuchtende Billboard-Strahlen mit additiver Farbüberlagerung (`GL_ONE`) und führt Client-Side-Surface-Clipping (`level.clip`) aus, sodass Strahlen exakt auf der Blockoberfläche terminieren.
+   * **Translations-Invarianz**: Kontinuierliche Laserstrahlen werden über relative Voxel-Offsets (`shooterShipId + "_" + relativePos.asLong()`) verwaltet, wodurch sie vor, während und nach Schiffsbewegungen absolut synchron bleiben.
+   * **VRAM-Freigabe**: Bei Chunk-Entladungen (`ChunkEvent.Unload`), Schiffsauflösung oder Logout werden VBOs und Laserstrahlen sofort freigegeben (`dispose()`).
 
 ---
 
-## 2. Detailliertes Mermaid Klassendiagramm
+## 2. Vollständiges Mermaid-Klassendiagramm
 
 ```mermaid
 classDiagram
@@ -36,13 +47,42 @@ classDiagram
             <<abstract>>
             +getShipId() UUID
             +setShipId(UUID shipId) void
-            +getUpdateTag(Provider registries) CompoundTag
-            +getUpdatePacket() ClientboundBlockEntityDataPacket
+        }
+
+        class AbstractLaserNodeBlockEntity {
+            <<abstract>>
+            +getTier() LaserWeaponTier
+            +isContinuous() boolean
+            +getFacing() Direction
+            +getCurrentDrillPos() BlockPos
+            +getDrillProgress() float
+            +addDrillProgress(float amount) void
+            +resetDrillProgress() void
+            +clearDrillProgress(Level level) void
+            +serverTick(Level level, BlockPos pos, BlockState state)* void
+        }
+
+        class PulseLaserBlockEntity {
+            -int cooldownRemaining
+            +canFire() boolean
+            +triggerCooldown() void
+        }
+
+        class HeavyBeamBlockEntity {
+            -boolean isFiring
+            +isFiring() boolean
+            +setFiring(boolean firing) void
+        }
+
+        class MiningLaserBlockEntity {
+            -boolean isMining
+            +isMining() boolean
+            +setMining(boolean mining) void
         }
 
         class ModAttachments {
-            +Supplier~AttachmentType~UUID~~ SHIP_ID
-            +register(IEventBus bus) void
+            +Supplier~AttachmentType~UUID~~ SHIP_ID$
+            +register(IEventBus bus)$ void
         }
 
         class ShipState {
@@ -52,17 +92,17 @@ classDiagram
             -Map~String, BlockPos~ homes
             -List~BlockPos~ reactors
             -List~BlockPos~ shields
+            -List~BlockPos~ weapons
             -boolean isShieldActive
-            +getId() UUID
-            +getControllerPos() BlockPos
-            +setControllerPos(BlockPos pos) void
-            +getBlocks() Set~BlockPos~
+            -long shieldCooldownUntil
+            -long movementCooldownUntil
+            -VoxelGridCache hullVoxelCache
+            -VoxelGridCache shieldVoxelCache
             +getImmutableBlockSnapshot() Set~BlockPos~
             +setBlocks(Set~BlockPos~ blocks, Level level) void
-            +isShieldActive() boolean
-            +setShieldActive(boolean active) void
-            +toggleShieldActive() void
-            +syncShieldBubbleToClients(Level level) void
+            +recalculateHullBounds() void
+            +isShieldOnCooldown(long gameTime) boolean
+            +isMovementOnCooldown(long gameTime) boolean
         }
 
         class ServerShipManager {
@@ -83,68 +123,67 @@ classDiagram
             +load(CompoundTag tag, Provider registries)$ ShipSavedData
         }
 
-        class ShipScannerService {
-            +MAX_SHIP_BLOCKS int$
-            +scan(Level level, BlockPos startPos)$ Set~BlockPos~
+        class LaserCombatService {
+            +fireWeapon(Level level, ShipState shooter, BlockPos weaponPos)$ boolean
+            +tickContinuousWeapon(Level level, ShipState shooter, BlockPos pos, AbstractLaserNodeBE be)$ void
+            -processPulseHit(Level level, ShipState shooter, LaserWeaponTier tier, RaycastHitResult hit)$ void
+            -processContinuousHit(Level level, ShipState shooter, BlockPos pos, AbstractLaserNodeBE be, LaserWeaponTier tier, RaycastHitResult hit)$ void
+            -destroyShipHullBlock(Level level, ShipState targetShip, BlockPos hitBlock, Vec3 worldHitPos)$ void
         }
 
-        class ShipMorphologyService {
-            +calculateShieldBubbleAsync(Set~BlockPos~ shipBlocks, int radius)$ CompletableFuture~Set~BlockPos~~
-            +performVolumetricDilation(Set~BlockPos~ immutableBlocks, int radius)$ Set~BlockPos~
-            +calculateAndSyncShieldAsync(ShipState ship, ServerLevel level, int radius)$ void
+        class LaserRaycastUtil {
+            +raycast(Level level, UUID shooterId, Vec3 origin, Vec3 dir, double maxRange, boolean hitTerrain)$ RaycastHitResult
+        }
+
+        class FastVoxelTraversal {
+            +traverse(VoxelGridCache cache, Vec3 localOrigin, Vec3 localDir, double maxDistance)$ Optional~VoxelHit~
+        }
+
+        class LaserWeaponTier {
+            <<enum>>
+            PULSE_LASER
+            HEAVY_BEAM
+            MINING_LASER
+            +getMaxRange() double
+            +getEnergyCost() int
+            +getBaseDamage() float
+            +getCooldownTicks() int
+        }
+
+        class RaycastHitResult {
+            <<record>>
+            +HitType type
+            +UUID hitShipId
+            +BlockPos relativeBlockPos
+            +BlockPos worldBlockPos
+            +Vec3 worldHitPos
+            +Direction hitFace
+            +double distance
+            +isHit() boolean
+            +isShipHit() boolean
+        }
+
+        class VoxelGridCache {
+            +BlockPos minOffset
+            +BitSet bitSet
+            +isSet(int x, int y, int z) boolean
+            +buildFromAbsolute(Collection~BlockPos~ abs, BlockPos ctrl)$ VoxelGridCache
         }
 
         class ShipMovementService {
             +TICK_BUDGET_NANOS long$
             +SHIP_TICKET TicketType~ChunkPos~$
-            -Queue~MovementTask~ PENDING_TASKS$
             +moveShip(Level level, ShipState ship, int dx, int dy, int dz, Player player)$ void
-            +prepareDestinationChunks(ServerLevel level, ShipState ship, Vec3 movementVector)$ Set~ChunkPos~
-            +releaseDestinationChunks(ServerLevel level, Set~ChunkPos~ loadedChunks)$ void
+            +isShipMoving(UUID shipId)$ boolean
             +onServerTick(ServerTickEvent.Post event)$ void
         }
 
         class SpaceshipEnergyManager {
-            +tryConsumeFlightEnergy(Level level, ShipState ship, int dx, int dy, int dz, Player player)$ boolean
+            +calculateMovementCost(ShipState ship, int dx, int dy, int dz)$ int
+            +getTotalAvailableEnergy(Level level, ShipState ship)$ int
+            +consumeEnergy(Level level, ShipState ship, int amount)$ void
             +tryConsumeEnergyAmount(Level level, ShipState ship, int amount)$ boolean
-        }
-
-        class SpaceshipNavigationManager {
-            +saveHome(Level level, ShipState ship, String homeName)$ void
-            +teleportToHome(Level level, ShipState ship, String homeName, Player player)$ void
-        }
-
-        class VoxelGridCache {
-            +BlockPos minOffset
-            +int sizeX
-            +int sizeY
-            +int sizeZ
-            +BitSet bitSet
-            +isSet(int x, int y, int z) boolean
-            +buildFromRelative(Collection~BlockPos~ rel)$ VoxelGridCache
-            +buildFromAbsolute(Collection~BlockPos~ abs, BlockPos ctrl)$ VoxelGridCache
-        }
-
-        class ShipCollisionService {
-            +calculateSweptAABB(AABB box, double dx, double dy, double dz)$ AABB
-            +calculateIntersection(AABB a, AABB b)$ Optional~AABB~
-            +findPotentialCollisions(ShipState movingShip, Vec3 moveVec)$ List~BroadPhaseCandidate~
-            +calculateVoxelIntersection(ShipState a, BlockPos origA, ShipState b, BlockPos origB, AABB box)$ VoxelCollisionResult
-        }
-
-        class CollisionResolver {
-            +resolve(ServerLevel level, VoxelCollisionResult collision, Vec3 moveVec)$ CollisionResolution
-        }
-
-        class SpaceshipShieldHandler {
-            +ENERGY_COST_PER_BLOCK int$
-            +DEFAULT_SHIELD_RADIUS int$
-            +hasShieldGenerator(ShipState ship)$ boolean
-            +getShieldRadius(ShipState ship)$ int
-            +toggleShield(Level level, ShipState ship)$ boolean
-            +onShieldBlockDestroyed(Level level, BlockPos pos, UUID shipId)$ void
-            +onBlockBreak(BreakEvent event)$ void
-            +onExplosion(ExplosionEvent.Detonate event)$ void
+            +tryConsumeFlightEnergy(Level level, ShipState ship, int dx, int dy, int dz, Player player)$ boolean
         }
     }
 
@@ -156,34 +195,32 @@ classDiagram
             +register(IEventBus bus)$ void
         }
 
-        class ShipActionPayload {
-            <<record>>
-            +ActionType actionType
-            +Optional~UUID~ shipId
-            +BlockPos pos
-            +int value
-            +String targetName
-        }
-
-        class ShipStructureSyncPayload {
+        class ShipCombatActionPayload {
             <<record>>
             +UUID shipId
-            +BlockPos controllerPos
-            +Set~BlockPos~ relativeBlocks
+            +CombatAction action
         }
 
-        class ShipStateSyncPayload {
+        class LaserFirePayload {
             <<record>>
-            +UUID shipId
-            +int currentEnergy
-            +boolean isShieldActive
+            +UUID shooterShipId
+            +Vec3 startPos
+            +Vec3 endPos
+            +LaserWeaponTier tier
         }
 
-        class ShieldBubbleSyncPacket {
+        class LaserStateSyncPayload {
+            <<record>>
+            +UUID shooterShipId
+            +BlockPos weaponPos
+            +boolean isFiring
+            +LaserWeaponTier tier
+        }
+
+        class ShipStructureDeltaPayload {
             <<record>>
             +UUID shipId
-            +BlockPos anchorPos
-            +Set~BlockPos~ relativeBubbleBlocks
+            +List~BlockPos~ removedBlocks
         }
 
         class ShipPositionSyncPayload {
@@ -192,15 +229,25 @@ classDiagram
             +BlockPos newAnchorPos
         }
 
+        class ShipStateSyncPayload {
+            <<record>>
+            +UUID shipId
+            +int currentEnergy
+            +boolean isShieldActive
+            +long shieldCooldownRemainingTicks
+            +long movementCooldownRemainingTicks
+        }
+
         class ServerPayloadHandler {
             +handleAction(ShipActionPayload payload, IPayloadContext context)$ void
+            +handleCombatAction(ShipCombatActionPayload payload, IPayloadContext context)$ void
         }
 
         class ClientPayloadHandler {
-            +handleShieldBubbleSync(ShieldBubbleSyncPacket packet, IPayloadContext context)$ void
-            +handleStructureSync(ShipStructureSyncPayload packet, IPayloadContext context)$ void
-            +handleStateSync(ShipStateSyncPayload packet, IPayloadContext context)$ void
+            +handleStructureDelta(ShipStructureDeltaPayload packet, IPayloadContext context)$ void
             +handlePositionSync(ShipPositionSyncPayload packet, IPayloadContext context)$ void
+            +handleLaserFire(LaserFirePayload packet, IPayloadContext context)$ void
+            +handleLaserStateSync(LaserStateSyncPayload packet, IPayloadContext context)$ void
         }
     }
 
@@ -211,105 +258,108 @@ classDiagram
         class ClientShipState {
             -UUID shipId
             -BlockPos anchorPos
-            -Set~BlockPos~ relativeBubbleBlocks
-            -Set~BlockPos~ relativeStructureBlocks
             -VertexBuffer shieldMesh
             -boolean isShieldActive
-            -boolean isDisposed
-            -Vec3 lastImpactPos
-            -float shieldEnergyPercentage
-            -long lastImpactTick
-            +getShipId() UUID
-            +getAnchorPos() BlockPos
-            +setAnchorPos(BlockPos pos) void
-            +getShieldMesh() VertexBuffer
-            +isShieldActive() boolean
-            +isDisposed() boolean
             +updateMesh(Set~BlockPos~ relativeBlocks) void
+            +removeStructureBlocks(List~BlockPos~ removed) void
             +dispose() void
-            +close() void
         }
 
-        class ClientShipManager {
-            -Map~UUID, ClientShipState~ ACTIVE_CLIENT_SHIPS$
-            -Map~ChunkPos, List~ShieldBubbleSyncPacket~~ PENDING_SYNCS$
-            +getOrCreateShip(UUID shipId)$ ClientShipState
-            +getShip(UUID shipId)$ ClientShipState
-            +getAllShips()$ Collection~ClientShipState~
-            +updateShieldBubble(UUID id, BlockPos anchor, Set~BlockPos~ bubble)$ void
-            +updateShipStructure(UUID id, BlockPos anchor, Set~BlockPos~ structure)$ void
-            +updateShipState(UUID id, int energy, boolean active)$ void
-            +addPendingSync(ShieldBubbleSyncPacket packet)$ void
-            +removeShip(UUID id)$ void
-            +clear()$ void
-            +onClientChunkLoad(ChunkEvent.Load event)$ void
-            +onClientChunkUnload(ChunkEvent.Unload event)$ void
-            +onClientLoggingOut(LoggingOut event)$ void
+        class ClientLaserState {
+            -CopyOnWriteArrayList~ActivePulseLaser~ ACTIVE_PULSES$
+            -Map~String, ActiveContinuousBeam~ ACTIVE_CONTINUOUS_BEAMS$
+            +addPulse(UUID shooterId, Vec3 start, Vec3 end, LaserWeaponTier tier)$ void
+            +setContinuousBeam(UUID shooterId, BlockPos weaponPos, boolean firing, LaserWeaponTier tier)$ void
+            +removeBeamsForShip(UUID shipId)$ void
+            +clearAll()$ void
+        }
+
+        class LaserBeamRenderer {
+            +onRenderLevelStage(RenderLevelStageEvent event)$ void
+            -drawBeam(BufferBuilder buffer, Matrix4f mat, Vec3 cam, Vec3 start, Vec3 end, LaserWeaponTier tier, float alpha)$ void
         }
 
         class ShieldRenderer {
             +renderShields(PoseStack stack, MultiBufferSource buffer, Camera camera, float partialTicks)$ void
-            +buildShieldMesh(Set~BlockPos~ bubbleBlocks)$ MeshData
-        }
-
-        class AbstractSpaceshipScreen {
-            <<abstract>>
-            #sendShipAction(ActionType type) void
-            #sendShipAction(ActionType type, int val, String target) void
-        }
-
-        class SpaceshipControlScreen {
-            +init() void
-            +render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) void
-        }
-
-        class SpaceshipHelmScreen {
-            +init() void
-            +render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) void
         }
     }
 
-    %% ==========================================
-    %% RELATIONSHIPS & DEPENDENCIES
-    %% ==========================================
+    %% Relationships
     AbstractSpaceshipNodeBlockEntity ..|> ISpaceshipNode : implements
-    AbstractSpaceshipNodeBlockEntity ..> ModAttachments : uses AttachmentType
+    AbstractLaserNodeBlockEntity --|> AbstractSpaceshipNodeBlockEntity : extends
+    PulseLaserBlockEntity --|> AbstractLaserNodeBlockEntity : extends
+    HeavyBeamBlockEntity --|> AbstractLaserNodeBlockEntity : extends
+    MiningLaserBlockEntity --|> AbstractLaserNodeBlockEntity : extends
+
     ServerShipManager o-- "0..*" ShipState : manages
-    ServerShipManager ..> ShipSavedData : persists via
-    ServerShipManager ..> ShipScannerService : scans with
-    ShipState ..> ShipMorphologyService : requests async calculation (Immutable Snapshot)
-    ServerShipManager ..> ShipMovementService : time-sliced mover with chunk tickets
-    SpaceshipNavigationManager ..> ShipMovementService : delegates travel
-    SpaceshipNavigationManager ..> ServerShipManager : saves waypoint
+    ShipState o-- "0..1" VoxelGridCache : holds
+    LaserCombatService ..> LaserRaycastUtil : raycasts via
+    LaserRaycastUtil ..> FastVoxelTraversal : 3D-DDA
+    LaserRaycastUtil ..> RaycastHitResult : evaluates
+    LaserCombatService ..> SpaceshipEnergyManager : drains FE
 
-    %% Server to Network
-    ServerShipManager ..> ShipStructureSyncPayload : dispatches (Spatial Hashing)
-    ServerShipManager ..> ShipStateSyncPayload : dispatches (Delta Telemetry)
-    ShipMorphologyService ..> ShieldBubbleSyncPacket : dispatches
-    ServerPayloadHandler ..> ServerShipManager : invokes CRUD
-    ServerPayloadHandler ..> ShipMovementService : invokes movement
+    ServerPayloadHandler ..> LaserCombatService : triggers combat
+    LaserCombatService ..> LaserFirePayload : broadcasts
+    LaserCombatService ..> LaserStateSyncPayload : broadcasts
+    LaserCombatService ..> ShipStructureDeltaPayload : broadcasts
 
-    %% Network to Client
-    ClientPayloadHandler ..> ClientShipManager : updates (enqueued to Main Thread)
-    ClientShipManager *-- "0..*" ClientShipState : contains
-    ClientShipState o-- "0..1" VertexBuffer : owns (VRAM)
-    ShieldRenderer ..> ClientShipManager : reads view models
-
-    %% UI to Network
-    AbstractSpaceshipScreen <|-- SpaceshipControlScreen : extends
-    AbstractSpaceshipScreen <|-- SpaceshipHelmScreen : extends
-    AbstractSpaceshipScreen ..> ShipActionPayload : sends to server
+    ClientPayloadHandler ..> ClientLaserState : updates state
+    ClientPayloadHandler ..> ClientShipManager : updates meshes
+    LaserBeamRenderer ..> ClientLaserState : reads beams
+    LaserBeamRenderer ..> ClientShipManager : resolves anchors
+    ClientShipManager *-- "0..*" ClientShipState : holds
 ```
 
 ---
 
-## 3. Datenfluss & Lebenszyklus-Matrix
+## 3. Mathematische Modelle & Algorithmen
 
-| Aktion | Auslöser / Schicht | Ausführung | Netzwerk / Persistenz |
+### A. Amanatides & Woo 3D-DDA Voxel-Traversierung (`FastVoxelTraversal`)
+Zur Erkennung von Treffern auf zusammenhängenden Schiffsvoxeln wird der 3D Digital Differential Analyzer eingesetzt:
+1. **Ray-Parametrisierung**: Der Strahl wird im Local-Space des Zielschiffs über $R(t) = \vec{o} + t \cdot \vec{d}$ beschrieben.
+2. **Initialisierung von $t_{\text{max}}$ und $\Delta t$**:
+   $$\Delta t_x = \left|\frac{1}{d_x}\right|, \quad t_{\text{max}, x} = t_{\text{start}} + (\lfloor x_0 \rfloor + 1 - x_0) \cdot \Delta t_x \quad (\text{für } d_x > 0)$$
+3. **Schrittweiser Voxel-Vorschub**: In jedem Schritt wird die Achse mit dem kleinsten $t_{\text{max}}$ inkrementiert und die entsprechende Eintrittsfläche (`Direction`) festgehalten:
+   $$t_{\text{max}, x} < t_{\text{max}, y} \land t_{\text{max}, x} < t_{\text{max}, z} \implies x \leftarrow x + \text{step}_x, \quad \text{face} \leftarrow \text{WEST/EAST}$$
+4. **Schutzgrenze**: Feste Obergrenze von maximal 1024 Iterationsschritten gegen Endlosschleifen bei extremen Distanzen.
+
+### B. Progressiver Blockabbau & Zerstörungs-Skalierung
+Dauerstrahlen (`HeavyBeam`, `MiningLaser`) berechnen den Zerstörungsfortschritt pro Server-Tick dynamisch anhand der Blockhärte $H = \text{DestroySpeed}$:
+$$\Delta \text{Progress} = \frac{k_{\text{tier}}}{\max(0.5, H)}$$
+* **Mining Laser**: $k_{\text{tier}} = 0.25$ (z. B. Stein mit $H=1.5 \implies \Delta P = 0.166 \implies 6\text{ Ticks} = 0.3\text{s}$).
+* **Heavy Beam**: $k_{\text{tier}} = 0.15$ (z. B. Stein $\implies 10\text{ Ticks} = 0.5\text{s}$).
+* **Optische Rückkopplung**: Der Server synchronisiert den Fortschritt über `level.destroyBlockProgress(id, pos, (int)(P \cdot 10))` direkt an alle Clients.
+
+---
+
+## 4. Datenfluss & Lebenszyklus-Matrix
+
+| Aktion | Auslöser / Schicht | Ausführung | Netzwerk / Persistenz / Render |
 | :--- | :--- | :--- | :--- |
-| **Schiff registrieren** | Spieler klickt UI `CREATE` | `ServerPayloadHandler` -> `ServerShipManager.createShip()` | Scan via `ShipScannerService`, UUID-Attachment via `ModAttachments.SHIP_ID`, Speichern via `ShipSavedData.setDirty()`. |
-| **Schild-Berechnung** | Schildblock platziert / Scan | `ShipState.syncShieldBubbleToClients()` -> `ShipMorphologyService` | Erstellt `getImmutableBlockSnapshot()`, berechnet asynchron auf Java 21 **Virtual Threads**, sendet `ShieldBubbleSyncPacket` thread-sicher via Server-Main-Thread. |
-| **Schild-Rendering** | Render-Frame (Client) | `ShieldRenderer.renderShields()` | Liest ausschließlich aus `ClientShipManager` / `ClientShipState.getShieldMesh()` (direkter VRAM VBO Zugriff). |
-| **Näherungs-Sync & Chunk-Handling** | Chunk lädt für Spieler | `ClientPayloadHandler` -> `ClientShipManager` | Falls Chunk geladen: Mesh sofort gebaut. Falls nicht geladen: In `PENDING_SYNCS` gepuffert und bei `ChunkEvent.Load` angewendet. |
-| **VRAM Freigabe** | Chunk entlädt / Ship zerstört | `ClientShipManager.onClientChunkUnload()` | Ruft `ClientShipState.dispose()`, schließt VBO über `RenderSystem.recordRenderCall()` sofort im Render-Kontext. |
-| **Schiffsbewegung & Forceloading** | Spieler steuert Schiff | `ShipMovementService.moveShip()` | Forceloaded Ziel-Chunks mit `SHIP_TICKET`, rechnet im `ServerTickEvent.Post` mit max. **10ms Tick-Budget** pro Tick und gibt Tickets nach Abschluss wieder frei. |
+| **Impuls-Laser abfeuern** | Pilot drückt `FIRE_PULSE` | `ServerPayloadHandler` $\rightarrow$ `LaserCombatService.fireWeapon()` | Zieht 250 FE ab, raycastet via `LaserRaycastUtil`. Zerstört 1 Block sofort (`destroyBlock` bzw. `SHIP_HULL`-Delta). Sendet `LaserFirePayload`. |
+| **Dauerstrahl umschalten** | Pilot drückt `TOGGLE_HEAVY_BEAM` | `ServerPayloadHandler` $\rightarrow$ `LaserCombatService.fireWeapon()` | Schaltet `isFiring` im BE um, sendet `LaserStateSyncPayload`. BE konsumiert im `serverTick` 50 FE/Tick und führt progressiven Abbau durch. |
+| **Energiemangel bei Dauerfeuer** | Reaktor leer (`tryConsumeEnergyAmount == false`) | `HeavyBeamBlockEntity.serverTick()` | Schaltet sich sofort ab (`setFiring(false)`), bricht Drill ab und sendet `LaserStateSyncPayload(isFiring = false)`. |
+| **Schiffstranslation mit aktiven Lasern** | Navigation / Helm `MOVE` | `ShipMovementService.moveShip()` | Verschiebt Blöcke und Waffen (`newWeapons`). Ignoriert Deaktivierung in `onRemove` via `isShipMoving()`. Client-Map-Key (`relativePos.asLong()`) bleibt translations-invariant. |
+| **Laser-Rendering (Client)** | Render-Frame (`AFTER_TRANSLUCENT_BLOCKS`) | `LaserBeamRenderer.onRenderLevelStage()` | Berechnet Strahlenursprung aus Schiffsanker + relativem Offset. Führt `level.clip()` aus $\rightarrow$ Strahl stoppt exakt auf der Blockoberfläche. Rendert Quads additiv (`GL_ONE`). |
+| **VRAM & Laser-Freigabe** | Chunk entlädt / Schiff gelöscht / Logout | `ClientShipManager` & `ClientLaserState` | `ClientLaserState.removeBeamsForShip(shipId)` räumt Laser auf; `ClientShipState.dispose()` schließt VBOs im GL-Thread. |
+
+---
+
+## 5. Testing-Architektur & CI/CD Pipeline
+
+Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
+
+1. **JUnit 5 & Mockito Suite (33 Tests, 100% Erfolgsquote)**:
+   * **`ShipCollisionMathTest`**: Continuous Swept-AABB Extrusion & BitSet-Linearisierung.
+   * **`ShipStateTest`**: Domain-Zustand, AABB-Neuberechnung, Controller-Translation, Cooldown-Arithmetik.
+   * **`CombatLogicTest`**: 3D-DDA Ray-Traversal, Normalenflächen (`WEST`, `DOWN`), Fehlschuss- & Reichweitenbegrenzung, Tier-Konfigurationen.
+   * **`PayloadSerializationTest`**: Symmetrische Serialisierung aller 10 Custom-Payloads via `FriendlyByteBuf` & `StreamCodecs`.
+   * **`SpaceshipEnergyManagerTest`**: Multi-Reaktor-Bündelung, sequenzieller FE-Drain, Transaktionssicherheit (Rollback).
+2. **NeoForge GameTests (`@GameTestHolder`)**:
+   * **`ShipScannerGameTests`**: Validierung des BFS-Scanners, Ausschluss diagonaler Blöcke, Multiblock-Ergänzung (Türen).
+   * **`ShipMovementGameTests`**: Physische Schiffstranslation im Testlevel mit `AIR`-Hinterlassung und Zielblock-Präsenz.
+   * **`ShipAttachmentGameTests`**: Persistenz von `ModAttachments.SHIP_ID` an BlockEntities.
+   * **`SpaceshipGameTests`**: Schiffserstellung über Kontrollblöcke.
+3. **GitHub Actions CI/CD Pipeline (`.github/workflows/ci.yml`)**:
+   * Vollautomatischer Workflow für `push` und `pull_request` auf `main`.
+   * Sequenzielle Pipeline: `compileJava` $\rightarrow$ `test` $\rightarrow$ `runGameTestServer` $\rightarrow$ `build` $\rightarrow$ Artefakt-Upload (`peaceman_alpha-*.jar`).
