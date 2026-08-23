@@ -356,6 +356,37 @@ classDiagram
         }
     }
 
+    %% ==========================================
+    %% DATA GENERATION PIPELINE
+    %% ==========================================
+    namespace Data_Generation {
+        class DataGenerators {
+            +gatherData(GatherDataEvent event)$ void
+        }
+
+        class ModBlockStateProvider {
+            +registerStatesAndModels() void
+            -registerLaserBase(Block block, ModelFile baseModel) void
+        }
+
+        class ModItemModelProvider {
+            +registerModels() void
+        }
+
+        class ModLanguageProvider {
+            +addTranslations() void
+        }
+
+        class ModLootTableProvider {
+            +create(PackOutput output, CompletableFuture lookupProvider)$ LootTableProvider
+        }
+
+        class ModBlockLootTableProvider {
+            +generate() void
+            +getKnownBlocks() Iterable~Block~
+        }
+    }
+
     %% Relationships
     AbstractSpaceshipNodeBlockEntity ..|> ISpaceshipNode : implements
     AbstractLaserNodeBlockEntity --|> AbstractSpaceshipNodeBlockEntity : extends
@@ -380,6 +411,12 @@ classDiagram
     LaserBeamRenderer ..> ClientLaserState : reads beams
     LaserBeamRenderer ..> ClientShipManager : resolves anchors
     ClientShipManager *-- "0..*" ClientShipState : holds
+
+    DataGenerators ..> ModBlockStateProvider : instantiates client
+    DataGenerators ..> ModItemModelProvider : instantiates client
+    DataGenerators ..> ModLanguageProvider : instantiates client
+    DataGenerators ..> ModLootTableProvider : instantiates server
+    ModLootTableProvider ..> ModBlockLootTableProvider : creates
 ```
 
 ---
@@ -421,12 +458,19 @@ $$\Delta \text{Progress} = \frac{k_{\text{tier}}}{\max(0.5, H)}$$
 
 Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
 
-1. **JUnit 5 & Mockito Suite (33 Tests, 100% Erfolgsquote)**:
+1. **JUnit 5 & Mockito Suite (48 Tests, 100% Erfolgsquote)**:
+   * **`DataGeneratorsTest`**: Event-Handling für `GatherDataEvent`, Client/Server-Provider-Registrierung und HolderLookup-Lifecycle.
+   * **`ModBlockStateProviderTest`**: 6-Achsen Euler-Winkel-Transformation (`rotX`, `rotY`) für `FACING` Split-Modell Basisplatten und `cubeAll` Generierung.
+   * **`ModItemModelProviderTest`**: Parent-Referenzen auf Block-Basen (`laser_base`) und 2D-Item-Modelle (`backflip_tool`).
+   * **`ModLanguageProviderTest`**: Symmetrische I18n- und L10n-Übersetzungen für `en_us` und `de_de`.
+   * **`ModLootTableProviderTest`**: `BlockLootSubProvider` Factory, Self-Drop-Logik und Vollständigkeitsprüfung via `getKnownBlocks()`.
    * **`ShipCollisionMathTest`**: Continuous Swept-AABB Extrusion & BitSet-Linearisierung.
    * **`ShipStateTest`**: Domain-Zustand, AABB-Neuberechnung, Controller-Translation, Cooldown-Arithmetik.
    * **`CombatLogicTest`**: 3D-DDA Ray-Traversal, Normalenflächen (`WEST`, `DOWN`), Fehlschuss- & Reichweitenbegrenzung, Tier-Konfigurationen.
    * **`PayloadSerializationTest`**: Symmetrische Serialisierung aller 10 Custom-Payloads via `FriendlyByteBuf` & `StreamCodecs`.
    * **`SpaceshipEnergyManagerTest`**: Multi-Reaktor-Bündelung, sequenzieller FE-Drain, Transaktionssicherheit (Rollback).
+   * **`AimTransformMathTest`**: Quaternion-Transformationen, Euler-Winkel-Konvertierung, 16-Bit Kompression und GimbalLimits.
+   * **`TurretSeatTest`**: TurretSeat DTO Attribute, NBT-Persistenz und Aim-Lock-Status.
 2. **NeoForge GameTests (`@GameTestHolder`)**:
    * **`ShipScannerGameTests`**: Validierung des BFS-Scanners, Ausschluss diagonaler Blöcke, Multiblock-Ergänzung (Türen).
    * **`ShipMovementGameTests`**: Physische Schiffstranslation im Testlevel mit `AIR`-Hinterlassung und Zielblock-Präsenz.

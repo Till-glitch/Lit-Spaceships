@@ -319,6 +319,37 @@ classDiagram
         }
     }
 
+    %% ==========================================
+    %% DATA GENERATION PIPELINE
+    %% ==========================================
+    namespace Data_Generation {
+        class DataGenerators {
+            +gatherData(GatherDataEvent event)$ void
+        }
+
+        class ModBlockStateProvider {
+            +registerStatesAndModels() void
+            -registerLaserBase(Block block, ModelFile baseModel) void
+        }
+
+        class ModItemModelProvider {
+            +registerModels() void
+        }
+
+        class ModLanguageProvider {
+            +addTranslations() void
+        }
+
+        class ModLootTableProvider {
+            +create(PackOutput output, CompletableFuture lookupProvider)$ LootTableProvider
+        }
+
+        class ModBlockLootTableProvider {
+            +generate() void
+            +getKnownBlocks() Iterable~Block~
+        }
+    }
+
     %% Relationships
     AbstractSpaceshipNodeBlockEntity ..|> ISpaceshipNode : implements
     AbstractLaserNodeBlockEntity --|> AbstractSpaceshipNodeBlockEntity : extends
@@ -343,3 +374,9 @@ classDiagram
     LaserBeamRenderer ..> ClientLaserState : reads beams
     LaserBeamRenderer ..> ClientShipManager : resolves anchors
     ClientShipManager *-- "0..*" ClientShipState : holds
+
+    DataGenerators ..> ModBlockStateProvider : instantiates client
+    DataGenerators ..> ModItemModelProvider : instantiates client
+    DataGenerators ..> ModLanguageProvider : instantiates client
+    DataGenerators ..> ModLootTableProvider : instantiates server
+    ModLootTableProvider ..> ModBlockLootTableProvider : creates
