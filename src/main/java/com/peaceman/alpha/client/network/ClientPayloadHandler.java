@@ -103,4 +103,31 @@ public class ClientPayloadHandler {
             });
         }
     }
+
+    public static void handleTurretAim(final com.peaceman.alpha.network.TurretAimPayload packet, final IPayloadContext context) {
+        if (context.flow().isClientbound()) {
+            context.enqueueWork(() -> {
+                net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+                if (mc.level != null && mc.level.getBlockEntity(packet.weaponPos()) instanceof com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity laserBE) {
+                    float yaw = com.peaceman.alpha.ship.combat.aim.AimTransformMath.decompressAngle(packet.compressedYaw());
+                    float pitch = com.peaceman.alpha.ship.combat.aim.AimTransformMath.decompressAngle(packet.compressedPitch());
+                    laserBE.setAimAngles(new com.peaceman.alpha.ship.combat.aim.AimAngles(yaw, pitch));
+                }
+            });
+        }
+    }
+
+    public static void handleTurretAimSync(final com.peaceman.alpha.network.TurretAimSyncPayload packet, final IPayloadContext context) {
+        if (context.flow().isClientbound()) {
+            context.enqueueWork(() -> {
+                net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+                if (mc.level != null && mc.level.getBlockEntity(packet.weaponPos()) instanceof com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity laserBE) {
+                    // Aktualisiere nur, wenn der lokale Spieler nicht gerade selbst in diesem Turm sitzt und ihn steuert
+                    if (mc.player == null || !(mc.player.getVehicle() instanceof com.peaceman.alpha.entity.TurretSeatEntity seat && packet.weaponPos().equals(seat.getWeaponPos()))) {
+                        laserBE.setAimAngles(new com.peaceman.alpha.ship.combat.aim.AimAngles(packet.yaw(), packet.pitch()));
+                    }
+                }
+            });
+        }
+    }
 }

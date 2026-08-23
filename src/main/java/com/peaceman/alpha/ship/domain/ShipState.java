@@ -29,6 +29,7 @@ public class ShipState {
     private boolean isShieldActive = true;
     private ResourceKey<Level> dimension = Level.OVERWORLD;
     private volatile boolean isJumping = false;
+    private volatile org.joml.Quaternionf rotation = new org.joml.Quaternionf();
 
     // Cooldown-Timer (absolute Weltzeit via level.getGameTime())
     public static final long SHIELD_COOLDOWN_TICKS = 200L;    // 10 Sekunden
@@ -329,6 +330,14 @@ public class ShipState {
 
     public void setShieldVoxelCache(VoxelGridCache shieldVoxelCache) {
         this.shieldVoxelCache = shieldVoxelCache != null ? shieldVoxelCache : VoxelGridCache.EMPTY;
+    }
+
+    public org.joml.Quaternionf getRotation() {
+        return this.rotation != null ? this.rotation : new org.joml.Quaternionf();
+    }
+
+    public void setRotation(org.joml.Quaternionf rotation) {
+        this.rotation = rotation != null ? rotation : new org.joml.Quaternionf();
     }
 
     /**

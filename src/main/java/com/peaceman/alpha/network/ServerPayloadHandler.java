@@ -127,4 +127,85 @@ public class ServerPayloadHandler {
             }
         });
     }
+
+    public static void handleTurretAim(final TurretAimPayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> {
+            Player player = context.player();
+            if (player == null || !(player.level() instanceof net.minecraft.server.level.ServerLevel serverLevel)) return;
+
+            var pos = payload.weaponPos();
+            if (pos == null) return;
+
+            if (serverLevel.getBlockEntity(pos) instanceof com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity laserBE) {
+                if (player.getVehicle() instanceof com.peaceman.alpha.entity.TurretSeatEntity seat && pos.equals(seat.getWeaponPos())) {
+                    float yaw = com.peaceman.alpha.ship.combat.aim.AimTransformMath.decompressAngle(payload.compressedYaw());
+                    float pitch = com.peaceman.alpha.ship.combat.aim.AimTransformMath.decompressAngle(payload.compressedPitch());
+
+                    laserBE.setAimAngles(new com.peaceman.alpha.ship.combat.aim.AimAngles(yaw, pitch));
+
+                    net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingChunk(
+                            serverLevel, new net.minecraft.world.level.ChunkPos(pos), payload
+                    );
+                }
+            }
+        });
+    }
+
+    public static void handleTurretAimSync(final TurretAimSyncPayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> {
+            Player player = context.player();
+            if (player == null || !(player.level() instanceof net.minecraft.server.level.ServerLevel serverLevel)) return;
+
+            var pos = payload.weaponPos();
+            if (pos == null) return;
+
+            if (serverLevel.getBlockEntity(pos) instanceof com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity laserBE) {
+                if (player.getVehicle() instanceof com.peaceman.alpha.entity.TurretSeatEntity seat && pos.equals(seat.getWeaponPos())) {
+                    com.peaceman.alpha.helper.TurretDebugLogger.logServerAimReceived(player.getName().getString(), pos, payload.yaw(), payload.pitch(), laserBE.isAimLocked());
+                    if (!laserBE.isAimLocked()) {
+                        laserBE.setAimAngles(new com.peaceman.alpha.ship.combat.aim.AimAngles(payload.yaw(), payload.pitch()));
+
+                        net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingChunk(
+                                serverLevel, new net.minecraft.world.level.ChunkPos(pos), payload
+                        );
+                    }
+                }
+            }
+        });
+    }
+
+    public static void handleTurretLockToggle(final TurretLockTogglePayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> {
+            Player player = context.player();
+            if (player == null || !(player.level() instanceof net.minecraft.server.level.ServerLevel serverLevel)) return;
+
+            var pos = payload.weaponPos();
+            if (pos == null) return;
+
+            if (serverLevel.getBlockEntity(pos) instanceof com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity laserBE) {
+                if (player.getVehicle() instanceof com.peaceman.alpha.entity.TurretSeatEntity seat && pos.equals(seat.getWeaponPos())) {
+                    boolean newLock = !laserBE.isAimLocked();
+                    laserBE.setAimLocked(newLock);
+                    com.peaceman.alpha.helper.TurretDebugLogger.logServerLockToggled(player.getName().getString(), pos, newLock);
+
+                    // 1. Akustisches Feedback über Server an alle nahegelegenen Spieler
+                    net.minecraft.sounds.SoundEvent sound = newLock ? net.minecraft.sounds.SoundEvents.IRON_TRAPDOOR_CLOSE : net.minecraft.sounds.SoundEvents.IRON_TRAPDOOR_OPEN;
+                    serverLevel.playSound(null, pos, sound, net.minecraft.sounds.SoundSource.BLOCKS, 1.0f, 1.2f);
+
+                    // 2. Action-Bar Benachrichtigung an den Spieler
+                    if (newLock) {
+                        player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+                                String.format("§a[Geschützturm] Ausrichtung eingeloggt (Yaw: %.1f°, Pitch: %.1f°) - Linksklick zum Entsperren",
+                                        laserBE.getTargetYaw(), laserBE.getTargetPitch())), true);
+                    } else {
+                        player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+                                "§e[Geschützturm] Ausrichtung freigegeben (Freelook aktiv)"), true);
+                    }
+
+                    // 3. Synchronisiere aktuellen BE-Zustand an alle Clients
+                    serverLevel.sendBlockUpdated(pos, laserBE.getBlockState(), laserBE.getBlockState(), 3);
+                }
+            }
+        });
+    }
 }

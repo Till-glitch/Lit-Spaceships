@@ -23,12 +23,59 @@ classDiagram
             +getTier() LaserWeaponTier
             +isContinuous() boolean
             +getFacing() Direction
+            +getTargetYaw() float
+            +getTargetPitch() float
+            +getAimAngles() AimAngles
+            +setAimAngles(AimAngles angles) void
+            +isOccupied() boolean
+            +setOccupied(boolean occupied) void
+            +isAimLocked() boolean
+            +setAimLocked(boolean locked) void
+            +getGimbalLimits() GimbalLimits
             +getCurrentDrillPos() BlockPos
             +getDrillProgress() float
             +addDrillProgress(float amount) void
             +resetDrillProgress() void
             +clearDrillProgress(Level level) void
             +serverTick(Level level, BlockPos pos, BlockState state)* void
+        }
+
+        class IAimStrategy {
+            <<interface>>
+            +getType() AimType
+            +requiresPassengerSeat() boolean
+            +calculateAimAngles(ShipState ship, BlockPos weaponPos, Player player, GimbalLimits limits) AimAngles
+        }
+
+        class FreelookAimStrategy {
+            +calculateAimAngles(ShipState ship, BlockPos weaponPos, Player player, GimbalLimits limits) AimAngles
+        }
+
+        class AimTransformMath {
+            +calculateWorldLookVector(float yaw, float pitch)$ Vec3
+            +transformWorldToLocal(Vec3 worldVec, Quaternionf rot)$ Vec3
+            +transformLocalToWorld(Vec3 localVec, Quaternionf rot)$ Vec3
+            +vectorToLocalEuler(Vec3 localVec)$ AimAngles
+            +localEulerToVector(float yaw, float pitch)$ Vec3
+            +compressAngle(float angle)$ short
+            +decompressAngle(short compressed)$ float
+            +interpolateAngle(float prev, float curr, float partialTick)$ float
+        }
+
+        class GimbalLimits {
+            <<record>>
+            +float minYaw
+            +float maxYaw
+            +float minPitch
+            +float maxPitch
+            +clamp(AimAngles angles) AimAngles
+        }
+
+        class TurretSeatEntity {
+            -BlockPos weaponPos
+            -UUID shipId
+            +getWeaponPos() BlockPos
+            +getShipId() UUID
         }
 
         class PulseLaserBlockEntity {
@@ -201,9 +248,23 @@ classDiagram
             +long movementCooldownRemainingTicks
         }
 
+        class TurretAimSyncPayload {
+            <<record>>
+            +BlockPos weaponPos
+            +float yaw
+            +float pitch
+        }
+
+        class TurretLockTogglePayload {
+            <<record>>
+            +BlockPos weaponPos
+        }
+
         class ServerPayloadHandler {
             +handleAction(ShipActionPayload payload, IPayloadContext context)$ void
             +handleCombatAction(ShipCombatActionPayload payload, IPayloadContext context)$ void
+            +handleTurretAimSync(TurretAimSyncPayload payload, IPayloadContext context)$ void
+            +handleTurretLockToggle(TurretLockTogglePayload payload, IPayloadContext context)$ void
         }
 
         class ClientPayloadHandler {
@@ -211,6 +272,7 @@ classDiagram
             +handlePositionSync(ShipPositionSyncPayload packet, IPayloadContext context)$ void
             +handleLaserFire(LaserFirePayload packet, IPayloadContext context)$ void
             +handleLaserStateSync(LaserStateSyncPayload packet, IPayloadContext context)$ void
+            +handleTurretAimSync(TurretAimSyncPayload packet, IPayloadContext context)$ void
         }
     }
 
@@ -244,6 +306,16 @@ classDiagram
 
         class ShieldRenderer {
             +renderShields(PoseStack stack, MultiBufferSource buffer, Camera camera, float partialTicks)$ void
+        }
+
+        class TurretDebugLogger {
+            +logMount(String player, BlockPos pos, UUID shipId, boolean isClient)$ void
+            +logDismount(String player, BlockPos pos, boolean isClient)$ void
+            +logClientAimSent(BlockPos pos, float yaw, float pitch)$ void
+            +logClientLockTriggered(BlockPos pos, String src)$ void
+            +logServerAimReceived(String player, BlockPos pos, float yaw, float pitch, boolean locked)$ void
+            +logServerLockToggled(String player, BlockPos pos, boolean newLock)$ void
+            +logCombatAim(BlockPos pos, float yaw, float pitch, double dx, double dy, double dz)$ void
         }
     }
 

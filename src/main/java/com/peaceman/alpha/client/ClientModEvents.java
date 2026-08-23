@@ -15,4 +15,11 @@ public class ClientModEvents {
     public static void registerScreens(RegisterMenuScreensEvent event) {
         event.register(ModMenuTypes.REACTOR_MENU.get(), SpaceshipReactorScreen::new);
     }
+
+    @SubscribeEvent
+    public static void registerRenderers(net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers event) {
+        event.registerBlockEntityRenderer(com.peaceman.alpha.registry.ModBlockEntities.PULSE_LASER_BE.get(), com.peaceman.alpha.client.render.TurretBlockEntityRenderer::new);
+        event.registerBlockEntityRenderer(com.peaceman.alpha.registry.ModBlockEntities.MINING_LASER_BE.get(), com.peaceman.alpha.client.render.TurretBlockEntityRenderer::new);
+        event.registerEntityRenderer(com.peaceman.alpha.registry.ModEntities.TURRET_SEAT.get(), com.peaceman.alpha.client.render.TurretSeatRenderer::new);
+    }
 }

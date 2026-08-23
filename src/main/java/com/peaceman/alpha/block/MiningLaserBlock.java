@@ -59,6 +59,24 @@ public class MiningLaserBlock extends BaseEntityBlock {
         return new MiningLaserBlockEntity(pos, state);
     }
 
+    @Override
+    public net.minecraft.world.InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, net.minecraft.world.entity.player.Player player, net.minecraft.world.phys.BlockHitResult hit) {
+        if (!level.isClientSide()) {
+            if (level.getBlockEntity(pos) instanceof MiningLaserBlockEntity laserBE) {
+                if (laserBE.isOccupied()) {
+                    player.displayClientMessage(net.minecraft.network.chat.Component.literal("Dieser Geschützturm ist bereits belegt!"), true);
+                    return net.minecraft.world.InteractionResult.CONSUME;
+                }
+
+                com.peaceman.alpha.entity.TurretSeatEntity seat = new com.peaceman.alpha.entity.TurretSeatEntity(level, pos, laserBE.getShipId());
+                level.addFreshEntity(seat);
+                player.startRiding(seat, true);
+                laserBE.setOccupied(true);
+            }
+        }
+        return net.minecraft.world.InteractionResult.sidedSuccess(level.isClientSide());
+    }
+
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {

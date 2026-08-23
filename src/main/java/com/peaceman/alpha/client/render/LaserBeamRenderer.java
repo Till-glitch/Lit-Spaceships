@@ -97,7 +97,13 @@ public class LaserBeamRenderer {
                 }
             }
 
-            Vec3 dir = Vec3.atLowerCornerOf(facing.getNormal()).normalize();
+            Vec3 dir;
+            if (level.getBlockEntity(weaponWorldPos) instanceof com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity laserBE) {
+                dir = Vec3.directionFromRotation(laserBE.getTargetPitch(), laserBE.getTargetYaw());
+            } else {
+                dir = Vec3.atLowerCornerOf(facing.getNormal()).normalize();
+            }
+
             Vec3 start = Vec3.atCenterOf(weaponWorldPos).add(dir.scale(0.55));
             Vec3 maxTarget = start.add(dir.scale(entry.tier().getMaxRange()));
 

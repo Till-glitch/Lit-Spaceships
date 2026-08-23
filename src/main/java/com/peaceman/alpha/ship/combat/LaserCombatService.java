@@ -54,9 +54,8 @@ public class LaserCombatService {
             }
             pulseBe.triggerCooldown();
 
-            // Schuss-Ursprung und Ausrichtung berechnen
-            Direction facing = laserBe.getFacing();
-            Vec3 dir = Vec3.atLowerCornerOf(facing.getNormal()).normalize();
+            // Schuss-Ursprung und dynamische Ausrichtung berechnen
+            Vec3 dir = calculateAimDirection(laserBe, shooterShip);
             Vec3 origin = Vec3.atCenterOf(weaponPos).add(dir.scale(0.55));
 
             // Raycast durchführen (trifft Schiffe und Terrain)
@@ -108,14 +107,20 @@ public class LaserCombatService {
         }
 
         LaserWeaponTier tier = laserBe.getTier();
-        Direction facing = laserBe.getFacing();
-        Vec3 dir = Vec3.atLowerCornerOf(facing.getNormal()).normalize();
+        Vec3 dir = calculateAimDirection(laserBe, shooterShip);
         Vec3 origin = Vec3.atCenterOf(weaponPos).add(dir.scale(0.55));
 
         // Strahlverfolgung gegen alle Blöcke und Schiffe
         RaycastHitResult hit = LaserRaycastUtil.raycast(level, shooterShip.getId(), origin, dir, laserBe.getMaxRange(), true);
 
         processContinuousHit(level, shooterShip, weaponPos, laserBe, tier, hit);
+    }
+
+    public static Vec3 calculateAimDirection(AbstractLaserNodeBlockEntity laserBe, ShipState shooterShip) {
+        Vec3 localDir = Vec3.directionFromRotation(laserBe.getTargetPitch(), laserBe.getTargetYaw());
+        Vec3 worldDir = com.peaceman.alpha.ship.combat.aim.AimTransformMath.transformLocalToWorld(localDir, shooterShip != null ? shooterShip.getRotation() : null);
+        com.peaceman.alpha.helper.TurretDebugLogger.logCombatAim(laserBe.getBlockPos(), laserBe.getTargetYaw(), laserBe.getTargetPitch(), worldDir.x, worldDir.y, worldDir.z);
+        return worldDir;
     }
 
     /**

@@ -141,4 +141,19 @@ public class CombatLogicTest {
         assertEquals(0, LaserWeaponTier.MINING_LASER.getCooldownTicks());
         assertEquals(0.0f, LaserWeaponTier.MINING_LASER.getBaseDamage());
     }
+
+    @Test
+    @DisplayName("calculateAimDirection nutzt lokale Euler-Winkel bei ausgerichteten Turrets")
+    void testCalculateAimDirection_DynamicTurret() {
+        // Mock oder Dummy für AbstractLaserNodeBlockEntity
+        var mockBe = org.mockito.Mockito.mock(com.peaceman.alpha.block.entity.PulseLaserBlockEntity.class);
+        org.mockito.Mockito.when(mockBe.isOccupied()).thenReturn(true);
+        org.mockito.Mockito.when(mockBe.getTargetYaw()).thenReturn(90.0f);   // West
+        org.mockito.Mockito.when(mockBe.getTargetPitch()).thenReturn(0.0f);  // Horizontal
+
+        Vec3 aimDir = LaserCombatService.calculateAimDirection(mockBe, null);
+        assertEquals(-1.0, aimDir.x, 1e-4);
+        assertEquals(0.0, aimDir.y, 1e-4);
+        assertEquals(0.0, aimDir.z, 1e-4);
+    }
 }

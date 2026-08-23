@@ -79,5 +79,35 @@ public class ModPayloads {
                 ShipDimensionSyncPayload.STREAM_CODEC,
                 ClientPayloadHandler::handleDimensionSync
         );
+
+        registrar.playBidirectional(
+                TurretAimPayload.TYPE,
+                TurretAimPayload.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.flow().isClientbound()) {
+                        ClientPayloadHandler.handleTurretAim(payload, context);
+                    } else {
+                        ServerPayloadHandler.handleTurretAim(payload, context);
+                    }
+                }
+        );
+
+        registrar.playBidirectional(
+                TurretAimSyncPayload.TYPE,
+                TurretAimSyncPayload.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.flow().isClientbound()) {
+                        ClientPayloadHandler.handleTurretAimSync(payload, context);
+                    } else {
+                        ServerPayloadHandler.handleTurretAimSync(payload, context);
+                    }
+                }
+        );
+
+        registrar.playToServer(
+                TurretLockTogglePayload.TYPE,
+                TurretLockTogglePayload.STREAM_CODEC,
+                ServerPayloadHandler::handleTurretLockToggle
+        );
     }
 }
