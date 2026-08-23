@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=down": {
+      "model": "peaceman_alpha:block/laser_base",
+      "x": 180
+    },
+    "facing=east": {
+      "model": "peaceman_alpha:block/laser_base",
+      "x": 90,
+      "y": 90
+    },
+    "facing=north": {
+      "model": "peaceman_alpha:block/laser_base",
+      "x": 90
+    },
+    "facing=south": {
+      "model": "peaceman_alpha:block/laser_base",
+      "x": 90,
+      "y": 180
+    },
+    "facing=up": {
+      "model": "peaceman_alpha:block/laser_base"
+    },
+    "facing=west": {
+      "model": "peaceman_alpha:block/laser_base",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

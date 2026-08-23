@@ -19,12 +19,21 @@ public class ModBlockStateProvider extends BlockStateProvider {
 
     @Override
     protected void registerStatesAndModels() {
-        // Standard Cube-All Blöcke generieren (inklusive Item-Modell Referenz)
+        // Standard Cube-All Block
         simpleBlockWithItem(ModBlocks.EXAMPLE_BLOCK.get(), cubeAll(ModBlocks.EXAMPLE_BLOCK.get()));
-        simpleBlockWithItem(ModBlocks.SPACESHIP_REACTOR.get(), cubeAll(ModBlocks.SPACESHIP_REACTOR.get()));
-        simpleBlockWithItem(ModBlocks.SPACESHIP_SHIELD.get(), cubeAll(ModBlocks.SPACESHIP_SHIELD.get()));
-        simpleBlockWithItem(ModBlocks.SPACESHIP_CONTROL.get(), cubeAll(ModBlocks.SPACESHIP_CONTROL.get()));
-        simpleBlockWithItem(ModBlocks.SPACESHIP_HELM.get(), cubeAll(ModBlocks.SPACESHIP_HELM.get()));
+
+        // Directional / Machine Blocks mit Existing Models
+        ModelFile controlModel = models().getExistingFile(modLoc("block/spaceship_control"));
+        simpleBlock(ModBlocks.SPACESHIP_CONTROL.get(), controlModel);
+
+        ModelFile helmModel = models().getExistingFile(modLoc("block/spaceship_helm"));
+        simpleBlock(ModBlocks.SPACESHIP_HELM.get(), helmModel);
+
+        ModelFile reactorModel = models().getExistingFile(modLoc("block/spaceship_reactor"));
+        simpleBlock(ModBlocks.SPACESHIP_REACTOR.get(), reactorModel);
+
+        ModelFile shieldModel = models().getExistingFile(modLoc("block/spaceship_shield"));
+        simpleBlock(ModBlocks.SPACESHIP_SHIELD.get(), shieldModel);
 
         // Laser Split-Model Extrahierung (Nur die statische Voxel-Basisplatte)
         ModelFile laserBaseModel = models().getExistingFile(modLoc("block/laser_base"));

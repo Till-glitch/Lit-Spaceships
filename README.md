@@ -27,6 +27,10 @@ An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21*
 * **Automated Data Generation Pipeline (`com.peaceman.alpha.datagen`):**
   * **Client DataGen (View Layer):** `ModBlockStateProvider` for automated `cubeAll` models and mathematical Euler angle rotation mapping (`FACING` direction property) for laser split-models; `ModItemModelProvider` for parent references (`laser_base`) and 2D item models (`BACKFLIP_TOOL`); `ModLanguageProvider` with synchronized bilingual translations (`en_us`, `de_de`).
   * **Server DataGen (Domain Layer):** `ModLootTableProvider` and `ModBlockLootTableProvider` with asynchronous `HolderLookup.Provider` resolving, self-drop declarations, and programmatic registry validation via `getKnownBlocks()`.
+* **Blockbench MCP Voxel Asset Pipeline:**
+  * **Deterministic Asset Generation:** Full procedural asset generation via Blockbench Model Context Protocol (MCP) bridge.
+  * **Standard Machine Blocks:** 16x16x16 Cube-Directional models (`spaceship_controller`, `spaceship_reactor`, `spaceship_shield`) with Sci-Fi Industrial palette and Ambient-Occlusion beveling.
+  * **Split-Model Laser Kinematics:** Exact pivot-aligned (`[8, 0, 8]`) standalone turret models (`laser_turret_heavy`, `laser_turret_pulse`, `laser_turret_mining`) and 16x4x16 static baseplate (`laser_base`) eliminating orbital drift during real-time freelook aiming.
 * **Backflip Tool (Klasingscher Degen):** Developer item demonstrating entity manipulation by launching targets into the air with forced backflips.
 
 ---

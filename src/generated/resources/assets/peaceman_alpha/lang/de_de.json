@@ -1,0 +1,15 @@
+{
+  "block.peaceman_alpha.example_block": "Beispielblock",
+  "block.peaceman_alpha.heavy_beam": "Schwerer Strahl-Laser",
+  "block.peaceman_alpha.mining_laser": "Bergbau-Laser",
+  "block.peaceman_alpha.pulse_laser": "Pulslaser-Geschütz",
+  "block.peaceman_alpha.spaceship_control": "Raumschiff-Controller",
+  "block.peaceman_alpha.spaceship_helm": "Raumschiff-Steuerkonsole",
+  "block.peaceman_alpha.spaceship_reactor": "Raumschiff-Reaktor",
+  "block.peaceman_alpha.spaceship_shield": "Raumschiff-Schildgenerator",
+  "item.peaceman_alpha.backflip_tool": "Klasingscher Degen",
+  "itemGroup.examplemod": "Mod Alpha - Raumschiffe",
+  "screen.peaceman_alpha.control": "Raumschiff Steuerung",
+  "screen.peaceman_alpha.helm": "Raumschiff Navigation",
+  "screen.peaceman_alpha.reactor": "Raumschiff-Reaktor"
+}

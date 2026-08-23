@@ -23,6 +23,9 @@ Das Gesamtsystem folgt einer strikten **Model-View-Controller (MVC) / Service-Ar
    * **Laserstrahlen-Rendering (`LaserBeamRenderer`)**: Rendert volumetrisch leuchtende Billboard-Strahlen mit additiver Farbüberlagerung (`GL_ONE`) und führt Client-Side-Surface-Clipping (`level.clip`) aus, sodass Strahlen exakt auf der Blockoberfläche terminieren.
    * **Translations-Invarianz**: Kontinuierliche Laserstrahlen werden über relative Voxel-Offsets (`shooterShipId + "_" + relativePos.asLong()`) verwaltet, wodurch sie vor, während und nach Schiffsbewegungen absolut synchron bleiben.
    * **VRAM-Freigabe**: Bei Chunk-Entladungen (`ChunkEvent.Unload`), Schiffsauflösung oder Logout werden VBOs und Laserstrahlen sofort freigegeben (`dispose()`).
+5. **Voxel-Asset Pipeline & Split-Model Kinematik (Blockbench MCP)**:
+   * **Automatisierte Voxel-Generierung**: Deterministische Erstellung von 16x16x16 Cube-Directional-Modellen (`spaceship_controller`, `spaceship_reactor`, `spaceship_shield`) und Texturen im Sci-Fi Industrial Design.
+   * **Split-Model Kinematik**: Statische Basisplatte (`laser_base.json`, 16x4x16 mit 8x2x8 Sockel) für AABB-Kollision und BFS-Schiffsscan; dynamische, entkoppelte Turret-Köpfe (`laser_turret_heavy`, `laser_turret_pulse`, `laser_turret_mining`) mit exaktem Drehgelenk bei `[8, 0, 8]` zur Vermeidung von orbitalem Drift im BlockEntityRenderer (`PoseStack`).
 
 ---
 
