@@ -59,8 +59,11 @@ public class ClientShipManager {
                                         long shieldCooldownTicks, long movementCooldownTicks) {
         ClientShipState shipState = getOrCreateShip(shipId);
         shipState.setShieldActive(isShieldActive);
+        shipState.setCurrentEnergy(currentEnergy);
         if (currentEnergy > 0) {
             shipState.setShieldEnergyPercentage(Math.min(1.0f, (float) currentEnergy / 1000000.0f));
+        } else {
+            shipState.setShieldEnergyPercentage(0.0f);
         }
         long clientTick = net.minecraft.client.Minecraft.getInstance().level != null
                 ? net.minecraft.client.Minecraft.getInstance().level.getGameTime() : 0L;

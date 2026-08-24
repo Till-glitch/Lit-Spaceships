@@ -42,7 +42,7 @@ public class SpaceshipHelmHudOverlay implements LayeredDraw.Layer {
             guiGraphics.drawString(font, Component.literal("§aAntrieb Bereit"), startX, startY + 12, 0xFFFFFF);
         }
 
-        // Home Waypoint Info (Mock for now, could be expanded)
-        guiGraphics.drawString(font, Component.literal("§7[H] Exit | [Sneak+RClick] Config"), startX - 20, startY + 24, 0xFFFFFF);
+        // Home Waypoint Info & Controls
+        guiGraphics.drawString(font, Component.literal("§7[H] Exit | [M] Config | [R-Click] Fire"), startX - 35, startY + 24, 0xFFFFFF);
     }
 }

@@ -256,6 +256,11 @@ public class ServerPayloadHandler {
                     com.peaceman.alpha.ship.domain.ShipState ship = com.peaceman.alpha.ship.service.ServerShipManager.getShip(shipId);
                     if (ship != null) {
                         net.minecraft.core.BlockPos controllerPos = ship.getControllerPos();
+                        int energy = com.peaceman.alpha.ship.SpaceshipEnergyManager.getTotalAvailableEnergy(serverPlayer.serverLevel(), ship);
+                        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(serverPlayer,
+                                new ShipStateSyncPayload(shipId, energy, ship.isShieldActive(),
+                                        ship.getShieldCooldownRemaining(serverPlayer.serverLevel().getGameTime()),
+                                        ship.getMovementCooldownRemaining(serverPlayer.serverLevel().getGameTime())));
                         serverPlayer.openMenu(new net.minecraft.world.MenuProvider() {
                             @Override
                             public net.minecraft.network.chat.Component getDisplayName() {

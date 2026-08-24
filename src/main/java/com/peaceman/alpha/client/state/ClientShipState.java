@@ -39,6 +39,7 @@ public class ClientShipState implements AutoCloseable {
     private final long[] impactTickTimes = new long[MAX_IMPACTS];
     private int impactCursor = 0;
     private float shieldEnergyPercentage = 1.0f;
+    private int currentEnergy = 0;
 
     public ClientShipState(UUID shipId) {
         this.shipId = shipId;
@@ -145,6 +146,14 @@ public class ClientShipState implements AutoCloseable {
 
     public boolean isMovementOnCooldown(long currentClientTick) {
         return getMovementCooldownDisplay(currentClientTick) > 0;
+    }
+
+    public int getCurrentEnergy() {
+        return currentEnergy;
+    }
+
+    public void setCurrentEnergy(int currentEnergy) {
+        this.currentEnergy = Math.max(0, currentEnergy);
     }
 
     public float getShieldEnergyPercentage() {

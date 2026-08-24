@@ -28,6 +28,17 @@ public class SpaceshipHelmBlock extends Block implements EntityBlock {
     public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (!level.isClientSide() && player.isShiftKeyDown()) {
             if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                BlockEntity be = level.getBlockEntity(pos);
+                if (be instanceof com.peaceman.alpha.block.ISpaceshipNode node && node.getShipId() != null) {
+                    com.peaceman.alpha.ship.domain.ShipState ship = com.peaceman.alpha.ship.service.ServerShipManager.getShip(node.getShipId());
+                    if (ship != null) {
+                        int energy = com.peaceman.alpha.ship.SpaceshipEnergyManager.getTotalAvailableEnergy(level, ship);
+                        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(serverPlayer,
+                                new com.peaceman.alpha.network.ShipStateSyncPayload(ship.getId(), energy, ship.isShieldActive(),
+                                        ship.getShieldCooldownRemaining(level.getGameTime()),
+                                        ship.getMovementCooldownRemaining(level.getGameTime())));
+                    }
+                }
                 serverPlayer.openMenu(new net.minecraft.world.MenuProvider() {
                     @Override
                     public net.minecraft.network.chat.Component getDisplayName() {
