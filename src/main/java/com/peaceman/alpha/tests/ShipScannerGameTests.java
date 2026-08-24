@@ -19,7 +19,7 @@ import java.util.Set;
 @GameTestHolder(Alpha.MODID)
 public class ShipScannerGameTests {
 
-    @GameTest
+    @GameTest(template = "empty")
     public static void testShipScannerConnectedBlocks(GameTestHelper helper) {
         BlockPos controllerRel = new BlockPos(1, 2, 1);
         BlockPos iron1Rel = new BlockPos(1, 2, 2);
@@ -66,7 +66,7 @@ public class ShipScannerGameTests {
         });
     }
 
-    @GameTest
+    @GameTest(template = "empty")
     public static void testShipScannerDiagonalIgnored(GameTestHelper helper) {
         BlockPos controllerRel = new BlockPos(1, 2, 1);
         BlockPos diagonalRel = new BlockPos(2, 2, 2); // Nur diagonal berührend
@@ -84,7 +84,7 @@ public class ShipScannerGameTests {
         });
     }
 
-    @GameTest
+    @GameTest(template = "empty")
     public static void testShipScannerDoorMultiblock(GameTestHelper helper) {
         BlockPos controllerRel = new BlockPos(1, 2, 1);
         BlockPos doorBottomRel = new BlockPos(1, 2, 2);

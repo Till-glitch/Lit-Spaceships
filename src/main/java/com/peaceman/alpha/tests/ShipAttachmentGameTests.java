@@ -18,7 +18,7 @@ import java.util.UUID;
 @GameTestHolder(Alpha.MODID)
 public class ShipAttachmentGameTests {
 
-    @GameTest
+    @GameTest(template = "empty")
     public static void testDataAttachmentPersistence(GameTestHelper helper) {
         BlockPos relPos = new BlockPos(1, 2, 1);
         helper.setBlock(relPos, ModBlocks.SPACESHIP_REACTOR.get());
