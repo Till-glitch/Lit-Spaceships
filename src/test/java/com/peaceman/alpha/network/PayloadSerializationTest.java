@@ -156,14 +156,28 @@ public class PayloadSerializationTest {
     @DisplayName("ShipCombatActionPayload serialisiert und deserialisiert fehlerfrei")
     void testShipCombatActionPayload_Codec() {
         UUID shipId = UUID.randomUUID();
-        ShipCombatActionPayload original = new ShipCombatActionPayload(shipId, ShipCombatActionPayload.CombatAction.FIRE_PULSE);
+        ShipCombatActionPayload original = new ShipCombatActionPayload(Optional.of(shipId), ShipCombatActionPayload.CombatAction.FIRE_PULSE, Optional.empty());
 
-        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        io.netty.buffer.ByteBuf buf = Unpooled.buffer();
         ShipCombatActionPayload.STREAM_CODEC.encode(buf, original);
         ShipCombatActionPayload decoded = ShipCombatActionPayload.STREAM_CODEC.decode(buf);
 
         assertEquals(original.shipId(), decoded.shipId());
         assertEquals(original.action(), decoded.action());
+        assertEquals(original.weaponPos(), decoded.weaponPos());
+    }
+
+    @Test
+    @DisplayName("OpenHelmConfigPayload serialisiert und deserialisiert fehlerfrei")
+    void testOpenHelmConfigPayload_Codec() {
+        UUID shipId = UUID.randomUUID();
+        OpenHelmConfigPayload original = new OpenHelmConfigPayload(Optional.of(shipId));
+
+        io.netty.buffer.ByteBuf buf = Unpooled.buffer();
+        OpenHelmConfigPayload.STREAM_CODEC.encode(buf, original);
+        OpenHelmConfigPayload decoded = OpenHelmConfigPayload.STREAM_CODEC.decode(buf);
+
+        assertEquals(original.shipId(), decoded.shipId());
     }
 
     @Test

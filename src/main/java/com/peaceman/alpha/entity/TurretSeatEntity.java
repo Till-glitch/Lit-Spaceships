@@ -24,8 +24,8 @@ public class TurretSeatEntity extends Entity {
 
     private static final net.minecraft.network.syncher.EntityDataAccessor<BlockPos> DATA_WEAPON_POS =
             SynchedEntityData.defineId(TurretSeatEntity.class, net.minecraft.network.syncher.EntityDataSerializers.BLOCK_POS);
-
-    private UUID shipId;
+    private static final net.minecraft.network.syncher.EntityDataAccessor<java.util.Optional<UUID>> DATA_SHIP_ID =
+            SynchedEntityData.defineId(TurretSeatEntity.class, net.minecraft.network.syncher.EntityDataSerializers.OPTIONAL_UUID);
 
     public TurretSeatEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
@@ -34,7 +34,7 @@ public class TurretSeatEntity extends Entity {
 
     public TurretSeatEntity(Level level, BlockPos weaponPos, UUID shipId) {
         this(ModEntities.TURRET_SEAT.get(), level);
-        this.shipId = shipId;
+        setShipId(shipId);
         setWeaponPos(weaponPos);
         this.setPos(weaponPos.getX() + 0.5, weaponPos.getY() + 0.1, weaponPos.getZ() + 0.5);
     }
@@ -42,6 +42,7 @@ public class TurretSeatEntity extends Entity {
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         builder.define(DATA_WEAPON_POS, BlockPos.ZERO);
+        builder.define(DATA_SHIP_ID, java.util.Optional.empty());
     }
 
     @Override
@@ -95,7 +96,7 @@ public class TurretSeatEntity extends Entity {
     protected void addPassenger(Entity passenger) {
         super.addPassenger(passenger);
         if (passenger instanceof Player player) {
-            com.peaceman.alpha.helper.TurretDebugLogger.logMount(player.getName().getString(), getWeaponPos(), this.shipId, level().isClientSide());
+            com.peaceman.alpha.helper.TurretDebugLogger.logMount(player.getName().getString(), getWeaponPos(), getShipId(), level().isClientSide());
         }
     }
 
@@ -136,7 +137,7 @@ public class TurretSeatEntity extends Entity {
             setWeaponPos(NbtUtils.readBlockPos(tag, "WeaponPos").orElse(null));
         }
         if (tag.hasUUID("ShipId")) {
-            this.shipId = tag.getUUID("ShipId");
+            setShipId(tag.getUUID("ShipId"));
         }
     }
 
@@ -146,8 +147,9 @@ public class TurretSeatEntity extends Entity {
         if (pos != null) {
             tag.put("WeaponPos", NbtUtils.writeBlockPos(pos));
         }
-        if (this.shipId != null) {
-            tag.putUUID("ShipId", this.shipId);
+        UUID id = getShipId();
+        if (id != null) {
+            tag.putUUID("ShipId", id);
         }
     }
 
@@ -161,6 +163,19 @@ public class TurretSeatEntity extends Entity {
     }
 
     public UUID getShipId() {
-        return shipId;
+        java.util.Optional<UUID> optional = this.entityData.get(DATA_SHIP_ID);
+        if (optional != null && optional.isPresent()) {
+            return optional.get();
+        }
+        // Fallback: If we have weaponPos and block entity on client
+        BlockPos weaponPos = getWeaponPos();
+        if (weaponPos != null && level().getBlockEntity(weaponPos) instanceof com.peaceman.alpha.block.ISpaceshipNode node) {
+            return node.getShipId();
+        }
+        return null;
+    }
+
+    public void setShipId(UUID shipId) {
+        this.entityData.set(DATA_SHIP_ID, java.util.Optional.ofNullable(shipId));
     }
 }

@@ -21,6 +21,12 @@ public class ModPayloads {
         );
 
         registrar.playToServer(
+                ShipMovementRequestPayload.TYPE,
+                ShipMovementRequestPayload.STREAM_CODEC,
+                ServerPayloadHandler::handleMovementRequest
+        );
+
+        registrar.playToServer(
                 ShipCombatActionPayload.TYPE,
                 ShipCombatActionPayload.STREAM_CODEC,
                 ServerPayloadHandler::handleCombatAction
@@ -44,10 +50,19 @@ public class ModPayloads {
                 (payload, context) -> ClientPayloadHandler.handleStateSync(payload, context)
         );
 
-        registrar.playToClient(
+        registrar.playBidirectional(
                 ShipPositionSyncPayload.TYPE,
                 ShipPositionSyncPayload.STREAM_CODEC,
-                (payload, context) -> ClientPayloadHandler.handlePositionSync(payload, context)
+                new net.neoforged.neoforge.network.handling.DirectionalPayloadHandler<>(
+                        ClientPayloadHandler::handlePositionSync,
+                        (payload, context) -> {}
+                )
+        );
+
+        registrar.playToServer(
+                OpenHelmConfigPayload.TYPE,
+                OpenHelmConfigPayload.STREAM_CODEC,
+                ServerPayloadHandler::handleOpenHelmConfig
         );
 
         registrar.playToClient(

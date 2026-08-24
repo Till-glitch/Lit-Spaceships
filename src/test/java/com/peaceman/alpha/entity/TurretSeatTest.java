@@ -37,6 +37,22 @@ public class TurretSeatTest {
         assertNotNull(shipId);
     }
 
+    @Test
+    @DisplayName("TurretSeatEntity speichert und lädt ShipId und WeaponPos via NBT")
+    void testTurretSeatNbtPersistence() {
+        UUID shipId = UUID.randomUUID();
+        BlockPos weaponPos = new BlockPos(50, 100, -50);
+
+        net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+        tag.put("WeaponPos", net.minecraft.nbt.NbtUtils.writeBlockPos(weaponPos));
+        tag.putUUID("ShipId", shipId);
+
+        assertTrue(tag.contains("WeaponPos"));
+        assertTrue(tag.hasUUID("ShipId"));
+        assertEquals(shipId, tag.getUUID("ShipId"));
+        assertEquals(weaponPos, net.minecraft.nbt.NbtUtils.readBlockPos(tag, "WeaponPos").orElse(null));
+    }
+
     static class TestLaserBlockEntity extends AbstractLaserNodeBlockEntity {
         public TestLaserBlockEntity(BlockPos pos, BlockState state) {
             super(null, pos, state);

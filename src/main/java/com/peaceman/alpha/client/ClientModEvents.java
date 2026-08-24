@@ -14,6 +14,7 @@ public class ClientModEvents {
     @SubscribeEvent
     public static void registerScreens(RegisterMenuScreensEvent event) {
         event.register(ModMenuTypes.REACTOR_MENU.get(), SpaceshipReactorScreen::new);
+        event.register(ModMenuTypes.HELM_MENU.get(), com.peaceman.alpha.client.screen.SpaceshipHelmConfigScreen::new);
     }
 
     @SubscribeEvent
@@ -21,6 +22,7 @@ public class ClientModEvents {
         event.registerBlockEntityRenderer(com.peaceman.alpha.registry.ModBlockEntities.PULSE_LASER_BE.get(), com.peaceman.alpha.client.render.TurretBlockEntityRenderer::new);
         event.registerBlockEntityRenderer(com.peaceman.alpha.registry.ModBlockEntities.HEAVY_BEAM_BE.get(), com.peaceman.alpha.client.render.TurretBlockEntityRenderer::new);
         event.registerBlockEntityRenderer(com.peaceman.alpha.registry.ModBlockEntities.MINING_LASER_BE.get(), com.peaceman.alpha.client.render.TurretBlockEntityRenderer::new);
+        event.registerBlockEntityRenderer(com.peaceman.alpha.registry.ModBlockEntities.SPACESHIP_REACTOR_BE.get(), com.peaceman.alpha.client.render.ReactorBlockEntityRenderer::new);
         event.registerEntityRenderer(com.peaceman.alpha.registry.ModEntities.TURRET_SEAT.get(), com.peaceman.alpha.client.render.TurretSeatRenderer::new);
     }
     @SubscribeEvent
@@ -28,5 +30,37 @@ public class ClientModEvents {
         event.register(net.minecraft.client.resources.model.ModelResourceLocation.standalone(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "block/laser_turret_heavy")));
         event.register(net.minecraft.client.resources.model.ModelResourceLocation.standalone(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "block/laser_turret_pulse")));
         event.register(net.minecraft.client.resources.model.ModelResourceLocation.standalone(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "block/laser_turret_mining")));
+    }
+
+    public static final net.minecraft.client.KeyMapping KEY_EXIT_HELM = new net.minecraft.client.KeyMapping(
+            "key." + Alpha.MODID + ".exit_helm",
+            com.mojang.blaze3d.platform.InputConstants.Type.KEYSYM,
+            org.lwjgl.glfw.GLFW.GLFW_KEY_H,
+            "key.categories.spaceship"
+    );
+
+    public static final net.minecraft.client.KeyMapping KEY_OPEN_HELM_CONFIG = new net.minecraft.client.KeyMapping(
+            "key." + Alpha.MODID + ".open_helm_config",
+            com.mojang.blaze3d.platform.InputConstants.Type.KEYSYM,
+            org.lwjgl.glfw.GLFW.GLFW_KEY_M, // M for Map/Menu
+            "key.categories.spaceship"
+    );
+
+    @SubscribeEvent
+    public static void registerKeyMappings(net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent event) {
+        event.register(KEY_EXIT_HELM);
+        event.register(KEY_OPEN_HELM_CONFIG);
+    }
+
+    @SubscribeEvent
+    public static void registerGuiLayers(net.neoforged.neoforge.client.event.RegisterGuiLayersEvent event) {
+        event.registerAboveAll(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "helm_hud"),
+                new com.peaceman.alpha.client.screen.hud.SpaceshipHelmHudOverlay()
+        );
+        event.registerAboveAll(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "tactical_hud"),
+                new com.peaceman.alpha.client.screen.hud.TacticalConsoleHudLayer()
+        );
     }
 }

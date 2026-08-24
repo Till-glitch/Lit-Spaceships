@@ -17,6 +17,9 @@ public class ModMenuTypes {
     public static final Supplier<MenuType<SpaceshipReactorMenu>> REACTOR_MENU =
             MENUS.register("spaceship_reactor_menu", () -> IMenuTypeExtension.create(SpaceshipReactorMenu::new));
 
+    public static final Supplier<MenuType<com.peaceman.alpha.menu.SpaceshipHelmMenu>> HELM_MENU =
+            MENUS.register("spaceship_helm_menu", () -> IMenuTypeExtension.create(com.peaceman.alpha.menu.SpaceshipHelmMenu::new));
+
     public static void register(IEventBus eventBus) {
         MENUS.register(eventBus);
     }

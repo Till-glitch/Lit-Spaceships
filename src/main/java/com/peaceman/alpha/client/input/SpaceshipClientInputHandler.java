@@ -19,6 +19,8 @@ import java.util.UUID;
 @EventBusSubscriber(modid = Alpha.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public class SpaceshipClientInputHandler {
 
+    public static UUID activeHelmShipId = null;
+
     @SubscribeEvent
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         if (!event.getLevel().isClientSide()) return;
@@ -28,14 +30,35 @@ public class SpaceshipClientInputHandler {
         Block block = state.getBlock();
 
         if (block instanceof SpaceshipHelmBlock) {
-            ClientHooks.openHelmScreen(pos);
-            // Wir canceln nicht zwingend, damit Server-seitiges useWithoutItem noch durchläuft und Success zurückgibt.
+            BlockEntity be = event.getLevel().getBlockEntity(pos);
+            if (be instanceof com.peaceman.alpha.block.ISpaceshipNode node) {
+                // If not sneaking, set as active pilot (sneaking is handled by server opening the menu)
+                if (!event.getEntity().isShiftKeyDown()) {
+                    activeHelmShipId = node.getShipId();
+                    event.getEntity().displayClientMessage(net.minecraft.network.chat.Component.literal("§a[Helm] §fDu steuerst nun das Schiff. WASD zum Fliegen, LSHIFT zum Sinken, LEERTASTE zum Steigen. ESC zum Verlassen."), true);
+                }
+            }
         } else if (block instanceof SpaceshipControlBlock) {
             BlockEntity be = event.getLevel().getBlockEntity(pos);
             if (be instanceof com.peaceman.alpha.block.ISpaceshipNode node) {
                 UUID shipId = node.getShipId();
                 ClientHooks.openControlScreen(shipId, pos);
             }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onInteractionKey(net.neoforged.neoforge.client.event.InputEvent.InteractionKeyMappingTriggered event) {
+        if (activeHelmShipId != null && event.isUseItem()) {
+            event.setCanceled(true);
+            event.setSwingHand(false);
+            net.neoforged.neoforge.network.PacketDistributor.sendToServer(
+                    new com.peaceman.alpha.network.ShipCombatActionPayload(
+                            java.util.Optional.ofNullable(activeHelmShipId),
+                            com.peaceman.alpha.network.ShipCombatActionPayload.CombatAction.FIRE_ALL,
+                            java.util.Optional.empty()
+                    )
+            );
         }
     }
 }

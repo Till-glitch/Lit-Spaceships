@@ -40,7 +40,7 @@ public class TurretClientInputHandler {
      */
     @SubscribeEvent
     public static void onInteractionKey(InputEvent.InteractionKeyMappingTriggered event) {
-        if (!event.isAttack()) return;
+        if (!event.isAttack() && !event.isUseItem()) return;
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -48,10 +48,20 @@ public class TurretClientInputHandler {
         if (mc.player.getVehicle() instanceof TurretSeatEntity seat) {
             BlockPos weaponPos = seat.getWeaponPos();
             if (weaponPos != null) {
-                event.setCanceled(true);
-                event.setSwingHand(false);
-                com.peaceman.alpha.helper.TurretDebugLogger.logClientLockTriggered(weaponPos, "InteractionKeyMappingTriggered/Attack");
-                PacketDistributor.sendToServer(new TurretLockTogglePayload(weaponPos));
+                if (event.isAttack()) {
+                    event.setCanceled(true);
+                    event.setSwingHand(false);
+                    com.peaceman.alpha.helper.TurretDebugLogger.logClientLockTriggered(weaponPos, "InteractionKeyMappingTriggered/Attack");
+                    PacketDistributor.sendToServer(new TurretLockTogglePayload(weaponPos));
+                } else if (event.isUseItem()) {
+                    event.setCanceled(true);
+                    event.setSwingHand(false);
+                    PacketDistributor.sendToServer(new com.peaceman.alpha.network.ShipCombatActionPayload(
+                            java.util.Optional.ofNullable(seat.getShipId()),
+                            com.peaceman.alpha.network.ShipCombatActionPayload.CombatAction.FIRE_SPECIFIC,
+                            java.util.Optional.of(weaponPos)
+                    ));
+                }
             }
         }
     }
@@ -104,12 +114,14 @@ public class TurretClientInputHandler {
     public static void onClientTick(ClientTickEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) {
+            com.peaceman.alpha.client.screen.hud.TacticalConsoleHudLayer.activeTacticalShipId = null;
             wasRiding = false;
             tickCounter = 0;
             return;
         }
 
         if (mc.player.getVehicle() instanceof TurretSeatEntity seat) {
+            com.peaceman.alpha.client.screen.hud.TacticalConsoleHudLayer.activeTacticalShipId = seat.getShipId();
             BlockPos weaponPos = seat.getWeaponPos();
             if (weaponPos == null) return;
 
@@ -165,6 +177,7 @@ public class TurretClientInputHandler {
                 }
             }
         } else {
+            com.peaceman.alpha.client.screen.hud.TacticalConsoleHudLayer.activeTacticalShipId = null;
             wasRiding = false;
             tickCounter = 0;
         }

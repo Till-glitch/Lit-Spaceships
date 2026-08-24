@@ -107,9 +107,10 @@ classDiagram
 
         class TurretSeatEntity {
             -BlockPos weaponPos
-            -UUID shipId
+            -Optional~UUID~ shipId
             +getWeaponPos() BlockPos
             +getShipId() UUID
+            +setShipId(UUID shipId) void
         }
 
         class PulseLaserBlockEntity {
@@ -248,8 +249,14 @@ classDiagram
 
         class ShipCombatActionPayload {
             <<record>>
-            +UUID shipId
+            +Optional~UUID~ shipId
             +CombatAction action
+            +Optional~BlockPos~ weaponPos
+        }
+
+        class OpenHelmConfigPayload {
+            <<record>>
+            +Optional~UUID~ shipId
         }
 
         class LaserFirePayload {

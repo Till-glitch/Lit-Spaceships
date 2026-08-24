@@ -1,7 +1,6 @@
 package com.peaceman.alpha.client;
 
 import com.peaceman.alpha.client.screen.SpaceshipControlScreen;
-import com.peaceman.alpha.client.screen.SpaceshipHelmScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import org.apache.commons.compress.compressors.lz77support.LZ77Compressor;
@@ -13,10 +12,6 @@ import org.apache.commons.compress.compressors.lz77support.LZ77Compressor;
  */
 public class ClientHooks {
 
-    // Methode zum Öffnen des Helm-Screens
-    public static void openHelmScreen(BlockPos pos) {
-        Minecraft.getInstance().setScreen(new SpaceshipHelmScreen(pos));
-    }
     public static void openControlScreen(java.util.UUID shipId, BlockPos pos) {
         Minecraft.getInstance().setScreen(new SpaceshipControlScreen(shipId, pos));
     }
