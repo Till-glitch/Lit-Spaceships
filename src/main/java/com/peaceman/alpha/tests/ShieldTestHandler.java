@@ -27,12 +27,14 @@ public class ShieldTestHandler {
     @SubscribeEvent
     public static void onRightClick(PlayerInteractEvent.RightClickBlock event) {
         // Nur auf dem Server ausführen
-        if (event.getLevel().isClientSide()) return;
+        if (event.getLevel().isClientSide())
+            return;
 
         // Wenn der Spieler schleicht und einen Stock in der Hand hat
         if (event.getEntity().isCrouching() && event.getItemStack().is(Items.STICK)) {
             shieldCenter = event.getPos();
-            event.getEntity().sendSystemMessage(Component.literal("§b[Schild-Test] §fSchild-Zentrum aktiviert bei: " + shieldCenter.toShortString()));
+            event.getEntity().sendSystemMessage(Component
+                    .literal("§b[Schild-Test] §fSchild-Zentrum aktiviert bei: " + shieldCenter.toShortString()));
             event.setCanceled(true); // Verhindert, dass der Stock normal benutzt wird
         }
     }
@@ -42,13 +44,16 @@ public class ShieldTestHandler {
      */
     @SubscribeEvent
     public static void onBlockBreak(BlockEvent.BreakEvent event) {
-        if (shieldCenter == null || event.getPlayer().isCreative()) return; // Kreativ-Spieler ignorieren wir mal
+        if (shieldCenter == null || event.getPlayer().isCreative())
+            return; // Kreativ-Spieler ignorieren wir mal
 
         // Wir prüfen die mathematische Distanz (Sphäre/Kugel).
-        // distSqr (Distanz zum Quadrat) ist für den PC viel schneller zu berechnen als die echte Distanz!
+        // distSqr (Distanz zum Quadrat) ist für den PC viel schneller zu berechnen als
+        // die echte Distanz!
         if (event.getPos().distSqr(shieldCenter) <= (SHIELD_RADIUS * SHIELD_RADIUS)) {
             event.setCanceled(true); // Abbauen abbrechen!
-            event.getPlayer().displayClientMessage(Component.literal("§cDieser Block wird von einem Schild geschützt!"), true);
+            event.getPlayer().displayClientMessage(Component.literal("§cDieser Block wird von einem Schild geschützt!"),
+                    true);
         }
     }
 
@@ -57,7 +62,8 @@ public class ShieldTestHandler {
      */
     @SubscribeEvent
     public static void onExplosion(ExplosionEvent.Detonate event) {
-        if (shieldCenter == null) return;
+        if (shieldCenter == null)
+            return;
 
         // Die Explosion gibt uns eine Liste aller Blöcke, die sie zerstören will.
         // Wir suchen alle Blöcke heraus, die in unserem Schild liegen...

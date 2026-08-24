@@ -199,4 +199,51 @@ public class PayloadSerializationTest {
         assertEquals(original.shipId(), decoded.shipId());
         assertEquals(original.dimension(), decoded.dimension());
     }
+
+    @Test
+    @DisplayName("TurretAimPayload serialisiert und deserialisiert mit 16-Bit Kompression fehlerfrei")
+    void testTurretAimPayload_Codec() {
+        BlockPos pos = new BlockPos(45, 78, -120);
+        short yaw = (short) 12345;
+        short pitch = (short) -6789;
+        TurretAimPayload original = new TurretAimPayload(pos, yaw, pitch);
+
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        TurretAimPayload.STREAM_CODEC.encode(buf, original);
+        TurretAimPayload decoded = TurretAimPayload.STREAM_CODEC.decode(buf);
+
+        assertEquals(original.weaponPos(), decoded.weaponPos());
+        assertEquals(original.compressedYaw(), decoded.compressedYaw());
+        assertEquals(original.compressedPitch(), decoded.compressedPitch());
+    }
+
+    @Test
+    @DisplayName("TurretAimSyncPayload serialisiert und deserialisiert fehlerfrei")
+    void testTurretAimSyncPayload_Codec() {
+        BlockPos pos = new BlockPos(12, 64, -88);
+        float yaw = 45.25f;
+        float pitch = -12.75f;
+        TurretAimSyncPayload original = new TurretAimSyncPayload(pos, yaw, pitch);
+
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        TurretAimSyncPayload.STREAM_CODEC.encode(buf, original);
+        TurretAimSyncPayload decoded = TurretAimSyncPayload.STREAM_CODEC.decode(buf);
+
+        assertEquals(original.weaponPos(), decoded.weaponPos());
+        assertEquals(original.yaw(), decoded.yaw(), 1e-4);
+        assertEquals(original.pitch(), decoded.pitch(), 1e-4);
+    }
+
+    @Test
+    @DisplayName("TurretLockTogglePayload serialisiert und deserialisiert fehlerfrei")
+    void testTurretLockTogglePayload_Codec() {
+        BlockPos pos = new BlockPos(-55, 120, 300);
+        TurretLockTogglePayload original = new TurretLockTogglePayload(pos);
+
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        TurretLockTogglePayload.STREAM_CODEC.encode(buf, original);
+        TurretLockTogglePayload decoded = TurretLockTogglePayload.STREAM_CODEC.decode(buf);
+
+        assertEquals(original.weaponPos(), decoded.weaponPos());
+    }
 }

@@ -2,6 +2,7 @@ package com.peaceman.alpha.tests;
 
 import com.peaceman.alpha.Alpha;
 import com.peaceman.alpha.registry.ModBlocks;
+import com.peaceman.alpha.block.entity.SpaceshipReactorBlockEntity;
 import com.peaceman.alpha.ship.domain.ShipState;
 import com.peaceman.alpha.ship.service.ServerShipManager;
 import com.peaceman.alpha.ship.service.ShipMovementService;
@@ -17,14 +18,19 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 @GameTestHolder(Alpha.MODID)
 public class ShipMovementGameTests {
 
-    @GameTest
+    @GameTest(template = "empty")
     public static void testShipMovementRelocation(GameTestHelper helper) {
         BlockPos startRel = new BlockPos(1, 2, 1);
         BlockPos startHullRel = new BlockPos(1, 2, 2);
 
         // 1. Schiff aufbauen
         helper.setBlock(startRel, ModBlocks.SPACESHIP_CONTROL.get());
-        helper.setBlock(startHullRel, Blocks.IRON_BLOCK);
+        helper.setBlock(startHullRel, ModBlocks.SPACESHIP_REACTOR.get());
+
+        BlockPos absHullPos = helper.absolutePos(startHullRel);
+        if (helper.getLevel().getBlockEntity(absHullPos) instanceof SpaceshipReactorBlockEntity reactor) {
+            reactor.getEnergyStorage().receiveEnergy(100000, false);
+        }
 
         BlockPos startAbs = helper.absolutePos(startRel);
         ShipState ship = ServerShipManager.createShip(helper.getLevel(), startAbs);
@@ -33,7 +39,7 @@ public class ShipMovementGameTests {
         ShipMovementService.moveShip(helper.getLevel(), ship, 2, 0, 0, null);
 
         // 3. Überprüfung
-        helper.succeedIf(() -> {
+        helper.succeedWhen(() -> {
             BlockPos targetRel = new BlockPos(3, 2, 1);
             BlockPos targetHullRel = new BlockPos(3, 2, 2);
 
@@ -43,7 +49,7 @@ public class ShipMovementGameTests {
 
             // An neuer Position müssen die Blöcke existieren
             helper.assertBlockPresent(ModBlocks.SPACESHIP_CONTROL.get(), targetRel);
-            helper.assertBlockPresent(Blocks.IRON_BLOCK, targetHullRel);
+            helper.assertBlockPresent(ModBlocks.SPACESHIP_REACTOR.get(), targetHullRel);
         });
     }
 }

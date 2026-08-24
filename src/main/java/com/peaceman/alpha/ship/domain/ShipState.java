@@ -5,7 +5,6 @@ import com.peaceman.alpha.block.entity.SpaceshipShieldBlockEntity;
 import com.peaceman.alpha.ship.SpaceshipShieldHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
@@ -29,6 +28,7 @@ public class ShipState {
     private boolean isShieldActive = true;
     private ResourceKey<Level> dimension = Level.OVERWORLD;
     private volatile boolean isJumping = false;
+    private volatile org.joml.Quaternionf rotation = new org.joml.Quaternionf();
 
     // Cooldown-Timer (absolute Weltzeit via level.getGameTime())
     public static final long SHIELD_COOLDOWN_TICKS = 200L;    // 10 Sekunden
@@ -158,9 +158,7 @@ public class ShipState {
         this.isShieldActive = shieldActive;
     }
 
-    public void toggleShieldActive(Level level) {
-        SpaceshipShieldHandler.toggleShield(level, this);
-    }
+
 
     public void toggleShieldActive() {
         if (this.shields.isEmpty()) {
@@ -205,36 +203,7 @@ public class ShipState {
         return Math.max(0L, movementCooldownUntil - currentGameTime);
     }
 
-    /**
-     * Aktualisiert die Blockstruktur, kategorisiert Funktionsblöcke (Reaktoren, Schilde),
-     * berechnet Hüll-Caches neu und triggert die Netzwerk-Synchronisation der Schildblase.
-     */
-    public void setBlocks(Set<BlockPos> newBlocks, Level level) {
-        this.blocks = newBlocks != null ? newBlocks : new HashSet<>();
-        this.reactors.clear();
-        this.shields.clear();
-        this.weapons.clear();
 
-        for (BlockPos pos : this.blocks) {
-            BlockEntity be = level.getBlockEntity(pos);
-            if (be instanceof SpaceshipReactorBlockEntity) {
-                this.reactors.add(pos);
-            } else if (be instanceof SpaceshipShieldBlockEntity) {
-                this.shields.add(pos);
-            } else if (be instanceof com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity) {
-                this.weapons.add(pos);
-            }
-        }
-
-        if (this.shields.isEmpty()) {
-            this.isShieldActive = false;
-            this.shieldVoxelCache = VoxelGridCache.EMPTY;
-            this.shieldBoundingBox = null;
-        }
-
-        recalculateHullBounds();
-        syncShieldBubbleToClients(level);
-    }
 
     public List<BlockPos> getWeapons() {
         return weapons;
@@ -331,13 +300,12 @@ public class ShipState {
         this.shieldVoxelCache = shieldVoxelCache != null ? shieldVoxelCache : VoxelGridCache.EMPTY;
     }
 
-    /**
-     * Berechnet die Schildblase asynchron auf Virtual Threads und synchronisiert sie direkt
-     * als Netzwerkpaket an die Clients, ohne sie permanent im Server-Zustand zu speichern.
-     */
-    public void syncShieldBubbleToClients(Level level) {
-        if (!level.isClientSide() && level instanceof ServerLevel serverLevel) {
-            com.peaceman.alpha.ship.service.ShipMorphologyService.calculateAndSyncShieldAsync(this, serverLevel, SpaceshipShieldHandler.getShieldRadius(this));
-        }
+    public org.joml.Quaternionf getRotation() {
+        return this.rotation != null ? this.rotation : new org.joml.Quaternionf();
     }
+
+    public void setRotation(org.joml.Quaternionf rotation) {
+        this.rotation = rotation != null ? rotation : new org.joml.Quaternionf();
+    }
+
 }

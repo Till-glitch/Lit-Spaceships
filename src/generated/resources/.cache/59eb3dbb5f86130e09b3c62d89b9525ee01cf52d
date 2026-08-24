@@ -1,0 +1,9 @@
+// 1.21	2026-08-23T09:59:46.7610379	Loot Tables
+da4eaa623a697fc12cf8e6e8bb3255861867098e data/peaceman_alpha/loot_table/blocks/example_block.json
+eec6a0e931b86dcee6631409f73e35f6e72b8539 data/peaceman_alpha/loot_table/blocks/heavy_beam.json
+fa0ae3fd982cf2a94035092d3dec35357557224d data/peaceman_alpha/loot_table/blocks/mining_laser.json
+d5ca62cd226ebb529a244b891dfb12510368d9d7 data/peaceman_alpha/loot_table/blocks/pulse_laser.json
+603ac1a9f20f7ae6d70e25ae7a7729e3113dbad9 data/peaceman_alpha/loot_table/blocks/spaceship_control.json
+8d127cde6dc8438feb345c565ba1d44430642bab data/peaceman_alpha/loot_table/blocks/spaceship_helm.json
+05837fc5f1b41bed58c07f3dffc913b98c4b3136 data/peaceman_alpha/loot_table/blocks/spaceship_reactor.json
+c13e301391d88f4c43e9a17033bc8584ff9b9087 data/peaceman_alpha/loot_table/blocks/spaceship_shield.json

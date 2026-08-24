@@ -10,10 +10,27 @@ An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21*
 * **Spaceship Helm (Navigation & Combat Console):** Full 6-axis flight controls (Forward, Backward, Left, Right, Up, Down), integrated waypoint bookmarks for automated navigation, and cockpit tactical weapon triggers.
 * **Spaceship Reactor:** Energy storage supporting standard **Forge Energy (FE)** with up to 1,000,000 FE capacity. Powers flight maneuvers, shield absorption, and laser weapon systems. *(Dev-Tip: Right-click with Redstone to charge 50,000 FE!)*
 * **Shield Generator & Hex-Shader:** Protects ship blocks against explosive damage (TNT, Creepers) and unauthorized block manipulation. Shields consume reactor energy upon impact and are rendered as procedural hexagon bubble meshes via custom shaders with impact ripples and low-energy alerts.
-* **Shipborne Laser Weapon System:**
+* **Shipborne Laser Weapon System & Dynamic Turrets:**
   * **Pulse Laser:** High-energy burst cannon (250 FE/shot, 20 ticks cooldown). Instantly vaporizes 1 block on hit or inflicts massive shield drain with kinetic shockwaves.
   * **Heavy Beam:** High-intensity continuous combat beam (50 FE/tick). Progressively melts and burns through hull blocks and terrain with visual breaking animations.
   * **Mining Laser:** Continuous industrial excavation laser (25 FE/tick). Rapidly drills through asteroid stone, ores, and terrain without causing entity damage.
+  * **Co-Pilot / Freelook Aiming System:** Right-click laser turrets to man the gunner seat (`TurretSeatEntity`). Aim turrets dynamically in real-time via camera freelook, stabilized against ship translation and rotation using quaternion transformations ($Q_{ship}^{-1} \otimes \vec{V}_{world} \otimes Q_{ship}$).
+  * **Left-Click Aim Locking & Persistence:** Left-click while seated to lock/arretiere the turret's orientation with acoustic feedback and Action-Bar notification. When dismounting, during ship movement, and across interdimensional teleports, the locked angle remains permanently stored in NBT until intentionally realigned.
+  * **Mechanical Gimbal Limits:** Strict joint angle clamping prevents turrets from cutting or firing into the ship's own hull.
+  * **Delta-Tick Network Throttling:** 16-bit short compression and 20 Hz delta-throttling ($\Delta \ge 0.5^\circ$) eliminate network spam and deliver 0 ms client-predicted aiming response.
+* **Deep Space Dimension (`peaceman_alpha:space`):**
+  * **Infinite Void Environment:** Custom procedural dimension from $Y = -64$ to $Y = 320$ with permanent cosmic night, zero natural monster spawns, and no vanilla bedrock floors.
+  * **Asteroid Fields & Ice Comets:** 3D procedural asteroid generation with diverse crusts (Stone, Basalt, Tuff, Deepslate) containing rich ore cores (Iron, Gold, Redstone, Diamond, Netherite Debris) and frozen ice comets.
+  * **Derelict Spacecraft Wrecks:** Rare abandoned shipwrecks featuring intact spaceship reactor cores and ancient treasure chests (`END_CITY_TREASURE`).
+* **Cross-Dimensional Ship Travel (Core Teleportation Service):**
+  * Fully transactional 6-phase warp travel (Suspension, Forceloading, Clipboard Serialization, Excision, Materialization, Passenger Entity Transition) across any dimension with ticket locking and zero chunk-boundary ghosting.
+* **Automated Data Generation Pipeline (`com.peaceman.alpha.datagen`):**
+  * **Client DataGen (View Layer):** `ModBlockStateProvider` for automated `cubeAll` models and mathematical Euler angle rotation mapping (`FACING` direction property) for laser split-models; `ModItemModelProvider` for parent references (`laser_base`) and 2D item models (`BACKFLIP_TOOL`); `ModLanguageProvider` with synchronized bilingual translations (`en_us`, `de_de`).
+  * **Server DataGen (Domain Layer):** `ModLootTableProvider` and `ModBlockLootTableProvider` with asynchronous `HolderLookup.Provider` resolving, self-drop declarations, and programmatic registry validation via `getKnownBlocks()`.
+* **Blockbench MCP Voxel Asset Pipeline:**
+  * **Deterministic Asset Generation:** Full procedural asset generation via Blockbench Model Context Protocol (MCP) bridge.
+  * **Standard Machine Blocks:** 16x16x16 Cube-Directional models (`spaceship_controller`, `spaceship_reactor`, `spaceship_shield`) with Sci-Fi Industrial palette and Ambient-Occlusion beveling.
+  * **Split-Model Laser Kinematics:** Exact pivot-aligned (`[8, 0, 8]`) standalone turret models (`laser_turret_heavy`, `laser_turret_pulse`, `laser_turret_mining`) and 16x4x16 static baseplate (`laser_base`) eliminating orbital drift during real-time freelook aiming.
 * **Backflip Tool (Klasingscher Degen):** Developer item demonstrating entity manipulation by launching targets into the air with forced backflips.
 
 ---
@@ -201,8 +218,8 @@ classDiagram
 ### Key Architectural Highlights
 
 #### 1. Server-Side Domain & Services (`com.peaceman.alpha.ship.*`)
-* **`ShipState`**: Pure domain Model holding authoritative ship data (UUID, controller position, functional block lists, reactor/shield associations, weapons list, waypoints, and `VoxelGridCache` bitsets). Contains **zero** client/rendering dependencies.
-* **`ServerShipManager`**: Central lifecycle and CRUD controller. Coordinates ship creation, updates, and spatial hashing distribution.
+* **`ShipState`**: Pure domain Model holding authoritative ship data (UUID, controller position, functional block lists, reactor/shield associations, weapons list, waypoints, and `VoxelGridCache` bitsets). Contains **zero** client, rendering, or `Level` dependencies (Strict MVC).
+* **`ServerShipManager`**: Central lifecycle and CRUD controller. Coordinates ship creation, function-block categorization (via `populateAndSyncShipState`), updates, and spatial hashing distribution.
 * **`LaserCombatService`**: Handles combat routing for pulse weapons and continuous beams, energy transactions, kinetic shield shockwaves, and progressive block destruction with `destroyBlockProgress` scaling by block hardness.
 * **`LaserRaycastUtil` & `FastVoxelTraversal`**: High-performance Amanatides & Woo 3D Digital Differential Analyzer (3D-DDA) traversing voxels in $O(\text{Ray Length})$ time, protected by broadphase AABB intersection filters and step bounds (1024 steps).
 * **`ShipMovementService`**: Translates blocks and passengers using an incremental **Time-Slicing Tick-Budget (10ms per tick)** executed during `ServerTickEvent.Post`, with chunk region tickets (`TicketType`) and translation-invariant weapon tracking.
@@ -214,6 +231,7 @@ classDiagram
 * **`ShipStructureDeltaPayload`**: Transmits destroyed voxel lists during combat to update client highlight meshes without re-sending the entire ship structure.
 
 #### 3. Client View Model & Rendering (`com.peaceman.alpha.client.*`)
+* **`SpaceshipClientInputHandler`**: Event-Subscriber (`PlayerInteractEvent.RightClickBlock`) handling all client-side UI interactions (Screens). Completely decouples Client-GUI from Server-Blocks to guarantee strict Dedicated Server compatibility (Sidedness).
 * **`ClientLaserState`**: Thread-safe collection (`ConcurrentHashMap`, `CopyOnWriteArrayList`) managing pulse fadeouts and continuous beams keyed by invariant relative offsets (`shooterShipId + "_" + relativePos.asLong()`).
 * **`LaserBeamRenderer`**: Volumetric Blaze3D billboard beam rendering with additive blending (`GL_ONE`), core/glow dual-cylinder quads, oscillating pulses, and client-side block surface clipping (`level.clip`) preventing laser pass-through.
 * **`ShieldRenderer`**: Blaze3D rendering pipeline consuming compiled VBOs (`VertexBuffer`) from `ClientShipState`.
@@ -225,15 +243,23 @@ classDiagram
 
 The project enforces continuous testing according to the **70/20 Rule** (70% Unit / Math Tests, 20% Engine GameTests, 10% Manual QA).
 
-### Automated Test Matrix (33 Unit Tests & 4 GameTest Suites)
+### Automated Test Matrix (51 Unit Tests & 4 GameTest Suites)
 
 | Test-Suite | Typ | Abdeckung |
 | :--- | :--- | :--- |
+| **`LaserNodeRenderStateTest`** | JUnit 5 (Mockito) | Thread-sichere Render-State Extraktion, interpolierte Kinematik (Yaw/Pitch), 180°-Winkel-Wrap und alle 6 `FACING`-Ausrichtungen (`UP`, `DOWN`, `NORTH`, `SOUTH`, `WEST`, `EAST`). |
+| **`DataGeneratorsTest`** | JUnit 5 (Mockito) | Event-Handling für `GatherDataEvent`, Provider-Registrierung und HolderLookup-Lifecycle. |
+| **`ModBlockStateProviderTest`** | JUnit 5 | 6-Achsen Euler-Winkel-Transformation (`rotX`, `rotY`) für `FACING` Split-Modell Basisplatten und `cubeAll` Generierung. |
+| **`ModItemModelProviderTest`** | JUnit 5 | Parent-Referenzen auf Block-Basen (`laser_base`) und 2D-Item-Modelle (`backflip_tool`). |
+| **`ModLanguageProviderTest`** | JUnit 5 | Symmetrische I18n- und L10n-Übersetzungen für `en_us` und `de_de`. |
+| **`ModLootTableProviderTest`** | JUnit 5 (Mockito) | `BlockLootSubProvider` Factory, Self-Drop-Logik und Vollständigkeitsprüfung via `getKnownBlocks()`. |
 | **`ShipCollisionMathTest`** | JUnit 5 | Continuous Swept-AABB Extrusion (positive/negative/zero), VoxelGridCache BitSet Indexing & Bounds. |
 | **`ShipStateTest`** | JUnit 5 | Domain-Zustand, AABB-Neuberechnung bei Blockmutation, Controller-Translation, Cooldown-Arithmetik. |
 | **`CombatLogicTest`** | JUnit 5 | FastVoxelTraversal 3D-DDA Treffererkennung, Normalenflächen (`WEST`, `DOWN`), Reichweiten- & Tier-Konstanten. |
 | **`PayloadSerializationTest`** | JUnit 5 | Symmetrische Serialisierung & Deserialisierung aller 10 CustomPacketPayload-Records via StreamCodecs. |
 | **`SpaceshipEnergyManagerTest`** | JUnit 5 (Mockito) | Reaktor-Bündelung, sequenzieller Energieabzug, Rollback bei Energiemangel, Flugkosten-Berechnung. |
+| **`AimTransformMathTest`** | JUnit 5 | Quaternion-Transformationen, Euler-Winkel-Konvertierung, 16-Bit Kompression und GimbalLimits. |
+| **`TurretSeatTest`** | JUnit 5 | TurretSeat DTO Attribute, NBT-Persistenz und Aim-Lock-Status. |
 | **`ShipScannerGameTests`** | GameTest | Orthogonale BFS-Erkennung, Ausschluss diagonaler Blöcke, Multipart-Erfassung (Türen, Betten, Truhen). |
 | **`ShipMovementGameTests`** | GameTest | Physische Welt-Translation, `AIR`-Hinterlassung und Zielblock-Präsenzprüfung. |
 | **`ShipAttachmentGameTests`** | GameTest | Typsichere Persistenz von `ModAttachments.SHIP_ID` an BlockEntities. |
@@ -270,6 +296,9 @@ src/main/java/com/peaceman/alpha/
 │   ├── render/                      # LaserBeamRenderer, ShieldRenderer, ShipHighlightRenderer
 │   ├── screen/                      # UI Screens (Control, Helm, Reactor)
 │   └── state/                       # ClientShipState, ClientShipManager, ClientLaserState
+├── datagen/                         # Data Generation Pipeline (NeoForge 1.21)
+│   ├── DataGenerators.java          # Event subscriber (GatherDataEvent)
+│   └── provider/                    # BlockState, ItemModel, Language, LootTable Providers
 ├── menu/                            # Container menus (SpaceshipReactorMenu)
 ├── network/                         # CustomPacketPayload definitions & ServerPayloadHandler
 ├── registry/                        # DeferredRegisters (Blocks, Items, BlockEntities, ModAttachments)

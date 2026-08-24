@@ -92,7 +92,8 @@ public class ServerShipManager {
 
             Set<BlockPos> shipBlocks = ShipScannerService.scan(level, startPos);
             ShipState newShip = new ShipState(startPos, shipBlocks, level.dimension());
-            newShip.setBlocks(shipBlocks, level);
+            newShip.setBlocksRaw(shipBlocks);
+            populateAndSyncShipState(level, newShip);
 
             registerShip(newShip);
 
@@ -116,7 +117,8 @@ public class ServerShipManager {
     public static void updateShipBlocks(Level level, ShipState ship) {
         if (ship != null) {
             Set<BlockPos> newBlocks = ShipScannerService.scan(level, ship.getControllerPos());
-            ship.setBlocks(newBlocks, level);
+            ship.setBlocksRaw(newBlocks);
+            populateAndSyncShipState(level, ship);
 
             for (BlockPos pos : newBlocks) {
                 if (level.getBlockEntity(pos) instanceof ISpaceshipNode node) {
@@ -190,7 +192,48 @@ public class ServerShipManager {
                     }
                     PacketDistributor.sendToPlayer(player, new ShieldBubbleSyncPacket(ship.getId(), ctrl, relBubble));
                 }
+
+                // Sync continuous laser states to joining/tracking players
+                for (BlockPos weaponPos : ship.getWeapons()) {
+                    BlockEntity be = event.getLevel().getBlockEntity(weaponPos);
+                    if (be instanceof com.peaceman.alpha.block.entity.HeavyBeamBlockEntity heavyBe && heavyBe.isFiring()) {
+                        PacketDistributor.sendToPlayer(player, new com.peaceman.alpha.network.LaserStateSyncPayload(ship.getId(), weaponPos, true, heavyBe.getTier()));
+                    } else if (be instanceof com.peaceman.alpha.block.entity.MiningLaserBlockEntity miningBe && miningBe.isMining()) {
+                        PacketDistributor.sendToPlayer(player, new com.peaceman.alpha.network.LaserStateSyncPayload(ship.getId(), weaponPos, true, miningBe.getTier()));
+                    }
+                }
             }
+        }
+    }
+
+    /**
+     * Orchestriert das Kategorisieren von Funktionsblöcken (Reaktoren, Schilde) und triggert
+     * das Netzwerk-Update für die Schildblase. Dies trennt reine Daten (ShipState) von der Logik (Controller).
+     */
+    public static void populateAndSyncShipState(Level level, ShipState ship) {
+        ship.getReactors().clear();
+        ship.getShields().clear();
+        ship.getWeapons().clear();
+
+        for (BlockPos pos : ship.getBlocks()) {
+            BlockEntity be = level.getBlockEntity(pos);
+            if (be instanceof com.peaceman.alpha.block.entity.SpaceshipReactorBlockEntity) {
+                ship.getReactors().add(pos);
+            } else if (be instanceof com.peaceman.alpha.block.entity.SpaceshipShieldBlockEntity) {
+                ship.getShields().add(pos);
+            } else if (be instanceof com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity) {
+                ship.getWeapons().add(pos);
+            }
+        }
+
+        if (ship.getShields().isEmpty()) {
+            ship.setShieldActive(false);
+            ship.updateShieldCache(com.peaceman.alpha.ship.domain.VoxelGridCache.EMPTY, java.util.Collections.emptySet());
+        }
+
+        // Schildberechnung und Sync anstoßen
+        if (!level.isClientSide() && level instanceof ServerLevel serverLevel) {
+            com.peaceman.alpha.ship.service.ShipMorphologyService.calculateAndSyncShieldAsync(ship, serverLevel, com.peaceman.alpha.ship.SpaceshipShieldHandler.getShieldRadius(ship));
         }
     }
 }

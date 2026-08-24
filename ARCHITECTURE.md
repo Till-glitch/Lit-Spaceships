@@ -23,6 +23,9 @@ Das Gesamtsystem folgt einer strikten **Model-View-Controller (MVC) / Service-Ar
    * **Laserstrahlen-Rendering (`LaserBeamRenderer`)**: Rendert volumetrisch leuchtende Billboard-Strahlen mit additiver Farbüberlagerung (`GL_ONE`) und führt Client-Side-Surface-Clipping (`level.clip`) aus, sodass Strahlen exakt auf der Blockoberfläche terminieren.
    * **Translations-Invarianz**: Kontinuierliche Laserstrahlen werden über relative Voxel-Offsets (`shooterShipId + "_" + relativePos.asLong()`) verwaltet, wodurch sie vor, während und nach Schiffsbewegungen absolut synchron bleiben.
    * **VRAM-Freigabe**: Bei Chunk-Entladungen (`ChunkEvent.Unload`), Schiffsauflösung oder Logout werden VBOs und Laserstrahlen sofort freigegeben (`dispose()`).
+5. **Voxel-Asset Pipeline & Split-Model Kinematik (Blockbench MCP)**:
+   * **Automatisierte Voxel-Generierung**: Deterministische Erstellung von 16x16x16 Cube-Directional-Modellen (`spaceship_controller`, `spaceship_reactor`, `spaceship_shield`) und Texturen im Sci-Fi Industrial Design.
+   * **Split-Model Kinematik**: Statische Basisplatte (`laser_base.json`, 16x4x16 mit 8x2x8 Sockel) für AABB-Kollision und BFS-Schiffsscan; dynamische, entkoppelte Turret-Köpfe (`laser_turret_heavy`, `laser_turret_pulse`, `laser_turret_mining`) mit exaktem Drehgelenk bei `[8, 0, 8]` zur Vermeidung von orbitalem Drift im BlockEntityRenderer (`PoseStack`).
 
 ---
 
@@ -54,12 +57,59 @@ classDiagram
             +getTier() LaserWeaponTier
             +isContinuous() boolean
             +getFacing() Direction
+            +getTargetYaw() float
+            +getTargetPitch() float
+            +getAimAngles() AimAngles
+            +setAimAngles(AimAngles angles) void
+            +isOccupied() boolean
+            +setOccupied(boolean occupied) void
+            +isAimLocked() boolean
+            +setAimLocked(boolean locked) void
+            +getGimbalLimits() GimbalLimits
             +getCurrentDrillPos() BlockPos
             +getDrillProgress() float
             +addDrillProgress(float amount) void
             +resetDrillProgress() void
             +clearDrillProgress(Level level) void
             +serverTick(Level level, BlockPos pos, BlockState state)* void
+        }
+
+        class IAimStrategy {
+            <<interface>>
+            +getType() AimType
+            +requiresPassengerSeat() boolean
+            +calculateAimAngles(ShipState ship, BlockPos weaponPos, Player player, GimbalLimits limits) AimAngles
+        }
+
+        class FreelookAimStrategy {
+            +calculateAimAngles(ShipState ship, BlockPos weaponPos, Player player, GimbalLimits limits) AimAngles
+        }
+
+        class AimTransformMath {
+            +calculateWorldLookVector(float yaw, float pitch)$ Vec3
+            +transformWorldToLocal(Vec3 worldVec, Quaternionf rot)$ Vec3
+            +transformLocalToWorld(Vec3 localVec, Quaternionf rot)$ Vec3
+            +vectorToLocalEuler(Vec3 localVec)$ AimAngles
+            +localEulerToVector(float yaw, float pitch)$ Vec3
+            +compressAngle(float angle)$ short
+            +decompressAngle(short compressed)$ float
+            +interpolateAngle(float prev, float curr, float partialTick)$ float
+        }
+
+        class GimbalLimits {
+            <<record>>
+            +float minYaw
+            +float maxYaw
+            +float minPitch
+            +float maxPitch
+            +clamp(AimAngles angles) AimAngles
+        }
+
+        class TurretSeatEntity {
+            -BlockPos weaponPos
+            -UUID shipId
+            +getWeaponPos() BlockPos
+            +getShipId() UUID
         }
 
         class PulseLaserBlockEntity {
@@ -99,7 +149,7 @@ classDiagram
             -VoxelGridCache hullVoxelCache
             -VoxelGridCache shieldVoxelCache
             +getImmutableBlockSnapshot() Set~BlockPos~
-            +setBlocks(Set~BlockPos~ blocks, Level level) void
+            +setBlocksRaw(Set~BlockPos~ blocks) void
             +recalculateHullBounds() void
             +isShieldOnCooldown(long gameTime) boolean
             +isMovementOnCooldown(long gameTime) boolean
@@ -110,6 +160,7 @@ classDiagram
             +getShip(UUID shipId)$ ShipState
             +hasShip(UUID shipId)$ boolean
             +createShip(Level level, BlockPos startPos)$ ShipState
+            +populateAndSyncShipState(Level level, ShipState ship)$ void
             +updateShipBlocks(Level level, ShipState ship)$ void
             +deleteShip(Level level, ShipState ship)$ void
             +saveData(Level level)$ void
@@ -238,9 +289,23 @@ classDiagram
             +long movementCooldownRemainingTicks
         }
 
+        class TurretAimSyncPayload {
+            <<record>>
+            +BlockPos weaponPos
+            +float yaw
+            +float pitch
+        }
+
+        class TurretLockTogglePayload {
+            <<record>>
+            +BlockPos weaponPos
+        }
+
         class ServerPayloadHandler {
             +handleAction(ShipActionPayload payload, IPayloadContext context)$ void
             +handleCombatAction(ShipCombatActionPayload payload, IPayloadContext context)$ void
+            +handleTurretAimSync(TurretAimSyncPayload payload, IPayloadContext context)$ void
+            +handleTurretLockToggle(TurretLockTogglePayload payload, IPayloadContext context)$ void
         }
 
         class ClientPayloadHandler {
@@ -248,6 +313,7 @@ classDiagram
             +handlePositionSync(ShipPositionSyncPayload packet, IPayloadContext context)$ void
             +handleLaserFire(LaserFirePayload packet, IPayloadContext context)$ void
             +handleLaserStateSync(LaserStateSyncPayload packet, IPayloadContext context)$ void
+            +handleTurretAimSync(TurretAimSyncPayload packet, IPayloadContext context)$ void
         }
     }
 
@@ -255,6 +321,10 @@ classDiagram
     %% CLIENT SIDE VIEW & RENDERING
     %% ==========================================
     namespace Client_Side {
+        class SpaceshipClientInputHandler {
+            +onPlayerInteract(PlayerInteractEvent.RightClickBlock event)$ void
+        }
+
         class ClientShipState {
             -UUID shipId
             -BlockPos anchorPos
@@ -279,8 +349,67 @@ classDiagram
             -drawBeam(BufferBuilder buffer, Matrix4f mat, Vec3 cam, Vec3 start, Vec3 end, LaserWeaponTier tier, float alpha)$ void
         }
 
+        class LaserNodeRenderState {
+            <<record>>
+            +Direction facing
+            +float yaw
+            +float pitch
+            +LaserWeaponTier tier
+            +extract(AbstractLaserNodeBlockEntity be, float partialTick)$ LaserNodeRenderState
+            +getYaw() float
+            +getPitch() float
+            +getFacing() Direction
+            +getTier() LaserWeaponTier
+        }
+
+        class TurretBlockEntityRenderer {
+            +render(T laserBE, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) void
+            +submit(LaserNodeRenderState renderState, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) void
+        }
+
         class ShieldRenderer {
             +renderShields(PoseStack stack, MultiBufferSource buffer, Camera camera, float partialTicks)$ void
+        }
+
+        class TurretDebugLogger {
+            +logMount(String player, BlockPos pos, UUID shipId, boolean isClient)$ void
+            +logDismount(String player, BlockPos pos, boolean isClient)$ void
+            +logClientAimSent(BlockPos pos, float yaw, float pitch)$ void
+            +logClientLockTriggered(BlockPos pos, String src)$ void
+            +logServerAimReceived(String player, BlockPos pos, float yaw, float pitch, boolean locked)$ void
+            +logServerLockToggled(String player, BlockPos pos, boolean newLock)$ void
+            +logCombatAim(BlockPos pos, float yaw, float pitch, double dx, double dy, double dz)$ void
+        }
+    }
+
+    %% ==========================================
+    %% DATA GENERATION PIPELINE
+    %% ==========================================
+    namespace Data_Generation {
+        class DataGenerators {
+            +gatherData(GatherDataEvent event)$ void
+        }
+
+        class ModBlockStateProvider {
+            +registerStatesAndModels() void
+            -registerLaserBase(Block block, ModelFile baseModel) void
+        }
+
+        class ModItemModelProvider {
+            +registerModels() void
+        }
+
+        class ModLanguageProvider {
+            +addTranslations() void
+        }
+
+        class ModLootTableProvider {
+            +create(PackOutput output, CompletableFuture lookupProvider)$ LootTableProvider
+        }
+
+        class ModBlockLootTableProvider {
+            +generate() void
+            +getKnownBlocks() Iterable~Block~
         }
     }
 
@@ -290,6 +419,7 @@ classDiagram
     PulseLaserBlockEntity --|> AbstractLaserNodeBlockEntity : extends
     HeavyBeamBlockEntity --|> AbstractLaserNodeBlockEntity : extends
     MiningLaserBlockEntity --|> AbstractLaserNodeBlockEntity : extends
+    TurretBlockEntityRenderer ..> LaserNodeRenderState : extracts & submits
 
     ServerShipManager o-- "0..*" ShipState : manages
     ShipState o-- "0..1" VoxelGridCache : holds
@@ -308,6 +438,12 @@ classDiagram
     LaserBeamRenderer ..> ClientLaserState : reads beams
     LaserBeamRenderer ..> ClientShipManager : resolves anchors
     ClientShipManager *-- "0..*" ClientShipState : holds
+
+    DataGenerators ..> ModBlockStateProvider : instantiates client
+    DataGenerators ..> ModItemModelProvider : instantiates client
+    DataGenerators ..> ModLanguageProvider : instantiates client
+    DataGenerators ..> ModLootTableProvider : instantiates server
+    ModLootTableProvider ..> ModBlockLootTableProvider : creates
 ```
 
 ---
@@ -349,12 +485,20 @@ $$\Delta \text{Progress} = \frac{k_{\text{tier}}}{\max(0.5, H)}$$
 
 Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
 
-1. **JUnit 5 & Mockito Suite (33 Tests, 100% Erfolgsquote)**:
+1. **JUnit 5 & Mockito Suite (51 Tests, 100% Erfolgsquote)**:
+   * **`LaserNodeRenderStateTest`**: Thread-sichere Render-State Extraktion, interpolierte Kinematik (Yaw/Pitch), 180°-Winkel-Wrap und alle 6 `FACING`-Ausrichtungen (`UP`, `DOWN`, `NORTH`, `SOUTH`, `WEST`, `EAST`).
+   * **`DataGeneratorsTest`**: Event-Handling für `GatherDataEvent`, Client/Server-Provider-Registrierung und HolderLookup-Lifecycle.
+   * **`ModBlockStateProviderTest`**: 6-Achsen Euler-Winkel-Transformation (`rotX`, `rotY`) für `FACING` Split-Modell Basisplatten und `cubeAll` Generierung.
+   * **`ModItemModelProviderTest`**: Parent-Referenzen auf Block-Basen (`laser_base`) und 2D-Item-Modelle (`backflip_tool`).
+   * **`ModLanguageProviderTest`**: Symmetrische I18n- und L10n-Übersetzungen für `en_us` und `de_de`.
+   * **`ModLootTableProviderTest`**: `BlockLootSubProvider` Factory, Self-Drop-Logik und Vollständigkeitsprüfung via `getKnownBlocks()`.
    * **`ShipCollisionMathTest`**: Continuous Swept-AABB Extrusion & BitSet-Linearisierung.
    * **`ShipStateTest`**: Domain-Zustand, AABB-Neuberechnung, Controller-Translation, Cooldown-Arithmetik.
    * **`CombatLogicTest`**: 3D-DDA Ray-Traversal, Normalenflächen (`WEST`, `DOWN`), Fehlschuss- & Reichweitenbegrenzung, Tier-Konfigurationen.
    * **`PayloadSerializationTest`**: Symmetrische Serialisierung aller 10 Custom-Payloads via `FriendlyByteBuf` & `StreamCodecs`.
    * **`SpaceshipEnergyManagerTest`**: Multi-Reaktor-Bündelung, sequenzieller FE-Drain, Transaktionssicherheit (Rollback).
+   * **`AimTransformMathTest`**: Quaternion-Transformationen, Euler-Winkel-Konvertierung, 16-Bit Kompression und GimbalLimits.
+   * **`TurretSeatTest`**: TurretSeat DTO Attribute, NBT-Persistenz und Aim-Lock-Status.
 2. **NeoForge GameTests (`@GameTestHolder`)**:
    * **`ShipScannerGameTests`**: Validierung des BFS-Scanners, Ausschluss diagonaler Blöcke, Multiblock-Ergänzung (Türen).
    * **`ShipMovementGameTests`**: Physische Schiffstranslation im Testlevel mit `AIR`-Hinterlassung und Zielblock-Präsenz.

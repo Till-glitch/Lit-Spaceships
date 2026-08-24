@@ -8,6 +8,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class AsteroidFeatureTest {
 
+    @org.junit.jupiter.api.BeforeAll
+    static void initMinecraft() {
+        net.minecraft.SharedConstants.tryDetectVersion();
+        net.minecraft.server.Bootstrap.bootStrap();
+    }
+
     @Test
     @DisplayName("ModFeatures hält Registrierungs-Holder für Asteroiden und Wracks")
     void testModFeatures_RegistrationHolders() {

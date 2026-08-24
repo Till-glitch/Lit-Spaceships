@@ -42,6 +42,26 @@ public class MiningLaserBlock extends BaseEntityBlock {
         return RenderShape.MODEL;
     }
 
+    private static final net.minecraft.world.phys.shapes.VoxelShape SHAPE_UP = Block.box(0, 0, 0, 16, 4, 16);
+    private static final net.minecraft.world.phys.shapes.VoxelShape SHAPE_DOWN = Block.box(0, 12, 0, 16, 16, 16);
+    private static final net.minecraft.world.phys.shapes.VoxelShape SHAPE_SOUTH = Block.box(0, 0, 0, 16, 16, 4);
+    private static final net.minecraft.world.phys.shapes.VoxelShape SHAPE_NORTH = Block.box(0, 0, 12, 16, 16, 16);
+    private static final net.minecraft.world.phys.shapes.VoxelShape SHAPE_EAST = Block.box(0, 0, 0, 4, 16, 16);
+    private static final net.minecraft.world.phys.shapes.VoxelShape SHAPE_WEST = Block.box(12, 0, 0, 16, 16, 16);
+
+    @Override
+    public net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos, net.minecraft.world.phys.shapes.CollisionContext context) {
+        switch (state.getValue(FACING)) {
+            case DOWN: return SHAPE_DOWN;
+            case SOUTH: return SHAPE_SOUTH;
+            case NORTH: return SHAPE_NORTH;
+            case EAST: return SHAPE_EAST;
+            case WEST: return SHAPE_WEST;
+            case UP:
+            default: return SHAPE_UP;
+        }
+    }
+
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(FACING);
@@ -59,10 +79,34 @@ public class MiningLaserBlock extends BaseEntityBlock {
         return new MiningLaserBlockEntity(pos, state);
     }
 
+    @Override
+    public net.minecraft.world.InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
+            net.minecraft.world.entity.player.Player player, net.minecraft.world.phys.BlockHitResult hit) {
+        if (!level.isClientSide()) {
+            if (level.getBlockEntity(pos) instanceof MiningLaserBlockEntity laserBE) {
+                if (laserBE.isOccupied()) {
+                    player.displayClientMessage(
+                            net.minecraft.network.chat.Component.literal("Dieser Geschützturm ist bereits belegt!"),
+                            true);
+                    return net.minecraft.world.InteractionResult.CONSUME;
+                }
+
+                com.peaceman.alpha.entity.TurretSeatEntity seat = new com.peaceman.alpha.entity.TurretSeatEntity(level,
+                        pos, laserBE.getShipId());
+                level.addFreshEntity(seat);
+                player.startRiding(seat, true);
+                laserBE.setOccupied(true);
+            }
+        }
+        return net.minecraft.world.InteractionResult.sidedSuccess(level.isClientSide());
+    }
+
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
-        if (level.isClientSide()) return null;
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
+            BlockEntityType<T> blockEntityType) {
+        if (level.isClientSide())
+            return null;
         return createTickerHelper(blockEntityType, ModBlockEntities.MINING_LASER_BE.get(),
                 (lvl, pos, st, be) -> be.serverTick(lvl, pos, st));
     }
@@ -72,14 +116,15 @@ public class MiningLaserBlock extends BaseEntityBlock {
         if (!state.is(newState.getBlock())) {
             if (!level.isClientSide() && level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
                 if (level.getBlockEntity(pos) instanceof MiningLaserBlockEntity be && be.isMining()) {
-                    boolean isMovingShip = be.getShipId() != null && com.peaceman.alpha.ship.service.ShipMovementService.isShipMoving(be.getShipId());
+                    boolean isMovingShip = be.getShipId() != null
+                            && com.peaceman.alpha.ship.service.ShipMovementService.isShipMoving(be.getShipId());
                     if (!isMovingShip) {
                         be.setMining(false);
                         if (be.getShipId() != null) {
                             net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingChunk(
                                     serverLevel, new net.minecraft.world.level.ChunkPos(pos),
-                                    new com.peaceman.alpha.network.LaserStateSyncPayload(be.getShipId(), pos, false, com.peaceman.alpha.ship.combat.LaserWeaponTier.MINING_LASER)
-                            );
+                                    new com.peaceman.alpha.network.LaserStateSyncPayload(be.getShipId(), pos, false,
+                                            com.peaceman.alpha.ship.combat.LaserWeaponTier.MINING_LASER));
                         }
                     } else {
                         be.clearDrillProgress(level);

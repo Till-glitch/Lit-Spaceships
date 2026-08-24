@@ -1,0 +1,15 @@
+{
+  "block.peaceman_alpha.example_block": "Example Block",
+  "block.peaceman_alpha.heavy_beam": "Heavy Beam Laser",
+  "block.peaceman_alpha.mining_laser": "Mining Laser",
+  "block.peaceman_alpha.pulse_laser": "Pulse Laser Turret",
+  "block.peaceman_alpha.spaceship_control": "Spaceship Controller",
+  "block.peaceman_alpha.spaceship_helm": "Spaceship Helm",
+  "block.peaceman_alpha.spaceship_reactor": "Spaceship Reactor",
+  "block.peaceman_alpha.spaceship_shield": "Spaceship Shield Generator",
+  "item.peaceman_alpha.backflip_tool": "Klasingscher Degen",
+  "itemGroup.examplemod": "Mod Alpha - Spaceships",
+  "screen.peaceman_alpha.control": "Spaceship Control",
+  "screen.peaceman_alpha.helm": "Spaceship Navigation",
+  "screen.peaceman_alpha.reactor": "Spaceship Reactor"
+}

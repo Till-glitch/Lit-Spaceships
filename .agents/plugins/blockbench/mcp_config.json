@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "blockbench": {
+      "serverUrl": "http://localhost:3000/bb-mcp"
+    }
+  }
+}

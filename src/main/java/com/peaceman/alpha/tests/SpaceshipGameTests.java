@@ -12,7 +12,7 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 @GameTestHolder(Alpha.MODID)
 public class SpaceshipGameTests {
 
-    @GameTest()
+    @GameTest(template = "empty")
     public static void testShipCreation(GameTestHelper helper) {
         BlockPos relativePos = new BlockPos(1, 2, 1);
 

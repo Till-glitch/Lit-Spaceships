@@ -1,7 +1,6 @@
 package com.peaceman.alpha.block;
 
 import com.peaceman.alpha.block.entity.SpaceshipControlBlockEntity;
-import com.peaceman.alpha.client.ClientHooks;
 import com.peaceman.alpha.ship.service.ServerShipManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionResult;
@@ -30,13 +29,8 @@ public class SpaceshipControlBlock extends Block implements EntityBlock {
 
     @Override
     public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (level.isClientSide()) {
-            BlockEntity be = level.getBlockEntity(pos);
-            if (be instanceof ISpaceshipNode node) {
-                UUID shipId = node.getShipId();
-                ClientHooks.openControlScreen(shipId, pos);
-            }
-        }
+        // Die GUI wird nun asynchron über das RightClickBlock-Event auf dem Client geöffnet.
+        // Das stellt sicher, dass der Server-JVM diese Klasse fehlerfrei laden kann.
         return InteractionResult.SUCCESS;
     }
 

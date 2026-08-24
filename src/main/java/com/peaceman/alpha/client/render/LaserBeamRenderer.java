@@ -27,7 +27,8 @@ import java.util.UUID;
 
 /**
  * Blaze3D Client-Renderer für Laserstrahlen.
- * Rendert volumetrisch leuchtende Billboard-Strahlen mit additiver Farbüberlagerung.
+ * Rendert volumetrisch leuchtende Billboard-Strahlen mit additiver
+ * Farbüberlagerung.
  */
 @EventBusSubscriber(modid = Alpha.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public class LaserBeamRenderer {
@@ -36,13 +37,15 @@ public class LaserBeamRenderer {
         ClientLaserState.addPulse(shooterShipId, startPos, endPos, tier);
     }
 
-    public static void setContinuousBeam(UUID shooterShipId, BlockPos weaponPos, boolean isFiring, LaserWeaponTier tier) {
+    public static void setContinuousBeam(UUID shooterShipId, BlockPos weaponPos, boolean isFiring,
+            LaserWeaponTier tier) {
         ClientLaserState.setContinuousBeam(shooterShipId, weaponPos, isFiring, tier);
     }
 
     @SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) return;
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS)
+            return;
 
         long now = System.currentTimeMillis();
         ClientLaserState.cleanExpired(now);
@@ -50,11 +53,13 @@ public class LaserBeamRenderer {
         var pulses = ClientLaserState.getActivePulses();
         var continuous = ClientLaserState.getActiveContinuousBeams();
 
-        if (pulses.isEmpty() && continuous.isEmpty()) return;
+        if (pulses.isEmpty() && continuous.isEmpty())
+            return;
 
         Minecraft mc = Minecraft.getInstance();
         Level level = mc.level;
-        if (level == null) return;
+        if (level == null)
+            return;
 
         Camera camera = event.getCamera();
         Vec3 cameraPos = camera.getPosition();
@@ -70,14 +75,16 @@ public class LaserBeamRenderer {
         poseStack.pushPose();
         Matrix4f matrix = poseStack.last().pose();
 
-        BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS,
+                DefaultVertexFormat.POSITION_COLOR);
         boolean hasDrawn = false;
 
         // 2. Pulse-Laser rendern (mit Zeit-Fade-Out)
         for (var pulse : pulses) {
             float progress = pulse.getProgress(now);
             float alpha = (1.0f - progress) * pulse.tier().getColorA();
-            if (alpha <= 0.01f) continue;
+            if (alpha <= 0.01f)
+                continue;
 
             drawBeam(buffer, matrix, cameraPos, pulse.startPos(), pulse.endPos(), pulse.tier(), alpha);
             hasDrawn = true;
@@ -86,7 +93,9 @@ public class LaserBeamRenderer {
         // 3. Kontinuierliche Strahlen rendern (Client-Side-Prediction)
         for (var entry : continuous.values()) {
             ClientShipState ship = ClientShipManager.getShip(entry.shooterShipId());
-            if (ship == null || ship.isDisposed() || ship.getAnchorPos() == null || (ship.getDimension() != null && !ship.getDimension().equals(level.dimension()))) continue;
+            if (ship == null || ship.isDisposed() || ship.getAnchorPos() == null
+                    || (ship.getDimension() != null && !ship.getDimension().equals(level.dimension())))
+                continue;
 
             BlockPos weaponWorldPos = ship.getAnchorPos().offset(entry.relativeWeaponPos());
             Direction facing = Direction.NORTH;
@@ -97,23 +106,37 @@ public class LaserBeamRenderer {
                 }
             }
 
-            Vec3 dir = Vec3.atLowerCornerOf(facing.getNormal()).normalize();
+            Vec3 dir;
+            if (level.getBlockEntity(
+                    weaponWorldPos) instanceof com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity laserBE) {
+                // 1. Lokalen Vektor aus Yaw und Pitch berechnen
+                Vec3 localDir = com.peaceman.alpha.ship.combat.aim.AimTransformMath.localEulerToVector(laserBE.getTargetYaw(), laserBE.getTargetPitch());
+                // 2. Mit der Wand-Ausrichtung in den Welt-Raum rotieren
+                org.joml.Vector3f dir3f = localDir.toVector3f();
+                dir3f.rotate(com.peaceman.alpha.ship.combat.aim.AimTransformMath.getRotationForFacing(facing));
+                dir = new Vec3(dir3f);
+            } else {
+                dir = Vec3.atLowerCornerOf(facing.getNormal()).normalize();
+            }
+
             Vec3 start = Vec3.atCenterOf(weaponWorldPos).add(dir.scale(0.55));
             Vec3 maxTarget = start.add(dir.scale(entry.tier().getMaxRange()));
 
-            // Raycast gegen Vanilla-Terrain / Blöcke: Strahl stoppt direkt auf der Block-Oberfläche
+            // Raycast gegen Vanilla-Terrain / Blöcke: Strahl stoppt direkt auf der
+            // Block-Oberfläche
             net.minecraft.world.phys.BlockHitResult blockHit = level.clip(new net.minecraft.world.level.ClipContext(
                     start, maxTarget, net.minecraft.world.level.ClipContext.Block.COLLIDER,
                     net.minecraft.world.level.ClipContext.Fluid.NONE,
-                    net.minecraft.world.phys.shapes.CollisionContext.empty()
-            ));
+                    net.minecraft.world.phys.shapes.CollisionContext.empty()));
 
-            Vec3 end = (blockHit.getType() != net.minecraft.world.phys.HitResult.Type.MISS) ? blockHit.getLocation() : maxTarget;
+            Vec3 end = (blockHit.getType() != net.minecraft.world.phys.HitResult.Type.MISS) ? blockHit.getLocation()
+                    : maxTarget;
             double closestDistSq = start.distanceToSqr(end);
 
             // Prüfung gegen Hüllenblöcke anderer Schiffe
             for (ClientShipState otherShip : ClientShipManager.getAllShips()) {
-                if (otherShip == null || otherShip.isDisposed() || otherShip.getShipId().equals(entry.shooterShipId()) || otherShip.getAnchorPos() == null) {
+                if (otherShip == null || otherShip.isDisposed() || otherShip.getShipId().equals(entry.shooterShipId())
+                        || otherShip.getAnchorPos() == null) {
                     continue;
                 }
 
@@ -153,7 +176,8 @@ public class LaserBeamRenderer {
         RenderSystem.depthMask(true);
     }
 
-    private static void drawBeam(BufferBuilder buffer, Matrix4f matrix, Vec3 cameraPos, Vec3 startWorld, Vec3 endWorld, LaserWeaponTier tier, float alpha) {
+    private static void drawBeam(BufferBuilder buffer, Matrix4f matrix, Vec3 cameraPos, Vec3 startWorld, Vec3 endWorld,
+            LaserWeaponTier tier, float alpha) {
         Vec3 start = startWorld.subtract(cameraPos);
         Vec3 end = endWorld.subtract(cameraPos);
         Vec3 dir = end.subtract(start).normalize();
@@ -165,7 +189,8 @@ public class LaserBeamRenderer {
         }
         Vec3 side2 = dir.cross(side1).normalize();
 
-        float glowRadius = tier == LaserWeaponTier.HEAVY_BEAM ? 0.35f : (tier == LaserWeaponTier.MINING_LASER ? 0.20f : 0.28f);
+        float glowRadius = tier == LaserWeaponTier.HEAVY_BEAM ? 0.35f
+                : (tier == LaserWeaponTier.MINING_LASER ? 0.20f : 0.28f);
         float coreRadius = glowRadius * 0.28f;
 
         float r = tier.getColorR();
@@ -181,7 +206,8 @@ public class LaserBeamRenderer {
         drawQuad(buffer, matrix, start, end, side2, coreRadius, 1.0f, 1.0f, 1.0f, alpha * 0.95f);
     }
 
-    private static void drawQuad(BufferBuilder buffer, Matrix4f matrix, Vec3 start, Vec3 end, Vec3 normal, float radius, float r, float g, float b, float a) {
+    private static void drawQuad(BufferBuilder buffer, Matrix4f matrix, Vec3 start, Vec3 end, Vec3 normal, float radius,
+            float r, float g, float b, float a) {
         Vec3 offset = normal.scale(radius);
 
         float x1 = (float) (start.x - offset.x);

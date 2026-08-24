@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "peaceman_alpha:item/backflip_tool"
+  }
+}
