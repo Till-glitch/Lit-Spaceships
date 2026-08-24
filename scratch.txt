@@ -1,0 +1,61 @@
+﻿<USER_REQUEST>
+Deine vorherigen Ã„nderungen haben die Koordinatensysteme zerstÃ¶rt. Die Laser sind dezentriert (oben links) und die Schussrichtung ignoriert die Blockausrichtung. Mache die fehlerhaften Modell-Verschiebungen rÃ¼ckgÃ¤ngig und befolge diesen strikten Schritt-fÃ¼r-Schritt-Plan. FÃ¼hre keine 'Optimierungen' an der Reihenfolge der Matrizen durch!
+
+Schritt 1: Reparatur der Blockbench-Modelle (Zentrierung)
+Du hast die Voxel in den JSON-Modellen verschoben. Das ist falsch. Die Turret-Modelle (laser_turret_heavy, laser_turret_pulse, laser_turret_mining) mÃ¼ssen in Blockbench zwingend ihr geometrisches Zentrum bei X=8 und Z=8 haben!
+
+    Ã–ffne die drei Turret-Projekte nacheinander.
+
+    Setze die elements so, dass der HauptkÃ¶rper exakt in der Mitte des 16x16 Grids liegt (z. B. von X=5 bis X=11 und Z=5 bis Z=11).
+
+    Die Unterkante des Turrets muss bei Y=0 starten (in Blockbench).
+
+    Exportiere die drei Modelle erneut und Ã¼berschreibe die JSON-Dateien.
+
+Schritt 2: BlockState-Ausrichtung (Java Block)
+
+    Stelle sicher, dass die Laser-Base-Klasse DirectionalBlock erweitert oder BlockStateProperties.FACING in den BlockBehaviour.Properties registriert ist.
+
+    Ãœberschreibe getStateForPlacement, sodass context.getClickedFace() als FACING zurÃ¼ckgegeben wird. Das definiert, an welcher Wand der Block klebt.
+
+Schritt 3: NeoForge 1.21 Render State Extraction
+Die Rendering-Logik nutzt in 1.21 das State-Extraction-Muster.
+
+    FÃ¼ge in deiner Klasse LaserNodeRenderState (welche BlockEntityRenderState erweitert) ein neues Feld hinzu: public Direction facing = Direction.UP;
+
+    In der BlockEntityRenderer-Methode extractRenderState musst du diesen Wert auslesen: renderState.facing = blockEntity.getBlockState().getValue(BlockStateProperties.FACING);
+
+Schritt 4: Die korrekte PoseStack-Matrix (Die LÃ¶sung fÃ¼r das Dezentrieren)
+In der submit-Methode des Renderers musst du exakt diesen Code-Ablauf verwenden. Die Reihenfolge ist mathematisch bindend, sonst fliegen die Modelle wieder in die 
+<truncated 991 bytes>
+kt auf der 0.25 hohen Basisplatte sitzt!
+poseStack.translate(-0.5, 0.0, -0.5);
+
+// 7. Rendern des JSON-Modells
+blockRenderDispatcher.getModelRenderer().renderModel(poseStack.last(), ...);
+
+poseStack.popPose();
+
+Schritt 5: Korrektur des physischen Schuss-Vektors (Firing Logic)
+Wenn der Server den Hitscan (Raycast) oder Partikel-Strahl berechnet, schieÃŸt der Laser aktuell in die falsche globale Richtung.
+
+    In der tick- oder Schuss-Methode des BlockEntity berechnest du zuerst den lokalen Schuss-Vektor basierend auf dem Yaw und Pitch des Turrets.
+
+    Wichtig: Du musst den BlockState abfragen (getBlockState().getValue(BlockStateProperties.FACING)).
+
+    Transformiere (multipliziere) den lokalen Ziel-Vektor anschlieÃŸend zwingend mit der Quaternion/Rotation der FACING-Direction (facing.getRotation()), bevor du den Raycast ausfÃ¼hrst. Nur so entspricht der mathematische Strahl der visuellen Ausrichtung an der Wand."
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-08-24T09:26:04+02:00.
+
+The user's current state is as follows:
+Other open documents:
+- c:\Users\Till\IdeaProjects\NeoForge-Alpha\src\main\java\com\peaceman\alpha\tests\ShipScannerGameTests.java (LANGUAGE_JAVA)
+- c:\Users\Till\IdeaProjects\NeoForge-Alpha\src\main\java\com\peaceman\alpha\ship\combat\FastVoxelTraversal.java (LANGUAGE_JAVA)
+- c:\Users\Till\IdeaProjects\NeoForge-Alpha\src\main\java\com\peaceman\alpha\ship\combat\RaycastHitResult.java (LANGUAGE_JAVA)
+- c:\Users\Till\IdeaProjects\NeoForge-Alpha\src\main\java\com\peaceman\alpha\registry\ModCreativeTabs.java (LANGUAGE_JAVA)
+- c:\Users\Till\IdeaProjects\NeoForge-Alpha\src\main\java\com\peaceman\alpha\registry\ModItems.java (LANGUAGE_JAVA)
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from Gemini 3.7 Flash (High) to Gemini 3.1 Pro (High). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>

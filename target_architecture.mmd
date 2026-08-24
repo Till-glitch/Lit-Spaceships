@@ -304,6 +304,24 @@ classDiagram
             -drawBeam(BufferBuilder buffer, Matrix4f mat, Vec3 cam, Vec3 start, Vec3 end, LaserWeaponTier tier, float alpha)$ void
         }
 
+        class LaserNodeRenderState {
+            <<record>>
+            +Direction facing
+            +float yaw
+            +float pitch
+            +LaserWeaponTier tier
+            +extract(AbstractLaserNodeBlockEntity be, float partialTick)$ LaserNodeRenderState
+            +getYaw() float
+            +getPitch() float
+            +getFacing() Direction
+            +getTier() LaserWeaponTier
+        }
+
+        class TurretBlockEntityRenderer {
+            +render(T laserBE, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) void
+            +submit(LaserNodeRenderState renderState, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) void
+        }
+
         class ShieldRenderer {
             +renderShields(PoseStack stack, MultiBufferSource buffer, Camera camera, float partialTicks)$ void
         }
@@ -356,6 +374,7 @@ classDiagram
     PulseLaserBlockEntity --|> AbstractLaserNodeBlockEntity : extends
     HeavyBeamBlockEntity --|> AbstractLaserNodeBlockEntity : extends
     MiningLaserBlockEntity --|> AbstractLaserNodeBlockEntity : extends
+    TurretBlockEntityRenderer ..> LaserNodeRenderState : extracts & submits
 
     ServerShipManager o-- "0..*" ShipState : manages
     ShipState o-- "0..1" VoxelGridCache : holds

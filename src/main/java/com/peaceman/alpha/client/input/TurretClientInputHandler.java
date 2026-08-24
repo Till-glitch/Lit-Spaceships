@@ -122,11 +122,26 @@ public class TurretClientInputHandler {
 
                 GimbalLimits limits = laserBE.getGimbalLimits();
 
-                // 1. Lies Rotation direkt vom lokalen Spieler aus (wrapDegrees für saubere 360° im Bereich [-180°, +180°])
+                // 1. Lies Rotation direkt vom lokalen Spieler aus
                 float playerYaw = net.minecraft.util.Mth.wrapDegrees(mc.player.getYRot());
                 float playerPitch = net.minecraft.util.Mth.clamp(mc.player.getXRot(), -90.0f, 90.0f);
 
-                AimAngles angles = new AimAngles(playerYaw, playerPitch);
+                // 1.5 Wandle die globale/Schiffs-lokale Spieler-Rotation in eine wand-lokale Rotation um!
+                net.minecraft.world.phys.Vec3 globalLookVec = AimTransformMath.calculateWorldLookVector(playerYaw, playerPitch);
+                org.joml.Vector3f wallLocalVec = globalLookVec.toVector3f();
+                
+                net.minecraft.core.Direction facing = net.minecraft.core.Direction.UP;
+                if (laserBE.getBlockState().hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING)) {
+                    facing = laserBE.getBlockState().getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING);
+                }
+                
+                org.joml.Quaternionf inverseWallRot = com.peaceman.alpha.ship.combat.aim.AimTransformMath.getRotationForFacing(facing).conjugate();
+                wallLocalVec.rotate(inverseWallRot);
+                
+                float wallYaw = (float) Math.toDegrees(Math.atan2(-wallLocalVec.x(), wallLocalVec.z()));
+                float wallPitch = (float) Math.toDegrees(Math.asin(net.minecraft.util.Mth.clamp(-wallLocalVec.y(), -1.0, 1.0)));
+
+                AimAngles angles = new AimAngles(wallYaw, wallPitch);
                 if (limits != null) {
                     angles = limits.clamp(angles);
                 }

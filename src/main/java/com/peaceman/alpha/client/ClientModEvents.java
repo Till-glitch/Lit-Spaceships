@@ -19,7 +19,14 @@ public class ClientModEvents {
     @SubscribeEvent
     public static void registerRenderers(net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(com.peaceman.alpha.registry.ModBlockEntities.PULSE_LASER_BE.get(), com.peaceman.alpha.client.render.TurretBlockEntityRenderer::new);
+        event.registerBlockEntityRenderer(com.peaceman.alpha.registry.ModBlockEntities.HEAVY_BEAM_BE.get(), com.peaceman.alpha.client.render.TurretBlockEntityRenderer::new);
         event.registerBlockEntityRenderer(com.peaceman.alpha.registry.ModBlockEntities.MINING_LASER_BE.get(), com.peaceman.alpha.client.render.TurretBlockEntityRenderer::new);
         event.registerEntityRenderer(com.peaceman.alpha.registry.ModEntities.TURRET_SEAT.get(), com.peaceman.alpha.client.render.TurretSeatRenderer::new);
+    }
+    @SubscribeEvent
+    public static void registerModels(net.neoforged.neoforge.client.event.ModelEvent.RegisterAdditional event) {
+        event.register(net.minecraft.client.resources.model.ModelResourceLocation.standalone(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "block/laser_turret_heavy")));
+        event.register(net.minecraft.client.resources.model.ModelResourceLocation.standalone(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "block/laser_turret_pulse")));
+        event.register(net.minecraft.client.resources.model.ModelResourceLocation.standalone(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "block/laser_turret_mining")));
     }
 }

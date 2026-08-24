@@ -29,55 +29,55 @@ public class ModPayloads {
         registrar.playToClient(
                 ShieldBubbleSyncPacket.TYPE,
                 ShieldBubbleSyncPacket.STREAM_CODEC,
-                ClientPayloadHandler::handleShieldBubbleSync
+                (payload, context) -> ClientPayloadHandler.handleShieldBubbleSync(payload, context)
         );
 
         registrar.playToClient(
                 ShipStructureSyncPayload.TYPE,
                 ShipStructureSyncPayload.STREAM_CODEC,
-                ClientPayloadHandler::handleStructureSync
+                (payload, context) -> ClientPayloadHandler.handleStructureSync(payload, context)
         );
 
         registrar.playToClient(
                 ShipStateSyncPayload.TYPE,
                 ShipStateSyncPayload.STREAM_CODEC,
-                ClientPayloadHandler::handleStateSync
+                (payload, context) -> ClientPayloadHandler.handleStateSync(payload, context)
         );
 
         registrar.playToClient(
                 ShipPositionSyncPayload.TYPE,
                 ShipPositionSyncPayload.STREAM_CODEC,
-                ClientPayloadHandler::handlePositionSync
+                (payload, context) -> ClientPayloadHandler.handlePositionSync(payload, context)
         );
 
         registrar.playToClient(
                 ShipImpactEventPayload.TYPE,
                 ShipImpactEventPayload.STREAM_CODEC,
-                ClientPayloadHandler::handleShipImpact
+                (payload, context) -> ClientPayloadHandler.handleShipImpact(payload, context)
         );
 
         registrar.playToClient(
                 ShipStructureDeltaPayload.TYPE,
                 ShipStructureDeltaPayload.STREAM_CODEC,
-                ClientPayloadHandler::handleStructureDelta
+                (payload, context) -> ClientPayloadHandler.handleStructureDelta(payload, context)
         );
 
         registrar.playToClient(
                 LaserFirePayload.TYPE,
                 LaserFirePayload.STREAM_CODEC,
-                ClientPayloadHandler::handleLaserFire
+                (payload, context) -> ClientPayloadHandler.handleLaserFire(payload, context)
         );
 
         registrar.playToClient(
                 LaserStateSyncPayload.TYPE,
                 LaserStateSyncPayload.STREAM_CODEC,
-                ClientPayloadHandler::handleLaserStateSync
+                (payload, context) -> ClientPayloadHandler.handleLaserStateSync(payload, context)
         );
 
         registrar.playToClient(
                 ShipDimensionSyncPayload.TYPE,
                 ShipDimensionSyncPayload.STREAM_CODEC,
-                ClientPayloadHandler::handleDimensionSync
+                (payload, context) -> ClientPayloadHandler.handleDimensionSync(payload, context)
         );
 
         registrar.playBidirectional(

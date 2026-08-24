@@ -21,9 +21,9 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 public abstract class AbstractLaserNodeBlockEntity extends AbstractSpaceshipNodeBlockEntity {
 
     protected float targetYaw = 0.0f;
-    protected float targetPitch = 0.0f;
+    protected float targetPitch = -90.0f;
     protected float prevTargetYaw = 0.0f;
-    protected float prevTargetPitch = 0.0f;
+    protected float prevTargetPitch = -90.0f;
     protected boolean isOccupied = false;
     protected boolean isAimLocked = false;
     protected GimbalLimits gimbalLimits = GimbalLimits.UNRESTRICTED;

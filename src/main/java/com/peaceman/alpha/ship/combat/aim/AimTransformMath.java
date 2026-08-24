@@ -11,10 +11,12 @@ import org.joml.Vector3f;
  */
 public final class AimTransformMath {
 
-    private AimTransformMath() {}
+    private AimTransformMath() {
+    }
 
     /**
-     * Berechnet aus globalen Euler-Winkeln der Spielerkamera einen normalisierten 3D-Blickvektor.
+     * Berechnet aus globalen Euler-Winkeln der Spielerkamera einen normalisierten
+     * 3D-Blickvektor.
      */
     public static Vec3 calculateWorldLookVector(float yawDeg, float pitchDeg) {
         float yawRad = yawDeg * Mth.DEG_TO_RAD;
@@ -28,27 +30,33 @@ public final class AimTransformMath {
     }
 
     /**
-     * Transformiert einen globalen Richtungsvektor via inverser Schiffs-Rotation in den lokalen Schiffs-Raum.
+     * Transformiert einen globalen Richtungsvektor via inverser Schiffs-Rotation in
+     * den lokalen Schiffs-Raum.
      */
     public static Vec3 transformWorldToLocal(Vec3 worldVector, Quaternionf shipRotation) {
-        if (shipRotation == null || (shipRotation.x == 0 && shipRotation.y == 0 && shipRotation.z == 0 && shipRotation.w == 1)) {
+        if (shipRotation == null
+                || (shipRotation.x == 0 && shipRotation.y == 0 && shipRotation.z == 0 && shipRotation.w == 1)) {
             return worldVector;
         }
 
         Quaternionf inv = new Quaternionf(shipRotation).conjugate();
-        Vector3f local = inv.transform(new Vector3f((float) worldVector.x, (float) worldVector.y, (float) worldVector.z));
+        Vector3f local = inv
+                .transform(new Vector3f((float) worldVector.x, (float) worldVector.y, (float) worldVector.z));
         return new Vec3(local.x(), local.y(), local.z()).normalize();
     }
 
     /**
-     * Transformiert einen lokalen Schiffsvektor via Schiffs-Rotation in den globalen Weltraum.
+     * Transformiert einen lokalen Schiffsvektor via Schiffs-Rotation in den
+     * globalen Weltraum.
      */
     public static Vec3 transformLocalToWorld(Vec3 localVector, Quaternionf shipRotation) {
-        if (shipRotation == null || (shipRotation.x == 0 && shipRotation.y == 0 && shipRotation.z == 0 && shipRotation.w == 1)) {
+        if (shipRotation == null
+                || (shipRotation.x == 0 && shipRotation.y == 0 && shipRotation.z == 0 && shipRotation.w == 1)) {
             return worldVector(localVector);
         }
 
-        Vector3f world = new Quaternionf(shipRotation).transform(new Vector3f((float) localVector.x, (float) localVector.y, (float) localVector.z));
+        Vector3f world = new Quaternionf(shipRotation)
+                .transform(new Vector3f((float) localVector.x, (float) localVector.y, (float) localVector.z));
         return new Vec3(world.x(), world.y(), world.z()).normalize();
     }
 
@@ -57,7 +65,8 @@ public final class AimTransformMath {
     }
 
     /**
-     * Wandelt einen lokalen Richtungsvektor in lokale Euler-Winkel (Yaw und Pitch in Grad) um.
+     * Wandelt einen lokalen Richtungsvektor in lokale Euler-Winkel (Yaw und Pitch
+     * in Grad) um.
      */
     public static AimAngles vectorToLocalEuler(Vec3 localVec) {
         Vec3 norm = localVec.normalize();
@@ -72,7 +81,8 @@ public final class AimTransformMath {
     }
 
     /**
-     * Wandelt lokale Euler-Winkel in einen normalisierten lokalen 3D-Richtungsvektor um.
+     * Wandelt lokale Euler-Winkel in einen normalisierten lokalen
+     * 3D-Richtungsvektor um.
      */
     public static Vec3 localEulerToVector(float yawDeg, float pitchDeg) {
         float yawRad = yawDeg * Mth.DEG_TO_RAD;
@@ -86,7 +96,8 @@ public final class AimTransformMath {
     }
 
     /**
-     * Komprimiert einen Winkel im Bereich [-180°, 180°] verlustarm in einen 16-Bit Short.
+     * Komprimiert einen Winkel im Bereich [-180°, 180°] verlustarm in einen 16-Bit
+     * Short.
      */
     public static short compressAngle(float angleDeg) {
         float wrapped = Mth.wrapDegrees(angleDeg);
@@ -101,17 +112,41 @@ public final class AimTransformMath {
     }
 
     /**
-     * Berechnet die kürzeste Winkeldifferenz (unter Berücksichtigung des 180°-Wraps) für stotterfreie Interpolation.
+     * Berechnet die kürzeste Winkeldifferenz (unter Berücksichtigung des
+     * 180°-Wraps) für stotterfreie Interpolation.
      */
     public static float normalizeAngleDelta(float current, float previous) {
         return Mth.wrapDegrees(current - previous);
     }
 
     /**
-     * Interpoliert sphärisch/linear zwischen zwei Winkeln unter Erhaltung des kürzesten Drehwegs.
+     * Interpoliert sphärisch/linear zwischen zwei Winkeln unter Erhaltung des
+     * kürzesten Drehwegs.
      */
     public static float interpolateAngle(float previous, float current, float partialTick) {
         float delta = normalizeAngleDelta(current, previous);
         return previous + delta * partialTick;
+    }
+
+    /**
+     * Gibt die Rotations-Matrix (Quaternion) für eine Wand-/Boden-/Decken-Montage zurück.
+     */
+    public static org.joml.Quaternionf getRotationForFacing(net.minecraft.core.Direction facing) {
+        switch (facing) {
+            case DOWN:
+                return new org.joml.Quaternionf().rotationX((float) Math.PI);
+            case UP:
+                return new org.joml.Quaternionf();
+            case NORTH:
+                return new org.joml.Quaternionf().rotationX((float) -Math.PI / 2F);
+            case SOUTH:
+                return new org.joml.Quaternionf().rotationX((float) Math.PI / 2F);
+            case WEST:
+                return new org.joml.Quaternionf().rotationZ((float) Math.PI / 2F);
+            case EAST:
+                return new org.joml.Quaternionf().rotationZ((float) -Math.PI / 2F);
+            default:
+                return new org.joml.Quaternionf();
+        }
     }
 }

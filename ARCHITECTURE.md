@@ -149,7 +149,7 @@ classDiagram
             -VoxelGridCache hullVoxelCache
             -VoxelGridCache shieldVoxelCache
             +getImmutableBlockSnapshot() Set~BlockPos~
-            +setBlocks(Set~BlockPos~ blocks, Level level) void
+            +setBlocksRaw(Set~BlockPos~ blocks) void
             +recalculateHullBounds() void
             +isShieldOnCooldown(long gameTime) boolean
             +isMovementOnCooldown(long gameTime) boolean
@@ -160,6 +160,7 @@ classDiagram
             +getShip(UUID shipId)$ ShipState
             +hasShip(UUID shipId)$ boolean
             +createShip(Level level, BlockPos startPos)$ ShipState
+            +populateAndSyncShipState(Level level, ShipState ship)$ void
             +updateShipBlocks(Level level, ShipState ship)$ void
             +deleteShip(Level level, ShipState ship)$ void
             +saveData(Level level)$ void
@@ -320,6 +321,10 @@ classDiagram
     %% CLIENT SIDE VIEW & RENDERING
     %% ==========================================
     namespace Client_Side {
+        class SpaceshipClientInputHandler {
+            +onPlayerInteract(PlayerInteractEvent.RightClickBlock event)$ void
+        }
+
         class ClientShipState {
             -UUID shipId
             -BlockPos anchorPos
@@ -342,6 +347,24 @@ classDiagram
         class LaserBeamRenderer {
             +onRenderLevelStage(RenderLevelStageEvent event)$ void
             -drawBeam(BufferBuilder buffer, Matrix4f mat, Vec3 cam, Vec3 start, Vec3 end, LaserWeaponTier tier, float alpha)$ void
+        }
+
+        class LaserNodeRenderState {
+            <<record>>
+            +Direction facing
+            +float yaw
+            +float pitch
+            +LaserWeaponTier tier
+            +extract(AbstractLaserNodeBlockEntity be, float partialTick)$ LaserNodeRenderState
+            +getYaw() float
+            +getPitch() float
+            +getFacing() Direction
+            +getTier() LaserWeaponTier
+        }
+
+        class TurretBlockEntityRenderer {
+            +render(T laserBE, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) void
+            +submit(LaserNodeRenderState renderState, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) void
         }
 
         class ShieldRenderer {
@@ -396,6 +419,7 @@ classDiagram
     PulseLaserBlockEntity --|> AbstractLaserNodeBlockEntity : extends
     HeavyBeamBlockEntity --|> AbstractLaserNodeBlockEntity : extends
     MiningLaserBlockEntity --|> AbstractLaserNodeBlockEntity : extends
+    TurretBlockEntityRenderer ..> LaserNodeRenderState : extracts & submits
 
     ServerShipManager o-- "0..*" ShipState : manages
     ShipState o-- "0..1" VoxelGridCache : holds
@@ -461,7 +485,8 @@ $$\Delta \text{Progress} = \frac{k_{\text{tier}}}{\max(0.5, H)}$$
 
 Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
 
-1. **JUnit 5 & Mockito Suite (48 Tests, 100% Erfolgsquote)**:
+1. **JUnit 5 & Mockito Suite (51 Tests, 100% Erfolgsquote)**:
+   * **`LaserNodeRenderStateTest`**: Thread-sichere Render-State Extraktion, interpolierte Kinematik (Yaw/Pitch), 180°-Winkel-Wrap und alle 6 `FACING`-Ausrichtungen (`UP`, `DOWN`, `NORTH`, `SOUTH`, `WEST`, `EAST`).
    * **`DataGeneratorsTest`**: Event-Handling für `GatherDataEvent`, Client/Server-Provider-Registrierung und HolderLookup-Lifecycle.
    * **`ModBlockStateProviderTest`**: 6-Achsen Euler-Winkel-Transformation (`rotX`, `rotY`) für `FACING` Split-Modell Basisplatten und `cubeAll` Generierung.
    * **`ModItemModelProviderTest`**: Parent-Referenzen auf Block-Basen (`laser_base`) und 2D-Item-Modelle (`backflip_tool`).

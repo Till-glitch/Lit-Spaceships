@@ -1,8 +1,6 @@
 package com.peaceman.alpha.block;
 
 import com.peaceman.alpha.block.entity.SpaceshipHelmBlockEntity;
-import com.peaceman.alpha.client.screen.SpaceshipHelmScreen;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -29,12 +27,9 @@ public class SpaceshipHelmBlock extends Block implements EntityBlock {
     @Override
     public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
 
-        // 1. Wir prüfen die Logik: Sind wir der Client?
-        if (level.isClientSide()) {
-            // 2. Wir rufen unsere Puffer-Klasse auf.
-            // Weil wir den vollen Pfad (com.peaceman...) angeben, sparen wir uns den Import oben.
-            com.peaceman.alpha.client.ClientHooks.openHelmScreen(pos);
-        }
+        // Die GUI wird nun asynchron über das RightClickBlock-Event auf dem Client geöffnet.
+        // Das stellt sicher, dass der Server-JVM diese Klasse (und das Block-Objekt)
+        // fehlerfrei laden kann.
 
         return InteractionResult.SUCCESS;
     }

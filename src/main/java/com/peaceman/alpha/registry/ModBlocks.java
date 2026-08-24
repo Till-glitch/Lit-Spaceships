@@ -29,13 +29,13 @@ public class ModBlocks {
             () -> new com.peaceman.alpha.block.SpaceshipShieldBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_LIGHT_GREEN).strength(4.0f)));
 
     public static final DeferredBlock<Block> PULSE_LASER = BLOCKS.register("pulse_laser",
-            () -> new com.peaceman.alpha.block.PulseLaserBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_CYAN).strength(3.5f)));
+            () -> new com.peaceman.alpha.block.PulseLaserBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_CYAN).strength(3.5f).noOcclusion()));
 
     public static final DeferredBlock<Block> HEAVY_BEAM = BLOCKS.register("heavy_beam",
-            () -> new com.peaceman.alpha.block.HeavyBeamBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_ORANGE).strength(4.0f)));
+            () -> new com.peaceman.alpha.block.HeavyBeamBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_ORANGE).strength(4.0f).noOcclusion()));
 
     public static final DeferredBlock<Block> MINING_LASER = BLOCKS.register("mining_laser",
-            () -> new com.peaceman.alpha.block.MiningLaserBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_YELLOW).strength(3.0f)));
+            () -> new com.peaceman.alpha.block.MiningLaserBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_YELLOW).strength(3.0f).noOcclusion()));
 
     // 3. Diese Methode ruft unsere Hauptklasse später auf
     public static void register(IEventBus eventBus) {

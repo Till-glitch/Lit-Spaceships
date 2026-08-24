@@ -137,7 +137,7 @@ public class SpaceshipShieldHandler {
             PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(ship.getId(), ship.getControllerPos(), Collections.emptySet()));
         } else {
             // Noch weitere Generatoren vorhanden: Schildblase neu berechnen
-            ship.syncShieldBubbleToClients(level);
+            com.peaceman.alpha.ship.service.ServerShipManager.populateAndSyncShipState(level, ship);
         }
 
         ServerShipManager.saveData(level);

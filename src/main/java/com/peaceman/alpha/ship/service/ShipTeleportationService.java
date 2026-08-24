@@ -130,7 +130,8 @@ public class ShipTeleportationService {
 
             // State & Dimension Update
             ship.setControllerPos(targetControllerPos);
-            ship.setBlocks(newBlocks, targetLevel);
+            ship.setBlocksRaw(newBlocks);
+            com.peaceman.alpha.ship.service.ServerShipManager.populateAndSyncShipState(targetLevel, ship);
             ship.setReactors(newReactors);
             ship.setShields(newShields);
             ship.setWeapons(newWeapons);
