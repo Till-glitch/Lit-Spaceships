@@ -315,6 +315,10 @@ classDiagram
             +handleTurretLockToggle(TurretLockTogglePayload payload, IPayloadContext context)$ void
         }
 
+        class ClientPayloadRegistrar {
+            +registerClientPayloads(PayloadRegistrar registrar)$ void
+        }
+
         class ClientPayloadHandler {
             +handleStructureDelta(ShipStructureDeltaPayload packet, IPayloadContext context)$ void
             +handlePositionSync(ShipPositionSyncPayload packet, IPayloadContext context)$ void

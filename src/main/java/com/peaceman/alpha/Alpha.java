@@ -39,6 +39,7 @@ public class Alpha {
         event.register(com.peaceman.alpha.tests.ShipScannerGameTests.class);
         event.register(com.peaceman.alpha.tests.ShipMovementGameTests.class);
         event.register(com.peaceman.alpha.tests.ShipAttachmentGameTests.class);
+        event.register(com.peaceman.alpha.tests.ShipCollisionGameTests.class);
     }
 
     private void registerCapabilities(net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent event) {
