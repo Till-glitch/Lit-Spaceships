@@ -53,7 +53,7 @@ public abstract class AbstractSpaceshipScreen extends Screen {
     protected void sendCombatAction(com.peaceman.alpha.network.ShipCombatActionPayload.CombatAction combatAction) {
         updateShipIdFromBlock();
         if (this.shipId != null) {
-            PacketDistributor.sendToServer(new com.peaceman.alpha.network.ShipCombatActionPayload(this.shipId, combatAction));
+            PacketDistributor.sendToServer(new com.peaceman.alpha.network.ShipCombatActionPayload(java.util.Optional.of(this.shipId), combatAction, java.util.Optional.empty()));
         }
     }
 

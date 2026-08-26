@@ -12,6 +12,7 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.List;
+import java.util.UUID;
 
 public class ServerPayloadHandler {
 
@@ -87,7 +88,7 @@ public class ServerPayloadHandler {
         });
     }
 
-    public static void handleCombatAction(final ShipCombatActionPayload payload, final IPayloadContext context) {
+    public static void handleMovementRequest(final ShipMovementRequestPayload payload, final IPayloadContext context) {
         context.enqueueWork(() -> {
             Player player = context.player();
             if (player == null) return;
@@ -97,8 +98,45 @@ public class ServerPayloadHandler {
             ShipState ship = ServerShipManager.getShip(payload.shipId());
             if (ship == null) return;
 
+            Direction forward = player.getDirection();
+            Direction right = forward.getClockWise();
+
+            int dx = Math.round(forward.getStepX() * payload.impulseForward() + right.getStepX() * payload.impulseLeft());
+            int dz = Math.round(forward.getStepZ() * payload.impulseForward() + right.getStepZ() * payload.impulseLeft());
+            int dy = Math.round(payload.impulseUp());
+
+            if (dx != 0 || dy != 0 || dz != 0) {
+                // Distanz pro Tick (z.B. 1 Block)
+                ShipMovementService.moveShip(level, ship, dx, dy, dz, player);
+            }
+        });
+    }
+
+    public static void handleCombatAction(final ShipCombatActionPayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> {
+            Player player = context.player();
+            if (player == null) return;
+            Level level = player.level();
+
+            UUID targetShipId = payload.shipId().orElse(null);
+            if (targetShipId == null && player.getVehicle() instanceof com.peaceman.alpha.entity.TurretSeatEntity seat) {
+                targetShipId = seat.getShipId();
+            }
+            if (targetShipId == null) return;
+
+            ShipState ship = ServerShipManager.getShip(targetShipId);
+            if (ship == null) return;
+
             List<BlockPos> weapons = ship.getWeapons();
             if (weapons.isEmpty()) return;
+            
+            if (payload.action() == ShipCombatActionPayload.CombatAction.FIRE_SPECIFIC && payload.weaponPos().isPresent()) {
+                BlockPos targetPos = payload.weaponPos().get();
+                if (weapons.contains(targetPos)) {
+                    com.peaceman.alpha.ship.combat.LaserCombatService.fireWeapon(level, ship, targetPos);
+                }
+                return;
+            }
 
             for (BlockPos weaponPos : weapons) {
                 var be = level.getBlockEntity(weaponPos);
@@ -204,6 +242,38 @@ public class ServerPayloadHandler {
 
                     // 3. Synchronisiere aktuellen BE-Zustand an alle Clients
                     serverLevel.sendBlockUpdated(pos, laserBE.getBlockState(), laserBE.getBlockState(), 3);
+                }
+            }
+        });
+    }
+
+    public static void handleOpenHelmConfig(OpenHelmConfigPayload payload, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            Player player = context.player();
+            if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                java.util.UUID shipId = payload.shipId().orElse(null);
+                if (shipId != null && com.peaceman.alpha.ship.service.ServerShipManager.ACTIVE_SHIPS.containsKey(shipId)) {
+                    com.peaceman.alpha.ship.domain.ShipState ship = com.peaceman.alpha.ship.service.ServerShipManager.getShip(shipId);
+                    if (ship != null) {
+                        net.minecraft.core.BlockPos controllerPos = ship.getControllerPos();
+                        int energy = com.peaceman.alpha.ship.SpaceshipEnergyManager.getTotalAvailableEnergy(serverPlayer.serverLevel(), ship);
+                        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(serverPlayer,
+                                new ShipStateSyncPayload(shipId, energy, ship.isShieldActive(),
+                                        ship.getShieldCooldownRemaining(serverPlayer.serverLevel().getGameTime()),
+                                        ship.getMovementCooldownRemaining(serverPlayer.serverLevel().getGameTime())));
+                        serverPlayer.openMenu(new net.minecraft.world.MenuProvider() {
+                            @Override
+                            public net.minecraft.network.chat.Component getDisplayName() {
+                                return net.minecraft.network.chat.Component.literal("Raumschiff Navigation");
+                            }
+
+                            @org.jetbrains.annotations.Nullable
+                            @Override
+                            public net.minecraft.world.inventory.AbstractContainerMenu createMenu(int id, net.minecraft.world.entity.player.Inventory inv, Player player) {
+                                return new com.peaceman.alpha.menu.SpaceshipHelmMenu(id, inv, controllerPos);
+                            }
+                        }, buf -> buf.writeBlockPos(controllerPos));
+                    }
                 }
             }
         });

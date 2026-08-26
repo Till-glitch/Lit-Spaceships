@@ -7,7 +7,7 @@ An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21*
 ## Features
 
 * **Spaceship Control Block:** The heart and core of every ship. Detects connected blocks via breadth-first search (BFS), binds them to a ship entity, and manages lifecycle operations (creation, structure update, deletion) with real-time hull highlighting.
-* **Spaceship Helm (Navigation & Combat Console):** Full 6-axis flight controls (Forward, Backward, Left, Right, Up, Down), integrated waypoint bookmarks for automated navigation, and cockpit tactical weapon triggers.
+* **Spaceship Helm (Navigation & Combat Console):** Full 6-axis flight controls (WASD for horizontal flight, Space to ascend, Left-Shift to descend), right-click to fire all shipboard weapons (`FIRE_ALL`), `M` key to open navigation/waypoint configuration while flying, and `H` key to exit helm control.
 * **Spaceship Reactor:** Energy storage supporting standard **Forge Energy (FE)** with up to 1,000,000 FE capacity. Powers flight maneuvers, shield absorption, and laser weapon systems. *(Dev-Tip: Right-click with Redstone to charge 50,000 FE!)*
 * **Shield Generator & Hex-Shader:** Protects ship blocks against explosive damage (TNT, Creepers) and unauthorized block manipulation. Shields consume reactor energy upon impact and are rendered as procedural hexagon bubble meshes via custom shaders with impact ripples and low-energy alerts.
 * **Shipborne Laser Weapon System & Dynamic Turrets:**
@@ -15,7 +15,7 @@ An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21*
   * **Heavy Beam:** High-intensity continuous combat beam (50 FE/tick). Progressively melts and burns through hull blocks and terrain with visual breaking animations.
   * **Mining Laser:** Continuous industrial excavation laser (25 FE/tick). Rapidly drills through asteroid stone, ores, and terrain without causing entity damage.
   * **Co-Pilot / Freelook Aiming System:** Right-click laser turrets to man the gunner seat (`TurretSeatEntity`). Aim turrets dynamically in real-time via camera freelook, stabilized against ship translation and rotation using quaternion transformations ($Q_{ship}^{-1} \otimes \vec{V}_{world} \otimes Q_{ship}$).
-  * **Left-Click Aim Locking & Persistence:** Left-click while seated to lock/arretiere the turret's orientation with acoustic feedback and Action-Bar notification. When dismounting, during ship movement, and across interdimensional teleports, the locked angle remains permanently stored in NBT until intentionally realigned.
+  * **Interactive Firing & Locking Controls:** Right-click while seated to fire the specific occupied turret (`FIRE_SPECIFIC`). Left-click while seated to lock/arretiere the turret's orientation with acoustic feedback and Action-Bar notification. When dismounting, during ship movement, and across interdimensional teleports, the locked angle remains permanently stored in NBT until intentionally realigned.
   * **Mechanical Gimbal Limits:** Strict joint angle clamping prevents turrets from cutting or firing into the ship's own hull.
   * **Delta-Tick Network Throttling:** 16-bit short compression and 20 Hz delta-throttling ($\Delta \ge 0.5^\circ$) eliminate network spam and deliver 0 ms client-predicted aiming response.
 * **Deep Space Dimension (`peaceman_alpha:space`):**
@@ -243,7 +243,7 @@ classDiagram
 
 The project enforces continuous testing according to the **70/20 Rule** (70% Unit / Math Tests, 20% Engine GameTests, 10% Manual QA).
 
-### Automated Test Matrix (51 Unit Tests & 4 GameTest Suites)
+### Automated Test Matrix (52 Unit Tests & 5 GameTest Suites / 15 GameTests)
 
 | Test-Suite | Typ | Abdeckung |
 | :--- | :--- | :--- |
@@ -256,7 +256,7 @@ The project enforces continuous testing according to the **70/20 Rule** (70% Uni
 | **`ShipCollisionMathTest`** | JUnit 5 | Continuous Swept-AABB Extrusion (positive/negative/zero), VoxelGridCache BitSet Indexing & Bounds. |
 | **`ShipStateTest`** | JUnit 5 | Domain-Zustand, AABB-Neuberechnung bei Blockmutation, Controller-Translation, Cooldown-Arithmetik. |
 | **`CombatLogicTest`** | JUnit 5 | FastVoxelTraversal 3D-DDA Treffererkennung, Normalenflächen (`WEST`, `DOWN`), Reichweiten- & Tier-Konstanten. |
-| **`PayloadSerializationTest`** | JUnit 5 | Symmetrische Serialisierung & Deserialisierung aller 10 CustomPacketPayload-Records via StreamCodecs. |
+| **`PayloadSerializationTest`** | JUnit 5 | Symmetrische Serialisierung & Deserialisierung aller 11 CustomPacketPayload-Records via StreamCodecs. |
 | **`SpaceshipEnergyManagerTest`** | JUnit 5 (Mockito) | Reaktor-Bündelung, sequenzieller Energieabzug, Rollback bei Energiemangel, Flugkosten-Berechnung. |
 | **`AimTransformMathTest`** | JUnit 5 | Quaternion-Transformationen, Euler-Winkel-Konvertierung, 16-Bit Kompression und GimbalLimits. |
 | **`TurretSeatTest`** | JUnit 5 | TurretSeat DTO Attribute, NBT-Persistenz und Aim-Lock-Status. |
@@ -264,6 +264,7 @@ The project enforces continuous testing according to the **70/20 Rule** (70% Uni
 | **`ShipMovementGameTests`** | GameTest | Physische Welt-Translation, `AIR`-Hinterlassung und Zielblock-Präsenzprüfung. |
 | **`ShipAttachmentGameTests`** | GameTest | Typsichere Persistenz von `ModAttachments.SHIP_ID` an BlockEntities. |
 | **`SpaceshipGameTests`** | GameTest | Schiffserstellung und UUID-Verknüpfung via Kontrollblock. |
+| **`ShipCollisionGameTests`** | GameTest | Vollständige Simulation aller 4 physikalischen Schiffskollisions-Szenarien (`OFF_vs_OFF`, `OFF_vs_ON`, `ON_vs_OFF`, `ON_vs_ON`) mit Schildabsorption, Fräs-/Bohr-Modus und Cluster-Explosionen. |
 
 ### CI/CD Pipeline (`.github/workflows/ci.yml`)
 

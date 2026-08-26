@@ -15,9 +15,17 @@ import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 public class SpaceshipReactorBlock extends BaseEntityBlock  {
+    public static final net.minecraft.world.level.block.state.properties.BooleanProperty LIT = net.minecraft.world.level.block.state.properties.BlockStateProperties.LIT;
+
     public static final com.mojang.serialization.MapCodec<SpaceshipReactorBlock> CODEC = simpleCodec(SpaceshipReactorBlock::new);
     public SpaceshipReactorBlock(Properties properties) {
         super(properties);
+        this.registerDefaultState(this.stateDefinition.any().setValue(LIT, false));
+    }
+
+    @Override
+    protected void createBlockStateDefinition(net.minecraft.world.level.block.state.StateDefinition.Builder<net.minecraft.world.level.block.Block, BlockState> builder) {
+        builder.add(LIT);
     }
 
     @Override

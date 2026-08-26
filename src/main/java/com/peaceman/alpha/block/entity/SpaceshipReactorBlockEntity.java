@@ -23,7 +23,8 @@ public class SpaceshipReactorBlockEntity extends AbstractSpaceshipNodeBlockEntit
         public int receiveEnergy(int maxReceive, boolean simulate) {
             int received = super.receiveEnergy(maxReceive, simulate);
             if (received > 0 && !simulate) {
-                setChanged(); // WICHTIG: Teilt Minecraft mit, dass die Energie auf die Festplatte muss!
+                setChanged();
+                updateLitState();
             }
             return received;
         }
@@ -32,11 +33,25 @@ public class SpaceshipReactorBlockEntity extends AbstractSpaceshipNodeBlockEntit
         public int extractEnergy(int maxExtract, boolean simulate) {
             int extracted = super.extractEnergy(maxExtract, simulate);
             if (extracted > 0 && !simulate) {
-                setChanged(); // WICHTIG: Sichert den neuen Stand nach Entnahme!
+                setChanged();
+                updateLitState();
             }
             return extracted;
         }
     };
+
+    private void updateLitState() {
+        if (level != null && !level.isClientSide()) {
+            boolean shouldBeLit = energyStorage.getEnergyStored() > 0;
+            BlockState currentState = getBlockState();
+            if (currentState.hasProperty(com.peaceman.alpha.block.SpaceshipReactorBlock.LIT)) {
+                boolean isLit = currentState.getValue(com.peaceman.alpha.block.SpaceshipReactorBlock.LIT);
+                if (isLit != shouldBeLit) {
+                    level.setBlock(getBlockPos(), currentState.setValue(com.peaceman.alpha.block.SpaceshipReactorBlock.LIT, shouldBeLit), 3);
+                }
+            }
+        }
+    }
 
     // Daten-Synchronisation für das Menü (Server -> Client für die GUI)
     protected final ContainerData data = new ContainerData() {

@@ -107,7 +107,8 @@ public class ServerShipManager {
             }
 
             saveData(level);
-            PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(newShip.getId(), 0, newShip.isShieldActive(), 0L, 0L));
+            int energy = com.peaceman.alpha.ship.SpaceshipEnergyManager.getTotalAvailableEnergy(level, newShip);
+            PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(newShip.getId(), energy, newShip.isShieldActive(), 0L, 0L));
             PacketDistributor.sendToAllPlayers(new ShipDimensionSyncPayload(newShip.getId(), level.dimension()));
             return newShip;
         }
@@ -126,7 +127,8 @@ public class ServerShipManager {
                 }
             }
             saveData(level);
-            PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(ship.getId(), 0, ship.isShieldActive(),
+            int energy = com.peaceman.alpha.ship.SpaceshipEnergyManager.getTotalAvailableEnergy(level, ship);
+            PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(ship.getId(), energy, ship.isShieldActive(),
                     ship.getShieldCooldownRemaining(level.getGameTime()),
                     ship.getMovementCooldownRemaining(level.getGameTime())));
         }
@@ -180,8 +182,9 @@ public class ServerShipManager {
                 ShieldLifecycleLogger.logServerChunkSent(ship.getId(), ctrl, chunkPos, player.getName().getString());
                 PacketDistributor.sendToPlayer(player, new ShipDimensionSyncPayload(ship.getId(), ship.getDimension()));
                 PacketDistributor.sendToPlayer(player, new ShipStructureSyncPayload(ship.getId(), ctrl, relative));
+                int energy = com.peaceman.alpha.ship.SpaceshipEnergyManager.getTotalAvailableEnergy(event.getLevel(), ship);
                 PacketDistributor.sendToPlayer(player,
-                        new ShipStateSyncPayload(ship.getId(), 0, ship.isShieldActive(),
+                        new ShipStateSyncPayload(ship.getId(), energy, ship.isShieldActive(),
                                 ship.getShieldCooldownRemaining(player.serverLevel().getGameTime()),
                                 ship.getMovementCooldownRemaining(player.serverLevel().getGameTime())));
                 if (!ship.getShields().isEmpty()) {
