@@ -243,7 +243,7 @@ classDiagram
 
 The project enforces continuous testing according to the **70/20 Rule** (70% Unit / Math Tests, 20% Engine GameTests, 10% Manual QA).
 
-### Automated Test Matrix (52 Unit Tests & 5 GameTest Suites / 15 GameTests)
+### Automated Test Matrix (52 Unit Tests & 5 GameTest Suites / 18 GameTests)
 
 | Test-Suite | Typ | Abdeckung |
 | :--- | :--- | :--- |
@@ -264,7 +264,7 @@ The project enforces continuous testing according to the **70/20 Rule** (70% Uni
 | **`ShipMovementGameTests`** | GameTest | Physische Welt-Translation, `AIR`-Hinterlassung und Zielblock-Präsenzprüfung. |
 | **`ShipAttachmentGameTests`** | GameTest | Typsichere Persistenz von `ModAttachments.SHIP_ID` an BlockEntities. |
 | **`SpaceshipGameTests`** | GameTest | Schiffserstellung und UUID-Verknüpfung via Kontrollblock. |
-| **`ShipCollisionGameTests`** | GameTest | Vollständige Simulation aller 4 physikalischen Schiffskollisions-Szenarien (`OFF_vs_OFF`, `OFF_vs_ON`, `ON_vs_OFF`, `ON_vs_ON`) mit Schildabsorption, Fräs-/Bohr-Modus und Cluster-Explosionen. |
+| **`ShipCollisionGameTests`** | GameTest | Vollständige Simulation aller 4 physikalischen Szenarien (`OFF_vs_OFF`, `OFF_vs_ON`, `ON_vs_OFF`, `ON_vs_ON`) inklusive Point-Zero Boundary Collapse, asynchronem Floating-Blocks Item-Drop (`Block.UPDATE_ALL`) und 3-Wege Multi-Kollisions-Schild-Priorisierung (`CollisionResolver.resolveMultiple`). |
 
 ### CI/CD Pipeline (`.github/workflows/ci.yml`)
 
