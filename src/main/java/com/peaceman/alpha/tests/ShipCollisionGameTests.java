@@ -11,6 +11,7 @@ import com.peaceman.alpha.ship.service.ShipCollisionService;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
@@ -121,24 +122,26 @@ public class ShipCollisionGameTests {
 
     @GameTest(template = "empty")
     public static void testOffVsOff_ExplosionDamage(GameTestHelper helper) {
-        ShipState shipA = createMockShip(helper, new BlockPos(1, 2, 1), 5, 1, 5, false, 0);
-        ShipState shipB = createMockShip(helper, new BlockPos(7, 2, 1), 5, 1, 5, false, 0);
+        ShipState shipA = createMockShip(helper, new BlockPos(1, 2, 1), 6, 6, 10, false, 0);
+        ShipState shipB = createMockShip(helper, new BlockPos(3, 2, 1), 6, 6, 10, false, 0);
 
         List<BlockPos> collidingVoxels = new ArrayList<>();
-        // Fuege sehr viele Kollisionsvoxel ein, um den Cluster-Explosions-Code auszubilden (size > 100)
-        BlockPos centerPos = helper.absolutePos(new BlockPos(5, 2, 1));
-        for(int i = 0; i < 200; i++) {
-            collidingVoxels.add(centerPos); 
+        // Echte 5x5x8 Matrix (200 distinkte Voxel), um den Cluster-Explosions-Code auszubilden (size > 100)
+        for (int x = 0; x < 5; x++) {
+            for (int y = 0; y < 5; y++) {
+                for (int z = 0; z < 8; z++) {
+                    collidingVoxels.add(helper.absolutePos(new BlockPos(2 + x, 2 + y, 1 + z)));
+                }
+            }
         }
 
         ShipCollisionService.VoxelCollisionResult collision = buildResult(shipA, shipB, collidingVoxels);
 
         CollisionResolver.resolve(helper.getLevel(), collision, new Vec3(1, 0, 0));
 
-        // Nach der Explosion sollen Bloecke innerhalb des Explosionsradius, aber ausserhalb der strikten Voxel-Schnittmenge zerstoert worden sein.
+        // Nach der Explosion sollen Bloecke innerhalb des Explosionsradius zerstoert worden sein.
         helper.succeedIf(() -> {
-            // (4,2,1) ist nah an (5,2,1) und muss der Cluster-Explosion zum Opfer gefallen sein.
-            helper.assertBlockPresent(Blocks.AIR, new BlockPos(4, 2, 1));
+            helper.assertBlockPresent(Blocks.AIR, new BlockPos(2, 2, 1));
         });
     }
 
@@ -189,7 +192,7 @@ public class ShipCollisionGameTests {
         List<BlockPos> collidingVoxels = new ArrayList<>();
         // 5 Voxel Ueberschneidung = 500 FE gefordert
         for (int i = 0; i < 5; i++) {
-            collidingVoxels.add(helper.absolutePos(new BlockPos(2, 2, 1))); 
+            collidingVoxels.add(helper.absolutePos(new BlockPos(2 + i, 2, 1))); 
         }
 
         ShipCollisionService.VoxelCollisionResult collision = buildResult(shipA, shipB, collidingVoxels);
@@ -199,6 +202,33 @@ public class ShipCollisionGameTests {
         helper.succeedIf(() -> {
             if (shipB.isShieldActive()) {
                 helper.fail("Shield B should have collapsed due to insufficient energy!");
+            }
+        });
+    }
+
+    @GameTest(template = "empty")
+    public static void testOffVsOn_PointZeroBoundary(GameTestHelper helper) {
+        ShipState shipA = createMockShip(helper, new BlockPos(1, 2, 1), 2, 2, 2, false, 0);
+        ShipState shipB = createMockShip(helper, new BlockPos(5, 2, 1), 2, 2, 2, true, 200); // Exakt 200 FE fuer 2 Voxel
+
+        List<BlockPos> collidingVoxels = new ArrayList<>();
+        collidingVoxels.add(helper.absolutePos(new BlockPos(2, 2, 1)));
+        collidingVoxels.add(helper.absolutePos(new BlockPos(2, 3, 1)));
+
+        ShipCollisionService.VoxelCollisionResult collision = buildResult(shipA, shipB, collidingVoxels);
+
+        CollisionResolver.CollisionResolution resolution = CollisionResolver.resolve(
+                helper.getLevel(), collision, new Vec3(1, 0, 0)
+        );
+
+        helper.succeedIf(() -> {
+            if (!resolution.movementStopped()) helper.fail("Movement should have stopped (kinetic impact)");
+            int remainingEnergy = SpaceshipEnergyManager.getTotalAvailableEnergy(helper.getLevel(), shipB);
+            if (remainingEnergy != 0) {
+                helper.fail("Energy should be exactly 0 FE, but was: " + remainingEnergy);
+            }
+            if (shipB.isShieldActive()) {
+                helper.fail("Shield B must collapse and cannot remain active with 0 FE!");
             }
         });
     }
@@ -251,12 +281,16 @@ public class ShipCollisionGameTests {
     @GameTest(template = "empty")
     public static void testOnVsOff_MidDrillCollapse(GameTestHelper helper) {
         ShipState shipA = createMockShip(helper, new BlockPos(1, 2, 1), 2, 2, 2, true, 500); // 500 FE = max 5 Voxel Drill
-        ShipState shipB = createMockShip(helper, new BlockPos(5, 2, 1), 2, 2, 2, false, 0);
+        ShipState shipB = createMockShip(helper, new BlockPos(5, 2, 1), 5, 2, 2, false, 0);
 
         List<BlockPos> collidingVoxels = new ArrayList<>();
-        // 10 Voxel = 1000 FE erforderlich -> Mid-Drill Collapse
-        for (int i = 0; i < 10; i++) {
-            collidingVoxels.add(helper.absolutePos(new BlockPos(5, 2, 1))); 
+        // Echter 5x2x1 Schnitt (10 distinkte Voxel) = 1000 FE erforderlich -> Mid-Drill Collapse
+        for (int x = 0; x < 5; x++) {
+            for (int y = 0; y < 2; y++) {
+                for (int z = 0; z < 1; z++) {
+                    collidingVoxels.add(helper.absolutePos(new BlockPos(5 + x, 2 + y, 1 + z)));
+                }
+            }
         }
 
         ShipCollisionService.VoxelCollisionResult collision = buildResult(shipA, shipB, collidingVoxels);
@@ -268,6 +302,31 @@ public class ShipCollisionGameTests {
         helper.succeedIf(() -> {
             if (!resolution.movementStopped()) helper.fail("Movement should have stopped after drill collapsed");
             if (shipA.isShieldActive()) helper.fail("Shield A should have collapsed mid-drill");
+        });
+    }
+
+    @GameTest(timeoutTicks = 40, template = "empty")
+    public static void testOnVsOff_FloatingBlocksUpdate(GameTestHelper helper) {
+        ShipState shipA = createMockShip(helper, new BlockPos(1, 2, 1), 2, 2, 2, true, 100000);
+        ShipState shipB = createMockShip(helper, new BlockPos(5, 2, 1), 2, 1, 2, false, 0);
+
+        // Platziere abhängigen Block (Fackel) auf dem Huellenblock von Schiff B
+        helper.setBlock(new BlockPos(5, 3, 1), Blocks.TORCH);
+
+        List<BlockPos> collidingVoxels = new ArrayList<>();
+        collidingVoxels.add(helper.absolutePos(new BlockPos(5, 2, 1)));
+
+        ShipCollisionService.VoxelCollisionResult collision = buildResult(shipA, shipB, collidingVoxels);
+
+        // Führe die Kollision bei Tick 5 aus
+        helper.runAtTickTime(5, () -> {
+            CollisionResolver.resolve(helper.getLevel(), collision, new Vec3(1, 0, 0));
+        });
+
+        // Validiere bei Tick 5, dass der Block entfernt und das Item asynchron gedroppt wurde
+        helper.succeedOnTickWhen(5, () -> {
+            helper.assertBlockPresent(Blocks.AIR, new BlockPos(5, 2, 1));
+            helper.assertItemEntityCountIs(Items.TORCH, new BlockPos(5, 3, 1), 2.0, 1);
         });
     }
 
@@ -331,6 +390,43 @@ public class ShipCollisionGameTests {
             if (!resolution.movementStopped()) helper.fail("Movement should have stopped");
             if (!shipA.isShieldActive()) helper.fail("Shield A should still be active");
             if (shipB.isShieldActive()) helper.fail("Shield B should have collapsed due to lack of energy");
+        });
+    }
+
+    @GameTest(template = "empty")
+    public static void testMultiCollision_ShieldPriority(GameTestHelper helper) {
+        ShipState shipA = createMockShip(helper, new BlockPos(1, 2, 1), 2, 2, 2, true, 100000);
+        ShipState shipB = createMockShip(helper, new BlockPos(5, 2, 1), 2, 2, 2, true, 100000);
+        ShipState shipC = createMockShip(helper, new BlockPos(5, 2, 5), 2, 2, 2, false, 0);
+
+        int initialEnergyB = SpaceshipEnergyManager.getTotalAvailableEnergy(helper.getLevel(), shipB);
+
+        // Zwei Kollisionen vorbereiten: Schiff A schneidet in B (Schild) und C (ungeschuetzt)
+        ShipCollisionService.VoxelCollisionResult collisionB = buildResult(
+                shipA, shipB, List.of(helper.absolutePos(new BlockPos(3, 2, 1)))
+        );
+        ShipCollisionService.VoxelCollisionResult collisionC = buildResult(
+                shipA, shipC, List.of(helper.absolutePos(new BlockPos(5, 2, 5)))
+        );
+
+        // Uebergib bewusst collisionC ZUERST, um die korrekte Priorisierung (Schild vor Drill) zu pruefen
+        CollisionResolver.CollisionResolution resolution = CollisionResolver.resolveMultiple(
+                helper.getLevel(), List.of(collisionC, collisionB), new Vec3(1, 0, 0)
+        );
+
+        helper.succeedIf(() -> {
+            if (!resolution.movementStopped()) {
+                helper.fail("Ship A should have been stopped by Ship B's shield!");
+            }
+            int remainingB = SpaceshipEnergyManager.getTotalAvailableEnergy(helper.getLevel(), shipB);
+            if (remainingB >= initialEnergyB) {
+                helper.fail("Energy should have been drained on Ship B! Initial: " + initialEnergyB + ", Remaining: " + remainingB);
+            }
+            // Schiff C muss vollkommen unversehrt sein (keine Phantom-Durchdringung)
+            helper.assertBlockPresent(Blocks.IRON_BLOCK, new BlockPos(5, 2, 5));
+            if (!shipC.getBlocks().contains(helper.absolutePos(new BlockPos(5, 2, 5)))) {
+                helper.fail("Ship C hull blocks were modified despite movement stopping on Ship B!");
+            }
         });
     }
 

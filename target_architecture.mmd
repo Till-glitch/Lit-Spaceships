@@ -189,6 +189,23 @@ classDiagram
             +onServerTick(ServerTickEvent.Post event)$ void
         }
 
+        class ShipCollisionService {
+            +SECTOR_SIZE double$
+            +calculateSweptAABB(AABB currentBox, double dx, double dy, double dz)$ AABB
+            +calculateTimeOfImpact(AABB movingBox, AABB targetBox, Vec3 velocity)$ double
+            +calculateIntersection(AABB a, AABB b)$ Optional~AABB~
+            +findPotentialCollisions(ShipState movingShip, Vec3 moveVec)$ List~BroadPhaseCandidate~
+            +calculateVoxelIntersection(ShipState shipA, BlockPos originA, ShipState shipB, BlockPos originB, AABB intersectionBox)$ VoxelCollisionResult
+        }
+
+        class CollisionResolver {
+            +ENERGY_PER_VOXEL_IMPACT int$
+            +ENERGY_PER_VOXEL_DRILL int$
+            +ENERGY_PER_VOXEL_SHIELD_CLASH int$
+            +resolve(ServerLevel level, VoxelCollisionResult collision, Vec3 movementVector)$ CollisionResolution
+            +resolveMultiple(ServerLevel level, List~VoxelCollisionResult~ collisions, Vec3 movementVector)$ CollisionResolution
+        }
+
         class SpaceshipEnergyManager {
             +calculateMovementCost(ShipState ship, int dx, int dy, int dz)$ int
             +getTotalAvailableEnergy(Level level, ShipState ship)$ int

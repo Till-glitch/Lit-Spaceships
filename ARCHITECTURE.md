@@ -230,6 +230,23 @@ classDiagram
             +onServerTick(ServerTickEvent.Post event)$ void
         }
 
+        class ShipCollisionService {
+            +SECTOR_SIZE double$
+            +calculateSweptAABB(AABB currentBox, double dx, double dy, double dz)$ AABB
+            +calculateTimeOfImpact(AABB movingBox, AABB targetBox, Vec3 velocity)$ double
+            +calculateIntersection(AABB a, AABB b)$ Optional~AABB~
+            +findPotentialCollisions(ShipState movingShip, Vec3 moveVec)$ List~BroadPhaseCandidate~
+            +calculateVoxelIntersection(ShipState shipA, BlockPos originA, ShipState shipB, BlockPos originB, AABB intersectionBox)$ VoxelCollisionResult
+        }
+
+        class CollisionResolver {
+            +ENERGY_PER_VOXEL_IMPACT int$
+            +ENERGY_PER_VOXEL_DRILL int$
+            +ENERGY_PER_VOXEL_SHIELD_CLASH int$
+            +resolve(ServerLevel level, VoxelCollisionResult collision, Vec3 movementVector)$ CollisionResolution
+            +resolveMultiple(ServerLevel level, List~VoxelCollisionResult~ collisions, Vec3 movementVector)$ CollisionResolution
+        }
+
         class SpaceshipEnergyManager {
             +calculateMovementCost(ShipState ship, int dx, int dy, int dz)$ int
             +getTotalAvailableEnergy(Level level, ShipState ship)$ int
@@ -510,7 +527,19 @@ Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
    * **`SpaceshipEnergyManagerTest`**: Multi-Reaktor-Bündelung, sequenzieller FE-Drain, Transaktionssicherheit (Rollback).
    * **`AimTransformMathTest`**: Quaternion-Transformationen, Euler-Winkel-Konvertierung, 16-Bit Kompression und GimbalLimits.
    * **`TurretSeatTest`**: TurretSeat DTO Attribute, NBT-Persistenz und Aim-Lock-Status.
-2. **NeoForge GameTests (`@GameTestHolder`)**:
+2. **NeoForge GameTests (`@GameTestHolder`, 18 Tests auf Dedicated GameTest-Server, 100% Erfolgsquote)**:
+   * **`ShipCollisionGameTests` (10 Tests)**:
+     - `testOffVsOff_StandardCollision`: Gegenseitige Zerstörung von Hüllenvoxeln bei OFF vs. OFF.
+     - `testOffVsOff_ExplosionDamage`: 5x5x8 Matrix (200 distinkte Voxel) mit Cluster-Explosionen im kinetischen Schwerpunkt.
+     - `testOffVsOn_Absorption`: Kinetischer Aufprall auf aktiven Schild mit FE-Absorption und Translations-Stopp.
+     - `testOffVsOn_ShieldCollapse`: Kinetischer Aufprall mit Energiemangel $\rightarrow$ Schild bricht zusammen.
+     - `testOffVsOn_PointZeroBoundary`: Kritisches Grenzverhalten: Bei exakt 0 FE nach Aufprall bricht das Schild sofort zusammen (`isShieldActive = false`).
+     - `testOnVsOff_Drill`: Fräs-/Bohrmodus: Schild schneidet durch Hüllenblöcke bei intaktem Schiffsmomentum.
+     - `testOnVsOff_MidDrillCollapse`: 5x2x1 Schnitt (10 distinkte Voxel): Energiemangel mitten im Bohrvorgang bricht Schild ab und stoppt Bewegung.
+     - `testOnVsOff_FloatingBlocksUpdate`: Lifecycle-Validierung: Zerstörung des Trägerblocks mit `Block.UPDATE_ALL` droppt abhängige Blöcke (Fackeln) asynchron als Item-Entities (`Items.TORCH`).
+     - `testOnVsOn_StandardClash`: Schild-gegen-Schild Kollision mit beidseitigem FE-Drain und Stopp.
+     - `testOnVsOn_AsymmetricCollapse`: Asymmetrischer Zusammenbruch des energieärmeren Schildes bei Kollision.
+     - `testMultiCollision_ShieldPriority`: 3-Wege-Kollision (Schiff A schneidet gleichzeitig in Schild B und ungeschützte Hülle C): Schild-Blockade stoppt Schiff A deterministisch via `CollisionResolver.resolveMultiple()`, schützt Hülle C vor Phantom-Durchdringung.
    * **`ShipScannerGameTests`**: Validierung des BFS-Scanners, Ausschluss diagonaler Blöcke, Multiblock-Ergänzung (Türen).
    * **`ShipMovementGameTests`**: Physische Schiffstranslation im Testlevel mit `AIR`-Hinterlassung und Zielblock-Präsenz.
    * **`ShipAttachmentGameTests`**: Persistenz von `ModAttachments.SHIP_ID` an BlockEntities.

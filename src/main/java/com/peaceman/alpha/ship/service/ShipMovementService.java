@@ -374,6 +374,7 @@ public class ShipMovementService {
         //    aber die Blöcke relativ zur aktuellen Controller-Position speichert.
         BlockPos projectedOriginA = ship.getControllerPos().offset(dx, dy, dz);
 
+        List<ShipCollisionService.VoxelCollisionResult> collisions = new ArrayList<>();
         for (ShipCollisionService.BroadPhaseCandidate candidate : candidates) {
             ShipCollisionService.VoxelCollisionResult collision =
                     ShipCollisionService.calculateVoxelIntersection(
@@ -382,18 +383,21 @@ public class ShipMovementService {
                             candidate.intersectionBox());
 
             if (collision.isColliding()) {
-                CollisionResolver.CollisionResolution resolution =
-                        CollisionResolver.resolve(serverLevel, collision, finalMoveVec);
+                collisions.add(collision);
+            }
+        }
 
-                if (resolution.movementStopped()) {
-                    finalMoveVec = resolution.clampedVector();
-                    if (player != null) {
-                        player.displayClientMessage(
-                                Component.literal("§c[Kollisionswarnung] §fKollision erkannt (" + resolution.resolutionCase() + ")! Bewegung gestoppt."),
-                                true
-                        );
-                    }
-                    break;
+        if (!collisions.isEmpty()) {
+            CollisionResolver.CollisionResolution resolution =
+                    CollisionResolver.resolveMultiple(serverLevel, collisions, finalMoveVec);
+
+            if (resolution.movementStopped()) {
+                finalMoveVec = resolution.clampedVector();
+                if (player != null) {
+                    player.displayClientMessage(
+                            Component.literal("§c[Kollisionswarnung] §fKollision erkannt (" + resolution.resolutionCase() + ")! Bewegung gestoppt."),
+                            true
+                    );
                 }
             }
         }
