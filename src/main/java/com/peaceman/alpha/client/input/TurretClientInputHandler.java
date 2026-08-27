@@ -31,12 +31,22 @@ public class TurretClientInputHandler {
     private static float lastSentPitch = 0.0f;
     private static int tickCounter = 0;
     private static boolean wasRiding = false;
-
     private static final float DELTA_THRESHOLD_DEGREES = 0.5f;
+    private static long lastLockToggleTick = 0L;
+
+    private static void triggerLockToggle(BlockPos weaponPos, String source) {
+        Minecraft mc = Minecraft.getInstance();
+        long currentTick = mc.level != null ? mc.level.getGameTime() : 0L;
+        if (currentTick - lastLockToggleTick < 2L && lastLockToggleTick != 0L) {
+            return;
+        }
+        lastLockToggleTick = currentTick;
+        com.peaceman.alpha.helper.TurretDebugLogger.logClientLockTriggered(weaponPos, source);
+        PacketDistributor.sendToServer(new TurretLockTogglePayload(weaponPos));
+    }
 
     /**
-     * Interceptet Linksklicks (Angriff / Abbauen) des im Geschütz sitzenden Spielers
-     * und sendet das TurretLockTogglePayload an den Server.
+     * Interceptet Aktionen (Angriff / Abbauen / Item-Nutzung) des im Geschütz sitzenden Spielers.
      */
     @SubscribeEvent
     public static void onInteractionKey(InputEvent.InteractionKeyMappingTriggered event) {
@@ -51,8 +61,7 @@ public class TurretClientInputHandler {
                 if (event.isAttack()) {
                     event.setCanceled(true);
                     event.setSwingHand(false);
-                    com.peaceman.alpha.helper.TurretDebugLogger.logClientLockTriggered(weaponPos, "InteractionKeyMappingTriggered/Attack");
-                    PacketDistributor.sendToServer(new TurretLockTogglePayload(weaponPos));
+                    triggerLockToggle(weaponPos, "InteractionKeyMappingTriggered/Attack");
                 } else if (event.isUseItem()) {
                     event.setCanceled(true);
                     event.setSwingHand(false);
@@ -77,8 +86,7 @@ public class TurretClientInputHandler {
                 BlockPos weaponPos = seat.getWeaponPos();
                 if (weaponPos != null) {
                     event.setCanceled(true);
-                    com.peaceman.alpha.helper.TurretDebugLogger.logClientLockTriggered(weaponPos, "MouseButton.Pre/GLFW_LEFT");
-                    PacketDistributor.sendToServer(new TurretLockTogglePayload(weaponPos));
+                    triggerLockToggle(weaponPos, "MouseButton.Pre/GLFW_LEFT");
                 }
             }
         }
@@ -89,8 +97,7 @@ public class TurretClientInputHandler {
         if (event.getEntity() != null && event.getEntity().getVehicle() instanceof TurretSeatEntity seat) {
             BlockPos weaponPos = seat.getWeaponPos();
             if (weaponPos != null) {
-                com.peaceman.alpha.helper.TurretDebugLogger.logClientLockTriggered(weaponPos, "PlayerInteractEvent.LeftClickEmpty");
-                PacketDistributor.sendToServer(new TurretLockTogglePayload(weaponPos));
+                triggerLockToggle(weaponPos, "PlayerInteractEvent.LeftClickEmpty");
             }
         }
     }
@@ -101,8 +108,7 @@ public class TurretClientInputHandler {
             BlockPos weaponPos = seat.getWeaponPos();
             if (weaponPos != null) {
                 event.setCanceled(true);
-                com.peaceman.alpha.helper.TurretDebugLogger.logClientLockTriggered(weaponPos, "PlayerInteractEvent.LeftClickBlock");
-                PacketDistributor.sendToServer(new TurretLockTogglePayload(weaponPos));
+                triggerLockToggle(weaponPos, "PlayerInteractEvent.LeftClickBlock");
             }
         }
     }

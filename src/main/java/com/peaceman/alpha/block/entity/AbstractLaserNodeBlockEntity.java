@@ -177,7 +177,6 @@ public abstract class AbstractLaserNodeBlockEntity extends AbstractSpaceshipNode
         super.saveAdditional(tag, registries);
         tag.putFloat("TargetYaw", this.targetYaw);
         tag.putFloat("TargetPitch", this.targetPitch);
-        tag.putBoolean("IsOccupied", this.isOccupied);
         tag.putBoolean("IsAimLocked", this.isAimLocked);
     }
 
@@ -192,11 +191,9 @@ public abstract class AbstractLaserNodeBlockEntity extends AbstractSpaceshipNode
             this.targetPitch = tag.getFloat("TargetPitch");
             this.prevTargetPitch = this.targetPitch;
         }
-        if (tag.contains("IsOccupied")) {
-            this.isOccupied = tag.getBoolean("IsOccupied");
-        }
         if (tag.contains("IsAimLocked")) {
             this.isAimLocked = tag.getBoolean("IsAimLocked");
         }
+        this.isOccupied = false;
     }
 }

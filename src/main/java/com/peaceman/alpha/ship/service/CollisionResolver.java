@@ -115,11 +115,7 @@ public class CollisionResolver {
                 PacketDistributor.sendToAllPlayers(new ShipStructureDeltaPayload(shipB.getId(), destroyedB));
             }
 
-            // Time of Impact (TOI) Berechnung für bündigen Stopp ohne statische Lücke
-            double toi = ShipCollisionService.calculateTimeOfImpact(shipA.getTotalBoundingBox(), shipB.getTotalBoundingBox(), movementVector);
-            double safeToi = Math.max(0.0, toi - 0.01);
-            Vec3 clampedVector = movementVector.scale(safeToi);
-
+            Vec3 clampedVector = calculateClampedMovement(shipA, shipB, movementVector);
             com.peaceman.alpha.helper.ShieldLifecycleLogger.logCollisionResolved("OFF_vs_OFF", shipA.getId(), shipB.getId(),
                     voxelCount, true, "Gegenseitige Zerstoerung (" + destroyedA.size() + " Bloecke von A, " + destroyedB.size() + " von B) + Cluster-Explosion");
 
@@ -130,47 +126,24 @@ public class CollisionResolver {
         if (!shieldA && shieldB) {
             int drain = voxelCount * ENERGY_PER_VOXEL_IMPACT;
             boolean absorbed = SpaceshipEnergyManager.tryConsumeEnergyAmount(level, shipB, drain);
-
-            // Time of Impact (TOI) Berechnung für bündigen Stopp an Schild B ohne Lückenbildung
-            double toi = ShipCollisionService.calculateTimeOfImpact(shipA.getTotalBoundingBox(), shipB.getTotalBoundingBox(), movementVector);
-            double safeToi = Math.max(0.0, toi - 0.01);
-            Vec3 clampedVector = movementVector.scale(safeToi);
+            Vec3 clampedVector = calculateClampedMovement(shipA, shipB, movementVector);
 
             if (!absorbed) {
-                // Schild B bricht zusammen!
-                if (shipB.isShieldActive()) {
-                    SpaceshipShieldHandler.toggleShield(level, shipB);
-                }
-                PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(shipB.getId(), shipB.getControllerPos(), Collections.emptySet()));
-                PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(shipB.getId(), 0, false,
-                        shipB.getShieldCooldownRemaining(level.getGameTime()),
-                        shipB.getMovementCooldownRemaining(level.getGameTime())));
+                collapseShieldAndSync(level, shipB);
                 com.peaceman.alpha.helper.ShieldLifecycleLogger.logCollisionResolved("OFF_vs_ON", shipA.getId(), shipB.getId(),
                         voxelCount, true, "Schild B zusammengebrochen! Energiemangel bei Absorption von " + drain + " FE");
             } else {
-                // Einschlagswelle auf Schild B auslösen
                 if (!collidingVoxels.isEmpty()) {
-                    Vec3 localB = Vec3.atCenterOf(collidingVoxels.get(0).subtract(shipB.getControllerPos()));
-                    PacketDistributor.sendToPlayersTrackingChunk(level, new ChunkPos(shipB.getControllerPos()),
-                            new ShipImpactEventPayload(shipB.getId(), localB, 1.0f));
+                    sendImpactWave(level, shipB, collidingVoxels.get(0), 1.0f);
                 }
 
                 int remainingB = SpaceshipEnergyManager.getTotalAvailableEnergy(level, shipB);
                 if (remainingB <= 0) {
-                    // Energie vollständig verbraucht (Point-Zero) -> Schild bricht zusammen
-                    if (shipB.isShieldActive()) {
-                        SpaceshipShieldHandler.toggleShield(level, shipB);
-                    }
-                    PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(shipB.getId(), shipB.getControllerPos(), Collections.emptySet()));
-                    PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(shipB.getId(), 0, false,
-                            shipB.getShieldCooldownRemaining(level.getGameTime()),
-                            shipB.getMovementCooldownRemaining(level.getGameTime())));
+                    collapseShieldAndSync(level, shipB);
                     com.peaceman.alpha.helper.ShieldLifecycleLogger.logCollisionResolved("OFF_vs_ON", shipA.getId(), shipB.getId(),
-                            voxelCount, true, "Schild B hat Aufprall absorbiert, ist aber durch vollstaendigen FE-Verbrauch (0 FE) zusammengebrochen.");
+                        voxelCount, true, "Schild B hat Aufprall absorbiert, ist aber durch vollstaendigen FE-Verbrauch (0 FE) zusammengebrochen.");
                 } else {
-                    PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(shipB.getId(), remainingB, true,
-                            shipB.getShieldCooldownRemaining(level.getGameTime()),
-                            shipB.getMovementCooldownRemaining(level.getGameTime())));
+                    syncIntactShieldState(level, shipB, remainingB);
                     com.peaceman.alpha.helper.ShieldLifecycleLogger.logCollisionResolved("OFF_vs_ON", shipA.getId(), shipB.getId(),
                             voxelCount, true, "Schild B hat Aufprall absorbiert (-" + drain + " FE). Translation von Schiff A gestoppt.");
                 }
@@ -185,67 +158,40 @@ public class CollisionResolver {
             boolean hasEnergy = SpaceshipEnergyManager.tryConsumeEnergyAmount(level, shipA, drillCost);
 
             if (hasEnergy) {
-                // Schild A schneidet ungebremst durch Hülle B
                 List<BlockPos> destroyedB = new ArrayList<>(collidingVoxels.size());
                 for (BlockPos pos : collidingVoxels) {
                     if (shipB.getBlocks().contains(pos)) {
                         destroyedB.add(pos);
                         shipB.getBlocks().remove(pos);
                     }
-                    // Flag 3 (Block update + Send to clients) erzwingt ein sofortiges Update für Physik & Netzwerk,
-                    // um Suffocation-Schaden mitreisender Entitäten im selben Sub-Tick zu verhindern.
                     level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
                 }
 
                 shipB.recalculateHullBounds();
                 ServerShipManager.saveData(level);
 
-                // O(k) Delta-Sync für entfernte Voxel von Schiff B
                 if (!destroyedB.isEmpty()) {
                     PacketDistributor.sendToAllPlayers(new ShipStructureDeltaPayload(shipB.getId(), destroyedB));
                 }
 
-                // Einschlagswelle auf Schild A (Bohrwirkung)
                 if (!collidingVoxels.isEmpty()) {
-                    Vec3 localA = Vec3.atCenterOf(collidingVoxels.get(0).subtract(shipA.getControllerPos()));
-                    PacketDistributor.sendToPlayersTrackingChunk(level, new ChunkPos(shipA.getControllerPos()),
-                            new ShipImpactEventPayload(shipA.getId(), localA, 1.0f));
+                    sendImpactWave(level, shipA, collidingVoxels.get(0), 1.0f);
                 }
 
                 int remainingA = SpaceshipEnergyManager.getTotalAvailableEnergy(level, shipA);
                 if (remainingA <= 0) {
-                    if (shipA.isShieldActive()) {
-                        SpaceshipShieldHandler.toggleShield(level, shipA);
-                    }
-                    PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(shipA.getId(), shipA.getControllerPos(), Collections.emptySet()));
-                    PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(shipA.getId(), 0, false,
-                            shipA.getShieldCooldownRemaining(level.getGameTime()),
-                            shipA.getMovementCooldownRemaining(level.getGameTime())));
+                    collapseShieldAndSync(level, shipA);
                 } else {
-                    PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(shipA.getId(), remainingA, true,
-                            shipA.getShieldCooldownRemaining(level.getGameTime()),
-                            shipA.getMovementCooldownRemaining(level.getGameTime())));
+                    syncIntactShieldState(level, shipA, remainingA);
                 }
 
                 com.peaceman.alpha.helper.ShieldLifecycleLogger.logCollisionResolved("ON_vs_OFF_DRILL", shipA.getId(), shipB.getId(),
                         voxelCount, false, "Schild A fraest durch B (-" + drillCost + " FE). " + destroyedB.size() + " Bloecke in B zerstoert. Momentum beibehalten.");
 
-                // Kein Stopp: Schiff A behält seine geplante Bewegung
                 return new CollisionResolution(false, movementVector, Collections.emptyList(), destroyedB, "ON_vs_OFF_DRILL");
             } else {
-                // Energie von Schiff A erschöpft -> Schild A kollabiert und stoppt
-                if (shipA.isShieldActive()) {
-                    SpaceshipShieldHandler.toggleShield(level, shipA);
-                }
-                PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(shipA.getId(), shipA.getControllerPos(), Collections.emptySet()));
-                PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(shipA.getId(), 0, false,
-                        shipA.getShieldCooldownRemaining(level.getGameTime()),
-                        shipA.getMovementCooldownRemaining(level.getGameTime())));
-
-                // Time of Impact (TOI) Berechnung für den kinetischen Stopp bei Schildkollaps
-                double toi = ShipCollisionService.calculateTimeOfImpact(shipA.getTotalBoundingBox(), shipB.getTotalBoundingBox(), movementVector);
-                double safeToi = Math.max(0.0, toi - 0.01);
-                Vec3 clampedVector = movementVector.scale(safeToi);
+                collapseShieldAndSync(level, shipA);
+                Vec3 clampedVector = calculateClampedMovement(shipA, shipB, movementVector);
 
                 com.peaceman.alpha.helper.ShieldLifecycleLogger.logCollisionResolved("ON_vs_OFF_COLLAPSED", shipA.getId(), shipB.getId(),
                         voxelCount, true, "Schild A beim Bohren zusammengebrochen! Energiemangel bei " + drillCost + " FE. Kinetischer Stopp.");
@@ -259,24 +205,15 @@ public class CollisionResolver {
             int clashCost = voxelCount * ENERGY_PER_VOXEL_SHIELD_CLASH;
             boolean absorbedA = SpaceshipEnergyManager.tryConsumeEnergyAmount(level, shipA, clashCost);
             boolean absorbedB = SpaceshipEnergyManager.tryConsumeEnergyAmount(level, shipB, clashCost);
+            Vec3 clampedVector = calculateClampedMovement(shipA, shipB, movementVector);
 
-            // Time of Impact (TOI) Berechnung für bündigen Schild-an-Schild Kontakt ohne statische Lücken
-            double toi = ShipCollisionService.calculateTimeOfImpact(shipA.getTotalBoundingBox(), shipB.getTotalBoundingBox(), movementVector);
-            double safeToi = Math.max(0.0, toi - 0.01);
-            Vec3 clampedVector = movementVector.scale(safeToi);
-
-            // Einschlagswellen auf beiden Schilden
             if (!collidingVoxels.isEmpty()) {
                 BlockPos hit = collidingVoxels.get(0);
                 if (absorbedA) {
-                    Vec3 localA = Vec3.atCenterOf(hit.subtract(shipA.getControllerPos()));
-                    PacketDistributor.sendToPlayersTrackingChunk(level, new ChunkPos(shipA.getControllerPos()),
-                            new ShipImpactEventPayload(shipA.getId(), localA, 1.5f));
+                    sendImpactWave(level, shipA, hit, 1.5f);
                 }
                 if (absorbedB) {
-                    Vec3 localB = Vec3.atCenterOf(hit.subtract(shipB.getControllerPos()));
-                    PacketDistributor.sendToPlayersTrackingChunk(level, new ChunkPos(shipB.getControllerPos()),
-                            new ShipImpactEventPayload(shipB.getId(), localB, 1.5f));
+                    sendImpactWave(level, shipB, hit, 1.5f);
                 }
             }
 
@@ -284,31 +221,15 @@ public class CollisionResolver {
             int remB = SpaceshipEnergyManager.getTotalAvailableEnergy(level, shipB);
 
             if (!absorbedA || remA <= 0) {
-                if (shipA.isShieldActive()) {
-                    SpaceshipShieldHandler.toggleShield(level, shipA);
-                }
-                PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(shipA.getId(), shipA.getControllerPos(), Collections.emptySet()));
-                PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(shipA.getId(), 0, false,
-                        shipA.getShieldCooldownRemaining(level.getGameTime()),
-                        shipA.getMovementCooldownRemaining(level.getGameTime())));
+                collapseShieldAndSync(level, shipA);
             } else {
-                PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(shipA.getId(), remA, true,
-                        shipA.getShieldCooldownRemaining(level.getGameTime()),
-                        shipA.getMovementCooldownRemaining(level.getGameTime())));
+                syncIntactShieldState(level, shipA, remA);
             }
 
             if (!absorbedB || remB <= 0) {
-                if (shipB.isShieldActive()) {
-                    SpaceshipShieldHandler.toggleShield(level, shipB);
-                }
-                PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(shipB.getId(), shipB.getControllerPos(), Collections.emptySet()));
-                PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(shipB.getId(), 0, false,
-                        shipB.getShieldCooldownRemaining(level.getGameTime()),
-                        shipB.getMovementCooldownRemaining(level.getGameTime())));
+                collapseShieldAndSync(level, shipB);
             } else {
-                PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(shipB.getId(), remB, true,
-                        shipB.getShieldCooldownRemaining(level.getGameTime()),
-                        shipB.getMovementCooldownRemaining(level.getGameTime())));
+                syncIntactShieldState(level, shipB, remB);
             }
 
             com.peaceman.alpha.helper.ShieldLifecycleLogger.logCollisionResolved("ON_vs_ON", shipA.getId(), shipB.getId(),
@@ -398,13 +319,31 @@ public class CollisionResolver {
         return new CollisionResolution(false, movementVector, totalDestroyedA, totalDestroyedB, "NONE");
     }
 
-    private static void syncShipStructure(ShipState ship) {
-        if (ship == null) return;
-        BlockPos ctrl = ship.getControllerPos();
-        Set<BlockPos> relative = new HashSet<>(ship.getBlocks().size());
-        for (BlockPos pos : ship.getBlocks()) {
-            relative.add(pos.subtract(ctrl));
+    private static void collapseShieldAndSync(ServerLevel level, ShipState ship) {
+        if (ship.isShieldActive()) {
+            SpaceshipShieldHandler.toggleShield(level, ship);
         }
-        PacketDistributor.sendToAllPlayers(new ShipStructureSyncPayload(ship.getId(), ctrl, relative));
+        PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(ship.getId(), ship.getControllerPos(), Collections.emptySet()));
+        PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(ship.getId(), 0, false,
+                ship.getShieldCooldownRemaining(level.getGameTime()),
+                ship.getMovementCooldownRemaining(level.getGameTime())));
+    }
+
+    private static void syncIntactShieldState(ServerLevel level, ShipState ship, int remainingEnergy) {
+        PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(ship.getId(), remainingEnergy, true,
+                ship.getShieldCooldownRemaining(level.getGameTime()),
+                ship.getMovementCooldownRemaining(level.getGameTime())));
+    }
+
+    private static Vec3 calculateClampedMovement(ShipState shipA, ShipState shipB, Vec3 movementVector) {
+        double toi = ShipCollisionService.calculateTimeOfImpact(shipA.getTotalBoundingBox(), shipB.getTotalBoundingBox(), movementVector);
+        double safeToi = Math.max(0.0, toi - 0.01);
+        return movementVector.scale(safeToi);
+    }
+
+    private static void sendImpactWave(ServerLevel level, ShipState ship, BlockPos hitPos, float intensity) {
+        Vec3 localPos = Vec3.atCenterOf(hitPos.subtract(ship.getControllerPos()));
+        PacketDistributor.sendToPlayersTrackingChunk(level, new ChunkPos(ship.getControllerPos()),
+                new ShipImpactEventPayload(ship.getId(), localPos, intensity));
     }
 }
