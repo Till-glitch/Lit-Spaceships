@@ -362,9 +362,20 @@ classDiagram
     }
 
     %% ==========================================
-    %% DATA GENERATION PIPELINE
+    %% ==========================================
+    %% DATA GENERATION & I18N PIPELINE
     %% ==========================================
     namespace Data_Generation {
+        class ModI18n {
+            +Tab Tab
+            +Screen Screen
+            +Message Message
+            +Keybind Keybind
+            +Tooltip Tooltip
+            +Structure Structure
+            +Biome Biome
+        }
+
         class DataGenerators {
             +gatherData(GatherDataEvent event)$ void
         }
@@ -376,6 +387,14 @@ classDiagram
 
         class ModItemModelProvider {
             +registerModels() void
+        }
+
+        class ModEnglishLanguageProvider {
+            +addTranslations() void
+        }
+
+        class ModGermanLanguageProvider {
+            +addTranslations() void
         }
 
         class ModLanguageProvider {
@@ -420,6 +439,9 @@ classDiagram
 
     DataGenerators ..> ModBlockStateProvider : instantiates client
     DataGenerators ..> ModItemModelProvider : instantiates client
-    DataGenerators ..> ModLanguageProvider : instantiates client
+    DataGenerators ..> ModEnglishLanguageProvider : instantiates client
+    DataGenerators ..> ModGermanLanguageProvider : instantiates client
     DataGenerators ..> ModLootTableProvider : instantiates server
+    ModEnglishLanguageProvider ..> ModI18n : references keys
+    ModGermanLanguageProvider ..> ModI18n : references keys
     ModLootTableProvider ..> ModBlockLootTableProvider : creates

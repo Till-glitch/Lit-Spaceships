@@ -32,28 +32,28 @@ public class TacticalConsoleHudLayer implements LayeredDraw.Layer {
         int startY = height - 90;
 
         guiGraphics.fill(startX, startY, startX + 110, startY + 80, 0x55000000);
-        guiGraphics.drawString(font, Component.literal("§b--- Tactical ---"), startX + 5, startY + 5, 0xFFFFFF);
+        guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_TACTICAL_HEADER).withStyle(net.minecraft.ChatFormatting.AQUA), startX + 5, startY + 5, 0xFFFFFF);
 
         long currentTick = mc.level != null ? mc.level.getGameTime() : 0;
         
         // Schild Status
         if (shipState.isShieldActive()) {
             if (shipState.getShieldEnergyPercentage() < 0.2f) {
-                guiGraphics.drawString(font, Component.literal("§cSchilde: Kritisch"), startX + 5, startY + 20, 0xFFFFFF);
+                guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_TACTICAL_SHIELD_CRITICAL).withStyle(net.minecraft.ChatFormatting.RED), startX + 5, startY + 20, 0xFFFFFF);
             } else {
-                guiGraphics.drawString(font, Component.literal("§3Schilde: Aktiv"), startX + 5, startY + 20, 0xFFFFFF);
+                guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_TACTICAL_SHIELD_ACTIVE).withStyle(net.minecraft.ChatFormatting.DARK_AQUA), startX + 5, startY + 20, 0xFFFFFF);
             }
         } else {
             if (shipState.isShieldOnCooldown(currentTick)) {
                 long cd = shipState.getShieldCooldownDisplay(currentTick);
-                guiGraphics.drawString(font, Component.literal("§cSchilde: Offline"), startX + 5, startY + 20, 0xFFFFFF);
-                guiGraphics.drawString(font, Component.literal("§cReboot: " + (cd / 20.0f) + "s"), startX + 5, startY + 35, 0xFFFFFF);
+                guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_TACTICAL_SHIELD_OFFLINE).withStyle(net.minecraft.ChatFormatting.RED), startX + 5, startY + 20, 0xFFFFFF);
+                guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_TACTICAL_REBOOT, (cd / 20.0f)).withStyle(net.minecraft.ChatFormatting.RED), startX + 5, startY + 35, 0xFFFFFF);
             } else {
-                guiGraphics.drawString(font, Component.literal("§4Schilde: Deaktiviert"), startX + 5, startY + 20, 0xFFFFFF);
+                guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_TACTICAL_SHIELD_DISABLED).withStyle(net.minecraft.ChatFormatting.DARK_RED), startX + 5, startY + 20, 0xFFFFFF);
             }
         }
 
-        guiGraphics.drawString(font, Component.literal("Energie: " + (int)(shipState.getShieldEnergyPercentage() * 100) + "%"), startX + 5, startY + 50, 0xFFFFFF);
+        guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_TACTICAL_ENERGY, (int)(shipState.getShieldEnergyPercentage() * 100)), startX + 5, startY + 50, 0xFFFFFF);
         
         // Fadenkreuz wird durch TurretCrosshairRenderer gezeichnet
         com.peaceman.alpha.client.render.TurretCrosshairRenderer.render(guiGraphics, deltaTracker);

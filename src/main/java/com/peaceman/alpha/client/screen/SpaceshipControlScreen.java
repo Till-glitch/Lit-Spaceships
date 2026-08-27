@@ -12,7 +12,7 @@ import java.util.UUID;
 public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
 
     public SpaceshipControlScreen(UUID shipId, BlockPos pos) {
-        super(Component.literal("Raumschiff Steuerung"), pos);
+        super(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_TITLE), pos);
         this.shipId = shipId;
     }
 
@@ -34,29 +34,29 @@ public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
         int btnLeft = centerX - (btnWidth / 2);
 
         // 1. Schiff erstellen
-        this.addRenderableWidget(Button.builder(Component.literal("Schiff erstellen"), button -> {
+        this.addRenderableWidget(Button.builder(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_BTN_CREATE), button -> {
             sendShipAction(ActionType.CREATE);
         }).bounds(btnLeft, centerY - 45, btnWidth, btnHeight).build());
 
         // 2. Struktur aktualisieren
-        this.addRenderableWidget(Button.builder(Component.literal("Struktur updaten"), button -> {
+        this.addRenderableWidget(Button.builder(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_BTN_UPDATE), button -> {
             sendShipAction(ActionType.UPDATE_BLOCKS);
         }).bounds(btnLeft, centerY - 15, btnWidth, btnHeight).build());
 
         // 3. Schiff auflösen
-        this.addRenderableWidget(Button.builder(Component.literal("Schiff auflösen"), button -> {
+        this.addRenderableWidget(Button.builder(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_BTN_DISASSEMBLE), button -> {
             sendShipAction(ActionType.DELETE_SHIP);
         }).bounds(btnLeft, centerY + 15, btnWidth, btnHeight).build());
 
         // 4. Markierung An/Aus (rein Client-seitig)
-        this.addRenderableWidget(Button.builder(Component.literal("Markierung An/Aus"), button -> {
+        this.addRenderableWidget(Button.builder(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_BTN_HIGHLIGHT), button -> {
             if (this.minecraft != null && this.minecraft.level != null) {
                 ShipHighlightRenderer.toggleHighlight(this.minecraft.level, this.blockPos);
             }
         }).bounds(btnLeft, centerY + 45, btnWidth, btnHeight).build());
 
         // 5. Schild An/Aus (Sendet Action an Server)
-        this.shieldButton = Button.builder(Component.literal("Schild An/Aus"), button -> {
+        this.shieldButton = Button.builder(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_BTN_SHIELD), button -> {
             sendShipAction(ActionType.TOGGLE_SHIELD);
         }).bounds(btnLeft, centerY + 70, btnWidth, btnHeight).build();
         this.addRenderableWidget(this.shieldButton);
@@ -74,13 +74,13 @@ public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
             if (shieldCd > 0) {
                 this.shieldButton.active = false;
                 double seconds = shieldCd / 20.0;
-                this.shieldButton.setMessage(Component.literal(String.format("Schild (%.1fs)", seconds)));
+                this.shieldButton.setMessage(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_SHIELD_COOLDOWN, seconds));
                 guiGraphics.drawCenteredString(this.font,
-                        Component.literal(String.format("§c[Schild-Abklingzeit: %.1fs]", seconds)),
+                        Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_SHIELD_COOLDOWN, seconds),
                         this.width / 2, this.height / 2 + 95, 0xFF5555);
             } else {
                 this.shieldButton.active = true;
-                this.shieldButton.setMessage(Component.literal(clientState.isShieldActive() ? "Schild: Aktiv" : "Schild: Inaktiv"));
+                this.shieldButton.setMessage(Component.translatable(clientState.isShieldActive() ? com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_SHIELD_ACTIVE : com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_SHIELD_INACTIVE));
             }
         }
 

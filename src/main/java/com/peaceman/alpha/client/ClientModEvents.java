@@ -33,17 +33,17 @@ public class ClientModEvents {
     }
 
     public static final net.minecraft.client.KeyMapping KEY_EXIT_HELM = new net.minecraft.client.KeyMapping(
-            "key." + Alpha.MODID + ".exit_helm",
+            com.peaceman.alpha.registry.ModI18n.Keybind.EXIT_HELM,
             com.mojang.blaze3d.platform.InputConstants.Type.KEYSYM,
             org.lwjgl.glfw.GLFW.GLFW_KEY_H,
-            "key.categories.spaceship"
+            com.peaceman.alpha.registry.ModI18n.Keybind.CATEGORY
     );
 
     public static final net.minecraft.client.KeyMapping KEY_OPEN_HELM_CONFIG = new net.minecraft.client.KeyMapping(
-            "key." + Alpha.MODID + ".open_helm_config",
+            com.peaceman.alpha.registry.ModI18n.Keybind.OPEN_HELM_CONFIG,
             com.mojang.blaze3d.platform.InputConstants.Type.KEYSYM,
             org.lwjgl.glfw.GLFW.GLFW_KEY_M, // M for Map/Menu
-            "key.categories.spaceship"
+            com.peaceman.alpha.registry.ModI18n.Keybind.CATEGORY
     );
 
     @SubscribeEvent

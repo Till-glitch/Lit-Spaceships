@@ -42,28 +42,28 @@ public class SpaceshipHelmConfigScreen extends AbstractContainerScreen<Spaceship
         int top = (this.height - this.imageHeight) / 2;
 
         // 1. Wegpunkt-Steuerung
-        this.homeNameInput = new EditBox(this.font, left + 15, top + 92, 100, 18, Component.literal("Wegpunkt"));
+        this.homeNameInput = new EditBox(this.font, left + 15, top + 92, 100, 18, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HELM_WAYPOINT_INPUT));
         this.homeNameInput.setValue("Basis");
         this.addRenderableWidget(this.homeNameInput);
 
-        this.saveHomeBtn = Button.builder(Component.literal("Speichern"), button -> {
+        this.saveHomeBtn = Button.builder(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HELM_BTN_SAVE), button -> {
             sendShipAction(ActionType.SAVE_HOME, 0, this.homeNameInput.getValue());
         }).bounds(left + 120, top + 92, 60, 18).build();
         this.addRenderableWidget(this.saveHomeBtn);
 
-        this.jumpHomeBtn = Button.builder(Component.literal("Anfliegen"), button -> {
+        this.jumpHomeBtn = Button.builder(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HELM_BTN_FLYTO), button -> {
             sendShipAction(ActionType.TP_HOME, 0, this.homeNameInput.getValue());
             this.minecraft.setScreen(null);
         }).bounds(left + 185, top + 92, 60, 18).build();
         this.addRenderableWidget(this.jumpHomeBtn);
 
         // 2. Manueller Distanz-Sprung
-        this.jumpDistanceInput = new EditBox(this.font, left + 15, top + 138, 60, 18, Component.literal("Distanz"));
+        this.jumpDistanceInput = new EditBox(this.font, left + 15, top + 138, 60, 18, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HELM_DISTANCE_INPUT));
         this.jumpDistanceInput.setValue("50");
         this.jumpDistanceInput.setFilter(s -> s.matches("\\d*"));
         this.addRenderableWidget(this.jumpDistanceInput);
 
-        this.jumpForwardBtn = Button.builder(Component.literal("Vorwärts"), button -> {
+        this.jumpForwardBtn = Button.builder(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HELM_BTN_FORWARD), button -> {
             int dist = parseDistance();
             if (dist > 0) {
                 sendShipAction(ActionType.MOVE_FORWARD, dist, "");
@@ -72,7 +72,7 @@ public class SpaceshipHelmConfigScreen extends AbstractContainerScreen<Spaceship
         }).bounds(left + 80, top + 138, 55, 18).build();
         this.addRenderableWidget(this.jumpForwardBtn);
 
-        this.jumpUpBtn = Button.builder(Component.literal("Aufwärts"), button -> {
+        this.jumpUpBtn = Button.builder(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HELM_BTN_UP), button -> {
             int dist = parseDistance();
             if (dist > 0) {
                 sendShipAction(ActionType.MOVE_UP, dist, "");
@@ -81,7 +81,7 @@ public class SpaceshipHelmConfigScreen extends AbstractContainerScreen<Spaceship
         }).bounds(left + 140, top + 138, 50, 18).build();
         this.addRenderableWidget(this.jumpUpBtn);
 
-        this.jumpDownBtn = Button.builder(Component.literal("Abwärts"), button -> {
+        this.jumpDownBtn = Button.builder(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HELM_BTN_DOWN), button -> {
             int dist = parseDistance();
             if (dist > 0) {
                 sendShipAction(ActionType.MOVE_DOWN, dist, "");
@@ -154,34 +154,34 @@ public class SpaceshipHelmConfigScreen extends AbstractContainerScreen<Spaceship
         if (this.jumpHomeBtn != null) this.jumpHomeBtn.active = !onWarpCooldown;
 
         // 1. Telemetrie & Energie / Reichweite (Oben)
-        guiGraphics.drawString(this.font, Component.literal(String.format("§7Schiffsgröße: §f%d Blöcke", blockCount)), left + 15, top + 22, 0xAAAAAA, false);
-        guiGraphics.drawString(this.font, Component.literal(String.format("§7Reaktor-Energie: §e%,d FE", currentEnergy)), left + 15, top + 34, 0xAAAAAA, false);
-        guiGraphics.drawString(this.font, Component.literal(String.format("§7Flugkosten: §f%d FE / Block", costPerMeter)), left + 15, top + 46, 0xAAAAAA, false);
-        guiGraphics.drawString(this.font, Component.literal(String.format("§aMax. Sprungreichweite: §f§l%,d Blöcke", maxJumpDistance)), left + 15, top + 58, 0x55FF55, false);
+        guiGraphics.drawString(this.font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HELM_SHIP_SIZE, blockCount), left + 15, top + 22, 0xAAAAAA, false);
+        guiGraphics.drawString(this.font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HELM_REACTOR_ENERGY, String.format("%,d", currentEnergy)), left + 15, top + 34, 0xAAAAAA, false);
+        guiGraphics.drawString(this.font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HELM_FLIGHT_COST, costPerMeter), left + 15, top + 46, 0xAAAAAA, false);
+        guiGraphics.drawString(this.font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HELM_MAX_JUMP, String.format("%,d", maxJumpDistance)), left + 15, top + 58, 0x55FF55, false);
 
         // Trennlinien
         guiGraphics.hLine(left + 12, left + this.imageWidth - 14, top + 74, 0xFF444444);
-        guiGraphics.drawString(this.font, Component.literal("§6Wegpunkt Navigation"), left + 15, top + 78, 0xFFFFAA, false);
+        guiGraphics.drawString(this.font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HELM_WAYPOINT_NAV), left + 15, top + 78, 0xFFFFAA, false);
 
         guiGraphics.hLine(left + 12, left + this.imageWidth - 14, top + 118, 0xFF444444);
-        guiGraphics.drawString(this.font, Component.literal("§6Manueller Distanz-Sprung"), left + 15, top + 124, 0xFFFFAA, false);
+        guiGraphics.drawString(this.font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HELM_MANUAL_JUMP), left + 15, top + 124, 0xFFFFAA, false);
 
         // 3. Kosten-Kalkulation für manuelle Distanz (Unten)
         if (inputDist > 0) {
             if (hasEnoughEnergy) {
-                guiGraphics.drawString(this.font, Component.literal(String.format("§aKosten für %dm Sprung: %,d FE §2(Bereit)", inputDist, jumpCost)), left + 15, top + 164, 0x55FF55, false);
+                guiGraphics.drawString(this.font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HELM_COST_READY, inputDist, String.format("%,d", jumpCost)), left + 15, top + 164, 0x55FF55, false);
             } else {
                 int missing = jumpCost - currentEnergy;
-                guiGraphics.drawString(this.font, Component.literal(String.format("§cKosten: %,d FE §4(Fehlen: %,d FE)", jumpCost, missing)), left + 15, top + 164, 0xFF5555, false);
+                guiGraphics.drawString(this.font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HELM_COST_MISSING, String.format("%,d", jumpCost), String.format("%,d", missing)), left + 15, top + 164, 0xFF5555, false);
             }
         } else {
-            guiGraphics.drawString(this.font, Component.literal("§7Distanz in Blöcken eingeben"), left + 15, top + 164, 0x888888, false);
+            guiGraphics.drawString(this.font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HELM_ENTER_DISTANCE), left + 15, top + 164, 0x888888, false);
         }
 
         // Cooldown-Warnung
         if (onWarpCooldown) {
             double cdSeconds = clientState.getMovementCooldownDisplay(currentTick) / 20.0;
-            guiGraphics.drawCenteredString(this.font, Component.literal(String.format("§c⏳ Warp-Cooldown aktiv (%.1fs)", cdSeconds)), left + this.imageWidth / 2, top + 185, 0xFF5555);
+            guiGraphics.drawCenteredString(this.font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HELM_WARP_COOLDOWN, cdSeconds), left + this.imageWidth / 2, top + 185, 0xFF5555);
         }
 
         this.renderTooltip(guiGraphics, mouseX, mouseY);
@@ -203,6 +203,6 @@ public class SpaceshipHelmConfigScreen extends AbstractContainerScreen<Spaceship
 
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        guiGraphics.drawString(this.font, Component.literal("§b✦ Navigation & Sprung-Computer ✦"), 12, 6, 0x55FFFF, false);
+        guiGraphics.drawString(this.font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HELM_SCREEN_TITLE), 12, 6, 0x55FFFF, false);
     }
 }

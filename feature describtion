@@ -1,0 +1,230 @@
+I18n & Localization Specification Document: Architektur und Implementation für Mod AlphaExecutive Summary und Architektonische VisionDie Überführung der hardcodierten Zeichenketten der Modifikation "Mod Alpha" in ein vollständig datengesteuertes Internationalisierungs- (I18n) und Lokalisierungs-System (L10n) erfordert eine strikte Trennung von Geschäftslogik und Darstellungspräsentation. Gemäß den modernen Architekturrichtlinien für NeoForge 1.21 basiert die Textverarbeitung auf der statischen API der Component-Schnittstelle, welche rohe Zeichenketten durch Metadaten-angereicherte Objekte ersetzt. Die zugrundeliegende Systemarchitektur der Modifikation, welche auf einem rigorosen Model-View-Controller-Muster (MVC) mit vollständiger logischer Client-Server-Entkopplung aufbaut, bedingt zwingend eine Auslagerung jeglicher textuellen Repräsentation in den Client-Bereich.Ein fundamentales Paradigma dieses Entwurfs ist die ausnahmslose Einhaltung der Client-Server-Sidedness. Der dedizierte Server, repräsentiert durch zentrale Instanzen wie den ServerShipManager oder den LaserCombatService, darf niemals eine Übersetzung auflösen oder lokalisierte Strings generieren. Jeglicher Text, der dem Spieler präsentiert wird, verlässt den Server ausschließlich als unaufgelöste Component.translatable-Instanz oder wird gänzlich clientseitig durch Netzwerk-Payloads in der View-Schicht initiiert und gerendert. Dieser Ansatz garantiert nicht nur die Funktionalität auf internationalen Servern mit heterogenen Client-Sprachen, sondern stellt auch sicher, dass die VRAM- und Netzwerk-Lebenszyklen der Modifikation unberührt bleiben und asynchrone Berechnungen wie der Amanatides-and-Woo 3D-DDA-Algorithmus nicht durch synchrone String-Konkatenationen blockiert werden.Das folgende Dokument spezifiziert die hierarchische Taxonomie, die dynamische Variablenformatierung, den Code-Ansatz via DataGen und liefert ein vollständiges Audit aller zu migrierenden Features der Spaceship-Modifikation. Durch die Etablierung einer Single-Source-of-Truth-Klasse für alle Übersetzungsschlüssel wird ein Fundament geschaffen, welches primär auf Englisch (en_us) fokussiert ist, jedoch architektonisch zu einhundert Prozent darauf vorbereitet ist, nahtlos durch weitere linguistische Provider wie Deutsch (de_de) erweitert zu werden.Translation Key Taxonomy: Hierarchische NamenskonventionenUm Kollisionen im globalen Namensraum von Minecraft zu verhindern und die Wartbarkeit der Sprachdateien bei der Skalierung auf weitere Provider zu gewährleisten, wird eine deterministische, hierarchische Nomenklatur etabliert. Die Struktur für Translation Keys in NeoForge 1.21 folgt dem etablierten Pattern der Registrierungsnamen, typischerweise strukturiert als <kategorie>.<modid>.<bezeichner>.<unterbezeichner>. Diese Taxonomie stellt sicher, dass selbst bei der Integration der "Mod Alpha" in massive Modpacks mit hunderten von Erweiterungen keine Konflikte bei der Textauflösung auftreten.Die Generierung von Übersetzungsschlüsseln muss strikt in Kleinbuchstaben (Lowercase) erfolgen. Als Trennzeichen für zusammengesetzte Bezeichner wird der Unterstrich (Snake-Case) verwendet, während der Punkt ausschließlich als Separator der Hierarchieebenen fungiert. Die Verwendung von Leerzeichen, Sonderzeichen oder Großbuchstaben ist im Übersetzungsschlüssel strikt untersagt, um eine deterministische Verarbeitung durch den JSON-Parser des DataGen-Systems zu garantieren.Regelwerk der Taxonomie-KategorienDie Kategorisierung der Übersetzungsschlüssel orientiert sich an den logischen Bestandteilen der Modifikation. Jede Kategorie besitzt ein spezifisches Präfix, welches den Verwendungszweck im Quellcode eindeutig identifiziert.KategoriePräfix / MusterBeispiel für Mod AlphaKontext / Analytische BegründungBlöckeblock.peaceman_alpha.<block_name>block.peaceman_alpha.spaceship_reactorVerwendet für Inventar-Namen, Waila/Jade-Integrationen und Block-Drops. Die Block-Registry von NeoForge löst diese Keys automatisch auf.Itemsitem.peaceman_alpha.<item_name>item.peaceman_alpha.backflip_toolIdentifiziert freie Items, die keine Blöcke sind. Die API differenziert hier strikt zwischen BlockItems und regulären Items.Kreativ-TabsitemGroup.peaceman_alpha.<tab_name>itemGroup.peaceman_alpha.main_tabDefiniert den Namen des Mod-Reiters im Creative Mode. Diese Keys sind essenziell für die initiale Orientierung des Spielers in der Mod.UI / Screensscreen.peaceman_alpha.<ui_name>.<feld>screen.peaceman_alpha.reactor.energyDient der Lokalisierung von Titeln und Labels in GUI-Menüs. Das Suffix definiert spezifische UI-Elemente wie Buttons, Checkboxen oder Textfelder.Nachrichtenmessage.peaceman_alpha.<system>.<ereignis>message.peaceman_alpha.turret.aim_lockedSystem-Feedback an den Spieler (Chat oder Action-Bar). Diese Keys repräsentieren dynamische Ereignisse, oft gepaart mit Variablen-Interpolation.Keybindingskey.peaceman_alpha.<aktion>key.peaceman_alpha.fire_allAnzeigename für spezifische Tastenbelegungen in den Optionen. Erlaubt die intuitive Konfiguration der Schiffssteuerung.Tasten-Kategorienkey.categories.peaceman_alphakey.categories.peaceman_alphaGruppierung der Mod-Tasten im übergeordneten Steuerungsmenü von Minecraft, um alle Funktionen des Spaceship-Helms übersichtlich zu bündeln.Tooltipstooltip.peaceman_alpha.<kontext>.<info>tooltip.peaceman_alpha.reactor.capacityZusätzliche Item-Informationen, die beim Hovern über ein Objekt generiert werden (HoverableText). Essenziell für technische Metadaten.Dimensionenbiome.peaceman_alpha.<name>biome.peaceman_alpha.deep_spaceTextuelle Repräsentation für den Debug-Screen (F3), Biome-Scanner und Server-Listen zur Identifikation des unendlichen Vakuums.Diese strikte Taxonomie transformiert chaotische Textfragmente in ein strukturiertes Datenmodell. Wenn beispielsweise der SpaceshipReactorBlock im Code instanziiert wird, generiert NeoForge den Description-Key automatisch aus dem Registry-Namen. Durch die Einhaltung dieser Konvention greifen die internen Mechanismen der Engine nahtlos in die von uns definierten Lokalisierungsdateien.I18n-Architektur: Der Single-Source-of-Truth AnsatzIn der klassischen Mod-Entwicklung stellt die fehlerhafte manuelle Eingabe von Übersetzungsschlüsseln eine signifikante Fehlerquelle dar. Wenn Programmierer Strings wie "screen.peaceman_alpha.reactor.energy" händisch in die View-Schicht tippen, entstehen unweigerlich Tippfehler. Da NeoForge bei unbekannten Keys keine Exception wirft, sondern den rohen String als Fallback im HUD des Spielers ausgibt, bleiben solche Fehler oft bis zur Laufzeit oder manuellen Qualitätssicherung unentdeckt.Um diese Fehlerklasse architektonisch zu eliminieren, wird eine statische Konstanten-Klasse (ModI18n) als Single-Source-of-Truth etabliert. Diese Klasse dient als exklusives Register für alle im System verwendeten Translation Keys. Sie wird bidirektional genutzt: Einerseits vom ModLanguageProvider innerhalb der DataGen-Pipeline zur Generierung der JSON-Dateien, andererseits von der Feature-Logik in Screens, BlockEntities und PayloadHandlers zur Erstellung der Component-Instanzen. Durch diesen Ansatz wird jeder Übersetzungsschlüssel zur Compile-Zeit verifiziert. Ein Tippfehler im Variablennamen führt zu einem sofortigen Compiler-Fehler, wodurch die Laufzeitstabilität des Textsystems mathematisch garantiert wird.Implementation der Konstanten-KlasseDie Klasse ModI18n wird in logische statische Sub-Klassen unterteilt, welche die zuvor definierte Taxonomie exakt widerspiegeln. Diese hierarchische Schachtelung innerhalb der Klasse bietet den Entwicklern eine saubere Autovervollständigung in der IDE und verhindert semantische Kollisionen.Javapackage com.peaceman.alpha.registry;
+
+import com.peaceman.alpha.Alpha;
+
+/**
+ * Single-Source-of-Truth für alle Translation Keys der Mod Alpha.
+ * Diese Klasse bündelt alle textuellen Bezeichner zur Vermeidung von 
+ * Magic Strings in der Geschäfts- und Darstellungskoordination.
+ */
+public final class ModI18n {
+    
+    // Privater Konstruktor verhindert die unerwünschte Instanziierung der Utility-Klasse
+    private ModI18n() {} 
+
+    public static final class Tab {
+        public static final String MAIN = "itemGroup." + Alpha.MODID + ".main";
+    }
+
+    public static final class Screen {
+        public static final String REACTOR_TITLE = "screen." + Alpha.MODID + ".reactor.title";
+        public static final String REACTOR_ENERGY = "screen." + Alpha.MODID + ".reactor.energy";
+        public static final String HELM_NAV_TITLE = "screen." + Alpha.MODID + ".helm.navigation";
+        public static final String HELM_BTN_WAYPOINT = "screen." + Alpha.MODID + ".helm.waypoint.set";
+    }
+
+    public static final class Message {
+        public static final String TURRET_AIM_LOCKED = "message." + Alpha.MODID + ".turret.aim_locked";
+        public static final String TURRET_GIMBAL_LIMIT = "message." + Alpha.MODID + ".turret.gimbal_limit";
+        public static final String SHIELD_COLLAPSE = "message." + Alpha.MODID + ".shield.collapse";
+        public static final String REACTOR_DEPLETED = "message." + Alpha.MODID + ".reactor.depleted";
+        public static final String COMBAT_TARGET_DESTROYED = "message." + Alpha.MODID + ".combat.destroyed";
+        public static final String WARP_PHASE_STATUS = "message." + Alpha.MODID + ".warp.phase";
+    }
+
+    public static final class Keybind {
+        public static final String CATEGORY = "key.categories." + Alpha.MODID;
+        public static final String FIRE_ALL = "key." + Alpha.MODID + ".fire_all";
+        public static final String NAV_MENU = "key." + Alpha.MODID + ".nav_menu";
+        public static final String EXIT_HELM = "key." + Alpha.MODID + ".exit_helm";
+        public static final String MOUNT_TURRET = "key." + Alpha.MODID + ".mount_turret";
+    }
+
+    public static final class Tooltip {
+        public static final String REACTOR_CAPACITY = "tooltip." + Alpha.MODID + ".reactor.capacity";
+        public static final String WEAPON_TIER = "tooltip." + Alpha.MODID + ".weapon.tier";
+        public static final String ENERGY_COST = "tooltip." + Alpha.MODID + ".weapon.energy_cost";
+        public static final String SHIELD_STATUS = "tooltip." + Alpha.MODID + ".shield.status";
+    }
+    
+    public static final class Structure {
+        public static final String SHIPWRECK = "structure." + Alpha.MODID + ".shipwreck";
+    }
+    
+    public static final class Biome {
+        public static final String DEEP_SPACE = "biome." + Alpha.MODID + ".deep_space";
+    }
+}
+Durch die Deklaration als static final String werden diese Werte vom Java-Compiler direkt in die aufrufenden Klassen ge-inlined. Dies bedeutet, dass die Nutzung der ModI18n-Klasse keinerlei Overhead zur Laufzeit erzeugt, während sie gleichzeitig die Sicherheit und Wartbarkeit des Codes drastisch erhöht.Automatisierte Datengenerierung (DataGen)Das Datengenerierungs-Framework von NeoForge 1.21 ermöglicht die vollautomatische Erstellung aller Asset- und Data-Dateien, einschließlich der Lokalisierungs-JSONs. Anstatt die en_us.json manuell zu pflegen, was unweigerlich zu Desynchronisationen zwischen Quellcode und Ressourcen führt, wird die Datei programmatisch über den ModLanguageProvider erzeugt. Dieser Provider wird in der Gather-Data-Phase der Mod-Initialisierung aufgerufen und iteriert über die definierten Keys, um ein konsistentes Wörterbuch zu kompilieren.Der ModLanguageProvider für Englisch (en_us)Die Implementierung des ModEnglishLanguageProvider nutzt die in der ModI18n hinterlegten Konstanten, um die englischen Primärtexte zuzuordnen. Für Blöcke und Items bietet die API überladene add()-Methoden, welche direkt die referenzierten DeferredRegister-Objekte konsumieren. Dies verknüpft die physischen Elemente der Mod untrennbar mit ihren textuellen Repräsentationen.Javapackage com.peaceman.alpha.datagen.provider;
+
+import com.peaceman.alpha.Alpha;
+import com.peaceman.alpha.registry.ModBlocks;
+import com.peaceman.alpha.registry.ModI18n;
+import com.peaceman.alpha.registry.ModItems;
+import net.minecraft.data.PackOutput;
+import net.neoforged.neoforge.common.data.LanguageProvider;
+
+/**
+ * Generiert die en_us.json Sprachdatei für die Mod Alpha.
+ * Diese Klasse fungiert als primärer Datenlieferant für das I18n-System.
+ */
+public class ModEnglishLanguageProvider extends LanguageProvider {
+
+    public ModEnglishLanguageProvider(PackOutput output) {
+        // Zuweisung der Mod-ID und des spezifischen Locales
+        super(output, Alpha.MODID, "en_us");
+    }
+
+    @Override
+    protected void addTranslations() {
+        // 1. Creative Tabs
+        add(ModI18n.Tab.MAIN, "Mod Alpha");
+
+        // 2. Blöcke (Automatische Extraktion der Translation Keys aus der Registry)
+        add(ModBlocks.SPACESHIP_CONTROL_BLOCK.get(), "Spaceship Controller");
+        add(ModBlocks.SPACESHIP_HELM_BLOCK.get(), "Spaceship Helm");
+        add(ModBlocks.SPACESHIP_REACTOR_BLOCK.get(), "Spaceship Reactor");
+        add(ModBlocks.SPACESHIP_SHIELD_BLOCK.get(), "Shield Generator");
+        add(ModBlocks.HEAVY_BEAM_BLOCK.get(), "Heavy Laser Beam");
+        add(ModBlocks.MINING_LASER_BLOCK.get(), "Mining Laser");
+        add(ModBlocks.PULSE_LASER_BLOCK.get(), "Pulse Laser Cannon");
+        add(ModBlocks.LASER_BASE.get(), "Turret Baseplate");
+
+        // 3. Items
+        add(ModItems.BACKFLIP_TOOL.get(), "Backflip Tool");
+
+        // 4. UI / Screens
+        add(ModI18n.Screen.REACTOR_TITLE, "Reactor Core Diagnostics");
+        add(ModI18n.Screen.REACTOR_ENERGY, "Energy Level: %1$s / %2$s FE");
+        add(ModI18n.Screen.HELM_NAV_TITLE, "Nav-Computer & Waypoints");
+        add(ModI18n.Screen.HELM_BTN_WAYPOINT, "Set Coordinates");
+
+        // 5. Messages (Chat / Action-Bar) mit dynamischen Platzhaltern
+        add(ModI18n.Message.TURRET_AIM_LOCKED, "[Turret] Aim locked (Yaw: %1$.1f°, Pitch: %2$.1f°)");
+        add(ModI18n.Message.TURRET_GIMBAL_LIMIT, "[Warning] Gimbal limit reached! Cannot aim further hull-ward.");
+        add(ModI18n.Message.SHIELD_COLLAPSE, "[Alert] Shield Generator collapsed! Energy depleted.");
+        add(ModI18n.Message.REACTOR_DEPLETED, "[System] Critical energy failure. Systems shutting down.");
+        add(ModI18n.Message.COMBAT_TARGET_DESTROYED, "Target neutralized: %1$s");
+        add(ModI18n.Message.WARP_PHASE_STATUS, "Warp Sequence Phase %1$d: %2$s");
+
+        // 6. Keybindings und Kategorien
+        add(ModI18n.Keybind.CATEGORY, "Mod Alpha Controls");
+        add(ModI18n.Keybind.FIRE_ALL, "Fire All Ship Weapons");
+        add(ModI18n.Keybind.NAV_MENU, "Open Navigation Menu");
+        add(ModI18n.Keybind.EXIT_HELM, "Exit Helm Console");
+        add(ModI18n.Keybind.MOUNT_TURRET, "Man Turret Seat");
+
+        // 7. Tooltips und Umgebung
+        add(ModI18n.Tooltip.REACTOR_CAPACITY, "Max Capacity: %1$s FE");
+        add(ModI18n.Tooltip.WEAPON_TIER, "Weapon Tier: %1$s");
+        add(ModI18n.Tooltip.ENERGY_COST, "Energy Cost: %1$s FE/shot");
+        add(ModI18n.Tooltip.SHIELD_STATUS, "Shield Matrix: %1$s");
+        add(ModI18n.Structure.SHIPWRECK, "Derelict Spacecraft Wreck");
+        add(ModI18n.Biome.DEEP_SPACE, "Deep Space Void");
+    }
+}
+Die Einbindung in den Event-Bus der Mod erfolgt über die DataGenerators-Klasse. Wenn das System den Befehl zur Datengenerierung erhält (beispielsweise durch den Gradle-Task runData), instanziiert das Framework den Provider und triggert die Schreibvorgänge in das src/generated/resources-Verzeichnis.Javapackage com.peaceman.alpha.datagen;
+
+import com.peaceman.alpha.datagen.provider.ModEnglishLanguageProvider;
+import net.minecraft.data.DataGenerator;
+import net.minecraft.data.PackOutput;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.data.event.GatherDataEvent;
+
+@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
+public class DataGenerators {
+
+    @SubscribeEvent
+    public static void onGatherData(GatherDataEvent event) {
+        DataGenerator generator = event.getGenerator();
+        PackOutput packOutput = generator.getPackOutput();
+        
+        // Registrierung des en_us Language Providers auf dem Client-View Layer
+        generator.addProvider(
+            event.includeClient(),
+            new ModEnglishLanguageProvider(packOutput)
+        );
+    }
+}
+Durch diese Architektur ist das System zu einhundert Prozent darauf vorbereitet, künftig erweitert zu werden. Die Implementierung eines ModGermanLanguageProvider erfordert lediglich eine Vererbungskopie dieser Klasse mit dem Parameter "de_de" und der Übersetzung der Value-Strings. Die Keys aus ModI18n bleiben unverändert, was eine absolute Symmetrie zwischen allen unterstützten Sprachen erzwingt und fehlende Übersetzungs-Einträge systematisch eliminiert.Dynamische Formatierung und StylingIn der Architektur von NeoForge 1.21 ist die statische Konkatenation von Strings (wie "Energy: " + amount + " FE") ein Anti-Pattern, da die grammatikalische Struktur in verschiedenen Sprachen massiv variiert. Stattdessen erfolgt die Zuweisung von Variablen an übersetzte Strings durch String-Interpolation, welche sich syntaktisch an String.format() in Java anlehnt.Um die semantische Integrität bei Übersetzungen zu wahren, müssen ausnahmslos positionale Argument-Indizes (wie %1$s, %2$s) verwendet werden. Ein Satz wie "Phase 1: Suspension" könnte in einer anderen Sprache als "Suspension ist Phase 1" übersetzt werden. Ohne positionale Indizes würde die Engine die Variablen in der falschen Reihenfolge injizieren.Interpolation von Telemetriedaten und FließkommawertenEin prägnantes Beispiel für komplexe Variablenübergabe ist das Turret-Aiming-System der Modifikation. Das Zielen via Freelook-System basiert auf Quaternion-Transformationen, welche hochpräzise Gier- und Nickwinkel generieren. Würden diese Rohdaten direkt als String konvertiert, entstünden Endlosbrüche, die in der Action-Bar des Spielers visuell flackern.Fehlerhafter Ansatz (Legacy): §a[Geschützturm] Ausrichtung eingeloggt (Yaw: X.X°, Pitch: Y.Y°)Korrekter I18n-Ansatz (JSON): "[Turret] Aim locked (Yaw: %1$.1f°, Pitch: %2$.1f°)"Der Index %1$ referenziert hierbei das erste übergebene Argument (den Gierwinkel), während %2$ auf das zweite Argument (den Nickwinkel) verweist. Die spezifische Formatierungs-Notation .1f forciert eine Fließkommadarstellung mit exakt einer Nachkommastelle auf Client-Seite. Dies delegiert die Formatierungslogik an die Darstellungs-Schicht und hält die Netzwerk-Payloads leichtgewichtig.Die Component API und visuelles StylingDas Einfärben von Texten darf unter keinen Umständen innerhalb der Übersetzungsdatei über das veraltete und missbilligte §-Zeichen erfolgen. In NeoForge 1.21 wird das optische Feedback strikt im Quellcode über die Style-API des MutableComponent definiert. Dies ermöglicht es der Rendering-Engine, Farben, Fett- und Kursivdruck dynamisch an Kontrast- und Barrierefreiheits-Einstellungen des jeweiligen Clients anzupassen.Wenn das TurretSeatEntity arretiert wird, empfängt der Client ein TurretLockTogglePayload. Die Konstruktion der darzustellenden Nachricht erfolgt dann ressourcenschonend im GUI-Thread:Javaimport net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.ChatFormatting;
+
+// Extraktion der Winkel aus dem Netzwerk-Paket
+float yaw = payload.yaw();
+float pitch = payload.pitch();
+
+// Erzeugung des übersetzbaren Components mit injizierten Float-Argumenten
+MutableComponent message = Component.translatable(
+    ModI18n.Message.TURRET_AIM_LOCKED, 
+    yaw, 
+    pitch
+).withStyle(ChatFormatting.GREEN); // Clientseitiges Styling
+
+// Übermittlung an den HUD-Renderer
+Minecraft.getInstance().gui.setOverlayMessage(message, false);
+Durch den Einsatz von Component.translatable(key, arg1, arg2) wandelt NeoForge die übergebenen Argumente automatisch in interpolierte Sub-Components um. Der Server muss somit keine Strings berechnen, sondern übermittelt lediglich die Rohdaten, was die Netzwerkbandbreite bei der hohen Delta-Tick-Rate des Zielsystems (20 Hz) signifikant schont.Umfassendes System-Audit bestehender FeaturesBasierend auf der Analyse der Systemarchitektur (@ARCHITECTURE.md) und der Feature-Dokumentation (@README.md) der "Mod Alpha", offenbart sich ein hochkomplexes Geflecht aus modularen Schiffsblöcken, dimensionenübergreifenden Teleportationsmechaniken und prozeduralen Kampfsystemen. Jeder dieser Berührungspunkte mit dem Endanwender erfordert eine systematische Lokalisierung.Die folgende Audit-Matrix identifiziert alle Mod-Elemente, klassifiziert ihren Kontext und verknüpft sie mit der entsprechenden Taxonomie-Spezifikation. Dies stellt sicher, dass kein string-basiertes Kundenfeedback während der Migration übersehen wird.Physische Schiffskomponenten und Item-AssetsAlle funktionalen Knotenpunkte des Schiffes (implementiert über das Interface ISpaceshipNode), die der Spieler im Survival- oder Creative-Modus manipulieren kann, benötigen Deskriptoren für das Inventar, Drop-Events und die Waila/Jade-Integration.Registry BezeichnerGeplanter Lokalisierungstext (Englisch)Kontext & Translation Typspaceship_controllerSpaceship ControllerBlock-Description für den BFS-Schiffs-Corespaceship_helmSpaceship HelmBlock-Description für das 6-Achsen-Flugpultspaceship_reactorSpaceship ReactorBlock-Description für den Forge Energy (FE) Speicherspaceship_shieldShield GeneratorBlock-Description für den Hex-Shader-Emitterlaser_turret_heavyHeavy Laser BeamBlock-Description des kontinuierlichen Schmelzlaserslaser_turret_pulsePulse Laser CannonBlock-Description der kinetischen Burst-Kanonelaser_turret_miningMining LaserBlock-Description des industriellen Bohrerslaser_baseTurret BaseplateBlock-Description der statischen Turret-Basisplattebackflip_toolBackflip ToolItem-Description des Klasingschen Degens zur Entitäts-ManipulationBenutzeroberflächen (UI) und Blaze3D-ScreensDie graphischen Schnittstellen, welche über den SpaceshipClientInputHandler entkoppelt aufgerufen werden, enthalten vielschichtige Labels und dynamische Informationsanzeigen. Diese erfordern eine besondere Behandlung bei der Formatierung großer Zahlenwerte.Zugehöriges ModulTextueller Inhalt / FunktionTranslation Key Evaluierung (ModI18n)SpaceshipReactorMenuTitel des Diagnose-InventarsScreen.REACTOR_TITLESpaceshipReactorMenuEnergie-Status (Format: X / Y FE)Screen.REACTOR_ENERGY (benötigt Tausendertrennzeichen-Interpolation)SpaceshipHelmBlockTitel des interaktiven NavigationsmenüsScreen.HELM_NAV_TITLESpaceshipHelmBlockInteraktive Schaltfläche: "Set Waypoint"Screen.HELM_BTN_WAYPOINTSpaceshipHelmBlockStatusanzeige der Flug-CooldownsScreen.HELM_COOLDOWN_STATUSSystem-Telemetrie und Action-Bar WarnungenDas HUD des Spielers ist die primäre Informationsquelle während Raumgefechten. Die Nachrichten basieren auf asynchronen Raycast-Ergebnissen (FastVoxelTraversal) und kinetischen Schildaufprallen (CollisionResolver), die latenzfrei kommuniziert werden müssen.Auslöser / Sub-SystemDynamischer TextTranslation Key Evaluierung (ModI18n)Turret Seat (Left-Click)Aim locked (Yaw: %1$.1f°, Pitch: %2$.1f°)Message.TURRET_AIM_LOCKED (Interpolation der Quaternion-Winkel)Turret Seat (Winkelgrenze)[Warning] Gimbal limit reached!Message.TURRET_GIMBAL_LIMITShield System (Aufprall)[Alert] Shield collapsed! Energy depleted.Message.SHIELD_COLLAPSE (Wird bei 0 FE Boundary Collapse getriggert)Energy Manager (Drain)[System] Critical energy failure.Message.REACTOR_DEPLETEDCombat Service (Raycast)Target neutralized: %1$sMessage.COMBAT_TARGET_DESTROYEDWarp Travel ServiceWarp Sequence Phase %1$d: \%2$sMessage.WARP_PHASE_STATUS (Visualisiert die 6 Phasen der Transition)Interaktionssteuerung und KeybindingsDie physische Steuerung der Schiffe verlangt nach klaren Deskriptoren in den Steuerungsoptionen des Clients, strukturiert in einer dedizierten Mod-Kategorie.Physische InteraktionGeplante BeschreibungTranslation Key Evaluierung (ModI18n)Globale KategorieMod Alpha ControlsKeybind.CATEGORYRight-Click im HelmFire All Ship WeaponsKeybind.FIRE_ALLTastendruck MOpen Navigation MenuKeybind.NAV_MENUTastendruck HExit Helm ConsoleKeybind.EXIT_HELMRight-Click auf TurretMan Turret SeatKeybind.MOUNT_TURRETKosmische Umgebungen und Metadaten-TooltipsDie Mod generiert weitreichende prozedurale Umgebungen und komplexe Waffen-Tiers, deren Metadaten bei der Inspektion von Items via Tooltips (HoverableText) oder im F3-Debug-Screen zugänglich gemacht werden müssen.Kontextuelles ElementEvaluierter Text / DeskriptorTranslation Key Evaluierung (ModI18n)Deep Space DimensionDeep Space VoidBiome.DEEP_SPACE (Identifikation in der Leere bei Y=-64 bis Y=320)Asteroid Field GenDerelict Spacecraft WreckStructure.SHIPWRECK (Bezeichnet die END_CITY_TREASURE Ruinen)Spaceship ReactorMax Capacity: %1$s FETooltip.REACTOR_CAPACITYPulse Laser ItemEnergy Cost: 250 FE/shotTooltip.ENERGY_COSTHeavy Beam ItemWeapon Tier: HEAVY_BEAMTooltip.WEAPON_TIER (Spezifiziert das kontinuierliche Schmelzverhalten)Dieses Audit demonstriert den massiven Umfang an textuellen Schnittstellen, die durch den konsequenten Einsatz der ModI18n zentralisiert und durch die DataGen-Architektur abgebildet werden. Jeder identifizierte Eintrag garantiert eine lückenlose Lokalisierungserfahrung für den Endanwender.Refactoring-Leitfaden: Migration dynamischer Component-AufrufeDie Erfüllung der Vorgabe, dass "kein einziger kundenorientierter String im Java-Logik-Code verbleibt", bedingt eine tiefgreifende Refaktorierung der existierenden Code-Basis. Es ist zwingend erforderlich, die Nutzung der Methode Component.literal(...) in jeglichem Produktionscode, welcher GUI-Elemente, Chat-Nachrichten oder Tooltips rendert, vollständig zu eliminieren. Component.literal entzieht den Text dem I18n-Kreislauf und erzwingt eine harte, unabänderliche Darstellung.Szenario 1: Action-Bar und TurretSeatEntity RefactoringIm gegenwärtigen Zustand wird die Arretierung der Laserkanonen im TurretSeatEntity oder dem verarbeitenden Payload-Handler über eine fehleranfällige und hardcodierte String-Konkatenation berechnet. Der veraltete Ansatz nutzte zudem das mittlerweile als toxisch geltende §-Zeichen für das farbliche Rendering.Alt (Legacy & Hardcodiert):Java// ClientPayloadHandler.java
+float yaw = payload.yaw();
+float pitch = payload.pitch();
+// Anti-Pattern: String-Konkatenation und hardcodierte Farbcodes
+String msg = "§a[Geschützturm] Ausrichtung eingeloggt (Yaw: " + yaw + "°, Pitch: " + pitch + "°)";
+Minecraft.getInstance().gui.setOverlayMessage(Component.literal(msg), false);
+Neu (L10n-konform & Datadriven):
+Das Refactoring bedient sich des in ModI18n spezifizierten Schlüssels. Die Parameter yaw und pitch werden der Component.translatable-Methode übergeben, welche diese positionsgenau (%1$.1f, %2$.1f) in den aufgelösten String injiziert. Die Typisierung der Farbe erfolgt sicher über das ChatFormatting-Enum auf dem resultierenden MutableComponent. Da dieses Paket über das Netzwerk eintrifft, ist zudem auf die korrekte Thread-Synchronisation via context.enqueueWork() zu achten.Java// ClientPayloadHandler.java
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.ChatFormatting;
+import com.peaceman.alpha.registry.ModI18n;
+
+public static void handleTurretLockToggle(TurretLockTogglePayload payload, IPayloadContext context) {
+    // Kontext-Wechsel: Lokale Ausführung strikt auf dem Render-Main-Thread des Clients
+    context.enqueueWork(() -> {
+        float yaw = payload.yaw();
+        float pitch = payload.pitch();
+
+        // Dynamische Auflösung der Übersetzung inklusive Formatierung und Variablen
+        MutableComponent lockedMessage = Component.translatable(
+            ModI18n.Message.TURRET_AIM_LOCKED, 
+            yaw, 
+            pitch
+        ).withStyle(ChatFormatting.GREEN);
+
+        // Anzeige in der Action-Bar (false = keine Chat-Nachricht, sondern temporäres HUD-Overlay)
+        Minecraft.getInstance().gui.setOverlayMessage(lockedMessage, false);
+    });
+}
+Architektonische Implikation: Falls die serverseitige Logik im LaserCombatService eine Fehlerbedingung identifiziert (beispielsweise das Erreichen der mechanischen Gimbal-Limits, um Beschuss der eigenen Hülle zu vermeiden), sendet der Server ein identisches, aber inhaltlich abstraktes Payload. Der Client übersetzt dieses anschließend selbstständig mittels Component.translatable(ModI18n.Message.TURRET_GIMBAL_LIMIT).withStyle(ChatFormatting.RED) in eine visuelle Warnung. Der Server generiert keine Texte.Szenario 2: UI-Screens und das SpaceshipReactorMenu RefactoringFür die grafische Darstellung innerhalb des SpaceshipReactorMenu oder verwandten Blaze3D-Screens muss das direkte Rendern von rohen Strings über den FontRenderer beziehungsweise die Methode GuiGraphics.drawString umfassend adaptiert werden. Insbesondere die Repräsentation großer numerischer Werte wie der Reaktor-Energie, welche bis zu 1.000.000 FE betragen kann, verlangt nach lokalisierungsgerechter Formatierung.Alt (Legacy & Hardcodiert):Java@Override
+protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+    // Anti-Pattern: Hardcodierter Titel
+    graphics.drawString(this.font, "Reactor Core", 8, 6, 0x404040, false);
+    
+    // Anti-Pattern: Primitive Konkatenation ohne Tausendertrennzeichen
+    String energyTxt = "Energy: " + this.currentEnergy + " / " + this.maxCapacity + " FE";
+    graphics.drawString(this.font, energyTxt, 8, 20, 0x00FF00, false);
+}
+Neu (L10n-konform & Datadriven):
+Im refaktorierten Zustand delegiert das UI das Holen des Titels an den entsprechenden Translation Key. Die Darstellung der Energiewerte nutzt zunächst das native String.format("%,d", ...) aus Java, um die Ziffern gemäß der lokalen Systemsprache des Benutzers mit Tausendertrennzeichen (beispielsweise Punkte im Deutschen, Kommata im Englischen) zu gliedern. Diese vorformatierten String-Segmente werden anschließend als Variablen in das Component übergeben.Java@Override
+protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+    // Rendern des statischen Titels über Component.translatable
+    graphics.drawString(
+        this.font, 
+        Component.translatable(ModI18n.Screen.REACTOR_TITLE), 
+        8, 6, 0x404040, false
+    );
+    
+    // Formatierung der rohen Integer-Werte zu visuell lesbaren Strings mit Trennzeichen
+    String formattedCurrent = String.format("%,d", this.currentEnergy);
+    String formattedMax = String.format("%,d", this.maxCapacity);
+
+    // Konstruktion der dynamischen Energieanzeige
+    MutableComponent energyText = Component.translatable(
+        ModI18n.Screen.REACTOR_ENERGY, 
+        formattedCurrent, 
+        formattedMax
+    ).withStyle(ChatFormatting.GREEN);
+
+    // Rendern der Component-Instanz im GUI
+    graphics.drawString(this.font, energyText, 8, 20, 0x00FF00, false);
+}
+Dieser Ansatz garantiert, dass die Zahl 1000000 dem Spieler visuell prägnant als 1,000,000 FE (im angloamerikanischen Standard) oder als 1.000.000 FE (im deutschsprachigen Raum) präsentiert wird, ohne dass die Kernlogik des SpaceshipEnergyManager sich um derlei Repräsentationsdetails kümmern muss.Systemische Resilienz und SchlussfolgerungenDas hier spezifizierte und entworfene I18n- und Lokalisierungs-Framework eliminiert jegliche hartcodierten Textartefakte aus dem Domain- und View-Layer der Modifikation "Mod Alpha". Durch die konsequente Dezentralisierung der Textauflösung auf die Client-Seite und die Konzentration auf die robuste DataGen-Architektur von NeoForge 1.21, profitiert das System von einer deterministischen, zur Compile-Zeit geprüften Verknüpfung aller textuellen Bezeichner. Die Taxonomie verhindert aktiv Namespace-Kollisionen, während die ModI18n-Klasse Typensicherheit in einem historisch fehleranfälligen Segment der Spieleentwicklung garantiert.Die strikte Einhaltung dieses Paradigmas stellt sicher, dass die Modifikation mühelos in internationale Märkte expandieren kann. Die Integration eines zusätzlichen linguistischen Providers, beispielsweise für Deutsch (de_de), erfordert zu keinem Zeitpunkt Eingriffe in die komplexe Logik der Voxel-Kollisionen, der Laser-Kampfsysteme oder der Teleportationsmechanismen. Die Trennung von Zustand und Repräsentation ist damit vollständig und architektonisch einwandfrei vollzogen.

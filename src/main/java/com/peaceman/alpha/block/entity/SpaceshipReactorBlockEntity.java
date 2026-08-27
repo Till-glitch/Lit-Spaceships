@@ -86,7 +86,7 @@ public class SpaceshipReactorBlockEntity extends AbstractSpaceshipNodeBlockEntit
     // --- MenuProvider Methoden ---
     @Override
     public Component getDisplayName() {
-        return Component.literal("Reaktor");
+        return Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.REACTOR_TITLE);
     }
 
     @Nullable

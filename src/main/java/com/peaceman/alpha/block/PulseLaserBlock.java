@@ -87,7 +87,7 @@ public class PulseLaserBlock extends BaseEntityBlock {
             if (level.getBlockEntity(pos) instanceof PulseLaserBlockEntity laserBE) {
                 if (laserBE.isOccupied()) {
                     player.displayClientMessage(
-                            net.minecraft.network.chat.Component.literal("Dieser Geschützturm ist bereits belegt!"),
+                            net.minecraft.network.chat.Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.TURRET_OCCUPIED),
                             true);
                     return net.minecraft.world.InteractionResult.CONSUME;
                 }

@@ -1,5 +1,7 @@
 package com.peaceman.alpha.datagen;
 
+import com.peaceman.alpha.datagen.provider.ModEnglishLanguageProvider;
+import com.peaceman.alpha.datagen.provider.ModGermanLanguageProvider;
 import com.peaceman.alpha.datagen.provider.ModLanguageProvider;
 import net.minecraft.SharedConstants;
 import net.minecraft.data.PackOutput;
@@ -22,6 +24,20 @@ class ModLanguageProviderTest {
     static void initMinecraft() {
         SharedConstants.tryDetectVersion();
         Bootstrap.bootStrap();
+    }
+
+    @Test
+    @DisplayName("ModEnglishLanguageProvider and ModGermanLanguageProvider instantiate correctly")
+    void testDedicatedLanguageProviders() {
+        PackOutput packOutput = new PackOutput(Path.of("test_output"));
+        ModEnglishLanguageProvider enProvider = new ModEnglishLanguageProvider(packOutput);
+        ModGermanLanguageProvider deProvider = new ModGermanLanguageProvider(packOutput);
+
+        assertNotNull(enProvider);
+        assertNotNull(deProvider);
+
+        assertEquals("Languages: en_us for mod: peaceman_alpha", enProvider.getName());
+        assertEquals("Languages: de_de for mod: peaceman_alpha", deProvider.getName());
     }
 
     @Test
