@@ -232,12 +232,12 @@ public class ServerPayloadHandler {
 
                     // 2. Action-Bar Benachrichtigung an den Spieler
                     if (newLock) {
-                        player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                                String.format("§a[Geschützturm] Ausrichtung eingeloggt (Yaw: %.1f°, Pitch: %.1f°) - Linksklick zum Entsperren",
-                                        laserBE.getTargetYaw(), laserBE.getTargetPitch())), true);
+                        player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                                com.peaceman.alpha.registry.ModI18n.Message.TURRET_AIM_LOCKED,
+                                laserBE.getTargetYaw(), laserBE.getTargetPitch()), true);
                     } else {
-                        player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                                "§e[Geschützturm] Ausrichtung freigegeben (Freelook aktiv)"), true);
+                        player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                                com.peaceman.alpha.registry.ModI18n.Message.TURRET_AIM_RELEASED), true);
                     }
 
                     // 3. Synchronisiere aktuellen BE-Zustand an alle Clients
@@ -264,7 +264,7 @@ public class ServerPayloadHandler {
                         serverPlayer.openMenu(new net.minecraft.world.MenuProvider() {
                             @Override
                             public net.minecraft.network.chat.Component getDisplayName() {
-                                return net.minecraft.network.chat.Component.literal("Raumschiff Navigation");
+                                return net.minecraft.network.chat.Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HELM_NAV_TITLE);
                             }
 
                             @org.jetbrains.annotations.Nullable

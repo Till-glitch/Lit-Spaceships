@@ -411,9 +411,20 @@ classDiagram
     }
 
     %% ==========================================
-    %% DATA GENERATION PIPELINE
+    %% ==========================================
+    %% DATA GENERATION & I18N PIPELINE
     %% ==========================================
     namespace Data_Generation {
+        class ModI18n {
+            +Tab Tab
+            +Screen Screen
+            +Message Message
+            +Keybind Keybind
+            +Tooltip Tooltip
+            +Structure Structure
+            +Biome Biome
+        }
+
         class DataGenerators {
             +gatherData(GatherDataEvent event)$ void
         }
@@ -425,6 +436,14 @@ classDiagram
 
         class ModItemModelProvider {
             +registerModels() void
+        }
+
+        class ModEnglishLanguageProvider {
+            +addTranslations() void
+        }
+
+        class ModGermanLanguageProvider {
+            +addTranslations() void
         }
 
         class ModLanguageProvider {
@@ -469,8 +488,11 @@ classDiagram
 
     DataGenerators ..> ModBlockStateProvider : instantiates client
     DataGenerators ..> ModItemModelProvider : instantiates client
-    DataGenerators ..> ModLanguageProvider : instantiates client
+    DataGenerators ..> ModEnglishLanguageProvider : instantiates client
+    DataGenerators ..> ModGermanLanguageProvider : instantiates client
     DataGenerators ..> ModLootTableProvider : instantiates server
+    ModEnglishLanguageProvider ..> ModI18n : references keys
+    ModGermanLanguageProvider ..> ModI18n : references keys
     ModLootTableProvider ..> ModBlockLootTableProvider : creates
 ```
 
@@ -518,7 +540,8 @@ Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
    * **`DataGeneratorsTest`**: Event-Handling für `GatherDataEvent`, Client/Server-Provider-Registrierung und HolderLookup-Lifecycle.
    * **`ModBlockStateProviderTest`**: 6-Achsen Euler-Winkel-Transformation (`rotX`, `rotY`) für `FACING` Split-Modell Basisplatten und `cubeAll` Generierung.
    * **`ModItemModelProviderTest`**: Parent-Referenzen auf Block-Basen (`laser_base`) und 2D-Item-Modelle (`backflip_tool`).
-   * **`ModLanguageProviderTest`**: Symmetrische I18n- und L10n-Übersetzungen für `en_us` und `de_de`.
+   * **`ModLanguageProviderTest`**: Symmetrische I18n- und L10n-Übersetzungen für `en_us` und `de_de` via `ModEnglishLanguageProvider` und `ModGermanLanguageProvider`.
+   * **`ModI18nTest`**: Strict Lowercase-Taxonomie-Validierung, Duplikatsfreiheit und 100% Symmetrie-Coverage für alle Keys aus `ModI18n`.
    * **`ModLootTableProviderTest`**: `BlockLootSubProvider` Factory, Self-Drop-Logik und Vollständigkeitsprüfung via `getKnownBlocks()`.
    * **`ShipCollisionMathTest`**: Continuous Swept-AABB Extrusion & BitSet-Linearisierung.
    * **`ShipStateTest`**: Domain-Zustand, AABB-Neuberechnung, Controller-Translation, Cooldown-Arithmetik.

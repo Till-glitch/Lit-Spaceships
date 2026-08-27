@@ -62,7 +62,8 @@ public class SpaceshipEnergyManager {
         if (!success && player != null) {
             int available = getTotalAvailableEnergy(level, ship);
             player.displayClientMessage(
-                    Component.literal("§cNicht genug Energie! §7Benötigt: " + cost + " FE | Vorhanden: " + available + " FE"), true);
+                    Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.ENERGY_INSUFFICIENT,
+                            String.format("%,d", cost), String.format("%,d", available)), true);
         }
 
         return success;

@@ -67,7 +67,7 @@ public class SpaceshipReactorBlock extends BaseEntityBlock  {
                     be.setChanged();
                     level.sendBlockUpdated(pos, state, state, 3);
                     player.sendSystemMessage(
-                            net.minecraft.network.chat.Component.literal("DEV-CHEAT: 50.000 FE geladen!"));
+                            net.minecraft.network.chat.Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.DEV_CHEAT_ENERGY, "500,000"));
                 }
             }
             return net.minecraft.world.ItemInteractionResult.sidedSuccess(level.isClientSide);

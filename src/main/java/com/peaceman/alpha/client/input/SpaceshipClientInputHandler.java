@@ -35,7 +35,7 @@ public class SpaceshipClientInputHandler {
                 // If not sneaking, set as active pilot (sneaking is handled by server opening the menu)
                 if (!event.getEntity().isShiftKeyDown()) {
                     activeHelmShipId = node.getShipId();
-                    event.getEntity().displayClientMessage(net.minecraft.network.chat.Component.literal("§a[Helm] §fDu steuerst nun das Schiff. WASD zum Fliegen, LSHIFT zum Sinken, LEERTASTE zum Steigen. ESC zum Verlassen."), true);
+                    event.getEntity().displayClientMessage(net.minecraft.network.chat.Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.HELM_CONTROL_ENTER).withStyle(net.minecraft.ChatFormatting.GREEN), true);
                 }
             }
         } else if (block instanceof SpaceshipControlBlock) {

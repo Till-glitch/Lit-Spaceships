@@ -42,7 +42,7 @@ public class SpaceshipHelmBlock extends Block implements EntityBlock {
                 serverPlayer.openMenu(new net.minecraft.world.MenuProvider() {
                     @Override
                     public net.minecraft.network.chat.Component getDisplayName() {
-                        return net.minecraft.network.chat.Component.literal("Raumschiff Navigation");
+                        return net.minecraft.network.chat.Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HELM_NAV_TITLE);
                     }
 
                     @Nullable

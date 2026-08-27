@@ -15,7 +15,7 @@ public class ModCreativeTabs {
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> EXAMPLE_TAB = CREATIVE_MODE_TABS
             .register("example_tab", () -> CreativeModeTab.builder()
-                    .title(Component.translatable("itemGroup.examplemod"))
+                    .title(Component.translatable(ModI18n.Tab.MAIN))
                     .withTabsBefore(CreativeModeTabs.COMBAT)
                     // NEU: Der Raumschiff-Block ist jetzt das Icon des Tabs!
                     .icon(() -> ModItems.SPACESHIP_CONTROL_ITEM.get().getDefaultInstance())

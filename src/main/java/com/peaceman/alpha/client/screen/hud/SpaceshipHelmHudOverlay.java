@@ -32,17 +32,17 @@ public class SpaceshipHelmHudOverlay implements LayeredDraw.Layer {
         guiGraphics.fill(startX - 10, startY - 10, startX + 110, startY + 40, 0x55000000);
 
         // Pilot Info
-        guiGraphics.drawString(font, Component.literal("§b--- Helm HUD ---"), startX, startY, 0xFFFFFF);
+        guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_HELM_HEADER).withStyle(net.minecraft.ChatFormatting.AQUA), startX, startY, 0xFFFFFF);
 
         long currentTick = mc.level != null ? mc.level.getGameTime() : 0;
         if (shipState.isMovementOnCooldown(currentTick)) {
             long remainingTicks = shipState.getMovementCooldownDisplay(currentTick);
-            guiGraphics.drawString(font, Component.literal("§cWarp Cooldown: " + (remainingTicks / 20.0f) + "s"), startX, startY + 12, 0xFFFFFF);
+            guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_HELM_WARP_COOLDOWN, (remainingTicks / 20.0f)).withStyle(net.minecraft.ChatFormatting.RED), startX, startY + 12, 0xFFFFFF);
         } else {
-            guiGraphics.drawString(font, Component.literal("§aAntrieb Bereit"), startX, startY + 12, 0xFFFFFF);
+            guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_HELM_READY).withStyle(net.minecraft.ChatFormatting.GREEN), startX, startY + 12, 0xFFFFFF);
         }
 
         // Home Waypoint Info & Controls
-        guiGraphics.drawString(font, Component.literal("§7[H] Exit | [M] Config | [R-Click] Fire"), startX - 35, startY + 24, 0xFFFFFF);
+        guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_HELM_CONTROLS).withStyle(net.minecraft.ChatFormatting.GRAY), startX - 35, startY + 24, 0xFFFFFF);
     }
 }

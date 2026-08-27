@@ -41,7 +41,7 @@ public class SpaceshipHelmInputInterceptor {
         if (com.peaceman.alpha.client.ClientModEvents.KEY_EXIT_HELM.consumeClick()) {
             SpaceshipClientInputHandler.activeHelmShipId = null;
             if (player != null) {
-                player.displayClientMessage(net.minecraft.network.chat.Component.literal("§e[Helm] §fDu hast die Steuerung verlassen."), true);
+                player.displayClientMessage(net.minecraft.network.chat.Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.HELM_CONTROL_LEAVE).withStyle(net.minecraft.ChatFormatting.YELLOW), true);
             }
             return;
         }

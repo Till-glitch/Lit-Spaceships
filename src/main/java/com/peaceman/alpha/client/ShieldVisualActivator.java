@@ -30,7 +30,10 @@ public class ShieldVisualActivator {
                     Vec3 localHit = Vec3.atCenterOf(clickPos.subtract(ship.getAnchorPos()));
                     ship.addImpact(localHit, event.getLevel().getGameTime());
                     event.getEntity().displayClientMessage(
-                            Component.literal("§c[Shader-Test] §fTreffer-Welle an (" + (int) localHit.x + ", " + (int) localHit.y + ", " + (int) localHit.z + ") ausgelöst!"),
+                            Component.translatable(
+                                    com.peaceman.alpha.registry.ModI18n.Message.SHADER_TEST_HIT,
+                                    (int) localHit.x, (int) localHit.y, (int) localHit.z
+                            ).withStyle(net.minecraft.ChatFormatting.RED),
                             true
                     );
                     hitFound = true;
@@ -40,7 +43,9 @@ public class ShieldVisualActivator {
 
             if (!hitFound) {
                 event.getEntity().displayClientMessage(
-                        Component.literal("§e[Shader-Test] §fKein aktives Schiff am Zielort gefunden."),
+                        Component.translatable(
+                                com.peaceman.alpha.registry.ModI18n.Message.SHADER_TEST_NO_SHIP
+                        ).withStyle(net.minecraft.ChatFormatting.YELLOW),
                         true
                 );
             }

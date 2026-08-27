@@ -44,7 +44,10 @@ public class SpaceshipReactorScreen extends AbstractContainerScreen<SpaceshipRea
         guiGraphics.drawCenteredString(this.font, this.title, this.imageWidth / 2, 6, 0xFFFFFF);
 
         // Energie-Text (Kein topPos mehr nötig, 25 ist relativ zur GUI-Kante)
-        String energyText = "Energie: " + String.format("%,d", currentEnergy) + " FE";
+        Component energyText = Component.translatable(
+                com.peaceman.alpha.registry.ModI18n.Screen.REACTOR_ENERGY,
+                String.format("%,d", currentEnergy)
+        );
         guiGraphics.drawCenteredString(this.font, energyText, this.imageWidth / 2, 25, 0xFFFFFF);
 
         // --- LADEBALKEN ---

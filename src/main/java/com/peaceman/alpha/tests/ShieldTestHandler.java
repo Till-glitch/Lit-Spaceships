@@ -52,7 +52,7 @@ public class ShieldTestHandler {
         // die echte Distanz!
         if (event.getPos().distSqr(shieldCenter) <= (SHIELD_RADIUS * SHIELD_RADIUS)) {
             event.setCanceled(true); // Abbauen abbrechen!
-            event.getPlayer().displayClientMessage(Component.literal("§cDieser Block wird von einem Schild geschützt!"),
+            event.getPlayer().displayClientMessage(Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.SHIELD_PROTECTED_BLOCK).withStyle(net.minecraft.ChatFormatting.RED),
                     true);
         }
     }

@@ -352,8 +352,9 @@ public class ShipMovementService {
         if (ship.isMovementOnCooldown(gameTime)) {
             long remaining = ship.getMovementCooldownRemaining(gameTime);
             if (player != null) {
+                String remainingSec = (remaining / 20) + "." + (remaining % 20 * 5);
                 player.displayClientMessage(
-                        Component.literal("§c[Antrieb] §fAbklingzeit aktiv! Noch " + (remaining / 20) + "." + (remaining % 20 * 5) + " Sekunden."),
+                        Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.MOVEMENT_COOLDOWN_ACTIVE, remainingSec),
                         true
                 );
             }
@@ -395,7 +396,7 @@ public class ShipMovementService {
                 finalMoveVec = resolution.clampedVector();
                 if (player != null) {
                     player.displayClientMessage(
-                            Component.literal("§c[Kollisionswarnung] §fKollision erkannt (" + resolution.resolutionCase() + ")! Bewegung gestoppt."),
+                            Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.COLLISION_WARNING, resolution.resolutionCase()),
                             true
                     );
                 }

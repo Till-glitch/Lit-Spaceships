@@ -31,7 +31,7 @@ public class SpaceshipNavigationManager {
             ShipMovementService.moveShip(level, ship, dx, dy, dz, player);
         } else {
             if (player != null) {
-                player.displayClientMessage(Component.literal("§cFehler: Wegpunkt '" + homeName + "' existiert nicht!"), true);
+                player.displayClientMessage(Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.WAYPOINT_NOT_FOUND, homeName), true);
             }
         }
     }

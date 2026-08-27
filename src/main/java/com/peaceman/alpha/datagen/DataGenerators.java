@@ -28,8 +28,8 @@ public class DataGenerators {
         // Client / View-bezogene Provider
         generator.addProvider(event.includeClient(), new ModBlockStateProvider(packOutput, existingFileHelper));
         generator.addProvider(event.includeClient(), new ModItemModelProvider(packOutput, existingFileHelper));
-        generator.addProvider(event.includeClient(), new ModLanguageProvider(packOutput, "en_us"));
-        generator.addProvider(event.includeClient(), new ModLanguageProvider(packOutput, "de_de"));
+        generator.addProvider(event.includeClient(), new com.peaceman.alpha.datagen.provider.ModEnglishLanguageProvider(packOutput));
+        generator.addProvider(event.includeClient(), new com.peaceman.alpha.datagen.provider.ModGermanLanguageProvider(packOutput));
 
         // Server / Domain-bezogene Provider
         generator.addProvider(event.includeServer(), ModLootTableProvider.create(packOutput, lookupProvider));
