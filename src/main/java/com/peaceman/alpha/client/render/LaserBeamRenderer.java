@@ -141,6 +141,24 @@ public class LaserBeamRenderer {
                 }
 
                 BlockPos otherAnchor = otherShip.getAnchorPos();
+                
+                // 1. Prüfung gegen den aktiven Schild des anderen Schiffs
+                if (otherShip.isShieldActive() && otherShip.getActiveMask() != 0) {
+                    for (BlockPos relPos : otherShip.getRelativeBubbleBlocks()) {
+                        BlockPos worldVoxel = otherAnchor.offset(relPos);
+                        net.minecraft.world.phys.AABB voxelBox = new net.minecraft.world.phys.AABB(worldVoxel);
+                        java.util.Optional<Vec3> hit = voxelBox.clip(start, end);
+                        if (hit.isPresent()) {
+                            double dSq = start.distanceToSqr(hit.get());
+                            if (dSq < closestDistSq) {
+                                closestDistSq = dSq;
+                                end = hit.get();
+                            }
+                        }
+                    }
+                }
+
+                // 2. Prüfung gegen Hüllenblöcke
                 for (BlockPos relPos : otherShip.getRelativeStructureBlocks()) {
                     BlockPos worldVoxel = otherAnchor.offset(relPos);
                     net.minecraft.world.phys.AABB voxelBox = new net.minecraft.world.phys.AABB(worldVoxel);

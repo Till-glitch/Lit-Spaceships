@@ -75,8 +75,13 @@ public class LaserRaycastUtil {
 
             // Schild-Prüfung (falls aktiv)
             if (ship.isShieldActive() && !ship.getShieldVoxelCache().isEmpty()) {
+                long gameTime = level.getGameTime();
                 Optional<FastVoxelTraversal.VoxelHit> shieldHit = FastVoxelTraversal.traverse(
-                        ship.getShieldVoxelCache(), localOrigin, dir, effectiveRange
+                        ship.getShieldVoxelCache(), localOrigin, dir, effectiveRange,
+                        id -> {
+                            com.peaceman.alpha.ship.domain.ShieldZone zone = ship.getShieldZone(id);
+                            return zone != null && !zone.isCollapsed(gameTime);
+                        }
                 );
 
                 if (shieldHit.isPresent()) {
@@ -86,7 +91,7 @@ public class LaserRaycastUtil {
                         BlockPos worldPos = hit.relativePos().offset(controllerPos);
                         Vec3 worldHitPos = worldOrigin.add(dir.scale(hit.distance()));
                         bestShipHit = RaycastHitResult.shipShield(
-                                ship.getId(), hit.relativePos(), worldPos, worldHitPos, hit.hitFace(), hit.distance()
+                                ship.getId(), hit.relativePos(), worldPos, worldHitPos, hit.hitFace(), hit.distance(), hit.shieldId()
                         );
                     }
                 }
@@ -105,7 +110,7 @@ public class LaserRaycastUtil {
                         BlockPos worldPos = hit.relativePos().offset(controllerPos);
                         Vec3 worldHitPos = worldOrigin.add(dir.scale(hit.distance()));
                         bestShipHit = RaycastHitResult.shipHull(
-                                ship.getId(), hit.relativePos(), worldPos, worldHitPos, hit.hitFace(), hit.distance()
+                                ship.getId(), hit.relativePos(), worldPos, worldHitPos, hit.hitFace(), hit.distance(), hit.shieldId()
                         );
                     }
                 }

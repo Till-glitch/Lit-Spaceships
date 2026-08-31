@@ -8,7 +8,13 @@ An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21*
 
 * **Spaceship Control Block:** The heart and core of every ship. Detects connected blocks via breadth-first search (BFS), binds them to a ship entity, and manages lifecycle operations (creation, structure update, deletion) with real-time hull highlighting.
 * **Spaceship Helm (Navigation & Combat Console):** Full 6-axis flight controls (WASD for horizontal flight, Space to ascend, Left-Shift to descend), right-click to fire all shipboard weapons (`FIRE_ALL`), `M` key to open navigation/waypoint configuration while flying, and `H` key to exit helm control.
-* **Spaceship Reactor:** Energy storage supporting standard **Forge Energy (FE)** with up to 1,000,000 FE capacity. Powers flight maneuvers, shield absorption, and laser weapon systems. *(Dev-Tip: Right-click with Redstone to charge 50,000 FE!)*
+* **Spaceship Reactor:** Energy storage supporting standard **Forge Energy (FE)** with up to 1,000,000 FE capacity. Powers flight maneuvers, proportional localized shield recharge, and laser weapon systems. *(Dev-Tip: Right-click with Redstone to charge 50,000 FE!)*
+* **Localized Shield Zones & 3D Voronoi Tessellation:**
+  * **Modular Shield Generators:** Place up to 64 independent shield generator blocks across the hull. Each generator dynamically anchors its own localized shield partition with distinct energy capacity and cooldown timers.
+  * **Deterministic 3D-Voronoi Partitioning:** `ShipScannerService` maps hull voxels and dilatated shield bubble volumes to the nearest generator via squared Euclidean distance with deterministic ID tie-breaking, storing assignments in an $O(1)$ flat `byte[] shieldMap` inside `VoxelGridCache`.
+  * **Proportional Deficit Energy Routing:** `SpaceshipEnergyManager` distributes available reactor energy proportionally according to each zone's deficit ratio ($D_i / D_{total}$) with zero-loss remainder trickle distribution, completely isolating collapsed/cooldown sectors.
+  * **Localized Shield Penetration & Tactical Combat:** Enemy lasers strike specific shield partitions; if a local zone collapses to 0 FE, enemy fire instantly penetrates the bubble and inflicts direct kinetic destruction on the underlying hull while adjacent intact shield zones remain operational.
+  * **Ultra-Low Bandwidth 64-Bit Sync:** Shield zone active/collapsed states are synchronized via `ShieldZoneStatePayload` using a 64-bit bitmask in $< 32$ bytes per packet with client shader uniform binding.
 * **Shield Generator & Hex-Shader:** Protects ship blocks against explosive damage (TNT, Creepers) and unauthorized block manipulation. Shields consume reactor energy upon impact and are rendered as procedural hexagon bubble meshes via custom shaders with impact ripples and low-energy alerts.
 * **Shipborne Laser Weapon System & Dynamic Turrets:**
   * **Pulse Laser:** High-energy burst cannon (250 FE/shot, 20 ticks cooldown). Instantly vaporizes 1 block on hit or inflicts massive shield drain with kinetic shockwaves.
@@ -251,6 +257,13 @@ The project enforces continuous testing according to the **70/20 Rule** (70% Uni
 
 | Test-Suite | Typ | Abdeckung |
 | :--- | :--- | :--- |
+| **`VoxelGridCacheShieldTest`** | JUnit 5 | $O(1)$ Flach-Array `byte[] shieldMap` Adressierung, Rand- und Out-of-Bounds-Absicherung im `VoxelGridCache`. |
+| **`ShipStateShieldZoneTest`** | JUnit 5 | Thread-sichere CRUD-Operationen auf `shieldZones`, `isCollapsed`-Auswertung bei Cooldown und Energiemangel. |
+| **`VoronoiTessellationTest`** | JUnit 5 | 3D-Voronoi-Tesselierung über quadrierte euklidische Distanz, deterministischer ID-Tie-Break und 64-Generatoren-Cap. |
+| **`ProportionalEnergyRoutingTest`** | JUnit 5 | Proportionale FE-Verteilung im Verhältnis der Zonendefizite ($D_i / D_{total}$) und Ausschluss kollabierter Zonen. |
+| **`EnergyRoutingRemainderTest`** | JUnit 5 | Exakter Rest-Tröpfchen-Loop (+1 FE) für verlustfreie Energieerhaltung bei krummen Primzahl-Werten (3333 FE auf 7 Generatoren). |
+| **`FastVoxelTraversalShieldTest`** | JUnit 5 | 3D-DDA-Traversierung mit extrahierter `shieldId` im `VoxelHit` bei Treffern auf Hülle und Schild. |
+| **`ShieldZonePayloadSerializationTest`** | JUnit 5 | Bit-genaue 64-Bit Bitmasken-Serialisierung und -Dekodierung in $< 32$ Bytes via `ShieldZoneStatePayload`. |
 | **`LaserNodeRenderStateTest`** | JUnit 5 (Mockito) | Thread-sichere Render-State Extraktion, interpolierte Kinematik (Yaw/Pitch), 180°-Winkel-Wrap und alle 6 `FACING`-Ausrichtungen (`UP`, `DOWN`, `NORTH`, `SOUTH`, `WEST`, `EAST`). |
 | **`DataGeneratorsTest`** | JUnit 5 (Mockito) | Event-Handling für `GatherDataEvent`, Provider-Registrierung und HolderLookup-Lifecycle. |
 | **`ModBlockStateProviderTest`** | JUnit 5 | 6-Achsen Euler-Winkel-Transformation (`rotX`, `rotY`) für `FACING` Split-Modell Basisplatten und `cubeAll` Generierung. |
@@ -261,10 +274,12 @@ The project enforces continuous testing according to the **70/20 Rule** (70% Uni
 | **`ShipCollisionMathTest`** | JUnit 5 | Continuous Swept-AABB Extrusion (positive/negative/zero), VoxelGridCache BitSet Indexing & Bounds. |
 | **`ShipStateTest`** | JUnit 5 | Domain-Zustand, AABB-Neuberechnung bei Blockmutation, Controller-Translation, Cooldown-Arithmetik. |
 | **`CombatLogicTest`** | JUnit 5 | FastVoxelTraversal 3D-DDA Treffererkennung, Normalenflächen (`WEST`, `DOWN`), Reichweiten- & Tier-Konstanten. |
-| **`PayloadSerializationTest`** | JUnit 5 | Symmetrische Serialisierung & Deserialisierung aller 11 CustomPacketPayload-Records via StreamCodecs. |
+| **`PayloadSerializationTest`** | JUnit 5 | Symmetrische Serialisierung & Deserialisierung aller 12 CustomPacketPayload-Records via StreamCodecs. |
 | **`SpaceshipEnergyManagerTest`** | JUnit 5 (Mockito) | Reaktor-Bündelung, sequenzieller Energieabzug, Rollback bei Energiemangel, Flugkosten-Berechnung. |
 | **`AimTransformMathTest`** | JUnit 5 | Quaternion-Transformationen, Euler-Winkel-Konvertierung, 16-Bit Kompression und GimbalLimits. |
 | **`TurretSeatTest`** | JUnit 5 | TurretSeat DTO Attribute, NBT-Persistenz und Aim-Lock-Status. |
+| **`ShipScannerVoronoiGameTest`** | GameTest | Voronoi-Zonierung und ShieldZone-Erfassung bei mehreren Schildgeneratoren im Schiff. |
+| **`LaserCombatPiercingGameTest`** | GameTest | Zonen-Kollaps und Durchschlag auf darunterliegende Schiffshülle bei inaktiver ShieldZone. |
 | **`ShipScannerGameTests`** | GameTest | Orthogonale BFS-Erkennung, Ausschluss diagonaler Blöcke, Multipart-Erfassung (Türen, Betten, Truhen). |
 | **`ShipMovementGameTests`** | GameTest | Physische Welt-Translation, `AIR`-Hinterlassung und Zielblock-Präsenzprüfung. |
 | **`ShipAttachmentGameTests`** | GameTest | Typsichere Persistenz von `ModAttachments.SHIP_ID` an BlockEntities. |

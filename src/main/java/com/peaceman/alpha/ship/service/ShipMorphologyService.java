@@ -72,6 +72,9 @@ public class ShipMorphologyService {
                 .start(() -> {
                     Set<BlockPos> calculatedBubble = performVolumetricDilation(immutableStructureSnapshot, radius);
                     VoxelGridCache shieldCache = VoxelGridCache.buildFromAbsolute(calculatedBubble, targetAnchor);
+                    if (ship.getShields() != null && !ship.getShields().isEmpty()) {
+                        ShipScannerService.calculateVoronoiZones(shieldCache, ship.getShields(), targetAnchor);
+                    }
 
                     // 4. Rückführung auf den Main Server Thread
                     serverLevel.getServer().execute(() -> {

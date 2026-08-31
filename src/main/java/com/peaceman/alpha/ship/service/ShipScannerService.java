@@ -1,5 +1,6 @@
 package com.peaceman.alpha.ship.service;
 
+import com.peaceman.alpha.ship.domain.VoxelGridCache;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
@@ -11,6 +12,7 @@ import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 
@@ -91,5 +93,80 @@ public class ShipScannerService {
             }
         }
         shipBlocks.addAll(toAdd);
+    }
+
+    public static final int MAX_SHIELD_GENERATORS = 64;
+
+    /**
+     * Berechnet die 3D-Voronoi-Tesselierung für jeden im VoxelGridCache gesetzten Hüllen-Voxel
+     * basierend auf der quadrierten euklidischen Distanz zu allen aktiven Schildgeneratoren.
+     *
+     * @param cache         Der zu aktualisierende VoxelGridCache
+     * @param generators    Liste der Generator-Positionen (absolut oder relativ zum controllerPos)
+     * @param controllerPos Position des Controllers (wenn null, werden generators als relativ interpretiert)
+     */
+    public static void calculateVoronoiZones(VoxelGridCache cache, List<BlockPos> generators, BlockPos controllerPos) {
+        if (cache == null || cache.isEmpty() || generators == null || generators.isEmpty()) {
+            return;
+        }
+
+        int count = generators.size();
+        if (count > MAX_SHIELD_GENERATORS) {
+            com.peaceman.alpha.Alpha.LOGGER.warn("Ship has {} shield generators, exceeding max limit of {}. Truncating to {}.",
+                    count, MAX_SHIELD_GENERATORS, MAX_SHIELD_GENERATORS);
+            count = MAX_SHIELD_GENERATORS;
+        }
+
+        int[][] genRelCoords = new int[count][3];
+        for (int i = 0; i < count; i++) {
+            BlockPos genPos = generators.get(i);
+            if (controllerPos != null) {
+                genRelCoords[i][0] = genPos.getX() - controllerPos.getX();
+                genRelCoords[i][1] = genPos.getY() - controllerPos.getY();
+                genRelCoords[i][2] = genPos.getZ() - controllerPos.getZ();
+            } else {
+                genRelCoords[i][0] = genPos.getX();
+                genRelCoords[i][1] = genPos.getY();
+                genRelCoords[i][2] = genPos.getZ();
+            }
+        }
+
+        BlockPos minOffset = cache.getMinOffset();
+        int sizeX = cache.getSizeX();
+        int sizeY = cache.getSizeY();
+        int sizeZ = cache.getSizeZ();
+
+        for (int x = 0; x < sizeX; x++) {
+            int relX = minOffset.getX() + x;
+            for (int y = 0; y < sizeY; y++) {
+                int relY = minOffset.getY() + y;
+                for (int z = 0; z < sizeZ; z++) {
+                    int relZ = minOffset.getZ() + z;
+
+                    if (!cache.isSet(relX, relY, relZ)) {
+                        continue;
+                    }
+
+                    long minDistanceSq = Long.MAX_VALUE;
+                    byte bestId = 1;
+
+                    for (int g = 0; g < count; g++) {
+                        long dx = relX - genRelCoords[g][0];
+                        long dy = relY - genRelCoords[g][1];
+                        long dz = relZ - genRelCoords[g][2];
+                        long distSq = dx * dx + dy * dy + dz * dz;
+
+                        // Deterministischer Tie-Break: Strikt kleiner (<) sorgt dafür, dass bei gleicher Distanz
+                        // stets die kleinere Generator-ID (früherer Index) gewinnt.
+                        if (distSq < minDistanceSq) {
+                            minDistanceSq = distSq;
+                            bestId = (byte) (g + 1);
+                        }
+                    }
+
+                    cache.setShieldId(relX, relY, relZ, bestId);
+                }
+            }
+        }
     }
 }

@@ -74,7 +74,7 @@ public class ShieldRenderer {
             RenderSystem.setShader(() -> hexShieldShader);
 
             for (ClientShipState shipState : ships) {
-                if (!shipState.isShieldActive() || shipState.getAnchorPos() == null || shipState.getShieldMesh() == null) {
+                if (!shipState.isShieldActive() || shipState.getActiveMask() == 0L || shipState.getAnchorPos() == null || shipState.getShieldMesh() == null) {
                     continue;
                 }
 

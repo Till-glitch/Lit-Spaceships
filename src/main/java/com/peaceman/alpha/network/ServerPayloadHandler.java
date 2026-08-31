@@ -83,6 +83,7 @@ public class ServerPayloadHandler {
                     ShipMovementService.moveShip(level, ship, dx, 0, dz, player);
                 }
                 case TOGGLE_SHIELD -> com.peaceman.alpha.ship.SpaceshipShieldHandler.toggleShield(level, ship);
+                case TOGGLE_SHIELD_ZONE -> com.peaceman.alpha.ship.SpaceshipShieldHandler.toggleShieldZone(level, ship, payload.pos());
                 default -> {}
             }
         });

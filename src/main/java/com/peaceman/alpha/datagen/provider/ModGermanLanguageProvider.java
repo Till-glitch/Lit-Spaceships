@@ -58,6 +58,13 @@ public class ModGermanLanguageProvider extends LanguageProvider {
         add(ModI18n.Screen.HELM_WARP_COOLDOWN, "Warp-Cooldown aktiv (%1$.1fs)");
         add(ModI18n.Screen.HELM_SCREEN_TITLE, "Navigation & Sprung-Computer");
 
+        add(ModI18n.Screen.SHIELD_TITLE, "Schildgenerator Interface");
+        add(ModI18n.Screen.SHIELD_TOGGLE, "Schild An/Aus");
+        add(ModI18n.Screen.SHIELD_STATUS, "Status: %1$s");
+        add(ModI18n.Screen.SHIELD_ACTIVE, "Aktiv");
+        add(ModI18n.Screen.SHIELD_INACTIVE, "Inaktiv");
+        add(ModI18n.Screen.SHIELD_ENERGY, "Energie: %1$s FE (Ladebedarf: %2$s FE)");
+
         add(ModI18n.Screen.CONTROL_TITLE, "Raumschiff Steuerung");
         add(ModI18n.Screen.CONTROL_BTN_CREATE, "Schiff erstellen");
         add(ModI18n.Screen.CONTROL_BTN_UPDATE, "Struktur updaten");

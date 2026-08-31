@@ -68,4 +68,106 @@ public class SpaceshipEnergyManager {
 
         return success;
     }
+
+    /**
+     * Verteilt verfügbare Reaktor-Energie proportional auf alle aktiven (nicht kollabierten)
+     * Schildzonen des Schiffs.
+     */
+    public static int distributeEnergyToShields(Level level, ShipState ship) {
+        if (level == null || ship == null || ship.getShieldZones().isEmpty()) {
+            return 0;
+        }
+        int availableEnergy = getTotalAvailableEnergy(level, ship);
+        if (availableEnergy <= 0) {
+            return 0;
+        }
+
+        int transferred = distributeEnergyToShields(availableEnergy, ship, level.getGameTime());
+        if (transferred > 0) {
+            consumeEnergy(level, ship, transferred);
+        }
+        return transferred;
+    }
+
+    public static final int MAX_CHARGE_RATE_PER_ZONE = 100;
+
+    /**
+     * Reine mathematische Zuweisungs-Logik: Teilt die Energie proportional zu den individuellen
+     * Defiziten der ladefähigen Zonen auf und nutzt einen Rest-Loop für exakte FE-Masserhaltung.
+     */
+    public static int distributeEnergyToShields(int availableEnergy, ShipState ship, long currentGameTime) {
+        if (availableEnergy <= 0 || ship == null || ship.getShieldZones().isEmpty()) {
+            return 0;
+        }
+
+        // 1. Defizite aller nicht-kollabierten / nicht-cooldown Zonen ermitteln
+        java.util.List<com.peaceman.alpha.ship.domain.ShieldZone> eligibleZones = new java.util.ArrayList<>();
+        long totalDeficit = 0L;
+
+        for (com.peaceman.alpha.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
+            if (currentGameTime < zone.cooldownUntil()) {
+                continue; // Cooldown-Blockade aktiv
+            }
+            int deficit = zone.maxEnergy() - zone.currentEnergy();
+            deficit = Math.min(deficit, MAX_CHARGE_RATE_PER_ZONE);
+            
+            if (deficit > 0) {
+                eligibleZones.add(zone);
+                totalDeficit += deficit;
+            }
+        }
+
+        if (totalDeficit <= 0 || eligibleZones.isEmpty()) {
+            return 0;
+        }
+
+        int energyToDistribute = (int) Math.min((long) availableEnergy, totalDeficit);
+        int remainingRest = energyToDistribute;
+
+        java.util.Map<Byte, Integer> allocations = new java.util.HashMap<>();
+
+        // 2. Primärer proportionaler Loop: E_transfer = floor(E_avail * (D_i / D_total))
+        for (com.peaceman.alpha.ship.domain.ShieldZone zone : eligibleZones) {
+            int deficit = zone.maxEnergy() - zone.currentEnergy();
+            deficit = Math.min(deficit, MAX_CHARGE_RATE_PER_ZONE);
+            int transfer = (int) ((double) energyToDistribute * (double) deficit / (double) totalDeficit);
+            transfer = Math.min(transfer, deficit);
+            allocations.put(zone.id(), transfer);
+            remainingRest -= transfer;
+        }
+
+        // 3. Sekundärer Fallback-Loop (Rest-Tröpfchen-Verteilung): +1 FE an Generatoren mit Restdefizit
+        if (remainingRest > 0) {
+            boolean distributedAny = true;
+            while (remainingRest > 0 && distributedAny) {
+                distributedAny = false;
+                for (com.peaceman.alpha.ship.domain.ShieldZone zone : eligibleZones) {
+                    if (remainingRest <= 0) break;
+                    int deficit = zone.maxEnergy() - zone.currentEnergy();
+                    deficit = Math.min(deficit, MAX_CHARGE_RATE_PER_ZONE);
+                    int currentAlloc = allocations.getOrDefault(zone.id(), 0);
+                    if (currentAlloc < deficit) {
+                        allocations.put(zone.id(), currentAlloc + 1);
+                        remainingRest--;
+                        distributedAny = true;
+                    }
+                }
+            }
+        }
+
+        // 4. ShipState Zonen atomar aktualisieren
+        int totalTransferred = 0;
+        for (java.util.Map.Entry<Byte, Integer> entry : allocations.entrySet()) {
+            int add = entry.getValue();
+            if (add > 0) {
+                com.peaceman.alpha.ship.domain.ShieldZone zone = ship.getShieldZone(entry.getKey());
+                if (zone != null) {
+                    ship.updateShieldZoneEnergy(entry.getKey(), zone.currentEnergy() + add);
+                    totalTransferred += add;
+                }
+            }
+        }
+
+        return totalTransferred;
+    }
 }

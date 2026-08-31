@@ -18,6 +18,8 @@
     { "name": "u_Impact0", "type": "float", "count": 4, "values": [ 0.0, 0.0, 0.0, -1.0 ] },
     { "name": "u_Impact1", "type": "float", "count": 4, "values": [ 0.0, 0.0, 0.0, -1.0 ] },
     { "name": "u_Impact2", "type": "float", "count": 4, "values": [ 0.0, 0.0, 0.0, -1.0 ] },
-    { "name": "u_Impact3", "type": "float", "count": 4, "values": [ 0.0, 0.0, 0.0, -1.0 ] }
+    { "name": "u_Impact3", "type": "float", "count": 4, "values": [ 0.0, 0.0, 0.0, -1.0 ] },
+    { "name": "u_ActiveMaskLow", "type": "int", "count": 1, "values": [ -1 ] },
+    { "name": "u_ActiveMaskHigh", "type": "int", "count": 1, "values": [ -1 ] }
   ]
 }

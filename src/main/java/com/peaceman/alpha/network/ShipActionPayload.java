@@ -34,7 +34,8 @@ public record ShipActionPayload(
         MOVE_LEFT(8),
         MOVE_RIGHT(9),
         SAVE_HOME(10),
-        TP_HOME(11);
+        TP_HOME(11),
+        TOGGLE_SHIELD_ZONE(12);
 
         private final int id;
 

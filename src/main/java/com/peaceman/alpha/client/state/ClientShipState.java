@@ -40,6 +40,7 @@ public class ClientShipState implements AutoCloseable {
     private int impactCursor = 0;
     private float shieldEnergyPercentage = 1.0f;
     private int currentEnergy = 0;
+    private volatile long activeMask = ~0L; // Standardmäßig alle 64 Zonen aktiv
 
     public ClientShipState(UUID shipId) {
         this.shipId = shipId;
@@ -47,6 +48,14 @@ public class ClientShipState implements AutoCloseable {
             this.impactTickTimes[i] = -1000L;
             this.impactPositions[i] = Vec3.ZERO;
         }
+    }
+
+    public long getActiveMask() {
+        return activeMask;
+    }
+
+    public void setActiveMask(long activeMask) {
+        this.activeMask = activeMask;
     }
 
     public UUID getShipId() {
@@ -187,6 +196,12 @@ public class ClientShipState implements AutoCloseable {
         }
         if (shader.getUniform("u_GameTime") != null) {
             shader.getUniform("u_GameTime").set(exactTime / 20.0f);
+        }
+        if (shader.getUniform("u_ActiveMaskLow") != null) {
+            shader.getUniform("u_ActiveMaskLow").set((int) (this.activeMask & 0xFFFFFFFFL));
+        }
+        if (shader.getUniform("u_ActiveMaskHigh") != null) {
+            shader.getUniform("u_ActiveMaskHigh").set((int) ((this.activeMask >>> 32) & 0xFFFFFFFFL));
         }
 
         // 2. Die 4 Impact-Vektoren aus dem Ring-Buffer binden

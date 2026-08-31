@@ -19,6 +19,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.level.ExplosionEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
@@ -111,6 +112,27 @@ public class SpaceshipShieldHandler {
         return newState;
     }
 
+    public static void toggleShieldZone(Level level, ShipState ship, BlockPos generatorPos) {
+        if (ship == null || level.isClientSide()) return;
+
+        // Find the shield zone ID matching the block pos
+        byte targetZoneId = 0;
+        for (com.peaceman.alpha.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
+            if (zone.generatorPos().equals(generatorPos)) {
+                targetZoneId = zone.id();
+                break;
+            }
+        }
+
+        if (targetZoneId > 0) {
+            ship.toggleShieldZoneActive(targetZoneId);
+            ServerShipManager.syncShieldZoneStates(level, ship);
+            ServerShipManager.saveData(level);
+            Alpha.LOGGER.info("[SpaceshipShieldHandler] Schild-Zone {} (Pos: {}) fuer Schiff '{}' umgeschaltet.",
+                    targetZoneId, generatorPos, ship.getId());
+        }
+    }
+
     /**
      * Wird aufgerufen, wenn ein Schildgenerator-Block abgebaut oder zerstört wird.
      * Deaktiviert den Schild sofort und leert das VBO-Mesh auf den Clients, falls kein weiterer Generator mehr existiert.
@@ -159,6 +181,55 @@ public class SpaceshipShieldHandler {
         }
     }
 
+    /**
+     * Versucht, dem für die gegebene Position verantwortlichen Schildgenerator
+     * Energie abzuziehen. Findet den Generator via VoxelGridCache oder per
+     * geometrischer Distanz (für Blöcke außerhalb der Hülle).
+     */
+    public static boolean tryConsumeShieldEnergyAt(Level level, ShipState ship, BlockPos hitPos, int energyCost) {
+        if (ship == null || ship.getShieldZones().isEmpty()) return false;
+
+        byte shieldId = 0;
+
+        // 1. Ist es Teil der Huelle? (O(1) Lookup)
+        if (ship.getHullVoxelCache() != null) {
+            BlockPos localPos = hitPos.subtract(ship.getControllerPos());
+            shieldId = ship.getHullVoxelCache().getShieldId(localPos);
+        }
+
+        // 2. Fallback: Block liegt im Schildradius, aber nicht auf der Huelle
+        if (shieldId == 0) {
+            double minSq = Double.MAX_VALUE;
+            long gameTime = level.getGameTime();
+            for (com.peaceman.alpha.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
+                if (!zone.isCollapsed(gameTime)) {
+                    double dist = zone.generatorPos().distSqr(hitPos);
+                    if (dist < minSq) {
+                        minSq = dist;
+                        shieldId = zone.id();
+                    }
+                }
+            }
+        }
+
+        // 3. Energie abziehen, falls moeglich
+        if (shieldId > 0) {
+            com.peaceman.alpha.ship.domain.ShieldZone zone = ship.getShieldZone(shieldId);
+            long gameTime = level.getGameTime();
+            if (zone != null && !zone.isCollapsed(gameTime) && zone.currentEnergy() >= energyCost) {
+                int newEnergy = zone.currentEnergy() - energyCost;
+                long cooldown = newEnergy <= 0 ? gameTime + ShipState.SHIELD_COOLDOWN_TICKS : zone.cooldownUntil();
+                ship.updateShieldZoneEnergyAndCooldown(shieldId, newEnergy, cooldown);
+
+                if (newEnergy <= 0) {
+                    ServerShipManager.syncShieldZoneStates(level, ship);
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
     @SubscribeEvent
     public static void onExplosion(ExplosionEvent.Detonate event) {
         Level level = event.getLevel();
@@ -189,7 +260,7 @@ public class SpaceshipShieldHandler {
                 // 3. Algorithmischer Check gegen die Schildmorphologie
                 if (ShieldMorphology.isBlockProtected(ship.getBlocks(), affectedBlock, radius)) {
                     // 4. Energieverbrauch prüfen
-                    if (SpaceshipEnergyManager.tryConsumeEnergyAmount(level, ship, ENERGY_COST_PER_BLOCK)) {
+                    if (tryConsumeShieldEnergyAt(level, ship, affectedBlock, ENERGY_COST_PER_BLOCK)) {
                         protectedBlocks.add(affectedBlock);
                         shipProtectedBlocks.add(affectedBlock);
                     }
@@ -223,6 +294,33 @@ public class SpaceshipShieldHandler {
         // 5. Gerettete Blöcke aus der Zerstörungsliste entfernen
         if (!protectedBlocks.isEmpty()) {
             event.getAffectedBlocks().removeAll(protectedBlocks);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLevelTick(LevelTickEvent.Post event) {
+        Level level = event.getLevel();
+        if (level.isClientSide() || !(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        // Verteile periodisch Energie auf aktive Schildzonen (hier 1x pro Tick)
+        long gameTime = serverLevel.getGameTime();
+        for (ShipState ship : ServerShipManager.getShipsInDimension(serverLevel.dimension()).values()) {
+            if (ship.isShieldActive() && hasShieldGenerator(ship)) {
+                // Merke alte Maske
+                long oldMask = ServerShipManager.calculateShieldActiveMask(ship, gameTime);
+                
+                int distributed = com.peaceman.alpha.ship.SpaceshipEnergyManager.distributeEnergyToShields(serverLevel, ship);
+                
+                // Falls Energie verteilt wurde, prüfen ob sich die Maske geändert hat
+                if (distributed > 0) {
+                    long newMask = ServerShipManager.calculateShieldActiveMask(ship, gameTime);
+                    if (oldMask != newMask) {
+                        ServerShipManager.syncShieldZoneStates(serverLevel, ship);
+                    }
+                }
+            }
         }
     }
 }

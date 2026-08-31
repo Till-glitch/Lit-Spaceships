@@ -72,12 +72,12 @@ public class HeavyBeamBlockEntity extends AbstractLaserNodeBlockEntity {
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
-        tag.putBoolean("IsFiring", isFiring);
+        // IsFiring wird absichtlich nicht gespeichert, damit Laser beim Server-Neustart standardmäßig aus sind.
     }
 
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
-        this.isFiring = tag.getBoolean("IsFiring");
+        // isFiring bleibt standardmäßig false.
     }
 }

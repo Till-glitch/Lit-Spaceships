@@ -125,7 +125,13 @@ public class CollisionResolver {
         // Fall 2: OFF vs. ON (Hülle A vs. Schild B)
         if (!shieldA && shieldB) {
             int drain = voxelCount * ENERGY_PER_VOXEL_IMPACT;
-            boolean absorbed = SpaceshipEnergyManager.tryConsumeEnergyAmount(level, shipB, drain);
+            boolean absorbed = true;
+            for (BlockPos pos : collidingVoxels) {
+                if (!SpaceshipShieldHandler.tryConsumeShieldEnergyAt(level, shipB, pos, ENERGY_PER_VOXEL_IMPACT)) {
+                    absorbed = false;
+                    break;
+                }
+            }
             Vec3 clampedVector = calculateClampedMovement(shipA, shipB, movementVector);
 
             if (!absorbed) {
@@ -155,7 +161,13 @@ public class CollisionResolver {
         // Fall 3: ON vs. OFF (Schild A vs. Hülle B) - Bohrer-Modus
         if (shieldA && !shieldB) {
             int drillCost = voxelCount * ENERGY_PER_VOXEL_DRILL;
-            boolean hasEnergy = SpaceshipEnergyManager.tryConsumeEnergyAmount(level, shipA, drillCost);
+            boolean hasEnergy = true;
+            for (BlockPos pos : collidingVoxels) {
+                if (!SpaceshipShieldHandler.tryConsumeShieldEnergyAt(level, shipA, pos, ENERGY_PER_VOXEL_DRILL)) {
+                    hasEnergy = false;
+                    break;
+                }
+            }
 
             if (hasEnergy) {
                 List<BlockPos> destroyedB = new ArrayList<>(collidingVoxels.size());
@@ -203,8 +215,17 @@ public class CollisionResolver {
         // Fall 4: ON vs. ON (Schild A vs. Schild B)
         if (shieldA && shieldB) {
             int clashCost = voxelCount * ENERGY_PER_VOXEL_SHIELD_CLASH;
-            boolean absorbedA = SpaceshipEnergyManager.tryConsumeEnergyAmount(level, shipA, clashCost);
-            boolean absorbedB = SpaceshipEnergyManager.tryConsumeEnergyAmount(level, shipB, clashCost);
+            boolean absorbedA = true;
+            boolean absorbedB = true;
+            for (BlockPos pos : collidingVoxels) {
+                if (absorbedA && !SpaceshipShieldHandler.tryConsumeShieldEnergyAt(level, shipA, pos, ENERGY_PER_VOXEL_SHIELD_CLASH)) {
+                    absorbedA = false;
+                }
+                if (absorbedB && !SpaceshipShieldHandler.tryConsumeShieldEnergyAt(level, shipB, pos, ENERGY_PER_VOXEL_SHIELD_CLASH)) {
+                    absorbedB = false;
+                }
+                if (!absorbedA && !absorbedB) break;
+            }
             Vec3 clampedVector = calculateClampedMovement(shipA, shipB, movementVector);
 
             if (!collidingVoxels.isEmpty()) {

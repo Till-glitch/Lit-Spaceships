@@ -70,6 +70,11 @@ public class ClientShipManager {
         shipState.updateCooldowns(shieldCooldownTicks, movementCooldownTicks, clientTick);
     }
 
+    public static void updateShieldZoneState(UUID shipId, long activeMask) {
+        ClientShipState shipState = getOrCreateShip(shipId);
+        shipState.setActiveMask(activeMask);
+    }
+
     public static void updateShipPosition(UUID shipId, BlockPos newAnchorPos) {
         ClientShipState shipState = getShip(shipId);
         if (shipState != null) {

@@ -19,19 +19,23 @@ public class FastVoxelTraversal {
             BlockPos relativePos,
             double distance,
             Direction hitFace,
-            Vec3 relativeHitPos
-    ) {}
+            Vec3 relativeHitPos,
+            byte shieldId
+    ) {
+        public VoxelHit(BlockPos relativePos, double distance, Direction hitFace, Vec3 relativeHitPos) {
+            this(relativePos, distance, hitFace, relativeHitPos, (byte) 0);
+        }
+    }
+
+    public static Optional<VoxelHit> traverse(VoxelGridCache cache, Vec3 localOrigin, Vec3 localDir, double maxDistance) {
+        return traverse(cache, localOrigin, localDir, maxDistance, id -> true);
+    }
 
     /**
-     * Durchläuft das Voxel-Gitter entlang des Strahls und ermittelt die erste geschnittene Voxel-Zelle.
-     *
-     * @param cache Der Voxel-Cache (Hülle oder Schild)
-     * @param localOrigin Startpunkt im lokalen Koordinatenraum (relativ zum Controller/Anchor)
-     * @param localDir Normierter Richtungsvektor des Strahls
-     * @param maxDistance Maximale Reichweite
-     * @return Das Trefferergebnis oder Optional.empty(), falls kein Voxel getroffen wurde
+     * Durchläuft das Voxel-Gitter entlang des Strahls und ermittelt die erste geschnittene Voxel-Zelle,
+     * die vom Prädikat akzeptiert wird.
      */
-    public static Optional<VoxelHit> traverse(VoxelGridCache cache, Vec3 localOrigin, Vec3 localDir, double maxDistance) {
+    public static Optional<VoxelHit> traverse(VoxelGridCache cache, Vec3 localOrigin, Vec3 localDir, double maxDistance, java.util.function.Predicate<Byte> isValid) {
         if (cache == null || cache.isEmpty() || maxDistance <= 0.0) {
             return Optional.empty();
         }
@@ -116,8 +120,11 @@ public class FastVoxelTraversal {
 
         // Prüfe direkt die Startzelle
         if (cache.isSet(x, y, z)) {
-            Vec3 hitPos = localOrigin.add(localDir.scale(currentT));
-            return Optional.of(new VoxelHit(new BlockPos(x, y, z), currentT, hitFace, hitPos));
+            byte shieldId = cache.getShieldId(x, y, z);
+            if (isValid.test(shieldId)) {
+                Vec3 hitPos = localOrigin.add(localDir.scale(currentT));
+                return Optional.of(new VoxelHit(new BlockPos(x, y, z), currentT, hitFace, hitPos, shieldId));
+            }
         }
 
         // Iterative 3D DDA Traversierung (hart limitiert auf 1024 Schritte)
@@ -153,10 +160,13 @@ public class FastVoxelTraversal {
                 }
             }
 
-            // Voxel-Existenzprüfung im BitSet (O(1))
+            // Voxel-Existenzprüfung im BitSet (O(1)) und ShieldId Lookup (O(1))
             if (cache.isSet(x, y, z)) {
-                Vec3 hitPos = localOrigin.add(localDir.scale(currentT));
-                return Optional.of(new VoxelHit(new BlockPos(x, y, z), currentT, hitFace, hitPos));
+                byte shieldId = cache.getShieldId(x, y, z);
+                if (isValid.test(shieldId)) {
+                    Vec3 hitPos = localOrigin.add(localDir.scale(currentT));
+                    return Optional.of(new VoxelHit(new BlockPos(x, y, z), currentT, hitFace, hitPos, shieldId));
+                }
             }
         }
 

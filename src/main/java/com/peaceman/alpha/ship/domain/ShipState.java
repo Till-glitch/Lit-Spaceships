@@ -25,6 +25,7 @@ public class ShipState {
     private List<BlockPos> reactors = new ArrayList<>();
     private List<BlockPos> shields = new ArrayList<>();
     private List<BlockPos> weapons = new ArrayList<>();
+    private final Map<Byte, ShieldZone> shieldZones = new java.util.concurrent.ConcurrentHashMap<>();
     private boolean isShieldActive = true;
     private ResourceKey<Level> dimension = Level.OVERWORLD;
     private volatile boolean isJumping = false;
@@ -160,6 +161,35 @@ public class ShipState {
 
 
 
+    public Map<Byte, ShieldZone> getShieldZones() {
+        return shieldZones;
+    }
+
+    public ShieldZone getShieldZone(byte id) {
+        return shieldZones.get(id);
+    }
+
+    public void setShieldZone(ShieldZone zone) {
+        if (zone != null) {
+            this.shieldZones.put(zone.id(), zone);
+        }
+    }
+
+    public void setShieldZones(Map<Byte, ShieldZone> zones) {
+        this.shieldZones.clear();
+        if (zones != null) {
+            this.shieldZones.putAll(zones);
+        }
+    }
+
+    public void updateShieldZoneEnergy(byte id, int newEnergy) {
+        this.shieldZones.computeIfPresent(id, (k, zone) -> zone.withEnergy(newEnergy));
+    }
+
+    public void updateShieldZoneEnergyAndCooldown(byte id, int newEnergy, long cooldownUntil) {
+        this.shieldZones.computeIfPresent(id, (k, zone) -> zone.withEnergyAndCooldown(newEnergy, cooldownUntil));
+    }
+
     public void toggleShieldActive() {
         if (this.shields.isEmpty()) {
             this.isShieldActive = false;
@@ -167,6 +197,10 @@ public class ShipState {
             this.isShieldActive = !this.isShieldActive;
         }
         com.peaceman.alpha.helper.ShieldLifecycleLogger.logShieldToggled(this.id, this.isShieldActive);
+    }
+
+    public void toggleShieldZoneActive(byte id) {
+        this.shieldZones.computeIfPresent(id, (k, zone) -> zone.withEnabled(!zone.isEnabled()));
     }
 
     // --- Cooldown-Methoden ---

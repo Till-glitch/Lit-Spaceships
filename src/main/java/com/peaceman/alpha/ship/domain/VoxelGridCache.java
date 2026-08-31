@@ -19,13 +19,24 @@ public class VoxelGridCache {
     private final int sizeY;
     private final int sizeZ;
     private final BitSet bitSet;
+    private final byte[] shieldMap;
 
     public VoxelGridCache(BlockPos minOffset, int sizeX, int sizeY, int sizeZ, BitSet bitSet) {
+        this(minOffset, sizeX, sizeY, sizeZ, bitSet, null);
+    }
+
+    public VoxelGridCache(BlockPos minOffset, int sizeX, int sizeY, int sizeZ, BitSet bitSet, byte[] shieldMap) {
         this.minOffset = minOffset != null ? minOffset : BlockPos.ZERO;
         this.sizeX = Math.max(0, sizeX);
         this.sizeY = Math.max(0, sizeY);
         this.sizeZ = Math.max(0, sizeZ);
         this.bitSet = bitSet != null ? bitSet : new BitSet(0);
+        int totalVolume = this.sizeX * this.sizeY * this.sizeZ;
+        if (shieldMap != null && shieldMap.length == totalVolume) {
+            this.shieldMap = shieldMap;
+        } else {
+            this.shieldMap = new byte[totalVolume];
+        }
     }
 
     public BlockPos getMinOffset() {
@@ -48,6 +59,10 @@ public class VoxelGridCache {
         return bitSet;
     }
 
+    public byte[] getShieldMap() {
+        return shieldMap;
+    }
+
     public boolean isEmpty() {
         return bitSet.isEmpty() || sizeX == 0 || sizeY == 0 || sizeZ == 0;
     }
@@ -68,6 +83,49 @@ public class VoxelGridCache {
         }
         int index = x + (y * sizeX) + (z * sizeX * sizeY);
         return bitSet.get(index);
+    }
+
+    /**
+     * Weist dem Voxel an den angegebenen relativen Koordinaten eine Schild-ID (1-64) zu.
+     *
+     * @throws IndexOutOfBoundsException wenn die Koordinaten außerhalb des Grids liegen
+     */
+    public void setShieldId(int relX, int relY, int relZ, byte id) {
+        int x = relX - minOffset.getX();
+        int y = relY - minOffset.getY();
+        int z = relZ - minOffset.getZ();
+        if (x < 0 || x >= sizeX || y < 0 || y >= sizeY || z < 0 || z >= sizeZ) {
+            throw new IndexOutOfBoundsException("Coordinates out of VoxelGrid bounds: (" + relX + ", " + relY + ", " + relZ + ") with bounds size (" + sizeX + "," + sizeY + "," + sizeZ + ") and minOffset " + minOffset);
+        }
+        int index = x + (y * sizeX) + (z * sizeX * sizeY);
+        shieldMap[index] = id;
+    }
+
+    public void setShieldId(BlockPos relativePos, byte id) {
+        if (relativePos == null) {
+            throw new NullPointerException("relativePos cannot be null");
+        }
+        setShieldId(relativePos.getX(), relativePos.getY(), relativePos.getZ(), id);
+    }
+
+    /**
+     * Ermittelt die Schild-ID (1-64) für den Voxel an den relativen Koordinaten in O(1).
+     * Gibt 0 zurück, wenn kein Schild zugewiesen ist oder die Koordinaten außerhalb der Bounds liegen.
+     */
+    public byte getShieldId(int relX, int relY, int relZ) {
+        int x = relX - minOffset.getX();
+        int y = relY - minOffset.getY();
+        int z = relZ - minOffset.getZ();
+        if (x < 0 || x >= sizeX || y < 0 || y >= sizeY || z < 0 || z >= sizeZ || shieldMap == null) {
+            return 0;
+        }
+        int index = x + (y * sizeX) + (z * sizeX * sizeY);
+        return shieldMap[index];
+    }
+
+    public byte getShieldId(BlockPos relativePos) {
+        if (relativePos == null) return 0;
+        return getShieldId(relativePos.getX(), relativePos.getY(), relativePos.getZ());
     }
 
     /**

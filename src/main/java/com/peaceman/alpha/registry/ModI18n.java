@@ -59,6 +59,14 @@ public final class ModI18n {
         public static final String HUD_TACTICAL_SHIELD_OFFLINE = "screen." + Alpha.MODID + ".hud.tactical.shield_offline";
         public static final String HUD_TACTICAL_REBOOT = "screen." + Alpha.MODID + ".hud.tactical.reboot";
         public static final String HUD_TACTICAL_SHIELD_DISABLED = "screen." + Alpha.MODID + ".hud.tactical.shield_disabled";
+        
+        // Shield Screen
+        public static final String SHIELD_TITLE = "screen." + Alpha.MODID + ".shield.title";
+        public static final String SHIELD_TOGGLE = "screen." + Alpha.MODID + ".shield.toggle";
+        public static final String SHIELD_STATUS = "screen." + Alpha.MODID + ".shield.status";
+        public static final String SHIELD_ACTIVE = "screen." + Alpha.MODID + ".shield.active";
+        public static final String SHIELD_INACTIVE = "screen." + Alpha.MODID + ".shield.inactive";
+        public static final String SHIELD_ENERGY = "screen." + Alpha.MODID + ".shield.energy";
         public static final String HUD_TACTICAL_ENERGY = "screen." + Alpha.MODID + ".hud.tactical.energy";
         public static final String HUD_HELM_HEADER = "screen." + Alpha.MODID + ".hud.helm.header";
         public static final String HUD_HELM_WARP_COOLDOWN = "screen." + Alpha.MODID + ".hud.helm.warp_cooldown";

@@ -58,6 +58,13 @@ public class ModEnglishLanguageProvider extends LanguageProvider {
         add(ModI18n.Screen.HELM_WARP_COOLDOWN, "Warp Cooldown active (%1$.1fs)");
         add(ModI18n.Screen.HELM_SCREEN_TITLE, "Navigation & Jump Computer");
 
+        add(ModI18n.Screen.SHIELD_TITLE, "Shield Generator Interface");
+        add(ModI18n.Screen.SHIELD_TOGGLE, "Toggle Shield");
+        add(ModI18n.Screen.SHIELD_STATUS, "Status: %1$s");
+        add(ModI18n.Screen.SHIELD_ACTIVE, "Active");
+        add(ModI18n.Screen.SHIELD_INACTIVE, "Inactive");
+        add(ModI18n.Screen.SHIELD_ENERGY, "Energy: %1$s FE (Deficit: %2$s FE)");
+
         add(ModI18n.Screen.CONTROL_TITLE, "Spaceship Control");
         add(ModI18n.Screen.CONTROL_BTN_CREATE, "Create Ship");
         add(ModI18n.Screen.CONTROL_BTN_UPDATE, "Update Structure");

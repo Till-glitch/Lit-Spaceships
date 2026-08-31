@@ -104,6 +104,14 @@ public class ClientPayloadHandler {
         }
     }
 
+    public static void handleShieldZoneStateSync(final com.peaceman.alpha.network.ShieldZoneStatePayload packet, final IPayloadContext context) {
+        if (context.flow().isClientbound()) {
+            context.enqueueWork(() -> {
+                ClientShipManager.updateShieldZoneState(packet.shipId(), packet.activeMask());
+            });
+        }
+    }
+
     public static void handleTurretAim(final com.peaceman.alpha.network.TurretAimPayload packet, final IPayloadContext context) {
         if (context.flow().isClientbound()) {
             context.enqueueWork(() -> {
