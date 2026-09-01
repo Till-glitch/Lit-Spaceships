@@ -4,7 +4,8 @@ import net.minecraft.core.BlockPos;
 
 /**
  * Unveränderliches Data Transfer Object (Record) für eine lokalisierte Schildzone.
- * Verwaltet ID, Generatorposition, aktuelle und maximale Energie sowie Cooldown-Ticks.
+ * Verwaltet ID, Generatorposition, aktuelle und maximale Energie, Cooldown-Ticks
+ * sowie die Echtzeit-Einspeiserate (FE/t).
  */
 public record ShieldZone(
         byte id,
@@ -12,10 +13,15 @@ public record ShieldZone(
         int currentEnergy,
         int maxEnergy,
         long cooldownUntil,
-        boolean isEnabled
+        boolean isEnabled,
+        int lastChargeRate
 ) {
     public ShieldZone(byte id, BlockPos generatorPos, int currentEnergy, int maxEnergy, long cooldownUntil) {
-        this(id, generatorPos, currentEnergy, maxEnergy, cooldownUntil, true);
+        this(id, generatorPos, currentEnergy, maxEnergy, cooldownUntil, true, 0);
+    }
+
+    public ShieldZone(byte id, BlockPos generatorPos, int currentEnergy, int maxEnergy, long cooldownUntil, boolean isEnabled) {
+        this(id, generatorPos, currentEnergy, maxEnergy, cooldownUntil, isEnabled, 0);
     }
 
     /**
@@ -32,20 +38,27 @@ public record ShieldZone(
      * Erstellt eine Kopie dieser ShieldZone mit neuem Energiewert.
      */
     public ShieldZone withEnergy(int newEnergy) {
-        return new ShieldZone(id, generatorPos, Math.max(0, Math.min(maxEnergy, newEnergy)), maxEnergy, cooldownUntil, isEnabled);
+        return new ShieldZone(id, generatorPos, Math.max(0, Math.min(maxEnergy, newEnergy)), maxEnergy, cooldownUntil, isEnabled, lastChargeRate);
+    }
+
+    /**
+     * Erstellt eine Kopie dieser ShieldZone mit neuem Energiewert und Einspeiserate.
+     */
+    public ShieldZone withEnergyAndChargeRate(int newEnergy, int newChargeRate) {
+        return new ShieldZone(id, generatorPos, Math.max(0, Math.min(maxEnergy, newEnergy)), maxEnergy, cooldownUntil, isEnabled, newChargeRate);
     }
 
     /**
      * Erstellt eine Kopie dieser ShieldZone mit neuem Energiewert und Cooldown.
      */
     public ShieldZone withEnergyAndCooldown(int newEnergy, long newCooldownUntil) {
-        return new ShieldZone(id, generatorPos, Math.max(0, Math.min(maxEnergy, newEnergy)), maxEnergy, newCooldownUntil, isEnabled);
+        return new ShieldZone(id, generatorPos, Math.max(0, Math.min(maxEnergy, newEnergy)), maxEnergy, newCooldownUntil, isEnabled, 0);
     }
 
     /**
      * Erstellt eine Kopie dieser ShieldZone mit neuem Aktivierungsstatus.
      */
     public ShieldZone withEnabled(boolean newEnabled) {
-        return new ShieldZone(id, generatorPos, currentEnergy, maxEnergy, cooldownUntil, newEnabled);
+        return new ShieldZone(id, generatorPos, currentEnergy, maxEnergy, cooldownUntil, newEnabled, lastChargeRate);
     }
 }

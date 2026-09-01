@@ -109,9 +109,26 @@ classDiagram
             +int currentEnergy
             +int maxEnergy
             +long cooldownUntil
+            +boolean isEnabled
+            +int lastChargeRate
             +isCollapsed(long currentTick) boolean
             +withEnergy(int newEnergy) ShieldZone
+            +withEnergyAndChargeRate(int newEnergy, int chargeRate) ShieldZone
             +withEnergyAndCooldown(int newEnergy, long newCooldown) ShieldZone
+        }
+
+        class SectorCoverage {
+            <<record>>
+            +byte zoneId
+            +BlockPos generatorPos
+            +int assignedVoxels
+            +int totalShipVoxels
+            +BlockPos minRelative
+            +BlockPos maxRelative
+            +getCoverageRatio() float
+            +getSpanX() int
+            +getSpanY() int
+            +getSpanZ() int
         }
 
         class ShipState {
@@ -123,6 +140,7 @@ classDiagram
             -List~BlockPos~ shields
             -List~BlockPos~ weapons
             -Map~Byte, ShieldZone~ shieldZones
+            -Map~Byte, SectorCoverage~ sectorCoverages
             -boolean isShieldActive
             -long shieldCooldownUntil
             -long movementCooldownUntil
@@ -130,9 +148,12 @@ classDiagram
             -VoxelGridCache shieldVoxelCache
             +getImmutableBlockSnapshot() Set~BlockPos~
             +getShieldZone(byte id) ShieldZone
+            +getSectorCoverage(byte id) SectorCoverage
             +setShieldZone(ShieldZone zone) void
             +setShieldZones(Map~Byte, ShieldZone~ zones) void
+            +setSectorCoverages(Map~Byte, SectorCoverage~ coverages) void
             +updateShieldZoneEnergy(byte id, int energy) void
+            +updateShieldZoneEnergyAndChargeRate(byte id, int energy, int chargeRate) void
             +updateShieldZoneEnergyAndCooldown(byte id, int energy, long cooldown) void
             +setBlocks(Set~BlockPos~ blocks, Level level) void
             +recalculateHullBounds() void
@@ -162,6 +183,7 @@ classDiagram
         }
 
         class LaserCombatService {
+            +stopAllContinuousLasers(Level level, ShipState ship)$ void
             +fireWeapon(Level level, ShipState shooter, BlockPos weaponPos)$ boolean
             +tickContinuousWeapon(Level level, ShipState shooter, BlockPos pos, AbstractLaserNodeBE be)$ void
             -processPulseHit(Level level, ShipState shooter, LaserWeaponTier tier, RaycastHitResult hit)$ void

@@ -22,6 +22,7 @@ public class ShipState {
     private List<BlockPos> shields = new ArrayList<>();
     private List<BlockPos> weapons = new ArrayList<>();
     private final Map<Byte, ShieldZone> shieldZones = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<Byte, SectorCoverage> sectorCoverages = new java.util.concurrent.ConcurrentHashMap<>();
     private boolean isShieldActive = true;
     private ResourceKey<Level> dimension = Level.OVERWORLD;
     private volatile boolean isJumping = false;
@@ -248,8 +249,27 @@ public class ShipState {
         this.shieldZones.computeIfPresent(id, (k, zone) -> zone.withEnergy(newEnergy));
     }
 
+    public void updateShieldZoneEnergyAndChargeRate(byte id, int newEnergy, int chargeRate) {
+        this.shieldZones.computeIfPresent(id, (k, zone) -> zone.withEnergyAndChargeRate(newEnergy, chargeRate));
+    }
+
     public void updateShieldZoneEnergyAndCooldown(byte id, int newEnergy, long cooldownUntil) {
         this.shieldZones.computeIfPresent(id, (k, zone) -> zone.withEnergyAndCooldown(newEnergy, cooldownUntil));
+    }
+
+    public Map<Byte, SectorCoverage> getSectorCoverages() {
+        return Collections.unmodifiableMap(this.sectorCoverages);
+    }
+
+    public SectorCoverage getSectorCoverage(byte id) {
+        return this.sectorCoverages.get(id);
+    }
+
+    public void setSectorCoverages(Map<Byte, SectorCoverage> coverages) {
+        this.sectorCoverages.clear();
+        if (coverages != null) {
+            this.sectorCoverages.putAll(coverages);
+        }
     }
 
     public void toggleShieldActive() {

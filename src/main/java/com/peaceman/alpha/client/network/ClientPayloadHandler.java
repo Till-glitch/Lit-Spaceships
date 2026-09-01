@@ -54,6 +54,7 @@ public class ClientPayloadHandler {
             context.enqueueWork(() -> {
                 ShieldLifecycleLogger.logClientPayloadReceived("ShipPositionSyncPayload", packet.shipId(), packet.newAnchorPos(), true);
                 ClientShipManager.updateShipPosition(packet.shipId(), packet.newAnchorPos());
+                com.peaceman.alpha.client.state.ClientLaserState.removeBeamsForShip(packet.shipId());
             });
         }
     }
@@ -100,6 +101,7 @@ public class ClientPayloadHandler {
         if (context.flow().isClientbound()) {
             context.enqueueWork(() -> {
                 ClientShipManager.updateShipDimension(packet.shipId(), packet.dimension());
+                com.peaceman.alpha.client.state.ClientLaserState.removeBeamsForShip(packet.shipId());
             });
         }
     }

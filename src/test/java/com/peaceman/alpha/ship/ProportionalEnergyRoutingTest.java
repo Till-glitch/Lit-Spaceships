@@ -35,6 +35,10 @@ class ProportionalEnergyRoutingTest {
         assertEquals(4995, ship.getShieldZone((byte) 1).currentEnergy(), "Gen 1 muss 5 FE erhalten haben (4990 + 5 = 4995)");
         assertEquals(4990, ship.getShieldZone((byte) 2).currentEnergy(), "Gen 2 muss 10 FE erhalten haben (4980 + 10 = 4990)");
         assertEquals(4985, ship.getShieldZone((byte) 3).currentEnergy(), "Gen 3 muss 15 FE erhalten haben (4970 + 15 = 4985)");
+
+        assertEquals(5, ship.getShieldZone((byte) 1).lastChargeRate(), "Gen 1 Flow-Rate muss 5 FE/t sein");
+        assertEquals(10, ship.getShieldZone((byte) 2).lastChargeRate(), "Gen 2 Flow-Rate muss 10 FE/t sein");
+        assertEquals(15, ship.getShieldZone((byte) 3).lastChargeRate(), "Gen 3 Flow-Rate muss 15 FE/t sein");
     }
 
     @Test
@@ -61,5 +65,9 @@ class ProportionalEnergyRoutingTest {
         assertEquals(5000, ship.getShieldZone((byte) 1).currentEnergy());
         assertEquals(5000, ship.getShieldZone((byte) 2).currentEnergy());
         assertEquals(4920, ship.getShieldZone((byte) 3).currentEnergy()); // Unverändert
+
+        assertEquals(50, ship.getShieldZone((byte) 1).lastChargeRate());
+        assertEquals(90, ship.getShieldZone((byte) 2).lastChargeRate());
+        assertEquals(0, ship.getShieldZone((byte) 3).lastChargeRate(), "Zone im Cooldown darf 0 FE/t Einspeiserate haben");
     }
 }

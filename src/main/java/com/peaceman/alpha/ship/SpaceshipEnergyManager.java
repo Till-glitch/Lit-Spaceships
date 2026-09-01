@@ -93,6 +93,13 @@ public class SpaceshipEnergyManager {
      */
     public static int distributeEnergyToShields(int availableEnergy, ShipState ship, long currentGameTime) {
         if (availableEnergy <= 0 || ship == null || ship.getShieldZones().isEmpty()) {
+            if (ship != null) {
+                for (com.peaceman.alpha.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
+                    if (zone.lastChargeRate() > 0) {
+                        ship.updateShieldZoneEnergyAndChargeRate(zone.id(), zone.currentEnergy(), 0);
+                    }
+                }
+            }
             return 0;
         }
 
@@ -114,6 +121,11 @@ public class SpaceshipEnergyManager {
         }
 
         if (totalDeficit <= 0 || eligibleZones.isEmpty()) {
+            for (com.peaceman.alpha.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
+                if (zone.lastChargeRate() > 0) {
+                    ship.updateShieldZoneEnergyAndChargeRate(zone.id(), zone.currentEnergy(), 0);
+                }
+            }
             return 0;
         }
 
@@ -177,15 +189,10 @@ public class SpaceshipEnergyManager {
 
         // 4. ShipState Zonen atomar aktualisieren
         int totalTransferred = 0;
-        for (java.util.Map.Entry<Byte, Integer> entry : allocations.entrySet()) {
-            int add = entry.getValue();
-            if (add > 0) {
-                com.peaceman.alpha.ship.domain.ShieldZone zone = ship.getShieldZone(entry.getKey());
-                if (zone != null) {
-                    ship.updateShieldZoneEnergy(entry.getKey(), zone.currentEnergy() + add);
-                    totalTransferred += add;
-                }
-            }
+        for (com.peaceman.alpha.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
+            int add = allocations.getOrDefault(zone.id(), 0);
+            ship.updateShieldZoneEnergyAndChargeRate(zone.id(), zone.currentEnergy() + add, add);
+            totalTransferred += add;
         }
 
         return totalTransferred;

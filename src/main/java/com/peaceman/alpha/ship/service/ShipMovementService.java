@@ -106,7 +106,10 @@ public class ShipMovementService {
                     return true; // Abbruch wegen Energiemangel
                 }
 
-                // 2. Chunks im Zielgebiet vorbereiten und forceloaden
+                // 2. Aktive Dauerstrahlen bei Schub/Bewegung sauber abschalten
+                com.peaceman.alpha.ship.combat.LaserCombatService.stopAllContinuousLasers(level, ship);
+
+                // 3. Chunks im Zielgebiet vorbereiten und forceloaden
                 destinationChunks = prepareDestinationChunks(level, ship, new Vec3(dx, dy, dz));
 
                 // 3. Bounding Box & Passagier-Matrix erfassen

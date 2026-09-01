@@ -59,11 +59,22 @@ public class ModEnglishLanguageProvider extends LanguageProvider {
         add(ModI18n.Screen.HELM_SCREEN_TITLE, "Navigation & Jump Computer");
 
         add(ModI18n.Screen.SHIELD_TITLE, "Shield Generator Interface");
-        add(ModI18n.Screen.SHIELD_TOGGLE, "Toggle Shield");
+        add(ModI18n.Screen.SHIELD_TOGGLE, "Toggle Sector Shield");
         add(ModI18n.Screen.SHIELD_STATUS, "Status: %1$s");
         add(ModI18n.Screen.SHIELD_ACTIVE, "Active");
         add(ModI18n.Screen.SHIELD_INACTIVE, "Inactive");
-        add(ModI18n.Screen.SHIELD_ENERGY, "Energy: %1$s FE (Deficit: %2$s FE)");
+        add(ModI18n.Screen.SHIELD_ENERGY, "Buffer: %1$s / %2$s FE");
+        add(ModI18n.Screen.SHIELD_POWER_FLOW, "Reactor Flow: +%1$s FE/t");
+        add(ModI18n.Screen.SHIELD_SECTOR_ID, "Sector #%1$d / %2$d");
+        add(ModI18n.Screen.SHIELD_STATUS_OPTIMAL, "OPTIMAL (100% CHARGED)");
+        add(ModI18n.Screen.SHIELD_STATUS_CHARGING, "ACTIVE (CHARGING)");
+        add(ModI18n.Screen.SHIELD_STATUS_COLLAPSED, "COLLAPSED (0 FE - BREACH)");
+        add(ModI18n.Screen.SHIELD_STATUS_RECHARGE_CD, "REGENERATING IN %1$.1fs");
+        add(ModI18n.Screen.SHIELD_STATUS_OFFLINE, "OFFLINE (DISABLED)");
+        add(ModI18n.Screen.SHIELD_STATUS_UNLINKED, "UNLINKED");
+        add(ModI18n.Screen.SHIELD_COVERAGE_VOXELS, "Assigned Hull Blocks: %1$d / %2$d (%3$.1f%%)");
+        add(ModI18n.Screen.SHIELD_COVERAGE_BOUNDS, "Sector Extent: %1$dm x %2$dm x %3$dm");
+        add(ModI18n.Screen.SHIELD_COVERAGE_SPAN, "Local Span: [%1$d, %2$d, %3$d] to [%4$d, %5$d, %6$d]");
 
         add(ModI18n.Screen.CONTROL_TITLE, "Spaceship Control");
         add(ModI18n.Screen.CONTROL_BTN_CREATE, "Create Ship");

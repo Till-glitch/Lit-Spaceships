@@ -99,15 +99,18 @@ public class ShipScannerService {
 
     /**
      * Berechnet die 3D-Voronoi-Tesselierung für jeden im VoxelGridCache gesetzten Hüllen-Voxel
-     * basierend auf der quadrierten euklidischen Distanz zu allen aktiven Schildgeneratoren.
+     * basierend auf der quadrierten euklidischen Distanz zu allen aktiven Schildgeneratoren
+     * und liefert die berechneten Sektor-Abdeckungsdaten (SectorCoverage) zurück.
      *
      * @param cache         Der zu aktualisierende VoxelGridCache
      * @param generators    Liste der Generator-Positionen (absolut oder relativ zum controllerPos)
      * @param controllerPos Position des Controllers (wenn null, werden generators als relativ interpretiert)
+     * @return Map aller berechneten SectorCoverages für jede Zonen-ID (1-basiert)
      */
-    public static void calculateVoronoiZones(VoxelGridCache cache, List<BlockPos> generators, BlockPos controllerPos) {
+    public static java.util.Map<Byte, com.peaceman.alpha.ship.domain.SectorCoverage> calculateVoronoiZones(
+            VoxelGridCache cache, List<BlockPos> generators, BlockPos controllerPos) {
         if (cache == null || cache.isEmpty() || generators == null || generators.isEmpty()) {
-            return;
+            return java.util.Collections.emptyMap();
         }
 
         int count = generators.size();
@@ -131,6 +134,15 @@ public class ShipScannerService {
             }
         }
 
+        int[] assignedVoxels = new int[count];
+        int[] minRelX = new int[count]; java.util.Arrays.fill(minRelX, Integer.MAX_VALUE);
+        int[] maxRelX = new int[count]; java.util.Arrays.fill(maxRelX, Integer.MIN_VALUE);
+        int[] minRelY = new int[count]; java.util.Arrays.fill(minRelY, Integer.MAX_VALUE);
+        int[] maxRelY = new int[count]; java.util.Arrays.fill(maxRelY, Integer.MIN_VALUE);
+        int[] minRelZ = new int[count]; java.util.Arrays.fill(minRelZ, Integer.MAX_VALUE);
+        int[] maxRelZ = new int[count]; java.util.Arrays.fill(maxRelZ, Integer.MIN_VALUE);
+        int totalVoxels = 0;
+
         BlockPos minOffset = cache.getMinOffset();
         int sizeX = cache.getSizeX();
         int sizeY = cache.getSizeY();
@@ -147,6 +159,7 @@ public class ShipScannerService {
                         continue;
                     }
 
+                    totalVoxels++;
                     long minDistanceSq = Long.MAX_VALUE;
                     byte bestId = 1;
 
@@ -165,8 +178,30 @@ public class ShipScannerService {
                     }
 
                     cache.setShieldId(relX, relY, relZ, bestId);
+
+                    int gIdx = (bestId & 0xFF) - 1;
+                    if (gIdx >= 0 && gIdx < count) {
+                        assignedVoxels[gIdx]++;
+                        if (relX < minRelX[gIdx]) minRelX[gIdx] = relX;
+                        if (relX > maxRelX[gIdx]) maxRelX[gIdx] = relX;
+                        if (relY < minRelY[gIdx]) minRelY[gIdx] = relY;
+                        if (relY > maxRelY[gIdx]) maxRelY[gIdx] = relY;
+                        if (relZ < minRelZ[gIdx]) minRelZ[gIdx] = relZ;
+                        if (relZ > maxRelZ[gIdx]) maxRelZ[gIdx] = relZ;
+                    }
                 }
             }
         }
+
+        java.util.Map<Byte, com.peaceman.alpha.ship.domain.SectorCoverage> coverages = new java.util.HashMap<>();
+        for (int i = 0; i < count; i++) {
+            byte zId = (byte) (i + 1);
+            BlockPos genPos = generators.get(i);
+            BlockPos minB = assignedVoxels[i] > 0 ? new BlockPos(minRelX[i], minRelY[i], minRelZ[i]) : BlockPos.ZERO;
+            BlockPos maxB = assignedVoxels[i] > 0 ? new BlockPos(maxRelX[i], maxRelY[i], maxRelZ[i]) : BlockPos.ZERO;
+            coverages.put(zId, new com.peaceman.alpha.ship.domain.SectorCoverage(zId, genPos, assignedVoxels[i], totalVoxels, minB, maxB));
+        }
+
+        return coverages;
     }
 }

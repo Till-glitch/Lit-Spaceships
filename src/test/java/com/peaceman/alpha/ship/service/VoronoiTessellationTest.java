@@ -34,7 +34,25 @@ class VoronoiTessellationTest {
         );
 
         // Voronoi-Zuweisung ausführen
-        ShipScannerService.calculateVoronoiZones(cache, generators, null);
+        java.util.Map<Byte, com.peaceman.alpha.ship.domain.SectorCoverage> coverages =
+                ShipScannerService.calculateVoronoiZones(cache, generators, null);
+
+        assertNotNull(coverages);
+        assertEquals(2, coverages.size());
+
+        com.peaceman.alpha.ship.domain.SectorCoverage cov1 = coverages.get((byte) 1);
+        com.peaceman.alpha.ship.domain.SectorCoverage cov2 = coverages.get((byte) 2);
+
+        assertNotNull(cov1);
+        assertNotNull(cov2);
+        assertEquals(1600, cov1.assignedVoxels(), "Zone 1 hat x=0..15 (16 Spalten)");
+        assertEquals(1400, cov2.assignedVoxels(), "Zone 2 hat x=16..29 (14 Spalten)");
+        assertEquals(3000, cov1.totalShipVoxels());
+        assertEquals(16, cov1.getSpanX());
+        assertEquals(10, cov1.getSpanY());
+        assertEquals(10, cov1.getSpanZ());
+        assertEquals(14, cov2.getSpanX());
+        assertTrue(cov1.getCoverageRatio() > 53.0f && cov1.getCoverageRatio() < 54.0f);
 
         // Iterative Verifikation
         for (int x = 0; x < sizeX; x++) {

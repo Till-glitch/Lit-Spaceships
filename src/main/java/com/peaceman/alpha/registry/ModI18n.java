@@ -67,6 +67,17 @@ public final class ModI18n {
         public static final String SHIELD_ACTIVE = "screen." + Alpha.MODID + ".shield.active";
         public static final String SHIELD_INACTIVE = "screen." + Alpha.MODID + ".shield.inactive";
         public static final String SHIELD_ENERGY = "screen." + Alpha.MODID + ".shield.energy";
+        public static final String SHIELD_POWER_FLOW = "screen." + Alpha.MODID + ".shield.power_flow";
+        public static final String SHIELD_SECTOR_ID = "screen." + Alpha.MODID + ".shield.sector_id";
+        public static final String SHIELD_STATUS_OPTIMAL = "screen." + Alpha.MODID + ".shield.status_optimal";
+        public static final String SHIELD_STATUS_CHARGING = "screen." + Alpha.MODID + ".shield.status_charging";
+        public static final String SHIELD_STATUS_COLLAPSED = "screen." + Alpha.MODID + ".shield.status_collapsed";
+        public static final String SHIELD_STATUS_RECHARGE_CD = "screen." + Alpha.MODID + ".shield.status_recharge_cd";
+        public static final String SHIELD_STATUS_OFFLINE = "screen." + Alpha.MODID + ".shield.status_offline";
+        public static final String SHIELD_STATUS_UNLINKED = "screen." + Alpha.MODID + ".shield.status_unlinked";
+        public static final String SHIELD_COVERAGE_VOXELS = "screen." + Alpha.MODID + ".shield.coverage_voxels";
+        public static final String SHIELD_COVERAGE_BOUNDS = "screen." + Alpha.MODID + ".shield.coverage_bounds";
+        public static final String SHIELD_COVERAGE_SPAN = "screen." + Alpha.MODID + ".shield.coverage_span";
         public static final String HUD_TACTICAL_ENERGY = "screen." + Alpha.MODID + ".hud.tactical.energy";
         public static final String HUD_HELM_HEADER = "screen." + Alpha.MODID + ".hud.helm.header";
         public static final String HUD_HELM_WARP_COOLDOWN = "screen." + Alpha.MODID + ".hud.helm.warp_cooldown";

@@ -17,13 +17,13 @@ public class SpaceshipShieldMenu extends AbstractContainerMenu {
 
     // Konstruktor für den Client
     public SpaceshipShieldMenu(int containerId, Inventory inv, FriendlyByteBuf extraData) {
-        this(containerId, inv, inv.player.level().getBlockEntity(extraData.readBlockPos()), new SimpleContainerData(4));
+        this(containerId, inv, inv.player.level().getBlockEntity(extraData.readBlockPos()), new SimpleContainerData(16));
     }
 
     // Konstruktor für den Server
     public SpaceshipShieldMenu(int containerId, Inventory inv, BlockEntity entity, ContainerData data) {
         super(ModMenuTypes.SHIELD_MENU.get(), containerId);
-        checkContainerDataCount(data, 4);
+        checkContainerDataCount(data, 16);
         this.access = ContainerLevelAccess.create(entity.getLevel(), entity.getBlockPos());
         this.blockEntity = (SpaceshipShieldBlockEntity) entity;
         this.data = data;
@@ -46,6 +46,72 @@ public class SpaceshipShieldMenu extends AbstractContainerMenu {
 
     public int getEnergyDeficit() {
         return this.data.get(3);
+    }
+
+    public int getChargeRate() {
+        return this.data.get(4);
+    }
+
+    public int getCooldownRemainingTicks() {
+        return this.data.get(5);
+    }
+
+    public int getAssignedVoxelCount() {
+        return this.data.get(6);
+    }
+
+    public int getTotalShipVoxelCount() {
+        return this.data.get(7);
+    }
+
+    public int getSectorId() {
+        return this.data.get(8);
+    }
+
+    public int getTotalZonesCount() {
+        return this.data.get(9);
+    }
+
+    public int getMinRelX() {
+        return this.data.get(10);
+    }
+
+    public int getMaxRelX() {
+        return this.data.get(11);
+    }
+
+    public int getMinRelY() {
+        return this.data.get(12);
+    }
+
+    public int getMaxRelY() {
+        return this.data.get(13);
+    }
+
+    public int getMinRelZ() {
+        return this.data.get(14);
+    }
+
+    public int getMaxRelZ() {
+        return this.data.get(15);
+    }
+
+    public int getSpanX() {
+        return getAssignedVoxelCount() > 0 ? (getMaxRelX() - getMinRelX() + 1) : 0;
+    }
+
+    public int getSpanY() {
+        return getAssignedVoxelCount() > 0 ? (getMaxRelY() - getMinRelY() + 1) : 0;
+    }
+
+    public int getSpanZ() {
+        return getAssignedVoxelCount() > 0 ? (getMaxRelZ() - getMinRelZ() + 1) : 0;
+    }
+
+    public float getCoverageRatio() {
+        int total = getTotalShipVoxelCount();
+        if (total <= 0) return 0.0f;
+        return ((float) getAssignedVoxelCount() / (float) total) * 100.0f;
     }
 
     public SpaceshipShieldBlockEntity getBlockEntity() {

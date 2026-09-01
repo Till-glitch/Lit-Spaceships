@@ -311,7 +311,8 @@ public class ServerShipManager {
 
             // Voronoi-Zuweisung auf dem Hüllen-Voxel-Cache durchführen
             if (ship.getHullVoxelCache() != null && !ship.getHullVoxelCache().isEmpty()) {
-                ShipScannerService.calculateVoronoiZones(ship.getHullVoxelCache(), ship.getShields(), ship.getControllerPos());
+                var coverages = ShipScannerService.calculateVoronoiZones(ship.getHullVoxelCache(), ship.getShields(), ship.getControllerPos());
+                ship.setSectorCoverages(coverages);
             }
         }
 

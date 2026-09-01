@@ -45,6 +45,7 @@ public class ShipTeleportationService {
 
         // 1. Phase: Suspendierung
         ship.setJumping(true);
+        com.peaceman.alpha.ship.combat.LaserCombatService.stopAllContinuousLasers(originLevel, ship);
 
         BlockPos currentCtrl = ship.getControllerPos();
         int dx = targetControllerPos.getX() - currentCtrl.getX();

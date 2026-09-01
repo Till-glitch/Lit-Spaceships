@@ -59,11 +59,22 @@ public class ModGermanLanguageProvider extends LanguageProvider {
         add(ModI18n.Screen.HELM_SCREEN_TITLE, "Navigation & Sprung-Computer");
 
         add(ModI18n.Screen.SHIELD_TITLE, "Schildgenerator Interface");
-        add(ModI18n.Screen.SHIELD_TOGGLE, "Schild An/Aus");
+        add(ModI18n.Screen.SHIELD_TOGGLE, "Sektor-Schild An/Aus");
         add(ModI18n.Screen.SHIELD_STATUS, "Status: %1$s");
         add(ModI18n.Screen.SHIELD_ACTIVE, "Aktiv");
         add(ModI18n.Screen.SHIELD_INACTIVE, "Inaktiv");
-        add(ModI18n.Screen.SHIELD_ENERGY, "Energie: %1$s FE (Ladebedarf: %2$s FE)");
+        add(ModI18n.Screen.SHIELD_ENERGY, "Puffer: %1$s / %2$s FE");
+        add(ModI18n.Screen.SHIELD_POWER_FLOW, "Reaktor-Einspeisung: +%1$s FE/t");
+        add(ModI18n.Screen.SHIELD_SECTOR_ID, "Sektor #%1$d / %2$d");
+        add(ModI18n.Screen.SHIELD_STATUS_OPTIMAL, "OPTIMAL (100% GELADEN)");
+        add(ModI18n.Screen.SHIELD_STATUS_CHARGING, "AKTIV (LÄDT)");
+        add(ModI18n.Screen.SHIELD_STATUS_COLLAPSED, "KOLLABIERT (0 FE - DURCHSCHLAG)");
+        add(ModI18n.Screen.SHIELD_STATUS_RECHARGE_CD, "REGENERATION IN %1$.1fs");
+        add(ModI18n.Screen.SHIELD_STATUS_OFFLINE, "DEAKTIVIERT");
+        add(ModI18n.Screen.SHIELD_STATUS_UNLINKED, "NICHT VERBUNDEN");
+        add(ModI18n.Screen.SHIELD_COVERAGE_VOXELS, "Geschützte Hüllenblöcke: %1$d / %2$d (%3$.1f%%)");
+        add(ModI18n.Screen.SHIELD_COVERAGE_BOUNDS, "Sektor-Ausdehnung: %1$dm x %2$dm x %3$dm");
+        add(ModI18n.Screen.SHIELD_COVERAGE_SPAN, "Lokale Spanne: [%1$d, %2$d, %3$d] bis [%4$d, %5$d, %6$d]");
 
         add(ModI18n.Screen.CONTROL_TITLE, "Raumschiff Steuerung");
         add(ModI18n.Screen.CONTROL_BTN_CREATE, "Schiff erstellen");

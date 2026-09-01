@@ -1,6 +1,8 @@
 package com.peaceman.alpha.ship.combat;
 
 import com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity;
+import com.peaceman.alpha.block.entity.HeavyBeamBlockEntity;
+import com.peaceman.alpha.block.entity.MiningLaserBlockEntity;
 import com.peaceman.alpha.network.*;
 import com.peaceman.alpha.ship.SpaceshipEnergyManager;
 import com.peaceman.alpha.ship.SpaceshipShieldHandler;
@@ -26,6 +28,39 @@ import java.util.List;
  * bei Dauerstrahlen.
  */
 public class LaserCombatService {
+
+    /**
+     * Schaltet alle aktiven Dauerstrahlen (Heavy Beam & Mining Laser) eines Schiffs ab,
+     * setzt Bohrfortschritte zurück und synchronisiert den Status an Clients.
+     */
+    public static void stopAllContinuousLasers(Level level, ShipState ship) {
+        if (level == null || ship == null || ship.getWeapons() == null || ship.getWeapons().isEmpty()) {
+            return;
+        }
+
+        for (BlockPos weaponPos : ship.getWeapons()) {
+            if (level.getBlockEntity(weaponPos) instanceof AbstractLaserNodeBlockEntity laserBe) {
+                laserBe.clearDrillProgress(level);
+                if (laserBe instanceof HeavyBeamBlockEntity heavyBe && heavyBe.isFiring()) {
+                    heavyBe.setFiring(false);
+                    if (level instanceof ServerLevel serverLevel) {
+                        PacketDistributor.sendToPlayersTrackingChunk(
+                                serverLevel, new ChunkPos(weaponPos),
+                                new LaserStateSyncPayload(ship.getId(), weaponPos, false, LaserWeaponTier.HEAVY_BEAM)
+                        );
+                    }
+                } else if (laserBe instanceof MiningLaserBlockEntity miningBe && miningBe.isMining()) {
+                    miningBe.setMining(false);
+                    if (level instanceof ServerLevel serverLevel) {
+                        PacketDistributor.sendToPlayersTrackingChunk(
+                                serverLevel, new ChunkPos(weaponPos),
+                                new LaserStateSyncPayload(ship.getId(), weaponPos, false, LaserWeaponTier.MINING_LASER)
+                        );
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * Feuert eine Laserwaffe an der angegebenen Position ab bzw. schaltet

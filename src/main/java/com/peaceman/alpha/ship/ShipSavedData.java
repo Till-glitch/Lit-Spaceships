@@ -197,9 +197,10 @@ public class ShipSavedData extends SavedData {
 
             // Voronoi-Zonen auf Hülle berechnen
             if (!loadedShip.getShields().isEmpty() && loadedShip.getHullVoxelCache() != null && !loadedShip.getHullVoxelCache().isEmpty()) {
-                com.peaceman.alpha.ship.service.ShipScannerService.calculateVoronoiZones(
+                var coverages = com.peaceman.alpha.ship.service.ShipScannerService.calculateVoronoiZones(
                         loadedShip.getHullVoxelCache(), loadedShip.getShields(), loadedShip.getControllerPos()
                 );
+                loadedShip.setSectorCoverages(coverages);
             }
 
             ServerShipManager.registerShip(loadedShip);
