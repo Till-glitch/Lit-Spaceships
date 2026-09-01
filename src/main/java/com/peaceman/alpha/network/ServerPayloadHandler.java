@@ -161,6 +161,7 @@ public class ServerPayloadHandler {
                         case FIRE_ALL -> {
                             com.peaceman.alpha.ship.combat.LaserCombatService.fireWeapon(level, ship, weaponPos);
                         }
+                        default -> {}
                     }
                 }
             }

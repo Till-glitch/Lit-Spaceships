@@ -7,14 +7,12 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 public class SpaceshipShieldMenu extends AbstractContainerMenu {
 
     private final ContainerLevelAccess access;
     private final SpaceshipShieldBlockEntity blockEntity;
-    private final Level level;
     private final ContainerData data;
 
     // Konstruktor für den Client
@@ -27,7 +25,6 @@ public class SpaceshipShieldMenu extends AbstractContainerMenu {
         super(ModMenuTypes.SHIELD_MENU.get(), containerId);
         checkContainerDataCount(data, 4);
         this.access = ContainerLevelAccess.create(entity.getLevel(), entity.getBlockPos());
-        this.level = inv.player.level();
         this.blockEntity = (SpaceshipShieldBlockEntity) entity;
         this.data = data;
 

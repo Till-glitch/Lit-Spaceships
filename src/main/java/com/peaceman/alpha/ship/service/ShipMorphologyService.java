@@ -10,7 +10,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;

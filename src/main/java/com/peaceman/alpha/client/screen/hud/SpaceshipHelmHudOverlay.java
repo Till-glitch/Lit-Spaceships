@@ -1,6 +1,5 @@
 package com.peaceman.alpha.client.screen.hud;
 
-import com.peaceman.alpha.Alpha;
 import com.peaceman.alpha.client.input.SpaceshipClientInputHandler;
 import com.peaceman.alpha.client.state.ClientShipState;
 import com.peaceman.alpha.client.state.ClientShipStateProvider;

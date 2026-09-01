@@ -1,11 +1,7 @@
 package com.peaceman.alpha.ship;
 
-import com.peaceman.alpha.network.ShieldBubbleSyncPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.HashSet;
 import java.util.Set;

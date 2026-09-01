@@ -7,14 +7,12 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 public class SpaceshipReactorMenu extends AbstractContainerMenu {
 
     private final ContainerLevelAccess access;
     private final SpaceshipReactorBlockEntity blockEntity;
-    private final Level level;
     private final ContainerData data;
 
     // Konstruktor für den Client
@@ -28,7 +26,6 @@ public class SpaceshipReactorMenu extends AbstractContainerMenu {
         // Wir prüfen das Inventar nicht mehr auf Größe, da wir es nicht nutzen
         checkContainerDataCount(data, 2);
         this.access = ContainerLevelAccess.create(entity.getLevel(), entity.getBlockPos());
-        this.level = inv.player.level();
         this.blockEntity = (SpaceshipReactorBlockEntity) entity;
         this.data = data;
 

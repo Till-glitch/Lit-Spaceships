@@ -13,8 +13,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.UUID;
-
 public class SpaceshipControlBlock extends Block implements EntityBlock {
 
     public SpaceshipControlBlock(Properties properties) {

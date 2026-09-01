@@ -1,12 +1,8 @@
 package com.peaceman.alpha.ship.domain;
 
-import com.peaceman.alpha.block.entity.SpaceshipReactorBlockEntity;
-import com.peaceman.alpha.block.entity.SpaceshipShieldBlockEntity;
-import com.peaceman.alpha.ship.SpaceshipShieldHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
 
 import java.util.*;

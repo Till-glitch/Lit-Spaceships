@@ -10,8 +10,6 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 
-import java.util.Set;
-
 /**
  * GameTest für die Voronoi-Zuweisung und Erfassung lokalisierter Schildzonen.
  */

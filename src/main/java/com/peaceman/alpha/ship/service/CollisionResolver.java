@@ -5,7 +5,6 @@ import com.peaceman.alpha.network.ShieldBubbleSyncPacket;
 import com.peaceman.alpha.network.ShipImpactEventPayload;
 import com.peaceman.alpha.network.ShipStateSyncPayload;
 import com.peaceman.alpha.network.ShipStructureDeltaPayload;
-import com.peaceman.alpha.network.ShipStructureSyncPayload;
 import com.peaceman.alpha.ship.SpaceshipEnergyManager;
 import com.peaceman.alpha.ship.SpaceshipShieldHandler;
 import com.peaceman.alpha.ship.domain.ShipState;

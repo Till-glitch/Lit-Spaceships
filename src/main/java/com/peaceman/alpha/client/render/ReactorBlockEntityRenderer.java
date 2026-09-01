@@ -7,8 +7,6 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 public class ReactorBlockEntityRenderer implements BlockEntityRenderer<SpaceshipReactorBlockEntity> {
@@ -41,10 +39,6 @@ public class ReactorBlockEntityRenderer implements BlockEntityRenderer<Spaceship
         // Zentriere über dem Block
         poseStack.translate(0.5, 1.5, 0.5);
 
-        // Billboarding zur Kamera
-        Vec3 cameraPos = mc.gameRenderer.getMainCamera().getPosition();
-        Vec3 blockPos = Vec3.atCenterOf(blockEntity.getBlockPos()).add(0, 1.0, 0);
-        
         float scale = 0.025f;
         
         // Die EntityViewRenderState / GuiTextRenderState Architektur in aktuelleren/zukünftigen NeoForge Versionen

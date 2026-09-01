@@ -12,7 +12,6 @@ import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -23,8 +22,6 @@ import org.joml.Matrix4f;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Set;
-import java.util.UUID;
 
 public class ShieldRenderer {
 

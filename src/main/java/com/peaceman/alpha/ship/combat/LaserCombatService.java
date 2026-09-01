@@ -1,9 +1,6 @@
 package com.peaceman.alpha.ship.combat;
 
 import com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity;
-import com.peaceman.alpha.block.entity.HeavyBeamBlockEntity;
-import com.peaceman.alpha.block.entity.MiningLaserBlockEntity;
-import com.peaceman.alpha.block.entity.PulseLaserBlockEntity;
 import com.peaceman.alpha.network.*;
 import com.peaceman.alpha.ship.SpaceshipEnergyManager;
 import com.peaceman.alpha.ship.SpaceshipShieldHandler;
@@ -20,7 +17,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-import java.util.Collections;
 import java.util.List;
 
 /**

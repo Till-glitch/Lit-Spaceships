@@ -2,7 +2,6 @@ package com.peaceman.alpha.tests;
 
 import com.peaceman.alpha.Alpha;
 import com.peaceman.alpha.registry.ModBlocks;
-import com.peaceman.alpha.ship.combat.LaserCombatService;
 import com.peaceman.alpha.ship.domain.ShieldZone;
 import com.peaceman.alpha.ship.domain.ShipState;
 import com.peaceman.alpha.ship.service.ServerShipManager;
@@ -41,8 +40,6 @@ public class LaserCombatPiercingGameTest {
         // Pulse Laser Kanone platzieren
         BlockPos weaponRel = new BlockPos(2, 2, 6);
         helper.setBlock(weaponRel, ModBlocks.PULSE_LASER.get());
-
-        BlockPos weaponAbs = helper.absolutePos(weaponRel);
 
         helper.succeedIf(() -> {
             if (targetShip == null) {

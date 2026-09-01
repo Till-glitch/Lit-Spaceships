@@ -2,9 +2,7 @@ package com.peaceman.alpha.helper;
 
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
-import net.minecraft.server.level.ServerPlayer;
 
 @EventBusSubscriber(modid = "peaceman_alpha")
 public class AutoOpEvent {
