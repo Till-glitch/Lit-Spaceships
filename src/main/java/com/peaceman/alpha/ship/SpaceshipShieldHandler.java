@@ -335,6 +335,8 @@ public class SpaceshipShieldHandler {
                     ServerShipManager.syncShieldZoneStates(serverLevel, ship);
                 }
             }
+            // Schließe Telemetrie für diesen Tick ab (Rollover von Puffer zu Last-Drain)
+            ship.endTickTelemetry();
         }
     }
 }

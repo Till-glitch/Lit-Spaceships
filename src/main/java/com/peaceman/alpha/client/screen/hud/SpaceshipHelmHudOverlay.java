@@ -36,7 +36,8 @@ public class SpaceshipHelmHudOverlay implements LayeredDraw.Layer {
         long currentTick = mc.level != null ? mc.level.getGameTime() : 0;
         if (shipState.isMovementOnCooldown(currentTick)) {
             long remainingTicks = shipState.getMovementCooldownDisplay(currentTick);
-            guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_HELM_WARP_COOLDOWN, (remainingTicks / 20.0f)).withStyle(net.minecraft.ChatFormatting.RED), startX, startY + 12, 0xFFFFFF);
+            String cdStr = String.format(java.util.Locale.ROOT, "%.1f", (remainingTicks / 20.0f));
+            guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_HELM_WARP_COOLDOWN, cdStr).withStyle(net.minecraft.ChatFormatting.RED), startX, startY + 12, 0xFFFFFF);
         } else {
             guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_HELM_READY).withStyle(net.minecraft.ChatFormatting.GREEN), startX, startY + 12, 0xFFFFFF);
         }

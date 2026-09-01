@@ -116,7 +116,7 @@ public class SpaceshipShieldScreen extends AbstractContainerScreen<SpaceshipShie
 
         if (cdRemaining > 0) {
             double cdSeconds = cdRemaining / 20.0;
-            statusBadge = Component.translatable(ModI18n.Screen.SHIELD_STATUS_RECHARGE_CD, String.format("%.1f", cdSeconds));
+            statusBadge = Component.translatable(ModI18n.Screen.SHIELD_STATUS_RECHARGE_CD, String.format(java.util.Locale.ROOT, "%.1f", cdSeconds));
             statusColor = 0xFFFF3333; // Alarm-Rot
         } else if (!isEnabled) {
             statusBadge = Component.translatable(ModI18n.Screen.SHIELD_STATUS_OFFLINE);
@@ -151,28 +151,29 @@ public class SpaceshipShieldScreen extends AbstractContainerScreen<SpaceshipShie
         }
 
         // Energy Values Text
-        float energyPct = maxEnergy > 0 ? ((float) currentEnergy / maxEnergy) * 100.0f : 0.0f;
-        String energyValueStr = String.format("%,d / %,d FE (%.1f%%)", currentEnergy, maxEnergy, energyPct);
+        float energyPct = maxEnergy > 0 ? ((float) currentEnergy / (float) maxEnergy) * 100.0f : 0.0f;
+        String energyValueStr = String.format(java.util.Locale.ROOT, "%,d / %,d FE (%.1f%%)", currentEnergy, maxEnergy, energyPct);
         int energyStrW = this.font.width(energyValueStr);
         guiGraphics.drawString(this.font, energyValueStr, (this.imageWidth - energyStrW) / 2, 58, 0xDDDDDD, false);
 
         // --- PANEL B: REACTOR POWER ROUTING ---
         Component flowText = Component.translatable(
                 ModI18n.Screen.SHIELD_POWER_FLOW,
-                String.format("%,d", chargeRate)
+                String.format(java.util.Locale.ROOT, "%,d", chargeRate)
         );
         int flowColor = chargeRate > 0 ? 0xFF00FFCC : (deficit > 0 ? 0xFFFFCC00 : 0xFF8899A6);
         guiGraphics.drawString(this.font, flowText, 10, 83, flowColor, false);
 
-        String deficitStr = deficit > 0 ? String.format("Ladebedarf: %,d FE", deficit) : "Voll aufgeladen";
-        guiGraphics.drawString(this.font, deficitStr, 10, 95, 0x8899A6, false);
+        Component deficitText = deficit > 0 ? Component.translatable(ModI18n.Screen.SHIELD_DEFICIT, String.format(java.util.Locale.ROOT, "%,d", deficit))
+                : Component.translatable(ModI18n.Screen.SHIELD_FULLY_CHARGED);
+        guiGraphics.drawString(this.font, deficitText, 10, 95, 0x8899A6, false);
 
         // --- PANEL C: VORONOI SECTOR COVERAGE ---
         Component coverageText = Component.translatable(
                 ModI18n.Screen.SHIELD_COVERAGE_VOXELS,
                 assignedBlocks,
                 totalBlocks,
-                coverageRatio
+                String.format(java.util.Locale.ROOT, "%.1f", coverageRatio)
         );
         guiGraphics.drawString(this.font, coverageText, 10, 116, 0xFFFFFF, false);
 

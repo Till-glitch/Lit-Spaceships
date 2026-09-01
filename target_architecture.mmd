@@ -131,6 +131,20 @@ classDiagram
             +getSpanZ() int
         }
 
+        class PowerPriority {
+            <<enumeration>>
+            BALANCED
+            SHIELDS_FIRST
+            WEAPONS_FIRST
+            ENGINES_FIRST
+            +getId() int
+            +getShieldShare() float
+            +getWeaponShare() float
+            +getEngineShare() float
+            +next() PowerPriority
+            +fromId(int id)$ PowerPriority
+        }
+
         class ShipState {
             -UUID id
             -BlockPos controllerPos
@@ -141,6 +155,11 @@ classDiagram
             -List~BlockPos~ weapons
             -Map~Byte, ShieldZone~ shieldZones
             -Map~Byte, SectorCoverage~ sectorCoverages
+            -PowerPriority powerPriority
+            -int lastGenerationRate
+            -int lastShieldDrain
+            -int lastWeaponDrain
+            -int lastEngineDrain
             -boolean isShieldActive
             -long shieldCooldownUntil
             -long movementCooldownUntil
@@ -149,6 +168,11 @@ classDiagram
             +getImmutableBlockSnapshot() Set~BlockPos~
             +getShieldZone(byte id) ShieldZone
             +getSectorCoverage(byte id) SectorCoverage
+            +getPowerPriority() PowerPriority
+            +setPowerPriority(PowerPriority priority) void
+            +getLastGenerationRate() int
+            +getLastConsumptionRate() int
+            +getNetEnergyThroughput() int
             +setShieldZone(ShieldZone zone) void
             +setShieldZones(Map~Byte, ShieldZone~ zones) void
             +setSectorCoverages(Map~Byte, SectorCoverage~ coverages) void
@@ -383,6 +407,35 @@ classDiagram
             +updateMesh(Set~BlockPos~ relativeBlocks) void
             +removeStructureBlocks(List~BlockPos~ removed) void
             +dispose() void
+        }
+
+        class SpaceshipControlScreen {
+            -Button createButton
+            -Button updateButton
+            -Button disassembleButton
+            -Button highlightButton
+            +render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) void
+        }
+
+        class SpaceshipReactorScreen {
+            +render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) void
+        }
+
+        class SpaceshipShieldScreen {
+            +render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) void
+        }
+
+        class SpaceshipHelmConfigScreen {
+            +render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) void
+        }
+
+        class ShipHighlightRenderer {
+            +boolean isHighlightActive$
+            +Set~BlockPos~ shipBlocks$
+            +toggleHighlight(Level level, BlockPos startPos)$ void
+            +toggleHighlight(Set~BlockPos~ blocks)$ void
+            +isHighlightActive()$ boolean
+            +onClientTick(ClientTickEvent.Post event)$ void
         }
 
         class ClientLaserState {

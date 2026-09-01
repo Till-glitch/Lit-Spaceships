@@ -15,7 +15,11 @@ public class ShipHighlightRenderer {
     public static boolean isHighlightActive = false;
     public static Set<BlockPos> shipBlocks = new HashSet<>();
 
-    // --- NEU: Die perfekte Methode zum Ein- und Ausschalten ---
+    public static boolean isHighlightActive() {
+        return isHighlightActive;
+    }
+
+    // --- Ein- und Ausschalten ---
     public static void toggleHighlight(net.minecraft.world.level.Level level, BlockPos startPos) {
         if (isHighlightActive) {
             // Ausschalten
@@ -24,6 +28,16 @@ public class ShipHighlightRenderer {
         } else {
             // Einschalten
             shipBlocks = com.peaceman.alpha.ship.service.ShipScannerService.scan(level, startPos);
+            isHighlightActive = true;
+        }
+    }
+
+    public static void toggleHighlight(Set<BlockPos> blocks) {
+        if (isHighlightActive) {
+            isHighlightActive = false;
+            shipBlocks.clear();
+        } else {
+            shipBlocks = new HashSet<>(blocks);
             isHighlightActive = true;
         }
     }

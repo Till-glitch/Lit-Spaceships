@@ -178,4 +178,38 @@ public class SpaceshipEnergyManagerTest {
         assertEquals(2000, fail.cost());
         assertEquals(900, storage.getEnergyStored());
     }
+
+    @Test
+    @DisplayName("Telemetry sammelt Waffen-, Flug- und Schildverbrauch im Tick und rolliert deterministisch bei endTickTelemetry")
+    void testTickTelemetryAccumulationAndRollover() {
+        ShipState ship = new ShipState(BlockPos.ZERO, Set.of(BlockPos.ZERO));
+        
+        // Simuliere Waffenfeuer (z.B. 2 Pulse-Laser Schüsse à 250 FE)
+        ship.addWeaponDrain(250);
+        ship.addWeaponDrain(250);
+        
+        // Simuliere Schildladung (100 FE) und Flugmanöver (300 FE)
+        ship.addShieldDrain(100);
+        ship.addEngineDrain(300);
+        
+        // Vor dem Tick-Ende sind die letzten gemessenen Raten noch 0
+        assertEquals(0, ship.getLastWeaponDrain());
+        assertEquals(0, ship.getLastShieldDrain());
+        assertEquals(0, ship.getLastEngineDrain());
+        
+        // Tick abschließen
+        ship.endTickTelemetry();
+        
+        assertEquals(500, ship.getLastWeaponDrain(), "Waffendrain muss die Summe aller Laser im Tick sein");
+        assertEquals(100, ship.getLastShieldDrain());
+        assertEquals(300, ship.getLastEngineDrain());
+        assertEquals(900, ship.getLastConsumptionRate());
+        
+        // Nächster Tick ohne Verbrauch (Leerlauf)
+        ship.endTickTelemetry();
+        assertEquals(0, ship.getLastWeaponDrain(), "Waffendrain muss im Leerlauf auf 0 FE/t abfallen");
+        assertEquals(0, ship.getLastShieldDrain());
+        assertEquals(0, ship.getLastEngineDrain());
+        assertEquals(0, ship.getLastConsumptionRate());
+    }
 }

@@ -17,22 +17,23 @@ public class SpaceshipReactorMenu extends AbstractContainerMenu {
 
     // Konstruktor für den Client
     public SpaceshipReactorMenu(int containerId, Inventory inv, FriendlyByteBuf extraData) {
-        this(containerId, inv, inv.player.level().getBlockEntity(extraData.readBlockPos()), new SimpleContainerData(2));
+        this(containerId, inv, inv.player.level().getBlockEntity(extraData.readBlockPos()), new SimpleContainerData(14));
     }
 
     // Konstruktor für den Server
     public SpaceshipReactorMenu(int containerId, Inventory inv, BlockEntity entity, ContainerData data) {
         super(ModMenuTypes.REACTOR_MENU.get(), containerId);
-        // Wir prüfen das Inventar nicht mehr auf Größe, da wir es nicht nutzen
-        checkContainerDataCount(data, 2);
+        checkContainerDataCount(data, 14);
         this.access = ContainerLevelAccess.create(entity.getLevel(), entity.getBlockPos());
         this.blockEntity = (SpaceshipReactorBlockEntity) entity;
         this.data = data;
 
-        // KEIN Spieler-Inventar mehr hinzufügen!
-
         // DataSlots hinzufügen
         this.addDataSlots(data);
+    }
+
+    public SpaceshipReactorBlockEntity getBlockEntity() {
+        return blockEntity;
     }
 
     public int getCurrentEnergy() {
@@ -41,6 +42,54 @@ public class SpaceshipReactorMenu extends AbstractContainerMenu {
 
     public int getMaxEnergy() {
         return this.data.get(1);
+    }
+
+    public int getTotalShipEnergy() {
+        return this.data.get(2);
+    }
+
+    public int getTotalShipMaxEnergy() {
+        return this.data.get(3);
+    }
+
+    public int getGenerationRate() {
+        return this.data.get(4);
+    }
+
+    public int getConsumptionRate() {
+        return this.data.get(5);
+    }
+
+    public int getNetThroughput() {
+        return this.data.get(6);
+    }
+
+    public com.peaceman.alpha.ship.domain.PowerPriority getPowerPriority() {
+        return com.peaceman.alpha.ship.domain.PowerPriority.fromId(this.data.get(7));
+    }
+
+    public int getStabilityPercentage() {
+        return this.data.get(8);
+    }
+
+    public int getOperationalStatus() {
+        return this.data.get(9);
+    }
+
+    public int getReactorCount() {
+        return this.data.get(10);
+    }
+
+    public int getShieldDrainRate() {
+        return this.data.get(11);
+    }
+
+    public int getWeaponDrainRate() {
+        return this.data.get(12);
+    }
+
+    public int getEngineDrainRate() {
+        return this.data.get(13);
     }
 
     @Override

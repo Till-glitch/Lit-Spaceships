@@ -28,8 +28,8 @@ public class ReactorBlockEntityRenderer implements BlockEntityRenderer<Spaceship
             color = 0xFFFFAA; // Gelb (Halb)
         }
 
-        String text = String.format("%,d FE", energy);
-        String pctText = String.format("%.1f%%", percentage * 100);
+        String text = String.format(java.util.Locale.ROOT, "%,d FE", energy);
+        String pctText = String.format(java.util.Locale.ROOT, "%.1f%%", percentage * 100);
 
         Minecraft mc = Minecraft.getInstance();
         Font font = mc.font;

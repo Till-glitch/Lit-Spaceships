@@ -49,6 +49,9 @@ public class SpaceshipEnergyManager {
         }
 
         consumeEnergy(level, ship, amount);
+        if (ship != null) {
+            ship.addWeaponDrain(amount);
+        }
         return true;
     }
 
@@ -62,6 +65,9 @@ public class SpaceshipEnergyManager {
             return new FlightEnergyResult(EnergyConsumeResult.INSUFFICIENT_ENERGY, cost, available);
         }
         consumeEnergy(level, ship, cost);
+        if (ship != null) {
+            ship.addEngineDrain(cost);
+        }
         return new FlightEnergyResult(EnergyConsumeResult.SUCCESS, cost, available);
     }
 
@@ -81,6 +87,7 @@ public class SpaceshipEnergyManager {
         int transferred = distributeEnergyToShields(availableEnergy, ship, level.getGameTime());
         if (transferred > 0) {
             consumeEnergy(level, ship, transferred);
+            ship.addShieldDrain(transferred);
         }
         return transferred;
     }

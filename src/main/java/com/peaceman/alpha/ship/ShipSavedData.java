@@ -89,6 +89,7 @@ public class ShipSavedData extends SavedData {
             // 5. Status & Dimension
             shipTag.putBoolean("ShieldActive", ship.isShieldActive());
             shipTag.putString("Dimension", ship.getDimension().location().toString());
+            shipTag.putString("PowerPriority", ship.getPowerPriority().name());
 
             // 6. Cooldowns (absolute Weltzeit)
             shipTag.putLong("ShieldCooldownUntil", ship.getShieldCooldownUntil());
@@ -185,6 +186,15 @@ public class ShipSavedData extends SavedData {
                     loadedZones.put(zId, new com.peaceman.alpha.ship.domain.ShieldZone(zId, gp, energy, maxEnergy, cooldown, isEnabled));
                 }
                 loadedShip.setShieldZones(loadedZones);
+            }
+
+            // Power-Priorität wiederherstellen
+            if (shipTag.contains("PowerPriority")) {
+                try {
+                    loadedShip.setPowerPriority(com.peaceman.alpha.ship.domain.PowerPriority.valueOf(shipTag.getString("PowerPriority")));
+                } catch (IllegalArgumentException ignored) {
+                    loadedShip.setPowerPriority(com.peaceman.alpha.ship.domain.PowerPriority.BALANCED);
+                }
             }
 
             // Cooldowns wiederherstellen

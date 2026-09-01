@@ -6,7 +6,11 @@ An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21*
 
 ## Features
 
-* **Spaceship Control Block:** The heart and core of every ship. Detects connected blocks via breadth-first search (BFS), binds them to a ship entity, and manages lifecycle operations (creation, structure update, deletion) with real-time hull highlighting.
+* **Spaceship Controller (Core Lifecycle & Structure Management Terminal):**
+  * **Structural Diagnostics:** Displays total connected hull blocks, calculated ship mass in metric tons (`X.0 t`), 3D spatial extents ($\Delta X \times \Delta Y \times \Delta Z$), and origin anchor coordinates bound via Breadth-First Search (BFS).
+  * **Subsystem Registry Summary:** Real-time itemized overview of linked functional blocks (Reactors, Shield Generators, Heavy Beams, Pulse Lasers, Mining Lasers, and Navigation Helms).
+  * **Hull Highlight Control:** Interactive toggle button triggering real-time in-world particle outline highlighting of outer hull boundaries for inspection.
+  * **Ship Lifecycle Operations:** Safe interface controls to create/bind, update structure boundaries, or unbind/disassemble the ship entity.
 * **Spaceship Helm (Navigation & Combat Console):** Full 6-axis flight controls (WASD for horizontal flight, Space to ascend, Left-Shift to descend), right-click to fire all shipboard weapons (`FIRE_ALL`), `M` key to open navigation/waypoint configuration while flying, and `H` key to exit helm control.
 * **Spaceship Reactor:** Energy storage supporting standard **Forge Energy (FE)** with up to 1,000,000 FE capacity. Powers flight maneuvers, proportional localized shield recharge, and laser weapon systems. *(Dev-Tip: Right-click with Redstone to charge 50,000 FE!)*
 * **Localized Shield Zones & 3D Voronoi Tessellation:**
@@ -19,6 +23,11 @@ An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21*
     * **Reactor Power Routing Indicator:** Real-time energy transfer rate monitor (`+X FE/t`) streaming live proportional energy feed from central reactors directly to the local sector buffer.
     * **Sector Status & Health Badge:** Multi-state tactical status readout (`OPTIMAL [100%]`, `ACTIVE [CHARGING]`, `COLLAPSED [0 FE - BREACH]`, `REGENERATING IN X.Xs`, `OFFLINE`, `UNLINKED`) with countdown timer during collapse recovery.
     * **Sector Coverage & Voronoi Visualizer:** Real-time spatial telemetry displaying assigned hull block counts and coverage ratios (`142 / 450 Blocks (31.6%)`), sector partition indices (`Sector #1 / 4`), and 3D bounding dimensions (`ΔX: 15m × ΔY: 7m × ΔZ: 18m`).
+* **Spaceship Reactor Terminal & Power Management (Crimson UI):**
+  * **Total Energy Storage Gauge:** Real-time FE gauge tracking massive capacity (1,000,000 FE per core) with animated gradient indicators and multi-reactor grid aggregation (`Ship Grid: X / Y FE`).
+  * **Energy Flow Metrics:** Live generation (`+FE/t`), total ship subsystem consumption (`-FE/t`), and net throughput ($\Delta\text{FE/t}$) with individual breakdown for Engines, Shields, and Weapons.
+  * **Power Distribution Priority:** Interactive tactical priority cycling (`BALANCED`, `SHIELDS FIRST [70% Def]`, `WEAPONS FIRST [70% Atk]`, `ENGINES FIRST [70% Spd]`) persisted in NBT and synchronized via network packets.
+  * **Reactor Status & Core Diagnostics:** Real-time multi-state status monitoring (`OPTIMAL`, `HIGH LOAD`, `CRITICAL DEPLETION`, `STANDBY`, `UNLINKED`) reflecting live energy throughput and grid saturation.
 * **Shield Generator & Hex-Shader:** Protects ship blocks against explosive damage (TNT, Creepers) and unauthorized block manipulation. Shields consume reactor energy upon impact and are rendered as procedural hexagon bubble meshes via custom shaders with impact ripples, dynamic culling, and low-energy alerts.
 * **Shipborne Laser Weapon System & Dynamic Turrets:**
   * **Pulse Laser:** High-energy burst cannon (250 FE/shot, 20 ticks cooldown). Instantly vaporizes 1 block on hit or inflicts massive shield drain with kinetic shockwaves.
@@ -193,6 +202,29 @@ classDiagram
             -boolean isShieldActive
             +updateMesh(Set~BlockPos~ relativeBlocks) void
             +dispose() void
+        }
+
+        class SpaceshipControlScreen {
+            -Button createButton
+            -Button updateButton
+            -Button disassembleButton
+            -Button highlightButton
+            +render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) void
+        }
+
+        class SpaceshipReactorScreen {
+            +render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) void
+        }
+
+        class SpaceshipShieldScreen {
+            +render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) void
+        }
+
+        class ShipHighlightRenderer {
+            +boolean isHighlightActive$
+            +toggleHighlight(Level level, BlockPos startPos)$ void
+            +toggleHighlight(Set~BlockPos~ blocks)$ void
+            +isHighlightActive()$ boolean
         }
 
         class ClientLaserState {

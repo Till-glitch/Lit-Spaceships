@@ -84,6 +84,14 @@ public class ServerPayloadHandler {
                 }
                 case TOGGLE_SHIELD -> com.peaceman.alpha.ship.SpaceshipShieldHandler.toggleShield(level, ship);
                 case TOGGLE_SHIELD_ZONE -> com.peaceman.alpha.ship.SpaceshipShieldHandler.toggleShieldZone(level, ship, payload.pos());
+                case CYCLE_POWER_PRIORITY -> {
+                    ship.setPowerPriority(ship.getPowerPriority().next());
+                    ServerShipManager.saveData(level);
+                }
+                case SET_POWER_PRIORITY -> {
+                    ship.setPowerPriority(com.peaceman.alpha.ship.domain.PowerPriority.fromId(payload.value()));
+                    ServerShipManager.saveData(level);
+                }
                 default -> {}
             }
         });
@@ -234,9 +242,11 @@ public class ServerPayloadHandler {
 
                     // 2. Action-Bar Benachrichtigung an den Spieler
                     if (newLock) {
+                        String yawStr = String.format(java.util.Locale.ROOT, "%.1f", laserBE.getTargetYaw());
+                        String pitchStr = String.format(java.util.Locale.ROOT, "%.1f", laserBE.getTargetPitch());
                         player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
                                 com.peaceman.alpha.registry.ModI18n.Message.TURRET_AIM_LOCKED,
-                                laserBE.getTargetYaw(), laserBE.getTargetPitch()), true);
+                                yawStr, pitchStr), true);
                     } else {
                         player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
                                 com.peaceman.alpha.registry.ModI18n.Message.TURRET_AIM_RELEASED), true);

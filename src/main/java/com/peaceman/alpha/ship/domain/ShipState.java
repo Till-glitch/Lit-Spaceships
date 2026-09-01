@@ -40,6 +40,16 @@ public class ShipState {
     private volatile VoxelGridCache hullVoxelCache = VoxelGridCache.EMPTY;
     private volatile VoxelGridCache shieldVoxelCache = VoxelGridCache.EMPTY;
 
+    // Energie- & Leistungs-Priorität und Telemetrie
+    private volatile PowerPriority powerPriority = PowerPriority.BALANCED;
+    private volatile int lastGenerationRate = 0;
+    private volatile int lastShieldDrain = 0;
+    private volatile int lastWeaponDrain = 0;
+    private volatile int lastEngineDrain = 0;
+    private volatile int currentTickShieldDrain = 0;
+    private volatile int currentTickWeaponDrain = 0;
+    private volatile int currentTickEngineDrain = 0;
+
     // Caches für Chunk-Sends
     private volatile Map<BlockPos, Byte> cachedRelBubble = null;
 
@@ -443,5 +453,74 @@ public class ShipState {
             }
         }
         return zoneEnergies;
+    }
+
+    public PowerPriority getPowerPriority() {
+        return powerPriority != null ? powerPriority : PowerPriority.BALANCED;
+    }
+
+    public void setPowerPriority(PowerPriority powerPriority) {
+        this.powerPriority = powerPriority != null ? powerPriority : PowerPriority.BALANCED;
+    }
+
+    public int getLastGenerationRate() {
+        return lastGenerationRate;
+    }
+
+    public void setLastGenerationRate(int lastGenerationRate) {
+        this.lastGenerationRate = Math.max(0, lastGenerationRate);
+    }
+
+    public int getLastShieldDrain() {
+        return lastShieldDrain;
+    }
+
+    public void setLastShieldDrain(int lastShieldDrain) {
+        this.lastShieldDrain = Math.max(0, lastShieldDrain);
+    }
+
+    public int getLastWeaponDrain() {
+        return lastWeaponDrain;
+    }
+
+    public void setLastWeaponDrain(int lastWeaponDrain) {
+        this.lastWeaponDrain = Math.max(0, lastWeaponDrain);
+    }
+
+    public int getLastEngineDrain() {
+        return lastEngineDrain;
+    }
+
+    public void setLastEngineDrain(int lastEngineDrain) {
+        this.lastEngineDrain = Math.max(0, lastEngineDrain);
+    }
+
+    public void addShieldDrain(int fe) {
+        if (fe > 0) this.currentTickShieldDrain += fe;
+    }
+
+    public void addWeaponDrain(int fe) {
+        if (fe > 0) this.currentTickWeaponDrain += fe;
+    }
+
+    public void addEngineDrain(int fe) {
+        if (fe > 0) this.currentTickEngineDrain += fe;
+    }
+
+    public void endTickTelemetry() {
+        this.lastShieldDrain = this.currentTickShieldDrain;
+        this.lastWeaponDrain = this.currentTickWeaponDrain;
+        this.lastEngineDrain = this.currentTickEngineDrain;
+        this.currentTickShieldDrain = 0;
+        this.currentTickWeaponDrain = 0;
+        this.currentTickEngineDrain = 0;
+    }
+
+    public int getLastConsumptionRate() {
+        return lastShieldDrain + lastWeaponDrain + lastEngineDrain;
+    }
+
+    public int getNetEnergyThroughput() {
+        return lastGenerationRate - getLastConsumptionRate();
     }
 }
