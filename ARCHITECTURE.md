@@ -226,8 +226,17 @@ classDiagram
             +TICK_BUDGET_NANOS long$
             +SHIP_TICKET TicketType~ChunkPos~$
             +moveShip(Level level, ShipState ship, int dx, int dy, int dz, Player player)$ void
+            +rotateShip(Level level, ShipState ship, Rotation rotation, Player player)$ void
             +isShipMoving(UUID shipId)$ boolean
             +onServerTick(ServerTickEvent.Post event)$ void
+        }
+
+        class ShipRotationMath {
+            +rotateRelativeBlockPos(BlockPos relPos, Rotation rot)$ BlockPos
+            +rotateAbsoluteBlockPos(BlockPos pos, BlockPos pivot, Rotation rot)$ BlockPos
+            +rotateEntityPos(Vec3 entityPos, BlockPos pivot, Rotation rot)$ Vec3
+            +rotateYaw(float yaw, Rotation rot)$ float
+            +normalizeYaw(float yaw)$ float
         }
 
         class ShipCollisionService {
@@ -237,6 +246,7 @@ classDiagram
             +calculateIntersection(AABB a, AABB b)$ Optional~AABB~
             +findPotentialCollisions(ShipState movingShip, Vec3 moveVec)$ List~BroadPhaseCandidate~
             +calculateVoxelIntersection(ShipState shipA, BlockPos originA, ShipState shipB, BlockPos originB, AABB intersectionBox)$ VoxelCollisionResult
+            +checkRotationCollisions(ServerLevel level, ShipState ship, Rotation rotation)$ boolean
         }
 
         class CollisionResolver {
@@ -249,10 +259,12 @@ classDiagram
 
         class SpaceshipEnergyManager {
             +calculateMovementCost(ShipState ship, int dx, int dy, int dz)$ int
+            +calculateRotationCost(ShipState ship, Rotation rotation)$ int
             +getTotalAvailableEnergy(Level level, ShipState ship)$ int
             +consumeEnergy(Level level, ShipState ship, int amount)$ void
             +tryConsumeEnergyAmount(Level level, ShipState ship, int amount)$ boolean
             +tryConsumeFlightEnergy(Level level, ShipState ship, int dx, int dy, int dz, Player player)$ boolean
+            +tryConsumeRotationEnergy(Level level, ShipState ship, Rotation rotation, Player player)$ boolean
         }
     }
 
@@ -509,12 +521,22 @@ Zur Erkennung von Treffern auf zusammenhängenden Schiffsvoxeln wird der 3D Digi
    $$t_{\text{max}, x} < t_{\text{max}, y} \land t_{\text{max}, x} < t_{\text{max}, z} \implies x \leftarrow x + \text{step}_x, \quad \text{face} \leftarrow \text{WEST/EAST}$$
 4. **Schutzgrenze**: Feste Obergrenze von maximal 1024 Iterationsschritten gegen Endlosschleifen bei extremen Distanzen.
 
-### B. Progressiver Blockabbau & Zerstörungs-Skalierung
-Dauerstrahlen (`HeavyBeam`, `MiningLaser`) berechnen den Zerstörungsfortschritt pro Server-Tick dynamisch anhand der Blockhärte $H = \text{DestroySpeed}$:
-$$\Delta \text{Progress} = \frac{k_{\text{tier}}}{\max(0.5, H)}$$
-* **Mining Laser**: $k_{\text{tier}} = 0.25$ (z. B. Stein mit $H=1.5 \implies \Delta P = 0.166 \implies 6\text{ Ticks} = 0.3\text{s}$).
-* **Heavy Beam**: $k_{\text{tier}} = 0.15$ (z. B. Stein $\implies 10\text{ Ticks} = 0.5\text{s}$).
-* **Optische Rückkopplung**: Der Server synchronisiert den Fortschritt über `level.destroyBlockProgress(id, pos, (int)(P \cdot 10))` direkt an alle Clients.
+### C. Orthogonale 90°-Rotations-Transformation (`ShipRotationMath`)
+Für 90°-Drehungen um den Spaceship-Controller als Pivot $(px, pz)$ wird eine diskrete 2D-Rotationsmatrix auf der horizontalen X/Z-Ebene angewendet:
+1. **Relative Voxel-Koordinaten $(rx, rz)$**:
+   * **90° CW (Rechtsdrehung)**:
+     $$\begin{pmatrix} rx' \\ rz' \end{pmatrix} = \begin{pmatrix} 0 & -1 \\ 1 & 0 \end{pmatrix} \begin{pmatrix} rx \\ rz \end{pmatrix} = \begin{pmatrix} -rz \\ rx \end{pmatrix}$$
+   * **90° CCW (Linksdrehung)**:
+     $$\begin{pmatrix} rx' \\ rz' \end{pmatrix} = \begin{pmatrix} 0 & 1 \\ -1 & 0 \end{pmatrix} \begin{pmatrix} rx \\ rz \end{pmatrix} = \begin{pmatrix} rz \\ -rx \end{pmatrix}$$
+2. **BlockState & Direction Transformation**:
+   * `BlockState.rotate(level, pos, Rotation.CLOCKWISE_90 / COUNTERCLOCKWISE_90)` rotiert `FACING`, `HORIZONTAL_FACING` sowie Treppen-, Tür- und Hebel-Zustände konsistent.
+3. **Passagier- & Kamera-POV-Rotation**:
+   * Fließkomma-Positionen rotieren um das Pivot-Blockzentrum $(px + 0.5, pz + 0.5)$:
+     $$x' = (px + 0.5) - (z - (pz + 0.5)), \quad z' = (pz + 0.5) + (x - (px + 0.5)) \quad (\text{für CW})$$
+   * Der Blickwinkel (Yaw) wird additiv transformiert und auf $[-180^\circ, 180^\circ]$ normalisiert:
+     $$\text{Yaw}' = \text{normalize}(\text{Yaw} \pm 90.0^\circ)$$
+4. **Laser-Turret & Orientation-Synchronisation**:
+   * Ausgerichtet bemannte und unbemannte Turrets rotieren ihren Ziel-Yaw (`rotateTurret`) synchron mit der Schiffsachse, um die relative Zielrichtung beizubehalten.
 
 ---
 
@@ -525,7 +547,8 @@ $$\Delta \text{Progress} = \frac{k_{\text{tier}}}{\max(0.5, H)}$$
 | **Impuls-Laser abfeuern** | Pilot drückt `FIRE_PULSE` | `ServerPayloadHandler` $\rightarrow$ `LaserCombatService.fireWeapon()` | Zieht 250 FE ab, raycastet via `LaserRaycastUtil`. Zerstört 1 Block sofort (`destroyBlock` bzw. `SHIP_HULL`-Delta). Sendet `LaserFirePayload`. |
 | **Dauerstrahl umschalten** | Pilot drückt `TOGGLE_HEAVY_BEAM` | `ServerPayloadHandler` $\rightarrow$ `LaserCombatService.fireWeapon()` | Schaltet `isFiring` im BE um, sendet `LaserStateSyncPayload`. BE konsumiert im `serverTick` 50 FE/Tick und führt progressiven Abbau durch. |
 | **Energiemangel bei Dauerfeuer** | Reaktor leer (`tryConsumeEnergyAmount == false`) | `HeavyBeamBlockEntity.serverTick()` | Schaltet sich sofort ab (`setFiring(false)`), bricht Drill ab und sendet `LaserStateSyncPayload(isFiring = false)`. |
-| **Schiffstranslation mit aktiven Lasern** | Navigation / Helm `MOVE` | `ShipMovementService.moveShip()` | Verschiebt Blöcke und Waffen (`newWeapons`). Ignoriert Deaktivierung in `onRemove` via `isShipMoving()`. Client-Map-Key (`relativePos.asLong()`) bleibt translations-invariant. |
+| **3-Pass Topologische Translation & Rotation** | Navigation / Helm `MOVE` / `ROTATE` | `ShipMovementService.moveShip()` / `rotateShip()` | Topologische 3-Stufen-Platzierung (Pass 1: Solids, Pass 2: Roots & Normals, Pass 3: Attachables & Tops). Freigewordene Positionen ($P_{\text{alt}} \setminus P_{\text{neu}}$) mit Flag 48 geleert, Pässe mit Flag 52 platziert. Synchronisiertes Client-Update (Flag 50) am Ende verhindert X-Ray-Flackern und schützt Multiblöcke (Türen, Betten) und Fackeln vor Item-Drops. |
+| **Orthogonale 90°-Rotation** | Helm `KEY_ROTATE_LEFT/RIGHT` / GUI-Button | `ServerPayloadHandler` $\rightarrow$ `ShipMovementService.rotateShip()` | Prüft Pre-Collision (`ShipCollisionService.checkRotationCollisions`) und Reaktor-Energie (`tryConsumeRotationEnergy`). Rotiert Voxel, NBT, Passagiere & Turrets im Time-Slicing Tick-Budget. Sendet `ShipStructureSyncPayload` & `ShieldBubbleSyncPacket`. |
 | **Laser-Rendering (Client)** | Render-Frame (`AFTER_TRANSLUCENT_BLOCKS`) | `LaserBeamRenderer.onRenderLevelStage()` | Berechnet Strahlenursprung aus Schiffsanker + relativem Offset. Führt `level.clip()` aus $\rightarrow$ Strahl stoppt exakt auf der Blockoberfläche. Rendert Quads additiv (`GL_ONE`). |
 | **VRAM & Laser-Freigabe** | Chunk entlädt / Schiff gelöscht / Logout | `ClientShipManager` & `ClientLaserState` | `ClientLaserState.removeBeamsForShip(shipId)` räumt Laser auf; `ClientShipState.dispose()` schließt VBOs im GL-Thread. |
 
@@ -535,7 +558,10 @@ $$\Delta \text{Progress} = \frac{k_{\text{tier}}}{\max(0.5, H)}$$
 
 Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
 
-1. **JUnit 5 & Mockito Suite (51 Tests, 100% Erfolgsquote)**:
+1. **JUnit 5 & Mockito Suite (63 Tests, 100% Erfolgsquote)**:
+   * **`ShipMovement3PassTest`**: Validierung der topologischen 3-Pass-Klassifizierung (`PASS_1_SOLIDS`, `PASS_2_ROOTS_AND_NORMALS`, `PASS_3_ATTACHABLES_AND_TOPS`) für Vollblöcke, untere/obere Türhälften, Betten, Treppen, Fackeln, Redstone und $Y$-Sortierung.
+   * **`ShipMovementFragileSortingTest`**: Validierung von `isFragileBlock` für Redstone Wire, Fackeln, Repeater, Hebel vs. Vollblöcke & Luft; Überprüfung der absteigenden Y-Entfernungs- und aufsteigenden Y-Platzierungs-Sortierung.
+   * **`ShipRotationMathTest`**: Orthogonale 90° CW / CCW Transformation für alle 4 Quadranten, Pivot-Verschiebungen, Fließkomma-Entitätsrotationen um das Pivot-Zentrum, Yaw-Normalisierung über $[-180^\circ, 180^\circ]$, 4x 90° Identitätsinvarianz und `BlockState.rotate` für Directional Facing.
    * **`LaserNodeRenderStateTest`**: Thread-sichere Render-State Extraktion, interpolierte Kinematik (Yaw/Pitch), 180°-Winkel-Wrap und alle 6 `FACING`-Ausrichtungen (`UP`, `DOWN`, `NORTH`, `SOUTH`, `WEST`, `EAST`).
    * **`DataGeneratorsTest`**: Event-Handling für `GatherDataEvent`, Client/Server-Provider-Registrierung und HolderLookup-Lifecycle.
    * **`ModBlockStateProviderTest`**: 6-Achsen Euler-Winkel-Transformation (`rotX`, `rotY`) für `FACING` Split-Modell Basisplatten und `cubeAll` Generierung.
@@ -550,7 +576,7 @@ Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
    * **`SpaceshipEnergyManagerTest`**: Multi-Reaktor-Bündelung, sequenzieller FE-Drain, Transaktionssicherheit (Rollback).
    * **`AimTransformMathTest`**: Quaternion-Transformationen, Euler-Winkel-Konvertierung, 16-Bit Kompression und GimbalLimits.
    * **`TurretSeatTest`**: TurretSeat DTO Attribute, NBT-Persistenz und Aim-Lock-Status.
-2. **NeoForge GameTests (`@GameTestHolder`, 18 Tests auf Dedicated GameTest-Server, 100% Erfolgsquote)**:
+2. **NeoForge GameTests (`@GameTestHolder`, 20 Tests auf Dedicated GameTest-Server, 100% Erfolgsquote)**:
    * **`ShipCollisionGameTests` (10 Tests)**:
      - `testOffVsOff_StandardCollision`: Gegenseitige Zerstörung von Hüllenvoxeln bei OFF vs. OFF.
      - `testOffVsOff_ExplosionDamage`: 5x5x8 Matrix (200 distinkte Voxel) mit Cluster-Explosionen im kinetischen Schwerpunkt.
@@ -564,7 +590,10 @@ Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
      - `testOnVsOn_AsymmetricCollapse`: Asymmetrischer Zusammenbruch des energieärmeren Schildes bei Kollision.
      - `testMultiCollision_ShieldPriority`: 3-Wege-Kollision (Schiff A schneidet gleichzeitig in Schild B und ungeschützte Hülle C): Schild-Blockade stoppt Schiff A deterministisch via `CollisionResolver.resolveMultiple()`, schützt Hülle C vor Phantom-Durchdringung.
    * **`ShipScannerGameTests`**: Validierung des BFS-Scanners, Ausschluss diagonaler Blöcke, Multiblock-Ergänzung (Türen).
-   * **`ShipMovementGameTests`**: Physische Schiffstranslation im Testlevel mit `AIR`-Hinterlassung und Zielblock-Präsenz.
+   * **`ShipMovementGameTests` (3 Tests)**:
+     - `testShipMovementRelocation`: Physische Schiffstranslation im Testlevel mit `AIR`-Hinterlassung und Zielblock-Präsenz.
+     - `testShipMovementDownWithRedstoneAndTorch`: Abwärtsbewegung mit Redstone Wire & Fackel; Verifikation der korrekten Platzierung und 0 Item-Drops.
+     - `testMovement_PreservesTorchesAndDoors`: 3-Pass-Validierung: Verschiebung einer Wand mit Fackel und einer zweiflügeligen Tür mit Erhalt aller Hälften und 0 Item-Drops.
    * **`ShipAttachmentGameTests`**: Persistenz von `ModAttachments.SHIP_ID` an BlockEntities.
    * **`SpaceshipGameTests`**: Schiffserstellung über Kontrollblöcke.
 3. **GitHub Actions CI/CD Pipeline (`.github/workflows/ci.yml`)**:

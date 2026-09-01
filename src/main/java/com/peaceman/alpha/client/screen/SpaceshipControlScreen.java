@@ -36,30 +36,40 @@ public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
         // 1. Schiff erstellen
         this.addRenderableWidget(Button.builder(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_BTN_CREATE), button -> {
             sendShipAction(ActionType.CREATE);
-        }).bounds(btnLeft, centerY - 45, btnWidth, btnHeight).build());
+        }).bounds(btnLeft, centerY - 60, btnWidth, btnHeight).build());
 
         // 2. Struktur aktualisieren
         this.addRenderableWidget(Button.builder(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_BTN_UPDATE), button -> {
             sendShipAction(ActionType.UPDATE_BLOCKS);
-        }).bounds(btnLeft, centerY - 15, btnWidth, btnHeight).build());
+        }).bounds(btnLeft, centerY - 35, btnWidth, btnHeight).build());
 
         // 3. Schiff auflösen
         this.addRenderableWidget(Button.builder(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_BTN_DISASSEMBLE), button -> {
             sendShipAction(ActionType.DELETE_SHIP);
-        }).bounds(btnLeft, centerY + 15, btnWidth, btnHeight).build());
+        }).bounds(btnLeft, centerY - 10, btnWidth, btnHeight).build());
 
         // 4. Markierung An/Aus (rein Client-seitig)
         this.addRenderableWidget(Button.builder(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_BTN_HIGHLIGHT), button -> {
             if (this.minecraft != null && this.minecraft.level != null) {
                 ShipHighlightRenderer.toggleHighlight(this.minecraft.level, this.blockPos);
             }
-        }).bounds(btnLeft, centerY + 45, btnWidth, btnHeight).build());
+        }).bounds(btnLeft, centerY + 15, btnWidth, btnHeight).build());
 
         // 5. Schild An/Aus (Sendet Action an Server)
         this.shieldButton = Button.builder(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_BTN_SHIELD), button -> {
             sendShipAction(ActionType.TOGGLE_SHIELD);
-        }).bounds(btnLeft, centerY + 70, btnWidth, btnHeight).build();
+        }).bounds(btnLeft, centerY + 40, btnWidth, btnHeight).build();
         this.addRenderableWidget(this.shieldButton);
+
+        // 6. Rotations-Buttons (90° CCW / 90° CW)
+        int halfBtnWidth = (btnWidth - 4) / 2;
+        this.addRenderableWidget(Button.builder(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_BTN_ROTATE_CCW), button -> {
+            sendShipAction(ActionType.ROTATE_CCW);
+        }).bounds(btnLeft, centerY + 65, halfBtnWidth, btnHeight).build());
+
+        this.addRenderableWidget(Button.builder(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_BTN_ROTATE_CW), button -> {
+            sendShipAction(ActionType.ROTATE_CW);
+        }).bounds(btnLeft + halfBtnWidth + 4, centerY + 65, halfBtnWidth, btnHeight).build());
     }
 
     @Override

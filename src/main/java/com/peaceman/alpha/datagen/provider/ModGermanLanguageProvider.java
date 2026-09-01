@@ -67,6 +67,8 @@ public class ModGermanLanguageProvider extends LanguageProvider {
         add(ModI18n.Screen.CONTROL_SHIELD_COOLDOWN, "Schild (%1$.1fs)");
         add(ModI18n.Screen.CONTROL_SHIELD_ACTIVE, "Schild: Aktiv");
         add(ModI18n.Screen.CONTROL_SHIELD_INACTIVE, "Schild: Inaktiv");
+        add(ModI18n.Screen.CONTROL_BTN_ROTATE_CW, "90° Rechts drehen");
+        add(ModI18n.Screen.CONTROL_BTN_ROTATE_CCW, "90° Links drehen");
 
         add(ModI18n.Screen.HUD_TACTICAL_HEADER, "--- Taktik ---");
         add(ModI18n.Screen.HUD_TACTICAL_SHIELD_CRITICAL, "Schilde: Kritisch");
@@ -78,7 +80,7 @@ public class ModGermanLanguageProvider extends LanguageProvider {
         add(ModI18n.Screen.HUD_HELM_HEADER, "--- Helm HUD ---");
         add(ModI18n.Screen.HUD_HELM_WARP_COOLDOWN, "Warp Cooldown: %1$.1fs");
         add(ModI18n.Screen.HUD_HELM_READY, "Antrieb Bereit");
-        add(ModI18n.Screen.HUD_HELM_CONTROLS, "[H] Verlassen | [M] Konfig | [Rechtsklick] Feuern");
+        add(ModI18n.Screen.HUD_HELM_CONTROLS, "[H] Verlassen | [M] Nav | [Pfeiltasten] Drehen | [Rechtsklick] Feuern");
 
         // 5. Messages (Chat / Action-Bar)
         add(ModI18n.Message.TURRET_AIM_LOCKED, "[Geschützturm] Ausrichtung eingeloggt (Yaw: %1$.1f°, Pitch: %2$.1f°)");
@@ -94,6 +96,7 @@ public class ModGermanLanguageProvider extends LanguageProvider {
         add(ModI18n.Message.WAYPOINT_NOT_FOUND, "Fehler: Wegpunkt '%1$s' existiert nicht!");
         add(ModI18n.Message.MOVEMENT_COOLDOWN_ACTIVE, "[Antrieb] Abklingzeit aktiv! Noch %1$s Sekunden.");
         add(ModI18n.Message.COLLISION_WARNING, "[Kollisionswarnung] Kollision erkannt (%1$s)! Bewegung gestoppt.");
+        add(ModI18n.Message.ROTATION_BLOCKED_COLLISION, "[Rotation blockiert] Hindernis oder Terrain im Drehbereich!");
         add(ModI18n.Message.HELM_CONTROL_ENTER, "[Helm] Du steuerst nun das Schiff. WASD zum Fliegen, LSHIFT zum Sinken, LEERTASTE zum Steigen. H/ESC zum Verlassen.");
         add(ModI18n.Message.HELM_CONTROL_LEAVE, "[Helm] Du hast die Steuerung verlassen.");
         add(ModI18n.Message.DEV_CHEAT_ENERGY, "DEV-CHEAT: %1$s FE geladen!");
@@ -107,6 +110,8 @@ public class ModGermanLanguageProvider extends LanguageProvider {
         add(ModI18n.Keybind.EXIT_HELM, "Steuerkonsole verlassen");
         add(ModI18n.Keybind.OPEN_HELM_CONFIG, "Helm-Navigationskonfiguration öffnen");
         add(ModI18n.Keybind.MOUNT_TURRET, "Geschützturm bemannen");
+        add(ModI18n.Keybind.ROTATE_LEFT, "Schiff links drehen (CCW)");
+        add(ModI18n.Keybind.ROTATE_RIGHT, "Schiff rechts drehen (CW)");
 
         // 7. Tooltips & Environments
         add(ModI18n.Tooltip.REACTOR_CAPACITY, "Max. Kapazität: %1$s FE");

@@ -185,8 +185,17 @@ classDiagram
             +TICK_BUDGET_NANOS long$
             +SHIP_TICKET TicketType~ChunkPos~$
             +moveShip(Level level, ShipState ship, int dx, int dy, int dz, Player player)$ void
+            +rotateShip(Level level, ShipState ship, Rotation rotation, Player player)$ void
             +isShipMoving(UUID shipId)$ boolean
             +onServerTick(ServerTickEvent.Post event)$ void
+        }
+
+        class ShipRotationMath {
+            +rotateRelativeBlockPos(BlockPos relPos, Rotation rot)$ BlockPos
+            +rotateAbsoluteBlockPos(BlockPos pos, BlockPos pivot, Rotation rot)$ BlockPos
+            +rotateEntityPos(Vec3 entityPos, BlockPos pivot, Rotation rot)$ Vec3
+            +rotateYaw(float yaw, Rotation rot)$ float
+            +normalizeYaw(float yaw)$ float
         }
 
         class ShipCollisionService {
@@ -196,6 +205,7 @@ classDiagram
             +calculateIntersection(AABB a, AABB b)$ Optional~AABB~
             +findPotentialCollisions(ShipState movingShip, Vec3 moveVec)$ List~BroadPhaseCandidate~
             +calculateVoxelIntersection(ShipState shipA, BlockPos originA, ShipState shipB, BlockPos originB, AABB intersectionBox)$ VoxelCollisionResult
+            +checkRotationCollisions(ServerLevel level, ShipState ship, Rotation rotation)$ boolean
         }
 
         class CollisionResolver {
@@ -208,10 +218,12 @@ classDiagram
 
         class SpaceshipEnergyManager {
             +calculateMovementCost(ShipState ship, int dx, int dy, int dz)$ int
+            +calculateRotationCost(ShipState ship, Rotation rotation)$ int
             +getTotalAvailableEnergy(Level level, ShipState ship)$ int
             +consumeEnergy(Level level, ShipState ship, int amount)$ void
             +tryConsumeEnergyAmount(Level level, ShipState ship, int amount)$ boolean
             +tryConsumeFlightEnergy(Level level, ShipState ship, int dx, int dy, int dz, Player player)$ boolean
+            +tryConsumeRotationEnergy(Level level, ShipState ship, Rotation rotation, Player player)$ boolean
         }
     }
 

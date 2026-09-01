@@ -50,6 +50,26 @@ public class SpaceshipHelmInputInterceptor {
             PacketDistributor.sendToServer(new com.peaceman.alpha.network.OpenHelmConfigPayload(java.util.Optional.ofNullable(SpaceshipClientInputHandler.activeHelmShipId)));
         }
 
+        if (com.peaceman.alpha.client.ClientModEvents.KEY_ROTATE_LEFT.consumeClick()) {
+            PacketDistributor.sendToServer(new com.peaceman.alpha.network.ShipActionPayload(
+                    java.util.Optional.ofNullable(SpaceshipClientInputHandler.activeHelmShipId),
+                    net.minecraft.core.BlockPos.ZERO,
+                    com.peaceman.alpha.network.ShipActionPayload.ActionType.ROTATE_CCW,
+                    90,
+                    ""
+            ));
+        }
+
+        if (com.peaceman.alpha.client.ClientModEvents.KEY_ROTATE_RIGHT.consumeClick()) {
+            PacketDistributor.sendToServer(new com.peaceman.alpha.network.ShipActionPayload(
+                    java.util.Optional.ofNullable(SpaceshipClientInputHandler.activeHelmShipId),
+                    net.minecraft.core.BlockPos.ZERO,
+                    com.peaceman.alpha.network.ShipActionPayload.ActionType.ROTATE_CW,
+                    90,
+                    ""
+            ));
+        }
+
         long now = System.currentTimeMillis();
         if (now - lastPayloadTime >= PAYLOAD_INTERVAL_MS) {
             if (forwardImpulse != 0 || leftImpulse != 0 || upImpulse != 0) {

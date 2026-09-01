@@ -6,8 +6,14 @@ An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21*
 
 ## Features
 
-* **Spaceship Control Block:** The heart and core of every ship. Detects connected blocks via breadth-first search (BFS), binds them to a ship entity, and manages lifecycle operations (creation, structure update, deletion) with real-time hull highlighting.
-* **Spaceship Helm (Navigation & Combat Console):** Full 6-axis flight controls (WASD for horizontal flight, Space to ascend, Left-Shift to descend), right-click to fire all shipboard weapons (`FIRE_ALL`), `M` key to open navigation/waypoint configuration while flying, and `H` key to exit helm control.
+* **Spaceship Control Block:** The heart and core of every ship. Detects connected blocks via breadth-first search (BFS), binds them to a ship entity, and manages lifecycle operations (creation, structure update, deletion) with real-time hull highlighting and dedicated 90° CW/CCW rotation controls.
+* **Spaceship Helm (Navigation & Combat Console):** Full 6-axis flight controls (WASD for horizontal flight, Space to ascend, Left-Shift to descend), Arrow keys (Left/Right) for 90° orthogonal yaw rotations (CCW/CW), right-click to fire all shipboard weapons (`FIRE_ALL`), `M` key to open navigation/waypoint configuration while flying, and `H` key to exit helm control.
+* **Orthogonal 90° Ship Rotation (Yaw):**
+  * Instantaneous, energy-consuming 90° CW and CCW yaw rotations about the controller pivot point.
+  * Rigorous 2D rotation matrix transformations ($(rx, rz) \rightarrow (-rz, rx)$ for CW, $(rx, rz) \rightarrow (rz, -rx)$ for CCW) preserving directional blockstates (`BlockState.rotate`), stairs, doors, and laser mount orientations.
+  * Passenger & camera POV transformation: Automatically rotates all entities within the hull bounding box and rotates their camera yaw by $\pm 90^\circ$.
+  * Starr mounted laser turret synchronization: Preserves target angles in relative mode and rotates turret aiming yaw.
+  * Pre-rotation collision checks: Evaluates rotated voxels against terrain and foreign ship hulls; plays acoustic buzzer alerts upon blocked rotations without wasting reactor energy.
 * **Spaceship Reactor:** Energy storage supporting standard **Forge Energy (FE)** with up to 1,000,000 FE capacity. Powers flight maneuvers, shield absorption, and laser weapon systems. *(Dev-Tip: Right-click with Redstone to charge 50,000 FE!)*
 * **Shield Generator & Hex-Shader:** Protects ship blocks against explosive damage (TNT, Creepers) and unauthorized block manipulation. Shields consume reactor energy upon impact and are rendered as procedural hexagon bubble meshes via custom shaders with impact ripples and low-energy alerts.
 * **Shipborne Laser Weapon System & Dynamic Turrets:**
@@ -247,10 +253,13 @@ classDiagram
 
 The project enforces continuous testing according to the **70/20 Rule** (70% Unit / Math Tests, 20% Engine GameTests, 10% Manual QA).
 
-### Automated Test Matrix (52 Unit Tests & 5 GameTest Suites / 18 GameTests)
+### Automated Test Matrix (63 Unit Tests & 5 GameTest Suites / 20 GameTests)
 
 | Test-Suite | Typ | Abdeckung |
 | :--- | :--- | :--- |
+| **`ShipMovement3PassTest`** | JUnit 5 | Topologische 3-Pass-Klassifizierung (`PASS_1_SOLIDS`, `PASS_2_ROOTS_AND_NORMALS`, `PASS_3_ATTACHABLES_AND_TOPS`) für Multiblöcke (Türen, Betten) und Fackeln/Redstone. |
+| **`ShipMovementFragileSortingTest`** | JUnit 5 | Zerbrechliche Block-Erkennung (`isFragileBlock`) und aufsteigende/absteigende $Y$-Sortierung für Translation und Rotation. |
+| **`ShipRotationMathTest`** | JUnit 5 | Orthogonale 90° CW/CCW Transformation, Pivot-Translation, Fließkomma-Entitätsrotationen und Yaw-Normalisierung. |
 | **`LaserNodeRenderStateTest`** | JUnit 5 (Mockito) | Thread-sichere Render-State Extraktion, interpolierte Kinematik (Yaw/Pitch), 180°-Winkel-Wrap und alle 6 `FACING`-Ausrichtungen (`UP`, `DOWN`, `NORTH`, `SOUTH`, `WEST`, `EAST`). |
 | **`DataGeneratorsTest`** | JUnit 5 (Mockito) | Event-Handling für `GatherDataEvent`, Provider-Registrierung und HolderLookup-Lifecycle. |
 | **`ModBlockStateProviderTest`** | JUnit 5 | 6-Achsen Euler-Winkel-Transformation (`rotX`, `rotY`) für `FACING` Split-Modell Basisplatten und `cubeAll` Generierung. |
@@ -266,10 +275,10 @@ The project enforces continuous testing according to the **70/20 Rule** (70% Uni
 | **`AimTransformMathTest`** | JUnit 5 | Quaternion-Transformationen, Euler-Winkel-Konvertierung, 16-Bit Kompression und GimbalLimits. |
 | **`TurretSeatTest`** | JUnit 5 | TurretSeat DTO Attribute, NBT-Persistenz und Aim-Lock-Status. |
 | **`ShipScannerGameTests`** | GameTest | Orthogonale BFS-Erkennung, Ausschluss diagonaler Blöcke, Multipart-Erfassung (Türen, Betten, Truhen). |
-| **`ShipMovementGameTests`** | GameTest | Physische Welt-Translation, `AIR`-Hinterlassung und Zielblock-Präsenzprüfung. |
+| **`ShipMovementGameTests` (3 Tests)** | GameTest | Physische Welt-Translation, Abwärtsbewegung mit Redstone/Fackeln und 3-Pass Erhaltung zweiflügeliger Türen und Fackeln ohne Drops. |
 | **`ShipAttachmentGameTests`** | GameTest | Typsichere Persistenz von `ModAttachments.SHIP_ID` an BlockEntities. |
 | **`SpaceshipGameTests`** | GameTest | Schiffserstellung und UUID-Verknüpfung via Kontrollblock. |
-| **`ShipCollisionGameTests`** | GameTest | Vollständige Simulation aller 4 physikalischen Szenarien (`OFF_vs_OFF`, `OFF_vs_ON`, `ON_vs_OFF`, `ON_vs_ON`) inklusive Point-Zero Boundary Collapse, asynchronem Floating-Blocks Item-Drop (`Block.UPDATE_ALL`) und 3-Wege Multi-Kollisions-Schild-Priorisierung (`CollisionResolver.resolveMultiple`). |
+| **`ShipCollisionGameTests` (10 Tests)** | GameTest | Vollständige Simulation aller 4 physikalischen Szenarien (`OFF_vs_OFF`, `OFF_vs_ON`, `ON_vs_OFF`, `ON_vs_ON`) inklusive Point-Zero Boundary Collapse, asynchronem Floating-Blocks Item-Drop (`Block.UPDATE_ALL`) und 3-Wege Multi-Kollisions-Schild-Priorisierung (`CollisionResolver.resolveMultiple`). |
 
 ### CI/CD Pipeline (`.github/workflows/ci.yml`)
 
