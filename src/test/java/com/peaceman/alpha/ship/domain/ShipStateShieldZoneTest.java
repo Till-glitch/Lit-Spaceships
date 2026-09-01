@@ -1,5 +1,6 @@
 package com.peaceman.alpha.ship.domain;
 
+import com.peaceman.alpha.ship.service.ServerShipManager;
 import net.minecraft.core.BlockPos;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,43 @@ class ShipStateShieldZoneTest {
 
         ShieldZone pastCooldownZone = new ShieldZone((byte) 6, pos, 20000, 100000, 900L);
         assertFalse(pastCooldownZone.isCollapsed(currentTick));
+
+        // 6. generatorPos == null (zerstörter Generator) -> kollabiert (true)
+        ShieldZone destroyedGenZone = new ShieldZone((byte) 7, null, 50000, 100000, 0L);
+        assertTrue(destroyedGenZone.isCollapsed(currentTick));
+
+        // 7. isEnabled == false -> kollabiert (true)
+        ShieldZone disabledZone = new ShieldZone((byte) 8, pos, 50000, 100000, 0L, false);
+        assertTrue(disabledZone.isCollapsed(currentTick));
+    }
+
+    @Test
+    @DisplayName("Zerstörter Schildgenerator deaktiviert nur die eigene Zone ohne die Nachbarzonen zu verändern")
+    void testDestroyedGeneratorCollapsesOnlyTargetZone() {
+        ShipState ship = new ShipState(BlockPos.ZERO, Set.of(BlockPos.ZERO));
+        BlockPos gen1 = new BlockPos(5, 0, 0);
+        BlockPos gen2 = new BlockPos(-5, 0, 0);
+
+        ShieldZone zone1 = new ShieldZone((byte) 1, gen1, 80000, 100000, 0L);
+        ShieldZone zone2 = new ShieldZone((byte) 2, gen2, 90000, 100000, 0L);
+
+        ship.setShieldZone(zone1);
+        ship.setShieldZone(zone2);
+
+        long gameTime = 500L;
+        assertEquals(0b11L, ServerShipManager.calculateShieldActiveMask(ship, gameTime));
+
+        // Generator 1 wird zerstört
+        ship.setShieldZone(new ShieldZone((byte) 1, null, 0, 100000, Long.MAX_VALUE, false));
+
+        // Zone 1 muss kollabiert sein, Zone 2 bleibt voll aktiv
+        assertTrue(ship.getShieldZone((byte) 1).isCollapsed(gameTime));
+        assertFalse(ship.getShieldZone((byte) 2).isCollapsed(gameTime));
+        assertEquals(90000, ship.getShieldZone((byte) 2).currentEnergy());
+
+        // Maske darf nur noch Zone 2 (Bit 1, da ZoneId 2 -> 1L << (2-1) = 2) enthalten
+        long maskAfterDestruction = ServerShipManager.calculateShieldActiveMask(ship, gameTime);
+        assertEquals(0b10L, maskAfterDestruction);
     }
 
     @Test

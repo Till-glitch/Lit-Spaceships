@@ -4,6 +4,7 @@ import com.peaceman.alpha.Alpha;
 import com.peaceman.alpha.block.ISpaceshipNode;
 import com.peaceman.alpha.block.entity.SpaceshipControlBlockEntity;
 import com.peaceman.alpha.network.ShipPositionSyncPayload;
+import com.peaceman.alpha.network.ShipStateSyncPayload;
 import com.peaceman.alpha.ship.SpaceshipEnergyManager;
 import com.peaceman.alpha.ship.domain.ShipState;
 import net.minecraft.core.BlockPos;
@@ -95,7 +96,13 @@ public class ShipMovementService {
                 Set<BlockPos> shipBlocks = ship.getBlocks();
 
                 // 1. Energieprüfung
-                if (!SpaceshipEnergyManager.tryConsumeFlightEnergy(level, ship, dx, dy, dz, player)) {
+                SpaceshipEnergyManager.FlightEnergyResult result = SpaceshipEnergyManager.tryConsumeFlightEnergy(level, ship, dx, dy, dz);
+                if (result.status() == com.peaceman.alpha.ship.EnergyConsumeResult.INSUFFICIENT_ENERGY) {
+                    if (player != null) {
+                        player.displayClientMessage(
+                                Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.ENERGY_INSUFFICIENT,
+                                        String.format("%,d", result.cost()), String.format("%,d", result.available())), true);
+                    }
                     return true; // Abbruch wegen Energiemangel
                 }
 
@@ -156,8 +163,6 @@ public class ShipMovementService {
                 if (level.getBlockEntity(startPos) instanceof SpaceshipControlBlockEntity be) {
                     be.setShipId(null);
                 }
-                BlockPos newStartPos = startPos.offset(dx, dy, dz);
-                ship.setControllerPos(newStartPos);
 
                 // 9. Blöcke sortieren: Erst feste, dann zerbrechliche
                 List<Map.Entry<BlockPos, BlockData>> solid = new ArrayList<>();
@@ -213,26 +218,8 @@ public class ShipMovementService {
                     level.setBlock(pos, Blocks.AIR.defaultBlockState(), 50);
                 }
 
-                // Abschluss: RAM-Daten aktualisieren
-                ship.setBlocksRaw(newShipBlocks);
-
-                List<BlockPos> newReactors = new ArrayList<>(ship.getReactors().size());
-                for (BlockPos pos : ship.getReactors()) {
-                    newReactors.add(pos.offset(dx, dy, dz));
-                }
-                ship.setReactors(newReactors);
-
-                List<BlockPos> newShields = new ArrayList<>(ship.getShields().size());
-                for (BlockPos pos : ship.getShields()) {
-                    newShields.add(pos.offset(dx, dy, dz));
-                }
-                ship.setShields(newShields);
-
-                List<BlockPos> newWeapons = new ArrayList<>(ship.getWeapons().size());
-                for (BlockPos pos : ship.getWeapons()) {
-                    newWeapons.add(pos.offset(dx, dy, dz));
-                }
-                ship.setWeapons(newWeapons);
+                // Abschluss: RAM-Daten atomar via translate aktualisieren
+                ship.translate(dx, dy, dz);
 
                 // Passagiere / Entities teleportieren
                 for (Entity entity : entitiesToMove) {
@@ -258,8 +245,16 @@ public class ShipMovementService {
 
                 ServerShipManager.saveData(level);
 
-                // Synchronisation der neuen Anker-Position an alle Clients
+                // Synchronisation der neuen Anker-Position und Schildzonen an alle Clients
                 PacketDistributor.sendToAllPlayers(new ShipPositionSyncPayload(ship.getId(), ship.getControllerPos()));
+                ServerShipManager.syncShieldZoneStates(level, ship);
+                PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(
+                        ship.getId(),
+                        SpaceshipEnergyManager.getTotalAvailableEnergy(level, ship),
+                        ship.isShieldActive(),
+                        ship.getShieldCooldownRemaining(level.getGameTime()),
+                        ship.getMovementCooldownRemaining(level.getGameTime())
+                ));
                 return true; // Fertig!
             }
 

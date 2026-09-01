@@ -238,6 +238,15 @@ classDiagram
             +resolveMultiple(ServerLevel level, List~VoxelCollisionResult~ collisions, Vec3 movementVector)$ CollisionResolution
         }
 
+        class SpaceshipShieldHandler {
+            +toggleShield(Level level, ShipState ship)$ boolean
+            +toggleShieldZone(Level level, ShipState ship, BlockPos generatorPos)$ void
+            +onShieldBlockDestroyed(Level level, BlockPos pos, UUID shipId)$ void
+            +tryConsumeShieldEnergyAt(Level level, ShipState ship, BlockPos hitPos, int energyCost, byte fallbackShieldId)$ boolean
+            +onExplosion(ExplosionEvent.Detonate event)$ void
+            +onLevelTick(LevelTickEvent.Post event)$ void
+        }
+
         class SpaceshipEnergyManager {
             +calculateMovementCost(ShipState ship, int dx, int dy, int dz)$ int
             +getTotalAvailableEnergy(Level level, ShipState ship)$ int

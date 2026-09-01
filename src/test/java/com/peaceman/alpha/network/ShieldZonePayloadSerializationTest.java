@@ -12,26 +12,32 @@ import static org.junit.jupiter.api.Assertions.*;
 class ShieldZonePayloadSerializationTest {
 
     @Test
-    @DisplayName("ShieldZoneStatePayload sollte 64-Bit Maske unter 32 Bytes serialisieren und verlustfrei dekodieren")
+    @DisplayName("ShieldZoneStatePayload sollte 64-Bit Maske und 64-Byte Energie-Array serialisieren und verlustfrei dekodieren")
     void testSerializationAndBitmaskIntegrity() {
         UUID shipId = UUID.randomUUID();
         // 64-Bit Test-Maske mit alternierenden Zonen
         long activeMask = 0xAAAAAAAAAAAAAAAAL ^ 0x0F0F0F0F0F0F0F0FL;
 
-        ShieldZoneStatePayload payload = new ShieldZoneStatePayload(shipId, activeMask);
+        byte[] energies = new byte[64];
+        for (int i = 0; i < 64; i++) {
+            energies[i] = (byte) (i * 3);
+        }
+
+        ShieldZoneStatePayload payload = new ShieldZoneStatePayload(shipId, activeMask, energies);
 
         FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
         ShieldZoneStatePayload.STREAM_CODEC.encode(buffer, payload);
 
-        // Byte-Größen-Verifikation (< 32 Bytes)
+        // Byte-Größen-Verifikation (~72-88 Bytes)
         int serializedBytes = buffer.readableBytes();
-        assertTrue(serializedBytes < 32, "Paketgröße muss unter 32 Bytes liegen, war aber: " + serializedBytes);
+        assertTrue(serializedBytes < 100, "Paketgröße muss unter 100 Bytes liegen, war aber: " + serializedBytes);
 
         // Dekodierung
         ShieldZoneStatePayload decoded = ShieldZoneStatePayload.STREAM_CODEC.decode(buffer);
 
         assertEquals(shipId, decoded.shipId());
         assertEquals(activeMask, decoded.activeMask(), "Die 64-Bit Zonen-Bitmaske muss nach der Dekodierung bit-identisch sein");
+        assertArrayEquals(energies, decoded.zoneEnergies(), "Das Energie-Array muss nach der Dekodierung byte-identisch sein");
     }
 
     @Test

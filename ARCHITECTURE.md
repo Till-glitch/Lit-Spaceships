@@ -398,7 +398,7 @@ classDiagram
             -BlockPos anchorPos
             -VertexBuffer shieldMesh
             -boolean isShieldActive
-            +updateMesh(Set~BlockPos~ relativeBlocks) void
+            +updateMesh(Map~BlockPos, Byte~ relativeBlocks) void
             +removeStructureBlocks(List~BlockPos~ removed) void
             +dispose() void
         }

@@ -78,9 +78,22 @@ public class LaserRaycastUtil {
                 long gameTime = level.getGameTime();
                 Optional<FastVoxelTraversal.VoxelHit> shieldHit = FastVoxelTraversal.traverse(
                         ship.getShieldVoxelCache(), localOrigin, dir, effectiveRange,
-                        id -> {
+                        (id, x, y, z) -> {
                             com.peaceman.alpha.ship.domain.ShieldZone zone = ship.getShieldZone(id);
-                            return zone != null && !zone.isCollapsed(gameTime);
+                            if (zone == null || zone.isCollapsed(gameTime) || zone.generatorPos() == null) return false;
+
+                            BlockPos genPos = zone.generatorPos();
+                            
+                            // Relativen Hit in absolute Welt-Koordinaten transformieren
+                            double toHitX = (controllerPos.getX() + x) - genPos.getX();
+                            double toHitY = (controllerPos.getY() + y) - genPos.getY();
+                            double toHitZ = (controllerPos.getZ() + z) - genPos.getZ();
+                            
+                            // Mathematisch effizientes Skalarprodukt
+                            double dotProduct = dir.x * toHitX + dir.y * toHitY + dir.z * toHitZ;
+                            
+                            // Nur Treffer von Außen (<= 0) werden als gültige Schildtreffer gewertet
+                            return dotProduct <= 0;
                         }
                 );
 

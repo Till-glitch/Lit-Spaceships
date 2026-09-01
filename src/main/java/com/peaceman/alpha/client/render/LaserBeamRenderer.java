@@ -144,15 +144,28 @@ public class LaserBeamRenderer {
                 
                 // 1. Prüfung gegen den aktiven Schild des anderen Schiffs
                 if (otherShip.isShieldActive() && otherShip.getActiveMask() != 0) {
-                    for (BlockPos relPos : otherShip.getRelativeBubbleBlocks()) {
+                    for (java.util.Map.Entry<BlockPos, Byte> shieldEntry : otherShip.getRelativeBubbleBlocks().entrySet()) {
+                        byte zoneId = shieldEntry.getValue();
+                        
+                        // Zonen-Maske auswerten: Voxel überspringen, wenn dessen Zone kollabiert ist
+                        if ((otherShip.getActiveMask() & (1L << (zoneId - 1))) == 0) continue;
+                        
+                        BlockPos relPos = shieldEntry.getKey();
                         BlockPos worldVoxel = otherAnchor.offset(relPos);
                         net.minecraft.world.phys.AABB voxelBox = new net.minecraft.world.phys.AABB(worldVoxel);
                         java.util.Optional<Vec3> hit = voxelBox.clip(start, end);
                         if (hit.isPresent()) {
-                            double dSq = start.distanceToSqr(hit.get());
+                            Vec3 hitPos = hit.get();
+                            
+                            // Geometrische Dot-Product Approximation (Client-Side) für Schüsse von innen nach außen
+                            // Da der Client keine exakten Generator-Positionen besitzt, nutzen wir den Schiffs-Anker.
+                            Vec3 toHit = hitPos.subtract(Vec3.atLowerCornerOf(otherAnchor));
+                            if (dir.dot(toHit) > 0) continue; // Strahl bewegt sich nach außen -> ignoriere Treffer!
+
+                            double dSq = start.distanceToSqr(hitPos);
                             if (dSq < closestDistSq) {
                                 closestDistSq = dSq;
-                                end = hit.get();
+                                end = hitPos;
                             }
                         }
                     }

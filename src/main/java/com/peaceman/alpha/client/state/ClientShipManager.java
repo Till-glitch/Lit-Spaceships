@@ -43,7 +43,7 @@ public class ClientShipManager {
         return ACTIVE_CLIENT_SHIPS.values();
     }
 
-    public static void updateShieldBubble(UUID shipId, BlockPos anchorPos, Set<BlockPos> relativeBubbleBlocks) {
+    public static void updateShieldBubble(UUID shipId, BlockPos anchorPos, java.util.Map<BlockPos, Byte> relativeBubbleBlocks) {
         ClientShipState shipState = getOrCreateShip(shipId);
         shipState.setAnchorPos(anchorPos);
         shipState.updateMesh(relativeBubbleBlocks);
@@ -70,9 +70,9 @@ public class ClientShipManager {
         shipState.updateCooldowns(shieldCooldownTicks, movementCooldownTicks, clientTick);
     }
 
-    public static void updateShieldZoneState(UUID shipId, long activeMask) {
+    public static void updateShieldZoneState(UUID shipId, long activeMask, byte[] encodedEnergies) {
         ClientShipState shipState = getOrCreateShip(shipId);
-        shipState.setActiveMask(activeMask);
+        shipState.setShieldZoneState(activeMask, encodedEnergies);
     }
 
     public static void updateShipPosition(UUID shipId, BlockPos newAnchorPos) {

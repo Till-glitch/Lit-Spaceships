@@ -25,7 +25,7 @@ public record ShieldZone(
      * @return true, wenn keine Energie mehr vorhanden ist, die Cooldown-Zeit noch nicht abgelaufen ist oder die Zone deaktiviert ist.
      */
     public boolean isCollapsed(long currentTick) {
-        return !isEnabled || currentEnergy <= 0 || currentTick < cooldownUntil;
+        return !isEnabled || generatorPos == null || currentEnergy <= 0 || currentTick < cooldownUntil;
     }
 
     /**

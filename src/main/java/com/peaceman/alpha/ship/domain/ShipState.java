@@ -43,6 +43,9 @@ public class ShipState {
     private volatile VoxelGridCache hullVoxelCache = VoxelGridCache.EMPTY;
     private volatile VoxelGridCache shieldVoxelCache = VoxelGridCache.EMPTY;
 
+    // Caches für Chunk-Sends
+    private volatile Map<BlockPos, Byte> cachedRelBubble = null;
+
     // Konstruktor für ein neues Schiff
     public ShipState(BlockPos controllerPos, Set<BlockPos> blocks) {
         this(controllerPos, blocks, Level.OVERWORLD);
@@ -141,6 +144,69 @@ public class ShipState {
 
     public void setShields(List<BlockPos> shields) {
         this.shields = shields != null ? shields : new ArrayList<>();
+    }
+
+    /**
+     * Verschiebt alle positionsabhängigen Daten des Schiffs atomar um (dx, dy, dz).
+     * Aktualisiert ControllerPos, Blocks, BoundingBoxen, Reaktoren, Schilde, Waffen und ShieldZones
+     * unter vollständiger Beibehaltung der Zonenergien und Zustände.
+     */
+    public synchronized void translate(int dx, int dy, int dz) {
+        if (dx == 0 && dy == 0 && dz == 0) return;
+
+        if (this.controllerPos != null) {
+            this.controllerPos = this.controllerPos.offset(dx, dy, dz);
+        }
+
+        if (this.blocks != null && !this.blocks.isEmpty()) {
+            Set<BlockPos> newBlocks = new HashSet<>(this.blocks.size());
+            for (BlockPos pos : this.blocks) {
+                newBlocks.add(pos.offset(dx, dy, dz));
+            }
+            this.blocks = newBlocks;
+        }
+
+        if (this.hullBoundingBox != null) {
+            this.hullBoundingBox = this.hullBoundingBox.move(dx, dy, dz);
+        }
+        if (this.shieldBoundingBox != null) {
+            this.shieldBoundingBox = this.shieldBoundingBox.move(dx, dy, dz);
+        }
+
+        if (this.reactors != null && !this.reactors.isEmpty()) {
+            List<BlockPos> newReactors = new ArrayList<>(this.reactors.size());
+            for (BlockPos pos : this.reactors) {
+                newReactors.add(pos.offset(dx, dy, dz));
+            }
+            this.reactors = newReactors;
+        }
+
+        if (this.shields != null && !this.shields.isEmpty()) {
+            List<BlockPos> newShields = new ArrayList<>(this.shields.size());
+            for (BlockPos pos : this.shields) {
+                newShields.add(pos.offset(dx, dy, dz));
+            }
+            this.shields = newShields;
+        }
+
+        if (this.weapons != null && !this.weapons.isEmpty()) {
+            List<BlockPos> newWeapons = new ArrayList<>(this.weapons.size());
+            for (BlockPos pos : this.weapons) {
+                newWeapons.add(pos.offset(dx, dy, dz));
+            }
+            this.weapons = newWeapons;
+        }
+
+        if (!this.shieldZones.isEmpty()) {
+            Map<Byte, ShieldZone> newZones = new HashMap<>();
+            for (Map.Entry<Byte, ShieldZone> entry : this.shieldZones.entrySet()) {
+                ShieldZone z = entry.getValue();
+                BlockPos newGenPos = z.generatorPos() != null ? z.generatorPos().offset(dx, dy, dz) : null;
+                newZones.put(entry.getKey(), new ShieldZone(z.id(), newGenPos, z.currentEnergy(), z.maxEnergy(), z.cooldownUntil(), z.isEnabled()));
+            }
+            this.shieldZones.clear();
+            this.shieldZones.putAll(newZones);
+        }
     }
 
     public Map<String, BlockPos> getHomes() {
@@ -283,6 +349,7 @@ public class ShipState {
      */
     public synchronized void updateShieldCache(VoxelGridCache cache, Set<BlockPos> absoluteShieldPositions) {
         this.shieldVoxelCache = cache != null ? cache : VoxelGridCache.EMPTY;
+        this.cachedRelBubble = null; // Invalidate cached bubble when shield updates
         if (absoluteShieldPositions != null && !absoluteShieldPositions.isEmpty()) {
             int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
             int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
@@ -342,4 +409,23 @@ public class ShipState {
         this.rotation = rotation != null ? rotation : new org.joml.Quaternionf();
     }
 
+    public Map<BlockPos, Byte> getCachedRelBubble() {
+        return cachedRelBubble;
+    }
+
+    public void setCachedRelBubble(Map<BlockPos, Byte> cachedRelBubble) {
+        this.cachedRelBubble = cachedRelBubble;
+    }
+
+    public byte[] encodeZoneEnergies() {
+        byte[] zoneEnergies = new byte[64];
+        for (ShieldZone zone : this.shieldZones.values()) {
+            int id = zone.id() & 0xFF;
+            if (id >= 1 && id <= 64) {
+                float percentage = Math.clamp((float) zone.currentEnergy() / Math.max(1.0f, (float) zone.maxEnergy()), 0.0f, 1.0f);
+                zoneEnergies[id - 1] = (byte) (percentage * 255.0f);
+            }
+        }
+        return zoneEnergies;
+    }
 }

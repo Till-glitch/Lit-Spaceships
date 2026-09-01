@@ -80,4 +80,13 @@ public class MiningLaserBlockEntity extends AbstractLaserNodeBlockEntity {
         super.loadAdditional(tag, registries);
         // isMining bleibt standardmäßig false.
     }
+
+    @Override
+    public boolean handleFire(Level level, ShipState shooterShip, BlockPos weaponPos) {
+        boolean newState = !isMining();
+        setMining(newState);
+        PacketDistributor.sendToPlayersTrackingChunk((ServerLevel) level, new ChunkPos(weaponPos),
+                new LaserStateSyncPayload(shooterShip.getId(), weaponPos, newState, getTier()));
+        return newState;
+    }
 }

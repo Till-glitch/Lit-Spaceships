@@ -33,7 +33,7 @@ public class SpaceshipShieldBlockEntity extends AbstractSpaceshipNodeBlockEntity
 
             ShieldZone myZone = null;
             for (ShieldZone zone : ship.getShieldZones().values()) {
-                if (zone.generatorPos().equals(worldPosition)) {
+                if (zone.generatorPos() != null && zone.generatorPos().equals(worldPosition)) {
                     myZone = zone;
                     break;
                 }

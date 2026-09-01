@@ -105,7 +105,7 @@ public class PayloadSerializationTest {
     void testShieldBubbleSyncPacket_Codec() {
         UUID shipId = UUID.randomUUID();
         BlockPos anchor = new BlockPos(50, 70, 50);
-        Set<BlockPos> shieldBlocks = Set.of(new BlockPos(51, 70, 50), new BlockPos(50, 71, 50));
+        Map<BlockPos, Byte> shieldBlocks = Map.of(new BlockPos(51, 70, 50), (byte) 1, new BlockPos(50, 71, 50), (byte) 2);
         ShieldBubbleSyncPacket original = new ShieldBubbleSyncPacket(shipId, anchor, shieldBlocks);
 
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());

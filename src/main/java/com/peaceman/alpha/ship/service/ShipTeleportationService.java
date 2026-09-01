@@ -129,15 +129,9 @@ public class ShipTeleportationService {
             }
 
             // State & Dimension Update
-            ship.setControllerPos(targetControllerPos);
-            ship.setBlocksRaw(newBlocks);
-            com.peaceman.alpha.ship.service.ServerShipManager.populateAndSyncShipState(targetLevel, ship);
-            ship.setReactors(newReactors);
-            ship.setShields(newShields);
-            ship.setWeapons(newWeapons);
-            ship.recalculateHullBounds();
-
+            ship.translate(dx, dy, dz);
             ServerShipManager.changeShipDimension(targetLevel, ship, targetLevel.dimension());
+            ServerShipManager.syncShieldZoneStates(targetLevel, ship);
 
             // 6. Phase: Entitäts- & Passagier-Transfer
             AABB originBox = ship.getTotalBoundingBox().move(-dx, -dy, -dz).inflate(1.0);

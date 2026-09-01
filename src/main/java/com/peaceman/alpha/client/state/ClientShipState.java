@@ -21,7 +21,7 @@ public class ClientShipState implements AutoCloseable {
 
     private final UUID shipId;
     private BlockPos anchorPos;
-    private Set<BlockPos> relativeBubbleBlocks = Collections.emptySet();
+    private java.util.Map<BlockPos, Byte> relativeBubbleBlocks = Collections.emptyMap();
     private Set<BlockPos> relativeStructureBlocks = Collections.emptySet();
     private VertexBuffer shieldMesh;
     private boolean isShieldActive = true;
@@ -41,6 +41,7 @@ public class ClientShipState implements AutoCloseable {
     private float shieldEnergyPercentage = 1.0f;
     private int currentEnergy = 0;
     private volatile long activeMask = ~0L; // Standardmäßig alle 64 Zonen aktiv
+    private final float[] zoneEnergies = new float[64];
 
     public ClientShipState(UUID shipId) {
         this.shipId = shipId;
@@ -48,14 +49,22 @@ public class ClientShipState implements AutoCloseable {
             this.impactTickTimes[i] = -1000L;
             this.impactPositions[i] = Vec3.ZERO;
         }
+        for (int i = 0; i < 64; i++) {
+            this.zoneEnergies[i] = 1.0f;
+        }
     }
 
     public long getActiveMask() {
         return activeMask;
     }
 
-    public void setActiveMask(long activeMask) {
+    public void setShieldZoneState(long activeMask, byte[] encodedEnergies) {
         this.activeMask = activeMask;
+        if (encodedEnergies != null && encodedEnergies.length == 64) {
+            for (int i = 0; i < 64; i++) {
+                this.zoneEnergies[i] = (encodedEnergies[i] & 0xFF) / 255.0f;
+            }
+        }
     }
 
     public UUID getShipId() {
@@ -70,7 +79,7 @@ public class ClientShipState implements AutoCloseable {
         this.anchorPos = anchorPos;
     }
 
-    public Set<BlockPos> getRelativeBubbleBlocks() {
+    public java.util.Map<BlockPos, Byte> getRelativeBubbleBlocks() {
         return relativeBubbleBlocks;
     }
 
@@ -190,9 +199,9 @@ public class ClientShipState implements AutoCloseable {
 
         float exactTime = currentTick + partialTicks;
 
-        // 1. Globale Energie- und Zeit-Uniforms übermitteln
-        if (shader.getUniform("u_EnergyLevel") != null) {
-            shader.getUniform("u_EnergyLevel").set(this.shieldEnergyPercentage);
+        // 1. Globale Zeit-Uniforms und lokales Energie-Array übermitteln
+        if (shader.getUniform("u_ZoneEnergies") != null) {
+            shader.getUniform("u_ZoneEnergies").set(this.zoneEnergies);
         }
         if (shader.getUniform("u_GameTime") != null) {
             shader.getUniform("u_GameTime").set(exactTime / 20.0f);
@@ -232,9 +241,9 @@ public class ClientShipState implements AutoCloseable {
      * Baut das Voxel-Mesh für die Schildblase und lädt es direkt in den VRAM (VertexBuffer).
      * Bestehender VRAM-Speicher wird ordnungsgemäß freigegeben.
      */
-    public synchronized void updateMesh(Set<BlockPos> relativeBlocks) {
+    public synchronized void updateMesh(java.util.Map<BlockPos, Byte> relativeBlocks) {
         if (isDisposed) return;
-        this.relativeBubbleBlocks = relativeBlocks != null ? relativeBlocks : Collections.emptySet();
+        this.relativeBubbleBlocks = relativeBlocks != null ? relativeBlocks : Collections.emptyMap();
 
         if (this.shieldMesh != null) {
             this.shieldMesh.close();

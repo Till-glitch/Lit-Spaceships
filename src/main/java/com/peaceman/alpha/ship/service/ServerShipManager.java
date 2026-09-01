@@ -160,20 +160,19 @@ public class ServerShipManager {
         }
     }
 
-    /**
-     * Berechnet die 64-Bit Aktivitätsmaske aller Schildzonen und synchronisiert diese
-     * an alle Spieler, die den Schiffs-Chunk tracken.
-     */
     public static void syncShieldZoneStates(Level level, ShipState ship) {
         if (level == null || level.isClientSide() || ship == null || ship.getControllerPos() == null) {
             return;
         }
         long activeMask = calculateShieldActiveMask(ship, level.getGameTime());
+        
+        byte[] zoneEnergies = ship.encodeZoneEnergies();
+        
         if (level instanceof ServerLevel serverLevel) {
             PacketDistributor.sendToPlayersTrackingChunk(
                     serverLevel,
                     new ChunkPos(ship.getControllerPos()),
-                    new com.peaceman.alpha.network.ShieldZoneStatePayload(ship.getId(), activeMask)
+                    new com.peaceman.alpha.network.ShieldZoneStatePayload(ship.getId(), activeMask, zoneEnergies)
             );
         }
     }
@@ -228,13 +227,21 @@ public class ServerShipManager {
                                 ship.getShieldCooldownRemaining(player.serverLevel().getGameTime()),
                                 ship.getMovementCooldownRemaining(player.serverLevel().getGameTime())));
                 if (!ship.getShields().isEmpty()) {
-                    Set<BlockPos> bubble = ShieldMorphology.calculateShieldBubble(ship.getBlocks(), 5);
-                    Set<BlockPos> relBubble = new HashSet<>(bubble.size());
-                    for (BlockPos bp : bubble) {
-                        relBubble.add(bp.subtract(ctrl));
+                    java.util.Map<BlockPos, Byte> relBubble = ship.getCachedRelBubble();
+                    if (relBubble == null) {
+                        Set<BlockPos> bubble = ShieldMorphology.calculateShieldBubble(ship.getBlocks(), 5);
+                        relBubble = new java.util.HashMap<>(bubble.size());
+                        for (BlockPos bp : bubble) {
+                            BlockPos rel = bp.subtract(ctrl);
+                            byte sId = ship.getShieldVoxelCache() != null ? ship.getShieldVoxelCache().getShieldId(rel) : 0;
+                            relBubble.put(rel, sId);
+                        }
+                        ship.setCachedRelBubble(relBubble);
                     }
                     PacketDistributor.sendToPlayer(player, new ShieldBubbleSyncPacket(ship.getId(), ctrl, relBubble));
-                    PacketDistributor.sendToPlayer(player, new com.peaceman.alpha.network.ShieldZoneStatePayload(ship.getId(), calculateShieldActiveMask(ship, player.serverLevel().getGameTime())));
+                    
+                    byte[] zoneEnergies = ship.encodeZoneEnergies();
+                    PacketDistributor.sendToPlayer(player, new com.peaceman.alpha.network.ShieldZoneStatePayload(ship.getId(), calculateShieldActiveMask(ship, player.serverLevel().getGameTime()), zoneEnergies));
                 }
 
                 // Sync continuous laser states to joining/tracking players
@@ -289,6 +296,9 @@ public class ServerShipManager {
                         break;
                     }
                 }
+                if (existing == null && ship.getShieldZone(id) != null) {
+                    existing = ship.getShieldZone(id);
+                }
                 
                 int energy = (existing != null) ? existing.currentEnergy() : 0;
                 int maxEnergy = (existing != null) ? existing.maxEnergy() : 100000;
@@ -308,6 +318,7 @@ public class ServerShipManager {
         // Schildberechnung und Sync anstoßen
         if (!level.isClientSide() && level instanceof ServerLevel serverLevel) {
             com.peaceman.alpha.ship.service.ShipMorphologyService.calculateAndSyncShieldAsync(ship, serverLevel, com.peaceman.alpha.ship.SpaceshipShieldHandler.getShieldRadius(ship));
+            syncShieldZoneStates(serverLevel, ship);
         }
     }
 }

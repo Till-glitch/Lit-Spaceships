@@ -80,4 +80,13 @@ public class HeavyBeamBlockEntity extends AbstractLaserNodeBlockEntity {
         super.loadAdditional(tag, registries);
         // isFiring bleibt standardmäßig false.
     }
+
+    @Override
+    public boolean handleFire(Level level, ShipState shooterShip, BlockPos weaponPos) {
+        boolean newState = !isFiring();
+        setFiring(newState);
+        PacketDistributor.sendToPlayersTrackingChunk((ServerLevel) level, new ChunkPos(weaponPos),
+                new LaserStateSyncPayload(shooterShip.getId(), weaponPos, newState, getTier()));
+        return newState;
+    }
 }

@@ -167,13 +167,15 @@ public class SpaceshipEnergyManagerTest {
         ship.setReactors(List.of(rPos));
 
         // Flug um 5m -> 2 Blöcke * 5m * 10 FE = 100 FE benötigt (vorhanden: 1000 FE)
-        boolean success = SpaceshipEnergyManager.tryConsumeFlightEnergy(level, ship, 5, 0, 0, null);
-        assertTrue(success);
+        SpaceshipEnergyManager.FlightEnergyResult success = SpaceshipEnergyManager.tryConsumeFlightEnergy(level, ship, 5, 0, 0);
+        assertEquals(EnergyConsumeResult.SUCCESS, success.status());
+        assertEquals(100, success.cost());
         assertEquals(900, storage.getEnergyStored());
 
         // Flug um 100m -> 2 Blöcke * 100m * 10 FE = 2000 FE benötigt (vorhanden: 900 FE) -> Fehlschlag
-        boolean fail = SpaceshipEnergyManager.tryConsumeFlightEnergy(level, ship, 100, 0, 0, null);
-        assertFalse(fail);
+        SpaceshipEnergyManager.FlightEnergyResult fail = SpaceshipEnergyManager.tryConsumeFlightEnergy(level, ship, 100, 0, 0);
+        assertEquals(EnergyConsumeResult.INSUFFICIENT_ENERGY, fail.status());
+        assertEquals(2000, fail.cost());
         assertEquals(900, storage.getEnergyStored());
     }
 }

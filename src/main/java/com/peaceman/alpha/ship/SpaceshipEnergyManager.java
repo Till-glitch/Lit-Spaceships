@@ -3,8 +3,6 @@ package com.peaceman.alpha.ship;
 import com.peaceman.alpha.block.entity.SpaceshipReactorBlockEntity;
 import com.peaceman.alpha.ship.domain.ShipState;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
@@ -54,19 +52,17 @@ public class SpaceshipEnergyManager {
         return true;
     }
 
+    public record FlightEnergyResult(EnergyConsumeResult status, int cost, int available) {}
+
     // 5. Die spezielle Methode für den Flug
-    public static boolean tryConsumeFlightEnergy(Level level, ShipState ship, int dx, int dy, int dz, Player player) {
+    public static FlightEnergyResult tryConsumeFlightEnergy(Level level, ShipState ship, int dx, int dy, int dz) {
         int cost = calculateMovementCost(ship, dx, dy, dz);
-        boolean success = tryConsumeEnergyAmount(level, ship, cost);
-
-        if (!success && player != null) {
-            int available = getTotalAvailableEnergy(level, ship);
-            player.displayClientMessage(
-                    Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.ENERGY_INSUFFICIENT,
-                            String.format("%,d", cost), String.format("%,d", available)), true);
+        int available = getTotalAvailableEnergy(level, ship);
+        if (available < cost) {
+            return new FlightEnergyResult(EnergyConsumeResult.INSUFFICIENT_ENERGY, cost, available);
         }
-
-        return success;
+        consumeEnergy(level, ship, cost);
+        return new FlightEnergyResult(EnergyConsumeResult.SUCCESS, cost, available);
     }
 
     /**
@@ -105,8 +101,8 @@ public class SpaceshipEnergyManager {
         long totalDeficit = 0L;
 
         for (com.peaceman.alpha.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
-            if (currentGameTime < zone.cooldownUntil()) {
-                continue; // Cooldown-Blockade aktiv
+            if (!zone.isEnabled() || zone.generatorPos() == null || currentGameTime < zone.cooldownUntil()) {
+                continue; // Cooldown-Blockade aktiv oder Generator zerstört/deaktiviert
             }
             int deficit = zone.maxEnergy() - zone.currentEnergy();
             deficit = Math.min(deficit, MAX_CHARGE_RATE_PER_ZONE);
@@ -136,20 +132,44 @@ public class SpaceshipEnergyManager {
             remainingRest -= transfer;
         }
 
-        // 3. Sekundärer Fallback-Loop (Rest-Tröpfchen-Verteilung): +1 FE an Generatoren mit Restdefizit
+        // 3. Sekundärer Fallback-Loop (Rest-Tröpfchen-Verteilung): Gleichmäßige Aufteilung des Restes
         if (remainingRest > 0) {
-            boolean distributedAny = true;
-            while (remainingRest > 0 && distributedAny) {
-                distributedAny = false;
-                for (com.peaceman.alpha.ship.domain.ShieldZone zone : eligibleZones) {
-                    if (remainingRest <= 0) break;
+            java.util.List<com.peaceman.alpha.ship.domain.ShieldZone> restZones = new java.util.ArrayList<>();
+            for (com.peaceman.alpha.ship.domain.ShieldZone zone : eligibleZones) {
+                int deficit = zone.maxEnergy() - zone.currentEnergy();
+                deficit = Math.min(deficit, MAX_CHARGE_RATE_PER_ZONE);
+                if (allocations.getOrDefault(zone.id(), 0) < deficit) {
+                    restZones.add(zone);
+                }
+            }
+
+            if (!restZones.isEmpty()) {
+                int div = remainingRest / restZones.size();
+                int mod = remainingRest % restZones.size();
+                for (com.peaceman.alpha.ship.domain.ShieldZone zone : restZones) {
                     int deficit = zone.maxEnergy() - zone.currentEnergy();
                     deficit = Math.min(deficit, MAX_CHARGE_RATE_PER_ZONE);
                     int currentAlloc = allocations.getOrDefault(zone.id(), 0);
-                    if (currentAlloc < deficit) {
-                        allocations.put(zone.id(), currentAlloc + 1);
-                        remainingRest--;
-                        distributedAny = true;
+                    int toAdd = Math.min(deficit - currentAlloc, div + (mod > 0 ? 1 : 0));
+                    if (mod > 0) mod--;
+                    allocations.put(zone.id(), currentAlloc + toAdd);
+                    remainingRest -= toAdd;
+                }
+                
+                // Fallback für verbleibenden Rest durch Math.min Limitierung
+                boolean distributedAny = true;
+                while (remainingRest > 0 && distributedAny) {
+                    distributedAny = false;
+                    for (com.peaceman.alpha.ship.domain.ShieldZone zone : restZones) {
+                        if (remainingRest <= 0) break;
+                        int deficit = zone.maxEnergy() - zone.currentEnergy();
+                        deficit = Math.min(deficit, MAX_CHARGE_RATE_PER_ZONE);
+                        int currentAlloc = allocations.getOrDefault(zone.id(), 0);
+                        if (currentAlloc < deficit) {
+                            allocations.put(zone.id(), currentAlloc + 1);
+                            remainingRest--;
+                            distributedAny = true;
+                        }
                     }
                 }
             }

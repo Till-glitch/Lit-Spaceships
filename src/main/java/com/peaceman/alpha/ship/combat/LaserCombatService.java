@@ -45,59 +45,7 @@ public class LaserCombatService {
             return false;
         }
 
-        LaserWeaponTier tier = laserBe.getTier();
-
-        // 1. Bei Pulse-Laser: Cooldown & Energie prüfen
-        if (laserBe instanceof PulseLaserBlockEntity pulseBe) {
-            if (!pulseBe.canFire()) {
-                return false;
-            }
-            if (!SpaceshipEnergyManager.tryConsumeEnergyAmount(level, shooterShip, laserBe.getEnergyCost())) {
-                return false;
-            }
-            pulseBe.triggerCooldown();
-
-            // Schuss-Ursprung und dynamische Ausrichtung berechnen
-            Vec3 dir = calculateAimDirection(laserBe, shooterShip);
-            Vec3 origin = Vec3.atCenterOf(weaponPos).add(dir.scale(0.55));
-
-            // Raycast durchführen (trifft Schiffe und Terrain)
-            RaycastHitResult hit = LaserRaycastUtil.raycast(level, shooterShip.getId(), origin, dir,
-                    laserBe.getMaxRange(), true);
-
-            // 1 Block sofort zerstören (Impuls-Wirkung)
-            processPulseHit(level, shooterShip, tier, hit);
-
-            // Visuelles Netzwerk-Broadcasting für Pulse-Laser
-            PacketDistributor.sendToPlayersTrackingChunk((ServerLevel) level, new ChunkPos(weaponPos),
-                    new LaserFirePayload(shooterShip.getId(), origin, hit.worldHitPos(), tier));
-
-            // Shooter Energy Sync
-            PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(
-                    shooterShip.getId(),
-                    SpaceshipEnergyManager.getTotalAvailableEnergy(level, shooterShip),
-                    shooterShip.isShieldActive(),
-                    shooterShip.getShieldCooldownRemaining(level.getGameTime()),
-                    shooterShip.getMovementCooldownRemaining(level.getGameTime())));
-
-            return true;
-
-        } else if (laserBe instanceof HeavyBeamBlockEntity heavyBe) {
-            boolean newState = !heavyBe.isFiring();
-            heavyBe.setFiring(newState);
-            PacketDistributor.sendToPlayersTrackingChunk((ServerLevel) level, new ChunkPos(weaponPos),
-                    new LaserStateSyncPayload(shooterShip.getId(), weaponPos, newState, tier));
-            return newState;
-
-        } else if (laserBe instanceof MiningLaserBlockEntity miningBe) {
-            boolean newState = !miningBe.isMining();
-            miningBe.setMining(newState);
-            PacketDistributor.sendToPlayersTrackingChunk((ServerLevel) level, new ChunkPos(weaponPos),
-                    new LaserStateSyncPayload(shooterShip.getId(), weaponPos, newState, tier));
-            return newState;
-        }
-
-        return false;
+        return laserBe.handleFire(level, shooterShip, weaponPos);
     }
 
     /**
@@ -145,7 +93,7 @@ public class LaserCombatService {
      * Sofortige Trefferverarbeitung für Impuls-Laser (zerstört pro Schuss genau 1
      * Block).
      */
-    private static void processPulseHit(Level level, ShipState shooterShip, LaserWeaponTier tier,
+    public static void processPulseHit(Level level, ShipState shooterShip, LaserWeaponTier tier,
             RaycastHitResult hit) {
         if (hit == null || !hit.isHit())
             return;
@@ -332,15 +280,13 @@ public class LaserCombatService {
      */
     private static void destroyShipHullBlock(Level level, ShipState targetShip, BlockPos hitBlock, Vec3 worldHitPos) {
         if (targetShip.getBlocks().contains(hitBlock)) {
+            boolean isShieldGen = targetShip.getShields().contains(hitBlock);
             targetShip.getBlocks().remove(hitBlock);
             targetShip.getReactors().remove(hitBlock);
-            targetShip.getShields().remove(hitBlock);
             targetShip.getWeapons().remove(hitBlock);
 
-            if (targetShip.getShields().isEmpty() && targetShip.isShieldActive()) {
-                targetShip.setShieldActive(false);
-                PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(targetShip.getId(),
-                        targetShip.getControllerPos(), Collections.emptySet()));
+            if (isShieldGen) {
+                SpaceshipShieldHandler.onShieldBlockDestroyed(level, hitBlock, targetShip.getId());
             }
 
             level.setBlock(hitBlock, Blocks.AIR.defaultBlockState(), 3);

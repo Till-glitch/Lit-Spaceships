@@ -16,7 +16,8 @@ import java.util.UUID;
  */
 public record ShieldZoneStatePayload(
         UUID shipId,
-        long activeMask
+        long activeMask,
+        byte[] zoneEnergies
 ) implements CustomPacketPayload {
 
     public static final CustomPacketPayload.Type<ShieldZoneStatePayload> TYPE =
@@ -27,6 +28,8 @@ public record ShieldZoneStatePayload(
             ShieldZoneStatePayload::shipId,
             ByteBufCodecs.VAR_LONG,
             ShieldZoneStatePayload::activeMask,
+            ByteBufCodecs.byteArray(64),
+            ShieldZoneStatePayload::zoneEnergies,
             ShieldZoneStatePayload::new
     );
 

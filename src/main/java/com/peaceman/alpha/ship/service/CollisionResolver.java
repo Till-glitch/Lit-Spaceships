@@ -126,8 +126,9 @@ public class CollisionResolver {
         if (!shieldA && shieldB) {
             int drain = voxelCount * ENERGY_PER_VOXEL_IMPACT;
             boolean absorbed = true;
+            byte fallbackB = findFallbackShieldId(level, shipB, collidingVoxels);
             for (BlockPos pos : collidingVoxels) {
-                if (!SpaceshipShieldHandler.tryConsumeShieldEnergyAt(level, shipB, pos, ENERGY_PER_VOXEL_IMPACT)) {
+                if (!SpaceshipShieldHandler.tryConsumeShieldEnergyAt(level, shipB, pos, ENERGY_PER_VOXEL_IMPACT, fallbackB)) {
                     absorbed = false;
                     break;
                 }
@@ -162,8 +163,9 @@ public class CollisionResolver {
         if (shieldA && !shieldB) {
             int drillCost = voxelCount * ENERGY_PER_VOXEL_DRILL;
             boolean hasEnergy = true;
+            byte fallbackA = findFallbackShieldId(level, shipA, collidingVoxels);
             for (BlockPos pos : collidingVoxels) {
-                if (!SpaceshipShieldHandler.tryConsumeShieldEnergyAt(level, shipA, pos, ENERGY_PER_VOXEL_DRILL)) {
+                if (!SpaceshipShieldHandler.tryConsumeShieldEnergyAt(level, shipA, pos, ENERGY_PER_VOXEL_DRILL, fallbackA)) {
                     hasEnergy = false;
                     break;
                 }
@@ -217,11 +219,13 @@ public class CollisionResolver {
             int clashCost = voxelCount * ENERGY_PER_VOXEL_SHIELD_CLASH;
             boolean absorbedA = true;
             boolean absorbedB = true;
+            byte fallbackA = findFallbackShieldId(level, shipA, collidingVoxels);
+            byte fallbackB = findFallbackShieldId(level, shipB, collidingVoxels);
             for (BlockPos pos : collidingVoxels) {
-                if (absorbedA && !SpaceshipShieldHandler.tryConsumeShieldEnergyAt(level, shipA, pos, ENERGY_PER_VOXEL_SHIELD_CLASH)) {
+                if (absorbedA && !SpaceshipShieldHandler.tryConsumeShieldEnergyAt(level, shipA, pos, ENERGY_PER_VOXEL_SHIELD_CLASH, fallbackA)) {
                     absorbedA = false;
                 }
-                if (absorbedB && !SpaceshipShieldHandler.tryConsumeShieldEnergyAt(level, shipB, pos, ENERGY_PER_VOXEL_SHIELD_CLASH)) {
+                if (absorbedB && !SpaceshipShieldHandler.tryConsumeShieldEnergyAt(level, shipB, pos, ENERGY_PER_VOXEL_SHIELD_CLASH, fallbackB)) {
                     absorbedB = false;
                 }
                 if (!absorbedA && !absorbedB) break;
@@ -344,7 +348,7 @@ public class CollisionResolver {
         if (ship.isShieldActive()) {
             SpaceshipShieldHandler.toggleShield(level, ship);
         }
-        PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(ship.getId(), ship.getControllerPos(), Collections.emptySet()));
+        PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(ship.getId(), ship.getControllerPos(), java.util.Collections.emptyMap()));
         PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(ship.getId(), 0, false,
                 ship.getShieldCooldownRemaining(level.getGameTime()),
                 ship.getMovementCooldownRemaining(level.getGameTime())));
@@ -366,5 +370,31 @@ public class CollisionResolver {
         Vec3 localPos = Vec3.atCenterOf(hitPos.subtract(ship.getControllerPos()));
         PacketDistributor.sendToPlayersTrackingChunk(level, new ChunkPos(ship.getControllerPos()),
                 new ShipImpactEventPayload(ship.getId(), localPos, intensity));
+    }
+
+    private static byte findFallbackShieldId(Level level, ShipState ship, List<BlockPos> collidingVoxels) {
+        if (collidingVoxels == null || collidingVoxels.isEmpty()) return 0;
+        long sumX = 0, sumY = 0, sumZ = 0;
+        for (BlockPos pos : collidingVoxels) {
+            sumX += pos.getX();
+            sumY += pos.getY();
+            sumZ += pos.getZ();
+        }
+        int size = collidingVoxels.size();
+        BlockPos center = new BlockPos((int)(sumX / size), (int)(sumY / size), (int)(sumZ / size));
+        
+        byte fallbackShieldId = 0;
+        double minSq = Double.MAX_VALUE;
+        long gameTime = level.getGameTime();
+        for (com.peaceman.alpha.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
+            if (!zone.isCollapsed(gameTime) && zone.generatorPos() != null) {
+                double dist = zone.generatorPos().distSqr(center);
+                if (dist < minSq) {
+                    minSq = dist;
+                    fallbackShieldId = zone.id();
+                }
+            }
+        }
+        return fallbackShieldId;
     }
 }

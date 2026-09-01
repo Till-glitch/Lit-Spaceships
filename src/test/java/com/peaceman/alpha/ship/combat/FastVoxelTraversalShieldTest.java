@@ -61,4 +61,58 @@ class FastVoxelTraversalShieldTest {
         assertTrue(hitOpt.isPresent());
         assertEquals((byte) 0, hitOpt.get().shieldId());
     }
+
+    @Test
+    @DisplayName("VoxelValidator mit Dot-Product ignoriert Treffer von innen und blockt Treffer von aussen")
+    void testVoxelValidatorDotProductDirection() {
+        int size = 5;
+        BitSet bitSet = new BitSet(size * size * size);
+        int index = 2 + (2 * size) + (2 * size * size);
+        bitSet.set(index); // Set voxel at (2, 2, 2)
+
+        VoxelGridCache cache = new VoxelGridCache(BlockPos.ZERO, size, size, size, bitSet);
+        cache.setShieldId(2, 2, 2, (byte) 1);
+        
+        // Generator is at (0, 2, 2) in relative space.
+        // Voxel is at (2, 2, 2).
+        BlockPos genPos = new BlockPos(0, 2, 2);
+
+        FastVoxelTraversal.VoxelValidator validator = (id, x, y, z) -> {
+            if (id != 1) return false;
+            double toHitX = x - genPos.getX();
+            double toHitY = y - genPos.getY();
+            double toHitZ = z - genPos.getZ();
+            
+            // Vector from generator to hit is (2, 0, 0)
+            // If ray is moving in +X direction, it hits from inside. (Dot > 0)
+            // If ray is moving in -X direction, it hits from outside. (Dot < 0)
+            return (1.0 * toHitX + 0.0 * toHitY + 0.0 * toHitZ) <= 0; // Using a dummy dir (1,0,0) for inside, (-1,0,0) for outside
+        };
+
+        // 1. Schuss von INNEN (Strahl bewegt sich nach +X, weg vom Generator)
+        Vec3 originInside = new Vec3(1.0, 2.5, 2.5);
+        Vec3 dirInside = new Vec3(1.0, 0.0, 0.0);
+        
+        Optional<FastVoxelTraversal.VoxelHit> hitInside = FastVoxelTraversal.traverse(
+            cache, originInside, dirInside, 10.0, 
+            (id, x, y, z) -> {
+                double toHitX = x - genPos.getX();
+                return dirInside.x * toHitX <= 0;
+            }
+        );
+        assertTrue(hitInside.isEmpty(), "Treffer von Innen (weg vom Generator) muss ignoriert werden");
+
+        // 2. Schuss von AUSSEN (Strahl bewegt sich nach -X, auf den Generator zu)
+        Vec3 originOutside = new Vec3(3.5, 2.5, 2.5);
+        Vec3 dirOutside = new Vec3(-1.0, 0.0, 0.0);
+        
+        Optional<FastVoxelTraversal.VoxelHit> hitOutside = FastVoxelTraversal.traverse(
+            cache, originOutside, dirOutside, 10.0,
+            (id, x, y, z) -> {
+                double toHitX = x - genPos.getX();
+                return dirOutside.x * toHitX <= 0;
+            }
+        );
+        assertTrue(hitOutside.isPresent(), "Treffer von Außen (auf den Generator zu) muss geblockt werden");
+    }
 }
