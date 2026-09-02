@@ -7,12 +7,10 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 // Die Record-Definition bekommt ein Feld mehr: anchorPos
-public record ShieldBubbleSyncPacket(UUID shipId, BlockPos anchorPos, Set<BlockPos> relativeBubbleBlocks) implements CustomPacketPayload {
+public record ShieldBubbleSyncPacket(UUID shipId, BlockPos anchorPos, java.util.Map<BlockPos, Byte> relativeBubbleBlocks) implements CustomPacketPayload {
 
     public static final CustomPacketPayload.Type<ShieldBubbleSyncPacket> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "shield_bubble_sync"));
@@ -25,17 +23,18 @@ public record ShieldBubbleSyncPacket(UUID shipId, BlockPos anchorPos, Set<BlockP
                 buf.writeUUID(packet.shipId());
                 buf.writeBlockPos(packet.anchorPos()); // NEU: Anker mitsenden
                 buf.writeInt(packet.relativeBubbleBlocks().size());
-                for (BlockPos pos : packet.relativeBubbleBlocks()) {
-                    buf.writeLong(pos.asLong());
+                for (java.util.Map.Entry<BlockPos, Byte> entry : packet.relativeBubbleBlocks().entrySet()) {
+                    buf.writeLong(entry.getKey().asLong());
+                    buf.writeByte(entry.getValue());
                 }
             },
             buf -> {
                 UUID id = buf.readUUID();
                 BlockPos anchor = buf.readBlockPos(); // NEU: Anker auslesen
                 int size = buf.readInt();
-                Set<BlockPos> blocks = new HashSet<>(size);
+                java.util.Map<BlockPos, Byte> blocks = new java.util.HashMap<>(size);
                 for (int i = 0; i < size; i++) {
-                    blocks.add(BlockPos.of(buf.readLong()));
+                    blocks.put(BlockPos.of(buf.readLong()), buf.readByte());
                 }
                 return new ShieldBubbleSyncPacket(id, anchor, blocks);
             }

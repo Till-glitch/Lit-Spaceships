@@ -69,9 +69,27 @@ public class ShipSavedData extends SavedData {
             }
             shipTag.put("Weapons", weaponList);
 
+            // Lokalisierte Schildzonen
+            ListTag zoneList = new ListTag();
+            for (com.peaceman.alpha.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
+                CompoundTag zTag = new CompoundTag();
+                zTag.putByte("ZoneId", zone.id());
+                BlockPos gp = zone.generatorPos();
+                if (gp != null) {
+                    zTag.putIntArray("GenPos", new int[]{gp.getX(), gp.getY(), gp.getZ()});
+                }
+                zTag.putInt("Energy", zone.currentEnergy());
+                zTag.putInt("MaxEnergy", zone.maxEnergy());
+                zTag.putLong("Cooldown", zone.cooldownUntil());
+                zTag.putBoolean("IsEnabled", zone.isEnabled());
+                zoneList.add(zTag);
+            }
+            shipTag.put("ShieldZones", zoneList);
+
             // 5. Status & Dimension
             shipTag.putBoolean("ShieldActive", ship.isShieldActive());
             shipTag.putString("Dimension", ship.getDimension().location().toString());
+            shipTag.putString("PowerPriority", ship.getPowerPriority().name());
 
             // 6. Cooldowns (absolute Weltzeit)
             shipTag.putLong("ShieldCooldownUntil", ship.getShieldCooldownUntil());
@@ -149,12 +167,50 @@ public class ShipSavedData extends SavedData {
             ShipState loadedShip = new ShipState(id, ctrlPos, blocks, homes, loadedReactors, loadedShields, isShieldActive, dimension);
             loadedShip.setWeapons(loadedWeapons);
 
+            // Lokalisierte Schildzonen laden
+            if (shipTag.contains("ShieldZones")) {
+                ListTag zList = shipTag.getList("ShieldZones", Tag.TAG_COMPOUND);
+                Map<Byte, com.peaceman.alpha.ship.domain.ShieldZone> loadedZones = new HashMap<>();
+                for (int j = 0; j < zList.size(); j++) {
+                    CompoundTag zTag = zList.getCompound(j);
+                    byte zId = zTag.getByte("ZoneId");
+                    BlockPos gp = null;
+                    if (zTag.contains("GenPos")) {
+                        int[] gArr = zTag.getIntArray("GenPos");
+                        gp = new BlockPos(gArr[0], gArr[1], gArr[2]);
+                    }
+                    int energy = zTag.getInt("Energy");
+                    int maxEnergy = zTag.getInt("MaxEnergy");
+                    long cooldown = zTag.getLong("Cooldown");
+                    boolean isEnabled = !zTag.contains("IsEnabled") || zTag.getBoolean("IsEnabled");
+                    loadedZones.put(zId, new com.peaceman.alpha.ship.domain.ShieldZone(zId, gp, energy, maxEnergy, cooldown, isEnabled));
+                }
+                loadedShip.setShieldZones(loadedZones);
+            }
+
+            // Power-Priorität wiederherstellen
+            if (shipTag.contains("PowerPriority")) {
+                try {
+                    loadedShip.setPowerPriority(com.peaceman.alpha.ship.domain.PowerPriority.valueOf(shipTag.getString("PowerPriority")));
+                } catch (IllegalArgumentException ignored) {
+                    loadedShip.setPowerPriority(com.peaceman.alpha.ship.domain.PowerPriority.BALANCED);
+                }
+            }
+
             // Cooldowns wiederherstellen
             if (shipTag.contains("ShieldCooldownUntil")) {
                 loadedShip.setShieldCooldownUntil(shipTag.getLong("ShieldCooldownUntil"));
             }
             if (shipTag.contains("MovementCooldownUntil")) {
                 loadedShip.setMovementCooldownUntil(shipTag.getLong("MovementCooldownUntil"));
+            }
+
+            // Voronoi-Zonen auf Hülle berechnen
+            if (!loadedShip.getShields().isEmpty() && loadedShip.getHullVoxelCache() != null && !loadedShip.getHullVoxelCache().isEmpty()) {
+                var coverages = com.peaceman.alpha.ship.service.ShipScannerService.calculateVoronoiZones(
+                        loadedShip.getHullVoxelCache(), loadedShip.getShields(), loadedShip.getControllerPos()
+                );
+                loadedShip.setSectorCoverages(coverages);
             }
 
             ServerShipManager.registerShip(loadedShip);

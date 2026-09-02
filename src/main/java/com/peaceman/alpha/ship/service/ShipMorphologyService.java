@@ -10,7 +10,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -56,7 +55,7 @@ public class ShipMorphologyService {
 
         if (ship.getShields().isEmpty()) {
             ship.updateShieldCache(VoxelGridCache.EMPTY, Collections.emptySet());
-            PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(targetId, targetAnchor, Collections.emptySet()));
+            PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(targetId, targetAnchor, Collections.emptyMap()));
             return;
         }
 
@@ -72,6 +71,9 @@ public class ShipMorphologyService {
                 .start(() -> {
                     Set<BlockPos> calculatedBubble = performVolumetricDilation(immutableStructureSnapshot, radius);
                     VoxelGridCache shieldCache = VoxelGridCache.buildFromAbsolute(calculatedBubble, targetAnchor);
+                    if (ship.getShields() != null && !ship.getShields().isEmpty()) {
+                        ShipScannerService.calculateVoronoiZones(shieldCache, ship.getShields(), targetAnchor);
+                    }
 
                     // 4. Rückführung auf den Main Server Thread
                     serverLevel.getServer().execute(() -> {
@@ -85,9 +87,10 @@ public class ShipMorphologyService {
                         if (isLatest && currentShip != null) {
                             currentShip.updateShieldCache(shieldCache, calculatedBubble);
 
-                            Set<BlockPos> relativeBlocks = new HashSet<>(calculatedBubble.size());
+                            java.util.Map<BlockPos, Byte> relativeBlocks = new java.util.HashMap<>(calculatedBubble.size());
                             for (BlockPos absPos : calculatedBubble) {
-                                relativeBlocks.add(absPos.subtract(targetAnchor));
+                                BlockPos rel = absPos.subtract(targetAnchor);
+                                relativeBlocks.put(rel, shieldCache.getShieldId(rel));
                             }
                             PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(targetId, targetAnchor, relativeBlocks));
                         }

@@ -45,6 +45,14 @@ public class ServerShipManager {
     public static void onServerStarted(ServerStartedEvent event) {
         ShipSavedData.get(event.getServer().overworld());
         Alpha.LOGGER.info("Spaceships loaded: {} across {} dimensions", ACTIVE_SHIPS.size(), SHIPS_BY_DIMENSION.size());
+        
+        // Ensure shield bubbles and caches are initialized on server start
+        for (ShipState ship : ACTIVE_SHIPS.values()) {
+            if (ship.isShieldActive() && !ship.getShields().isEmpty()) {
+                com.peaceman.alpha.ship.service.ShipMorphologyService.calculateAndSyncShieldAsync(
+                        ship, event.getServer().overworld(), com.peaceman.alpha.ship.SpaceshipShieldHandler.getShieldRadius(ship));
+            }
+        }
     }
 
     public static ShipState getShip(UUID shipId) {
@@ -108,6 +116,11 @@ public class ServerShipManager {
 
             saveData(level);
             int energy = com.peaceman.alpha.ship.SpaceshipEnergyManager.getTotalAvailableEnergy(level, newShip);
+            Set<BlockPos> relative = new HashSet<>(shipBlocks.size());
+            for (BlockPos b : shipBlocks) {
+                relative.add(b.subtract(startPos));
+            }
+            PacketDistributor.sendToAllPlayers(new ShipStructureSyncPayload(newShip.getId(), startPos, relative));
             PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(newShip.getId(), energy, newShip.isShieldActive(), 0L, 0L));
             PacketDistributor.sendToAllPlayers(new ShipDimensionSyncPayload(newShip.getId(), level.dimension()));
             return newShip;
@@ -122,12 +135,21 @@ public class ServerShipManager {
             populateAndSyncShipState(level, ship);
 
             for (BlockPos pos : newBlocks) {
-                if (level.getBlockEntity(pos) instanceof ISpaceshipNode node) {
+                BlockEntity entityAtPos = level.getBlockEntity(pos);
+                if (entityAtPos instanceof ISpaceshipNode node) {
                     node.setShipId(ship.getId());
+                    entityAtPos.setChanged();
+                    level.sendBlockUpdated(pos, entityAtPos.getBlockState(), entityAtPos.getBlockState(), 3);
                 }
             }
             saveData(level);
             int energy = com.peaceman.alpha.ship.SpaceshipEnergyManager.getTotalAvailableEnergy(level, ship);
+            BlockPos ctrl = ship.getControllerPos();
+            Set<BlockPos> relative = new HashSet<>(newBlocks.size());
+            for (BlockPos b : newBlocks) {
+                relative.add(b.subtract(ctrl));
+            }
+            PacketDistributor.sendToAllPlayers(new ShipStructureSyncPayload(ship.getId(), ctrl, relative));
             PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(ship.getId(), energy, ship.isShieldActive(),
                     ship.getShieldCooldownRemaining(level.getGameTime()),
                     ship.getMovementCooldownRemaining(level.getGameTime())));
@@ -137,10 +159,14 @@ public class ServerShipManager {
     public static void deleteShip(Level level, ShipState ship) {
         if (ship != null) {
             for (BlockPos pos : ship.getBlocks()) {
-                if (level.getBlockEntity(pos) instanceof ISpaceshipNode node) {
+                BlockEntity entityAtPos = level.getBlockEntity(pos);
+                if (entityAtPos instanceof ISpaceshipNode node) {
                     node.setShipId(null);
+                    entityAtPos.setChanged();
+                    level.sendBlockUpdated(pos, entityAtPos.getBlockState(), entityAtPos.getBlockState(), 3);
                 }
             }
+            PacketDistributor.sendToAllPlayers(new ShipStructureSyncPayload(ship.getId(), ship.getControllerPos(), java.util.Collections.emptySet()));
             unregisterShip(ship);
             saveData(level);
         }
@@ -150,6 +176,37 @@ public class ServerShipManager {
         if (level instanceof ServerLevel serverLevel) {
             ShipSavedData.get(serverLevel).setDirty();
         }
+    }
+
+    public static void syncShieldZoneStates(Level level, ShipState ship) {
+        if (level == null || level.isClientSide() || ship == null || ship.getControllerPos() == null) {
+            return;
+        }
+        long activeMask = calculateShieldActiveMask(ship, level.getGameTime());
+        
+        byte[] zoneEnergies = ship.encodeZoneEnergies();
+        
+        if (level instanceof ServerLevel serverLevel) {
+            PacketDistributor.sendToPlayersTrackingChunk(
+                    serverLevel,
+                    new ChunkPos(ship.getControllerPos()),
+                    new com.peaceman.alpha.network.ShieldZoneStatePayload(ship.getId(), activeMask, zoneEnergies)
+            );
+        }
+    }
+
+    public static long calculateShieldActiveMask(ShipState ship, long gameTime) {
+        if (ship == null || ship.getShieldZones().isEmpty()) {
+            return 0L;
+        }
+        long mask = 0L;
+        for (com.peaceman.alpha.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
+            int id = zone.id() & 0xFF;
+            if (id >= 1 && id <= 64 && !zone.isCollapsed(gameTime)) {
+                mask |= (1L << (id - 1));
+            }
+        }
+        return mask;
     }
 
     /**
@@ -188,12 +245,21 @@ public class ServerShipManager {
                                 ship.getShieldCooldownRemaining(player.serverLevel().getGameTime()),
                                 ship.getMovementCooldownRemaining(player.serverLevel().getGameTime())));
                 if (!ship.getShields().isEmpty()) {
-                    Set<BlockPos> bubble = ShieldMorphology.calculateShieldBubble(ship.getBlocks(), 5);
-                    Set<BlockPos> relBubble = new HashSet<>(bubble.size());
-                    for (BlockPos bp : bubble) {
-                        relBubble.add(bp.subtract(ctrl));
+                    java.util.Map<BlockPos, Byte> relBubble = ship.getCachedRelBubble();
+                    if (relBubble == null) {
+                        Set<BlockPos> bubble = ShieldMorphology.calculateShieldBubble(ship.getBlocks(), 5);
+                        relBubble = new java.util.HashMap<>(bubble.size());
+                        for (BlockPos bp : bubble) {
+                            BlockPos rel = bp.subtract(ctrl);
+                            byte sId = ship.getShieldVoxelCache() != null ? ship.getShieldVoxelCache().getShieldId(rel) : 0;
+                            relBubble.put(rel, sId);
+                        }
+                        ship.setCachedRelBubble(relBubble);
                     }
                     PacketDistributor.sendToPlayer(player, new ShieldBubbleSyncPacket(ship.getId(), ctrl, relBubble));
+                    
+                    byte[] zoneEnergies = ship.encodeZoneEnergies();
+                    PacketDistributor.sendToPlayer(player, new com.peaceman.alpha.network.ShieldZoneStatePayload(ship.getId(), calculateShieldActiveMask(ship, player.serverLevel().getGameTime()), zoneEnergies));
                 }
 
                 // Sync continuous laser states to joining/tracking players
@@ -231,12 +297,47 @@ public class ServerShipManager {
 
         if (ship.getShields().isEmpty()) {
             ship.setShieldActive(false);
+            ship.getShieldZones().clear();
             ship.updateShieldCache(com.peaceman.alpha.ship.domain.VoxelGridCache.EMPTY, java.util.Collections.emptySet());
+        } else {
+            // ShieldZones initialisieren / abgleichen
+            int maxGens = Math.min(ship.getShields().size(), ShipScannerService.MAX_SHIELD_GENERATORS);
+            java.util.Map<Byte, com.peaceman.alpha.ship.domain.ShieldZone> updatedZones = new java.util.HashMap<>();
+            for (int i = 0; i < maxGens; i++) {
+                byte id = (byte) (i + 1);
+                BlockPos genPos = ship.getShields().get(i);
+                
+                com.peaceman.alpha.ship.domain.ShieldZone existing = null;
+                for (com.peaceman.alpha.ship.domain.ShieldZone z : ship.getShieldZones().values()) {
+                    if (z.generatorPos() != null && z.generatorPos().equals(genPos)) {
+                        existing = z;
+                        break;
+                    }
+                }
+                if (existing == null && ship.getShieldZone(id) != null) {
+                    existing = ship.getShieldZone(id);
+                }
+                
+                int energy = (existing != null) ? existing.currentEnergy() : 0;
+                int maxEnergy = (existing != null) ? existing.maxEnergy() : 100000;
+                long cooldown = (existing != null) ? existing.cooldownUntil() : 0L;
+                boolean isEnabled = (existing != null) ? existing.isEnabled() : true;
+                
+                updatedZones.put(id, new com.peaceman.alpha.ship.domain.ShieldZone(id, genPos, energy, maxEnergy, cooldown, isEnabled));
+            }
+            ship.setShieldZones(updatedZones);
+
+            // Voronoi-Zuweisung auf dem Hüllen-Voxel-Cache durchführen
+            if (ship.getHullVoxelCache() != null && !ship.getHullVoxelCache().isEmpty()) {
+                var coverages = ShipScannerService.calculateVoronoiZones(ship.getHullVoxelCache(), ship.getShields(), ship.getControllerPos());
+                ship.setSectorCoverages(coverages);
+            }
         }
 
         // Schildberechnung und Sync anstoßen
         if (!level.isClientSide() && level instanceof ServerLevel serverLevel) {
             com.peaceman.alpha.ship.service.ShipMorphologyService.calculateAndSyncShieldAsync(ship, serverLevel, com.peaceman.alpha.ship.SpaceshipShieldHandler.getShieldRadius(ship));
+            syncShieldZoneStates(serverLevel, ship);
         }
     }
 }

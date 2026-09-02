@@ -3,7 +3,6 @@ package com.peaceman.alpha.client;
 import com.peaceman.alpha.client.screen.SpaceshipControlScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
-import org.apache.commons.compress.compressors.lz77support.LZ77Compressor;
 
 /**
  * Diese Klasse darf NIEMALS vom Server aufgerufen werden.

@@ -3,7 +3,6 @@ package com.peaceman.alpha.ship.combat;
 import com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity;
 import com.peaceman.alpha.block.entity.HeavyBeamBlockEntity;
 import com.peaceman.alpha.block.entity.MiningLaserBlockEntity;
-import com.peaceman.alpha.block.entity.PulseLaserBlockEntity;
 import com.peaceman.alpha.network.*;
 import com.peaceman.alpha.ship.SpaceshipEnergyManager;
 import com.peaceman.alpha.ship.SpaceshipShieldHandler;
@@ -20,7 +19,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -30,6 +28,39 @@ import java.util.List;
  * bei Dauerstrahlen.
  */
 public class LaserCombatService {
+
+    /**
+     * Schaltet alle aktiven Dauerstrahlen (Heavy Beam & Mining Laser) eines Schiffs ab,
+     * setzt Bohrfortschritte zurück und synchronisiert den Status an Clients.
+     */
+    public static void stopAllContinuousLasers(Level level, ShipState ship) {
+        if (level == null || ship == null || ship.getWeapons() == null || ship.getWeapons().isEmpty()) {
+            return;
+        }
+
+        for (BlockPos weaponPos : ship.getWeapons()) {
+            if (level.getBlockEntity(weaponPos) instanceof AbstractLaserNodeBlockEntity laserBe) {
+                laserBe.clearDrillProgress(level);
+                if (laserBe instanceof HeavyBeamBlockEntity heavyBe && heavyBe.isFiring()) {
+                    heavyBe.setFiring(false);
+                    if (level instanceof ServerLevel serverLevel) {
+                        PacketDistributor.sendToPlayersTrackingChunk(
+                                serverLevel, new ChunkPos(weaponPos),
+                                new LaserStateSyncPayload(ship.getId(), weaponPos, false, LaserWeaponTier.HEAVY_BEAM)
+                        );
+                    }
+                } else if (laserBe instanceof MiningLaserBlockEntity miningBe && miningBe.isMining()) {
+                    miningBe.setMining(false);
+                    if (level instanceof ServerLevel serverLevel) {
+                        PacketDistributor.sendToPlayersTrackingChunk(
+                                serverLevel, new ChunkPos(weaponPos),
+                                new LaserStateSyncPayload(ship.getId(), weaponPos, false, LaserWeaponTier.MINING_LASER)
+                        );
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * Feuert eine Laserwaffe an der angegebenen Position ab bzw. schaltet
@@ -45,59 +76,7 @@ public class LaserCombatService {
             return false;
         }
 
-        LaserWeaponTier tier = laserBe.getTier();
-
-        // 1. Bei Pulse-Laser: Cooldown & Energie prüfen
-        if (laserBe instanceof PulseLaserBlockEntity pulseBe) {
-            if (!pulseBe.canFire()) {
-                return false;
-            }
-            if (!SpaceshipEnergyManager.tryConsumeEnergyAmount(level, shooterShip, laserBe.getEnergyCost())) {
-                return false;
-            }
-            pulseBe.triggerCooldown();
-
-            // Schuss-Ursprung und dynamische Ausrichtung berechnen
-            Vec3 dir = calculateAimDirection(laserBe, shooterShip);
-            Vec3 origin = Vec3.atCenterOf(weaponPos).add(dir.scale(0.55));
-
-            // Raycast durchführen (trifft Schiffe und Terrain)
-            RaycastHitResult hit = LaserRaycastUtil.raycast(level, shooterShip.getId(), origin, dir,
-                    laserBe.getMaxRange(), true);
-
-            // 1 Block sofort zerstören (Impuls-Wirkung)
-            processPulseHit(level, shooterShip, tier, hit);
-
-            // Visuelles Netzwerk-Broadcasting für Pulse-Laser
-            PacketDistributor.sendToPlayersTrackingChunk((ServerLevel) level, new ChunkPos(weaponPos),
-                    new LaserFirePayload(shooterShip.getId(), origin, hit.worldHitPos(), tier));
-
-            // Shooter Energy Sync
-            PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(
-                    shooterShip.getId(),
-                    SpaceshipEnergyManager.getTotalAvailableEnergy(level, shooterShip),
-                    shooterShip.isShieldActive(),
-                    shooterShip.getShieldCooldownRemaining(level.getGameTime()),
-                    shooterShip.getMovementCooldownRemaining(level.getGameTime())));
-
-            return true;
-
-        } else if (laserBe instanceof HeavyBeamBlockEntity heavyBe) {
-            boolean newState = !heavyBe.isFiring();
-            heavyBe.setFiring(newState);
-            PacketDistributor.sendToPlayersTrackingChunk((ServerLevel) level, new ChunkPos(weaponPos),
-                    new LaserStateSyncPayload(shooterShip.getId(), weaponPos, newState, tier));
-            return newState;
-
-        } else if (laserBe instanceof MiningLaserBlockEntity miningBe) {
-            boolean newState = !miningBe.isMining();
-            miningBe.setMining(newState);
-            PacketDistributor.sendToPlayersTrackingChunk((ServerLevel) level, new ChunkPos(weaponPos),
-                    new LaserStateSyncPayload(shooterShip.getId(), weaponPos, newState, tier));
-            return newState;
-        }
-
-        return false;
+        return laserBe.handleFire(level, shooterShip, weaponPos);
     }
 
     /**
@@ -145,7 +124,7 @@ public class LaserCombatService {
      * Sofortige Trefferverarbeitung für Impuls-Laser (zerstört pro Schuss genau 1
      * Block).
      */
-    private static void processPulseHit(Level level, ShipState shooterShip, LaserWeaponTier tier,
+    public static void processPulseHit(Level level, ShipState shooterShip, LaserWeaponTier tier,
             RaycastHitResult hit) {
         if (hit == null || !hit.isHit())
             return;
@@ -154,33 +133,32 @@ public class LaserCombatService {
             case SHIP_SHIELD -> {
                 ShipState targetShip = ServerShipManager.getShip(hit.hitShipId());
                 if (targetShip != null) {
-                    int shieldDrain = (int) (tier.getBaseDamage() * 100);
-                    boolean absorbed = SpaceshipEnergyManager.tryConsumeEnergyAmount(level, targetShip, shieldDrain);
+                    byte shieldId = hit.shieldId();
+                    com.peaceman.alpha.ship.domain.ShieldZone zone = (shieldId != 0) ? targetShip.getShieldZone(shieldId) : null;
+                    long gameTime = level.getGameTime();
 
-                    if (absorbed) {
+                    if (zone != null && !zone.isCollapsed(gameTime)) {
+                        int shieldDrain = (int) (tier.getBaseDamage() * 100);
+                        int newEnergy = Math.max(0, zone.currentEnergy() - shieldDrain);
+                        long cooldown = newEnergy <= 0 ? gameTime + ShipState.SHIELD_COOLDOWN_TICKS : zone.cooldownUntil();
+                        targetShip.updateShieldZoneEnergyAndCooldown(shieldId, newEnergy, cooldown);
+
                         Vec3 localImpact = hit.worldHitPos()
                                 .subtract(Vec3.atLowerCornerOf(targetShip.getControllerPos()));
                         PacketDistributor.sendToPlayersTrackingChunk((ServerLevel) level,
                                 new ChunkPos(targetShip.getControllerPos()),
                                 new ShipImpactEventPayload(targetShip.getId(), localImpact, 1.0f));
 
+                        if (newEnergy <= 0) {
+                            ServerShipManager.syncShieldZoneStates(level, targetShip);
+                        }
+
                         PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(
                                 targetShip.getId(),
                                 SpaceshipEnergyManager.getTotalAvailableEnergy(level, targetShip),
-                                true,
-                                targetShip.getShieldCooldownRemaining(level.getGameTime()),
-                                targetShip.getMovementCooldownRemaining(level.getGameTime())));
-                    } else {
-                        // Schildbruch
-                        SpaceshipShieldHandler.toggleShield(level, targetShip);
-                        PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(targetShip.getId(),
-                                targetShip.getControllerPos(), Collections.emptySet()));
-                        PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(
-                                targetShip.getId(),
-                                0,
-                                false,
-                                targetShip.getShieldCooldownRemaining(level.getGameTime()),
-                                targetShip.getMovementCooldownRemaining(level.getGameTime())));
+                                targetShip.isShieldActive(),
+                                targetShip.getShieldCooldownRemaining(gameTime),
+                                targetShip.getMovementCooldownRemaining(gameTime)));
                     }
                 }
             }
@@ -220,29 +198,28 @@ public class LaserCombatService {
 
         switch (hit.type()) {
             case SHIP_SHIELD -> {
-                laserBe.clearDrillProgress(level);
                 ShipState targetShip = ServerShipManager.getShip(hit.hitShipId());
                 if (targetShip != null) {
-                    int shieldDrain = (int) (tier.getBaseDamage() * 20); // Kontinuierlicher Ticksauger
-                    boolean absorbed = SpaceshipEnergyManager.tryConsumeEnergyAmount(level, targetShip, shieldDrain);
+                    byte shieldId = hit.shieldId();
+                    com.peaceman.alpha.ship.domain.ShieldZone zone = (shieldId != 0) ? targetShip.getShieldZone(shieldId) : null;
+                    long gameTime = level.getGameTime();
 
-                    if (absorbed) {
+                    if (zone != null && !zone.isCollapsed(gameTime)) {
+                        laserBe.clearDrillProgress(level);
+                        int shieldDrain = (int) (tier.getBaseDamage() * 20); // Kontinuierlicher Ticksauger
+                        int newEnergy = Math.max(0, zone.currentEnergy() - shieldDrain);
+                        long cooldown = newEnergy <= 0 ? gameTime + ShipState.SHIELD_COOLDOWN_TICKS : zone.cooldownUntil();
+                        targetShip.updateShieldZoneEnergyAndCooldown(shieldId, newEnergy, cooldown);
+
                         Vec3 localImpact = hit.worldHitPos()
                                 .subtract(Vec3.atLowerCornerOf(targetShip.getControllerPos()));
                         PacketDistributor.sendToPlayersTrackingChunk((ServerLevel) level,
                                 new ChunkPos(targetShip.getControllerPos()),
                                 new ShipImpactEventPayload(targetShip.getId(), localImpact, 0.4f));
-                    } else {
-                        // Schild kollabiert durch Dauerfeuer
-                        SpaceshipShieldHandler.toggleShield(level, targetShip);
-                        PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(targetShip.getId(),
-                                targetShip.getControllerPos(), Collections.emptySet()));
-                        PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(
-                                targetShip.getId(),
-                                0,
-                                false,
-                                targetShip.getShieldCooldownRemaining(level.getGameTime()),
-                                targetShip.getMovementCooldownRemaining(level.getGameTime())));
+
+                        if (newEnergy <= 0) {
+                            ServerShipManager.syncShieldZoneStates(level, targetShip);
+                        }
                     }
                 }
             }
@@ -250,36 +227,10 @@ public class LaserCombatService {
             case SHIP_HULL -> {
                 BlockPos targetPos = hit.worldBlockPos();
                 ShipState targetShip = ServerShipManager.getShip(hit.hitShipId());
-                if (targetPos == null || targetShip == null) {
+                if (targetPos != null && targetShip != null) {
+                    processHullDrilling(level, targetShip, weaponPos, laserBe, tier, targetPos, hit.worldHitPos());
+                } else {
                     laserBe.clearDrillProgress(level);
-                    return;
-                }
-
-                if (!targetPos.equals(laserBe.getCurrentDrillPos())) {
-                    laserBe.clearDrillProgress(level);
-                    laserBe.setCurrentDrillPos(targetPos);
-                }
-
-                BlockState state = level.getBlockState(targetPos);
-                float hardness = state.getDestroySpeed(level, targetPos);
-                if (hardness < 0.0f) {
-                    laserBe.clearDrillProgress(level); // Unzerstörbar
-                    return;
-                }
-
-                float progressStep = (tier == LaserWeaponTier.MINING_LASER ? 0.20f : 0.12f) / Math.max(0.5f, hardness);
-                laserBe.addDrillProgress(progressStep);
-                level.destroyBlockProgress(weaponPos.hashCode(), targetPos,
-                        Math.min(9, (int) (laserBe.getDrillProgress() * 10)));
-
-                if (laserBe.getDrillProgress() >= 1.0f) {
-                    level.destroyBlockProgress(weaponPos.hashCode(), targetPos, -1);
-                    laserBe.resetDrillProgress();
-                    if (tier == LaserWeaponTier.MINING_LASER) {
-                        mineShipHullAndCollectItems(level, targetShip, targetPos, laserBe, hit.worldHitPos());
-                    } else {
-                        destroyShipHullBlock(level, targetShip, targetPos, hit.worldHitPos());
-                    }
                 }
             }
 
@@ -324,21 +275,49 @@ public class LaserCombatService {
         }
     }
 
+    private static void processHullDrilling(Level level, ShipState targetShip, BlockPos weaponPos,
+            AbstractLaserNodeBlockEntity laserBe, LaserWeaponTier tier, BlockPos targetPos, Vec3 worldHitPos) {
+        if (!targetPos.equals(laserBe.getCurrentDrillPos())) {
+            laserBe.clearDrillProgress(level);
+            laserBe.setCurrentDrillPos(targetPos);
+        }
+
+        BlockState state = level.getBlockState(targetPos);
+        float hardness = state.getDestroySpeed(level, targetPos);
+        if (hardness < 0.0f) {
+            laserBe.clearDrillProgress(level); // Unzerstörbar
+            return;
+        }
+
+        float progressStep = (tier == LaserWeaponTier.MINING_LASER ? 0.20f : 0.12f) / Math.max(0.5f, hardness);
+        laserBe.addDrillProgress(progressStep);
+        level.destroyBlockProgress(weaponPos.hashCode(), targetPos,
+                Math.min(9, (int) (laserBe.getDrillProgress() * 10)));
+
+        if (laserBe.getDrillProgress() >= 1.0f) {
+            level.destroyBlockProgress(weaponPos.hashCode(), targetPos, -1);
+            laserBe.resetDrillProgress();
+            if (tier == LaserWeaponTier.MINING_LASER) {
+                mineShipHullAndCollectItems(level, targetShip, targetPos, laserBe, worldHitPos);
+            } else {
+                destroyShipHullBlock(level, targetShip, targetPos, worldHitPos);
+            }
+        }
+    }
+
     /**
      * Zerstört einen Block der Schiffshülle, entfernt ihn aus allen Systemen und
      * prüft auf Schiffsauflösung.
      */
     private static void destroyShipHullBlock(Level level, ShipState targetShip, BlockPos hitBlock, Vec3 worldHitPos) {
         if (targetShip.getBlocks().contains(hitBlock)) {
+            boolean isShieldGen = targetShip.getShields().contains(hitBlock);
             targetShip.getBlocks().remove(hitBlock);
             targetShip.getReactors().remove(hitBlock);
-            targetShip.getShields().remove(hitBlock);
             targetShip.getWeapons().remove(hitBlock);
 
-            if (targetShip.getShields().isEmpty() && targetShip.isShieldActive()) {
-                targetShip.setShieldActive(false);
-                PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(targetShip.getId(),
-                        targetShip.getControllerPos(), Collections.emptySet()));
+            if (isShieldGen) {
+                SpaceshipShieldHandler.onShieldBlockDestroyed(level, hitBlock, targetShip.getId());
             }
 
             level.setBlock(hitBlock, Blocks.AIR.defaultBlockState(), 3);

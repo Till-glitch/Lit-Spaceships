@@ -167,13 +167,49 @@ public class SpaceshipEnergyManagerTest {
         ship.setReactors(List.of(rPos));
 
         // Flug um 5m -> 2 Blöcke * 5m * 10 FE = 100 FE benötigt (vorhanden: 1000 FE)
-        boolean success = SpaceshipEnergyManager.tryConsumeFlightEnergy(level, ship, 5, 0, 0, null);
-        assertTrue(success);
+        SpaceshipEnergyManager.FlightEnergyResult success = SpaceshipEnergyManager.tryConsumeFlightEnergy(level, ship, 5, 0, 0);
+        assertEquals(EnergyConsumeResult.SUCCESS, success.status());
+        assertEquals(100, success.cost());
         assertEquals(900, storage.getEnergyStored());
 
         // Flug um 100m -> 2 Blöcke * 100m * 10 FE = 2000 FE benötigt (vorhanden: 900 FE) -> Fehlschlag
-        boolean fail = SpaceshipEnergyManager.tryConsumeFlightEnergy(level, ship, 100, 0, 0, null);
-        assertFalse(fail);
+        SpaceshipEnergyManager.FlightEnergyResult fail = SpaceshipEnergyManager.tryConsumeFlightEnergy(level, ship, 100, 0, 0);
+        assertEquals(EnergyConsumeResult.INSUFFICIENT_ENERGY, fail.status());
+        assertEquals(2000, fail.cost());
         assertEquals(900, storage.getEnergyStored());
+    }
+
+    @Test
+    @DisplayName("Telemetry sammelt Waffen-, Flug- und Schildverbrauch im Tick und rolliert deterministisch bei endTickTelemetry")
+    void testTickTelemetryAccumulationAndRollover() {
+        ShipState ship = new ShipState(BlockPos.ZERO, Set.of(BlockPos.ZERO));
+        
+        // Simuliere Waffenfeuer (z.B. 2 Pulse-Laser Schüsse à 250 FE)
+        ship.addWeaponDrain(250);
+        ship.addWeaponDrain(250);
+        
+        // Simuliere Schildladung (100 FE) und Flugmanöver (300 FE)
+        ship.addShieldDrain(100);
+        ship.addEngineDrain(300);
+        
+        // Vor dem Tick-Ende sind die letzten gemessenen Raten noch 0
+        assertEquals(0, ship.getLastWeaponDrain());
+        assertEquals(0, ship.getLastShieldDrain());
+        assertEquals(0, ship.getLastEngineDrain());
+        
+        // Tick abschließen
+        ship.endTickTelemetry();
+        
+        assertEquals(500, ship.getLastWeaponDrain(), "Waffendrain muss die Summe aller Laser im Tick sein");
+        assertEquals(100, ship.getLastShieldDrain());
+        assertEquals(300, ship.getLastEngineDrain());
+        assertEquals(900, ship.getLastConsumptionRate());
+        
+        // Nächster Tick ohne Verbrauch (Leerlauf)
+        ship.endTickTelemetry();
+        assertEquals(0, ship.getLastWeaponDrain(), "Waffendrain muss im Leerlauf auf 0 FE/t abfallen");
+        assertEquals(0, ship.getLastShieldDrain());
+        assertEquals(0, ship.getLastEngineDrain());
+        assertEquals(0, ship.getLastConsumptionRate());
     }
 }

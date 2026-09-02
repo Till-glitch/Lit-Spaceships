@@ -43,7 +43,7 @@ public class ClientShipManager {
         return ACTIVE_CLIENT_SHIPS.values();
     }
 
-    public static void updateShieldBubble(UUID shipId, BlockPos anchorPos, Set<BlockPos> relativeBubbleBlocks) {
+    public static void updateShieldBubble(UUID shipId, BlockPos anchorPos, java.util.Map<BlockPos, Byte> relativeBubbleBlocks) {
         ClientShipState shipState = getOrCreateShip(shipId);
         shipState.setAnchorPos(anchorPos);
         shipState.updateMesh(relativeBubbleBlocks);
@@ -68,6 +68,11 @@ public class ClientShipManager {
         long clientTick = net.minecraft.client.Minecraft.getInstance().level != null
                 ? net.minecraft.client.Minecraft.getInstance().level.getGameTime() : 0L;
         shipState.updateCooldowns(shieldCooldownTicks, movementCooldownTicks, clientTick);
+    }
+
+    public static void updateShieldZoneState(UUID shipId, long activeMask, byte[] encodedEnergies) {
+        ClientShipState shipState = getOrCreateShip(shipId);
+        shipState.setShieldZoneState(activeMask, encodedEnergies);
     }
 
     public static void updateShipPosition(UUID shipId, BlockPos newAnchorPos) {

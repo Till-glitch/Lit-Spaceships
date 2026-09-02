@@ -57,11 +57,50 @@ public class SpaceshipReactorBlockEntity extends AbstractSpaceshipNodeBlockEntit
     protected final ContainerData data = new ContainerData() {
         @Override
         public int get(int index) {
+            com.peaceman.alpha.ship.domain.ShipState ship = (getShipId() != null) ? com.peaceman.alpha.ship.service.ServerShipManager.getShip(getShipId()) : null;
+            int localEnergy = energyStorage.getEnergyStored();
+            int localMax = energyStorage.getMaxEnergyStored();
+
             switch (index) {
                 case 0:
-                    return energyStorage.getEnergyStored();
+                    return localEnergy;
                 case 1:
-                    return energyStorage.getMaxEnergyStored();
+                    return localMax;
+                case 2:
+                    return (ship != null && level != null) ? com.peaceman.alpha.ship.SpaceshipEnergyManager.getTotalAvailableEnergy(level, ship) : localEnergy;
+                case 3:
+                    return (ship != null) ? Math.max(localMax, ship.getReactors().size() * 1000000) : localMax;
+                case 4:
+                    return (ship != null) ? ship.getLastGenerationRate() : 0;
+                case 5:
+                    return (ship != null) ? ship.getLastConsumptionRate() : 0;
+                case 6:
+                    return (ship != null) ? ship.getNetEnergyThroughput() : 0;
+                case 7:
+                    return (ship != null) ? ship.getPowerPriority().getId() : com.peaceman.alpha.ship.domain.PowerPriority.BALANCED.getId();
+                case 8: {
+                    // Core Stability: 100% normal, sinkt leicht bei anhaltender Überlast
+                    if (localEnergy <= 0) return 0;
+                    int drain = (ship != null) ? ship.getLastConsumptionRate() : 0;
+                    return Math.clamp(100 - (drain / 200), 75, 100);
+                }
+                case 9: {
+                    // Operational Status: 0=Optimal, 1=High Load, 2=Critical Drain, 3=Standby, 4=Unlinked
+                    if (ship == null) return 4; // UNLINKED
+                    if (localEnergy <= 0) return 2; // CRITICAL_DRAIN
+                    int drain = ship.getLastConsumptionRate();
+                    if (drain > 150) return 1; // HIGH_LOAD
+                    if (drain == 0 && localEnergy >= localMax) return 3; // STANDBY
+                    return 0; // OPTIMAL
+                }
+                case 10:
+                    return (ship != null) ? Math.max(1, ship.getReactors().size()) : 1;
+                case 11:
+                    return (ship != null) ? ship.getLastShieldDrain() : 0;
+                case 12:
+                    return (ship != null) ? ship.getLastWeaponDrain() : 0;
+                case 13:
+                    return (ship != null) ? ship.getLastEngineDrain() : 0;
                 default:
                     return 0;
             }
@@ -74,7 +113,7 @@ public class SpaceshipReactorBlockEntity extends AbstractSpaceshipNodeBlockEntit
 
         @Override
         public int getCount() {
-            return 2;
+            return 14;
         }
     };
 

@@ -1,5 +1,5 @@
 ---
-description: Der Standard-Workflow der bei ALLEN neuen Features angewandt wird. Ihm ist streng folge zu leisten und ist detailiert in den enzigen /*phase* beschrieben z.B: /spec oder /plan
+description:
 ---
 
 Master-Rulefile und Standard Operating Procedure (SOP): Entwicklungs-Workflow "Mod Alpha" (NeoForge 1.21)

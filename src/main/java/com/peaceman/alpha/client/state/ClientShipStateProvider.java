@@ -1,6 +1,5 @@
 package com.peaceman.alpha.client.state;
 
-import net.minecraft.world.phys.Vec3;
 import java.util.Collection;
 import java.util.UUID;
 

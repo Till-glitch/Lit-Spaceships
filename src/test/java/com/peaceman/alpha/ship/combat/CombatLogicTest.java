@@ -159,4 +159,23 @@ public class CombatLogicTest {
         assertEquals(0.0, aimDir.y, 1e-4);
         assertEquals(0.0, aimDir.z, 1e-4);
     }
+
+    @Test
+    @DisplayName("stopAllContinuousLasers deaktiviert alle aktiven Dauerstrahlen und bereinigt Drill-Progress")
+    void testStopAllContinuousLasers() {
+        var mockLevel = org.mockito.Mockito.mock(net.minecraft.world.level.Level.class);
+        var mockShip = org.mockito.Mockito.mock(com.peaceman.alpha.ship.domain.ShipState.class);
+
+        BlockPos weaponPos = new BlockPos(10, 64, 10);
+        org.mockito.Mockito.when(mockShip.getWeapons()).thenReturn(java.util.List.of(weaponPos));
+
+        var mockHeavyBe = org.mockito.Mockito.mock(com.peaceman.alpha.block.entity.HeavyBeamBlockEntity.class);
+        org.mockito.Mockito.when(mockHeavyBe.isFiring()).thenReturn(true);
+        org.mockito.Mockito.when(mockLevel.getBlockEntity(weaponPos)).thenReturn(mockHeavyBe);
+
+        LaserCombatService.stopAllContinuousLasers(mockLevel, mockShip);
+
+        org.mockito.Mockito.verify(mockHeavyBe).clearDrillProgress(mockLevel);
+        org.mockito.Mockito.verify(mockHeavyBe).setFiring(false);
+    }
 }

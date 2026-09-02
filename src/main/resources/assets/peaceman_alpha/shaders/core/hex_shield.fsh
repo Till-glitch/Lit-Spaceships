@@ -3,11 +3,12 @@
 in vec2 uv;
 in vec3 v_LocalPos;
 in vec3 v_ViewPos;
+in vec4 vertexColor;
 
 out vec4 fragColor;
 
 // Uniforms
-uniform float u_EnergyLevel; // 0.0 bis 1.0
+uniform float u_ZoneEnergies[64]; // 0.0 bis 1.0 pro Zone
 uniform float u_GameTime;    // Kontinuierliche Zeit (in Ticks oder Sekunden)
 uniform mat4 HexModelViewMat;
 
@@ -15,6 +16,9 @@ uniform vec4 u_Impact0;
 uniform vec4 u_Impact1;
 uniform vec4 u_Impact2;
 uniform vec4 u_Impact3;
+
+uniform int u_ActiveMaskLow;
+uniform int u_ActiveMaskHigh;
 
 // Statische Farb-Vektoren (SRGB Farbraum)
 const vec3 COLOR_OPTIMAL  = vec3(0.1, 0.9, 1.0);
@@ -79,6 +83,19 @@ float calculateRippleIntensity(vec3 fragPos, vec4 impactData) {
 }
 
 void main() {
+    int zoneId = int(round(vertexColor.r * 255.0));
+    if (zoneId > 0 && zoneId <= 64) {
+        bool isActive = false;
+        if (zoneId <= 32) {
+            isActive = (u_ActiveMaskLow & (1 << (zoneId - 1))) != 0;
+        } else {
+            isActive = (u_ActiveMaskHigh & (1 << (zoneId - 33))) != 0;
+        }
+        if (!isActive) {
+            discard;
+        }
+    }
+
     // 1. Blickrichtungsvektor (View-Vektor zur Kamera im View-Space)
     vec3 V = normalize(-v_ViewPos);
 
@@ -94,7 +111,11 @@ void main() {
     float fresnel = pow(1.0 - NdotV, 3.5);
 
     // 4. Energie-Farbe bestimmen
-    vec3 energyColor = calculateEnergyColor(u_EnergyLevel, u_GameTime);
+    float localEnergy = 1.0;
+    if (zoneId > 0 && zoneId <= 64) {
+        localEnergy = u_ZoneEnergies[zoneId - 1];
+    }
+    vec3 energyColor = calculateEnergyColor(localEnergy, u_GameTime);
 
     // 5. Multi-Impact-Schockwellen akkumulieren
     float totalRipple = 0.0;

@@ -102,6 +102,49 @@ classDiagram
             +register(IEventBus bus)$ void
         }
 
+        class ShieldZone {
+            <<record>>
+            +byte id
+            +BlockPos generatorPos
+            +int currentEnergy
+            +int maxEnergy
+            +long cooldownUntil
+            +boolean isEnabled
+            +int lastChargeRate
+            +isCollapsed(long currentTick) boolean
+            +withEnergy(int newEnergy) ShieldZone
+            +withEnergyAndChargeRate(int newEnergy, int chargeRate) ShieldZone
+            +withEnergyAndCooldown(int newEnergy, long newCooldown) ShieldZone
+        }
+
+        class SectorCoverage {
+            <<record>>
+            +byte zoneId
+            +BlockPos generatorPos
+            +int assignedVoxels
+            +int totalShipVoxels
+            +BlockPos minRelative
+            +BlockPos maxRelative
+            +getCoverageRatio() float
+            +getSpanX() int
+            +getSpanY() int
+            +getSpanZ() int
+        }
+
+        class PowerPriority {
+            <<enumeration>>
+            BALANCED
+            SHIELDS_FIRST
+            WEAPONS_FIRST
+            ENGINES_FIRST
+            +getId() int
+            +getShieldShare() float
+            +getWeaponShare() float
+            +getEngineShare() float
+            +next() PowerPriority
+            +fromId(int id)$ PowerPriority
+        }
+
         class ShipState {
             -UUID id
             -BlockPos controllerPos
@@ -110,12 +153,32 @@ classDiagram
             -List~BlockPos~ reactors
             -List~BlockPos~ shields
             -List~BlockPos~ weapons
+            -Map~Byte, ShieldZone~ shieldZones
+            -Map~Byte, SectorCoverage~ sectorCoverages
+            -PowerPriority powerPriority
+            -int lastGenerationRate
+            -int lastShieldDrain
+            -int lastWeaponDrain
+            -int lastEngineDrain
             -boolean isShieldActive
             -long shieldCooldownUntil
             -long movementCooldownUntil
             -VoxelGridCache hullVoxelCache
             -VoxelGridCache shieldVoxelCache
             +getImmutableBlockSnapshot() Set~BlockPos~
+            +getShieldZone(byte id) ShieldZone
+            +getSectorCoverage(byte id) SectorCoverage
+            +getPowerPriority() PowerPriority
+            +setPowerPriority(PowerPriority priority) void
+            +getLastGenerationRate() int
+            +getLastConsumptionRate() int
+            +getNetEnergyThroughput() int
+            +setShieldZone(ShieldZone zone) void
+            +setShieldZones(Map~Byte, ShieldZone~ zones) void
+            +setSectorCoverages(Map~Byte, SectorCoverage~ coverages) void
+            +updateShieldZoneEnergy(byte id, int energy) void
+            +updateShieldZoneEnergyAndChargeRate(byte id, int energy, int chargeRate) void
+            +updateShieldZoneEnergyAndCooldown(byte id, int energy, long cooldown) void
             +setBlocks(Set~BlockPos~ blocks, Level level) void
             +recalculateHullBounds() void
             +isShieldOnCooldown(long gameTime) boolean
@@ -130,15 +193,26 @@ classDiagram
             +updateShipBlocks(Level level, ShipState ship)$ void
             +deleteShip(Level level, ShipState ship)$ void
             +saveData(Level level)$ void
+            +syncShieldZoneStates(Level level, ShipState ship)$ void
+            +calculateShieldActiveMask(ShipState ship, long gameTime)$ long
             +onServerStarted(ServerStartedEvent event)$ void
             +onChunkSent(ChunkWatchEvent.Sent event)$ void
         }
 
+        class ShipScannerService {
+            +MAX_SHIP_BLOCKS int$
+            +MAX_SHIELD_GENERATORS int$
+            +scan(Level level, BlockPos startPos)$ Set~BlockPos~
+            +calculateVoronoiZones(VoxelGridCache cache, List~BlockPos~ generators, BlockPos controllerPos)$ void
+        }
+
         class LaserCombatService {
+            +stopAllContinuousLasers(Level level, ShipState ship)$ void
             +fireWeapon(Level level, ShipState shooter, BlockPos weaponPos)$ boolean
             +tickContinuousWeapon(Level level, ShipState shooter, BlockPos pos, AbstractLaserNodeBE be)$ void
             -processPulseHit(Level level, ShipState shooter, LaserWeaponTier tier, RaycastHitResult hit)$ void
             -processContinuousHit(Level level, ShipState shooter, BlockPos pos, AbstractLaserNodeBE be, LaserWeaponTier tier, RaycastHitResult hit)$ void
+            -processHullDrilling(Level level, ShipState targetShip, BlockPos weaponPos, AbstractLaserNodeBE laserBe, LaserWeaponTier tier, BlockPos targetPos, Vec3 worldHitPos)$ void
             -destroyShipHullBlock(Level level, ShipState targetShip, BlockPos hitBlock, Vec3 worldHitPos)$ void
         }
 
@@ -170,6 +244,7 @@ classDiagram
             +Vec3 worldHitPos
             +Direction hitFace
             +double distance
+            +byte shieldId
             +isHit() boolean
             +isShipHit() boolean
         }
@@ -177,7 +252,10 @@ classDiagram
         class VoxelGridCache {
             +BlockPos minOffset
             +BitSet bitSet
+            +byte[] shieldMap
             +isSet(int x, int y, int z) boolean
+            +getShieldId(int x, int y, int z) byte
+            +setShieldId(int x, int y, int z, byte shieldId) void
             +buildFromAbsolute(Collection~BlockPos~ abs, BlockPos ctrl)$ VoxelGridCache
         }
 
@@ -258,6 +336,15 @@ classDiagram
             +resolveMultiple(ServerLevel level, List~VoxelCollisionResult~ collisions, Vec3 movementVector)$ CollisionResolution
         }
 
+        class SpaceshipShieldHandler {
+            +toggleShield(Level level, ShipState ship)$ boolean
+            +toggleShieldZone(Level level, ShipState ship, BlockPos generatorPos)$ void
+            +onShieldBlockDestroyed(Level level, BlockPos pos, UUID shipId)$ void
+            +tryConsumeShieldEnergyAt(Level level, ShipState ship, BlockPos hitPos, int energyCost, byte fallbackShieldId)$ boolean
+            +onExplosion(ExplosionEvent.Detonate event)$ void
+            +onLevelTick(LevelTickEvent.Post event)$ void
+        }
+
         class SpaceshipEnergyManager {
             +calculateMovementCost(ShipState ship, int dx, int dy, int dz)$ int
             +calculateRotationCost(ShipState ship, Rotation rotation)$ int
@@ -266,6 +353,8 @@ classDiagram
             +tryConsumeEnergyAmount(Level level, ShipState ship, int amount)$ boolean
             +tryConsumeFlightEnergy(Level level, ShipState ship, int dx, int dy, int dz, Player player)$ boolean
             +tryConsumeRotationEnergy(Level level, ShipState ship, Rotation rotation, Player player)$ boolean
+            +distributeEnergyToShields(Level level, ShipState ship)$ int
+            +distributeEnergyToShields(int availableEnergy, ShipState ship, long currentGameTime)$ int
         }
     }
 
@@ -275,6 +364,12 @@ classDiagram
     namespace Network_Layer {
         class ModPayloads {
             +register(IEventBus bus)$ void
+        }
+
+        class ShieldZoneStatePayload {
+            <<record>>
+            +UUID shipId
+            +long activeMask
         }
 
         class ShipCombatActionPayload {
@@ -303,6 +398,13 @@ classDiagram
             +BlockPos weaponPos
             +boolean isFiring
             +LaserWeaponTier tier
+        }
+
+        class ShipStructureSyncPayload {
+            <<record>>
+            +UUID shipId
+            +BlockPos controllerPos
+            +Set~BlockPos~ relativeBlocks
         }
 
         class ShipStructureDeltaPayload {
@@ -346,6 +448,7 @@ classDiagram
         }
 
         class ClientPayloadHandler {
+            +handleStructureSync(ShipStructureSyncPayload packet, IPayloadContext context)$ void
             +handleStructureDelta(ShipStructureDeltaPayload packet, IPayloadContext context)$ void
             +handlePositionSync(ShipPositionSyncPayload packet, IPayloadContext context)$ void
             +handleLaserFire(LaserFirePayload packet, IPayloadContext context)$ void
@@ -366,6 +469,35 @@ classDiagram
             +updateMesh(Set~BlockPos~ relativeBlocks) void
             +removeStructureBlocks(List~BlockPos~ removed) void
             +dispose() void
+        }
+
+        class SpaceshipControlScreen {
+            -Button createButton
+            -Button updateButton
+            -Button disassembleButton
+            -Button highlightButton
+            +render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) void
+        }
+
+        class SpaceshipReactorScreen {
+            +render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) void
+        }
+
+        class SpaceshipShieldScreen {
+            +render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) void
+        }
+
+        class SpaceshipHelmConfigScreen {
+            +render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) void
+        }
+
+        class ShipHighlightRenderer {
+            +boolean isHighlightActive$
+            +Set~BlockPos~ shipBlocks$
+            +toggleHighlight(Level level, BlockPos startPos)$ void
+            +toggleHighlight(Set~BlockPos~ blocks)$ void
+            +isHighlightActive()$ boolean
+            +onClientTick(ClientTickEvent.Post event)$ void
         }
 
         class ClientLaserState {
@@ -473,6 +605,11 @@ classDiagram
     TurretBlockEntityRenderer ..> LaserNodeRenderState : extracts & submits
 
     ServerShipManager o-- "0..*" ShipState : manages
+    ShipState *-- "0..64" ShieldZone : partitions
+    ShipState o-- "0..1" VoxelGridCache : holds
+    ShipScannerService ..> VoxelGridCache : Voronoi partitioning
+    SpaceshipEnergyManager ..> ShieldZone : routes proportional FE
+    ServerShipManager ..> ShieldZoneStatePayload : syncs 64-bit mask
     ShipMovementService ..> BlockDependencyGraph : builds DAG
     ShipMovementService ..> BlockRelocationRegistry : dispatches & checks
     ShipMovementService ..> NbtCoordinateRemapper : remaps BE coordinates

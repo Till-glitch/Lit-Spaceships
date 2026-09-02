@@ -1,18 +1,42 @@
 package com.peaceman.alpha.client.screen;
 
 import com.peaceman.alpha.client.render.ShipHighlightRenderer;
+import com.peaceman.alpha.client.state.ClientShipState;
 import com.peaceman.alpha.network.ShipActionPayload.ActionType;
+import com.peaceman.alpha.registry.ModI18n;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Modernes Sci-Fi Command- & Lebenszyklus-Terminal für das Raumschiff (240x238).
+ * Zeigt detaillierte BFS-Strukturdiagnostik, ein Subsystem-Register (Reaktoren, Schilde, Laser)
+ * sowie sichere Lifecycle-, Rotations- und Hüllen-Hervorhebungs-Operationen.
+ */
 public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
 
+    private final int imageWidth = 240;
+    private final int imageHeight = 238;
+
+    private Button createButton;
+    private Button updateButton;
+    private Button highlightButton;
+    private Button disassembleButton;
+    private Button rotateCcwButton;
+    private Button rotateCwButton;
+
+    private Set<BlockPos> cachedUnboundBlocks = null;
+    private long lastScanTime = -100L;
+
     public SpaceshipControlScreen(UUID shipId, BlockPos pos) {
-        super(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_TITLE), pos);
+        super(Component.translatable(ModI18n.Screen.CONTROL_TITLE), pos);
         this.shipId = shipId;
     }
 
@@ -21,80 +45,227 @@ public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
         return false;
     }
 
-    private Button shieldButton;
-
     @Override
     protected void init() {
         super.init();
 
-        int centerX = this.width / 2;
-        int centerY = this.height / 2;
-        int btnWidth = 140;
+        int startX = (this.width - this.imageWidth) / 2;
+        int startY = (this.height - this.imageHeight) / 2;
+        int btnWidth = 108;
         int btnHeight = 20;
-        int btnLeft = centerX - (btnWidth / 2);
 
-        // 1. Schiff erstellen
-        this.addRenderableWidget(Button.builder(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_BTN_CREATE), button -> {
+        // 1. Schiff erstellen / Binden
+        this.createButton = Button.builder(Component.translatable(ModI18n.Screen.CONTROL_BTN_CREATE), button -> {
             sendShipAction(ActionType.CREATE);
-        }).bounds(btnLeft, centerY - 60, btnWidth, btnHeight).build());
+            this.cachedUnboundBlocks = null;
+        }).bounds(startX + 8, startY + 158, btnWidth, btnHeight).build();
+        this.addRenderableWidget(this.createButton);
 
-        // 2. Struktur aktualisieren
-        this.addRenderableWidget(Button.builder(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_BTN_UPDATE), button -> {
+        // 2. Struktur-Grenzen aktualisieren
+        this.updateButton = Button.builder(Component.translatable(ModI18n.Screen.CONTROL_BTN_UPDATE), button -> {
             sendShipAction(ActionType.UPDATE_BLOCKS);
-        }).bounds(btnLeft, centerY - 35, btnWidth, btnHeight).build());
+            this.cachedUnboundBlocks = null;
+        }).bounds(startX + 124, startY + 158, btnWidth, btnHeight).build();
+        this.addRenderableWidget(this.updateButton);
 
-        // 3. Schiff auflösen
-        this.addRenderableWidget(Button.builder(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_BTN_DISASSEMBLE), button -> {
-            sendShipAction(ActionType.DELETE_SHIP);
-        }).bounds(btnLeft, centerY - 10, btnWidth, btnHeight).build());
-
-        // 4. Markierung An/Aus (rein Client-seitig)
-        this.addRenderableWidget(Button.builder(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_BTN_HIGHLIGHT), button -> {
+        // 3. Hülle hervorheben (Client-Side Particle Scan)
+        this.highlightButton = Button.builder(getHighlightButtonText(), button -> {
             if (this.minecraft != null && this.minecraft.level != null) {
-                ShipHighlightRenderer.toggleHighlight(this.minecraft.level, this.blockPos);
+                var clientState = getClientShipState();
+                if (clientState != null && !clientState.getRelativeStructureBlocks().isEmpty()) {
+                    BlockPos anchor = clientState.getAnchorPos() != null ? clientState.getAnchorPos() : this.blockPos;
+                    Set<BlockPos> absoluteBlocks = new HashSet<>();
+                    for (BlockPos rel : clientState.getRelativeStructureBlocks()) {
+                        absoluteBlocks.add(anchor.offset(rel));
+                    }
+                    ShipHighlightRenderer.toggleHighlight(absoluteBlocks);
+                } else if (this.cachedUnboundBlocks != null && !this.cachedUnboundBlocks.isEmpty()) {
+                    ShipHighlightRenderer.toggleHighlight(this.cachedUnboundBlocks);
+                } else {
+                    ShipHighlightRenderer.toggleHighlight(this.minecraft.level, this.blockPos);
+                }
+                button.setMessage(getHighlightButtonText());
             }
-        }).bounds(btnLeft, centerY + 15, btnWidth, btnHeight).build());
+        }).bounds(startX + 8, startY + 182, btnWidth, btnHeight).build();
+        this.addRenderableWidget(this.highlightButton);
 
-        // 5. Schild An/Aus (Sendet Action an Server)
-        this.shieldButton = Button.builder(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_BTN_SHIELD), button -> {
-            sendShipAction(ActionType.TOGGLE_SHIELD);
-        }).bounds(btnLeft, centerY + 40, btnWidth, btnHeight).build();
-        this.addRenderableWidget(this.shieldButton);
+        // 4. Schiff auflösen
+        this.disassembleButton = Button.builder(Component.translatable(ModI18n.Screen.CONTROL_BTN_DISASSEMBLE), button -> {
+            sendShipAction(ActionType.DELETE_SHIP);
+            this.cachedUnboundBlocks = null;
+            this.shipId = null;
+        }).bounds(startX + 124, startY + 182, btnWidth, btnHeight).build();
+        this.addRenderableWidget(this.disassembleButton);
 
-        // 6. Rotations-Buttons (90° CCW / 90° CW)
-        int halfBtnWidth = (btnWidth - 4) / 2;
-        this.addRenderableWidget(Button.builder(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_BTN_ROTATE_CCW), button -> {
+        // 5. Rotation: 90° CCW (Links)
+        this.rotateCcwButton = Button.builder(Component.translatable(ModI18n.Screen.CONTROL_BTN_ROTATE_CCW), button -> {
             sendShipAction(ActionType.ROTATE_CCW);
-        }).bounds(btnLeft, centerY + 65, halfBtnWidth, btnHeight).build());
+        }).bounds(startX + 8, startY + 206, btnWidth, btnHeight).build();
+        this.addRenderableWidget(this.rotateCcwButton);
 
-        this.addRenderableWidget(Button.builder(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_BTN_ROTATE_CW), button -> {
+        // 6. Rotation: 90° CW (Rechts)
+        this.rotateCwButton = Button.builder(Component.translatable(ModI18n.Screen.CONTROL_BTN_ROTATE_CW), button -> {
             sendShipAction(ActionType.ROTATE_CW);
-        }).bounds(btnLeft + halfBtnWidth + 4, centerY + 65, halfBtnWidth, btnHeight).build());
+        }).bounds(startX + 124, startY + 206, btnWidth, btnHeight).build();
+        this.addRenderableWidget(this.rotateCwButton);
+    }
+
+    private Component getHighlightButtonText() {
+        return ShipHighlightRenderer.isHighlightActive()
+                ? Component.translatable(ModI18n.Screen.CONTROL_HIGHLIGHT_ACTIVE).withStyle(ChatFormatting.GREEN)
+                : Component.translatable(ModI18n.Screen.CONTROL_HIGHLIGHT_INACTIVE).withStyle(ChatFormatting.GRAY);
     }
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
 
-        // Cooldown- & Status-Prüfung für Schild-Button
+        int startX = (this.width - this.imageWidth) / 2;
+        int startY = (this.height - this.imageHeight) / 2;
+
+        // 1. Status & Button-Aktivierung berechnen
         var clientState = getClientShipState();
-        if (clientState != null && this.shieldButton != null) {
-            long gameTime = getClientGameTime();
-            long shieldCd = clientState.getShieldCooldownDisplay(gameTime);
-            if (shieldCd > 0) {
-                this.shieldButton.active = false;
-                double seconds = shieldCd / 20.0;
-                this.shieldButton.setMessage(Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_SHIELD_COOLDOWN, seconds));
-                guiGraphics.drawCenteredString(this.font,
-                        Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_SHIELD_COOLDOWN, seconds),
-                        this.width / 2, this.height / 2 + 95, 0xFF5555);
-            } else {
-                this.shieldButton.active = true;
-                this.shieldButton.setMessage(Component.translatable(clientState.isShieldActive() ? com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_SHIELD_ACTIVE : com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_SHIELD_INACTIVE));
+        boolean isBound = (clientState != null && this.shipId != null);
+
+        if (this.createButton != null) this.createButton.active = !isBound;
+        if (this.updateButton != null) this.updateButton.active = isBound;
+        if (this.disassembleButton != null) this.disassembleButton.active = isBound;
+        if (this.rotateCcwButton != null) this.rotateCcwButton.active = isBound;
+        if (this.rotateCwButton != null) this.rotateCwButton.active = isBound;
+        if (this.highlightButton != null) this.highlightButton.setMessage(getHighlightButtonText());
+
+        // 2. Vollständig deckender Terminal-Hintergrund & Panels
+        renderTerminalBackground(guiGraphics, startX, startY);
+
+        // 3. Widgets / Buttons rendern
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+
+        // 4. Text-Inhalte & Subsystem-Informationen rendern
+        renderTerminalLabels(guiGraphics, startX, startY, clientState, isBound);
+    }
+
+    private void renderTerminalBackground(GuiGraphics guiGraphics, int startX, int startY) {
+        // Äußerer Rahmen & Terminal-Körper (Solid Dark Emerald / Matrix Obsidian Theme)
+        guiGraphics.fill(startX, startY, startX + this.imageWidth, startY + this.imageHeight, 0xFF08120B);
+        guiGraphics.fill(startX + 1, startY + 1, startX + this.imageWidth - 1, startY + this.imageHeight - 1, 0xFF0F2417);
+        guiGraphics.fill(startX + 2, startY + 2, startX + this.imageWidth - 2, startY + this.imageHeight - 2, 0xFF0B1A10);
+
+        // Header-Balken mit Neon-Grün Akzentlinie
+        guiGraphics.fill(startX + 4, startY + 4, startX + this.imageWidth - 4, startY + 22, 0xFF142E1E);
+        guiGraphics.fill(startX + 4, startY + 22, startX + this.imageWidth - 4, startY + 23, 0xFF00FF66);
+
+        // Panel A: Struktur-Diagnostik Box (Y: 26..82)
+        guiGraphics.fill(startX + 6, startY + 26, startX + this.imageWidth - 6, startY + 82, 0xFF0F2215);
+        guiGraphics.renderOutline(startX + 6, startY + 26, this.imageWidth - 12, 56, 0xFF1E4D2B);
+
+        // Panel B: Subsystem-Register Box (Y: 86..150)
+        guiGraphics.fill(startX + 6, startY + 86, startX + this.imageWidth - 6, startY + 150, 0xFF0F2215);
+        guiGraphics.renderOutline(startX + 6, startY + 86, this.imageWidth - 12, 64, 0xFF1E4D2B);
+    }
+
+    private void renderTerminalLabels(GuiGraphics guiGraphics, int startX, int startY, ClientShipState clientState, boolean isBound) {
+        // Header Titel
+        guiGraphics.drawString(this.font, this.title, startX + 8, startY + 7, 0x00FF66, false);
+
+        // Status Badge
+        Component statusBadge = isBound
+                ? Component.translatable(ModI18n.Screen.CONTROL_STATUS_BOUND).withStyle(ChatFormatting.GREEN)
+                : Component.translatable(ModI18n.Screen.CONTROL_STATUS_UNBOUND).withStyle(ChatFormatting.GOLD);
+        int badgeWidth = this.font.width(statusBadge);
+        guiGraphics.drawString(this.font, statusBadge, startX + this.imageWidth - 8 - badgeWidth, startY + 7, isBound ? 0x00FF66 : 0xFFA726, false);
+
+        // Panel A: Struktur-Diagnostik Header & Metriken
+        guiGraphics.drawString(this.font, Component.translatable(ModI18n.Screen.CONTROL_STRUCTURAL_HEADER), startX + 10, startY + 30, 0x00E676, false);
+
+        // Ermittle aktive oder gescannte Blöcke
+        BlockPos anchor = (isBound && clientState != null && clientState.getAnchorPos() != null)
+                ? clientState.getAnchorPos()
+                : this.blockPos;
+
+        Set<BlockPos> relativeBlocks = null;
+        if (isBound && clientState != null && !clientState.getRelativeStructureBlocks().isEmpty()) {
+            relativeBlocks = clientState.getRelativeStructureBlocks();
+        } else if (this.minecraft != null && this.minecraft.level != null) {
+            long now = this.minecraft.level.getGameTime();
+            if (this.cachedUnboundBlocks == null || (now - this.lastScanTime >= 20)) {
+                this.cachedUnboundBlocks = com.peaceman.alpha.ship.service.ShipScannerService.scan(this.minecraft.level, this.blockPos);
+                this.lastScanTime = now;
+            }
+            if (this.cachedUnboundBlocks != null && !this.cachedUnboundBlocks.isEmpty()) {
+                Set<BlockPos> rel = new HashSet<>();
+                for (BlockPos abs : this.cachedUnboundBlocks) {
+                    rel.add(abs.subtract(this.blockPos));
+                }
+                relativeBlocks = rel;
+                anchor = this.blockPos;
             }
         }
 
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
-        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, this.height / 2 - 75, 16777215);
+        int totalBlocks = (relativeBlocks != null) ? relativeBlocks.size() : 0;
+        int spanX = 1, spanY = 1, spanZ = 1;
+
+        if (relativeBlocks != null && !relativeBlocks.isEmpty()) {
+            int minX = 0, maxX = 0, minY = 0, maxY = 0, minZ = 0, maxZ = 0;
+            boolean first = true;
+            for (BlockPos pos : relativeBlocks) {
+                if (first) {
+                    minX = maxX = pos.getX();
+                    minY = maxY = pos.getY();
+                    minZ = maxZ = pos.getZ();
+                    first = false;
+                } else {
+                    if (pos.getX() < minX) minX = pos.getX();
+                    if (pos.getX() > maxX) maxX = pos.getX();
+                    if (pos.getY() < minY) minY = pos.getY();
+                    if (pos.getY() > maxY) maxY = pos.getY();
+                    if (pos.getZ() < minZ) minZ = pos.getZ();
+                    if (pos.getZ() > maxZ) maxZ = pos.getZ();
+                }
+            }
+            spanX = Math.max(1, maxX - minX + 1);
+            spanY = Math.max(1, maxY - minY + 1);
+            spanZ = Math.max(1, maxZ - minZ + 1);
+        }
+
+        String blockCountStr = String.format(Locale.ROOT, "%,d", totalBlocks);
+        String massStr = String.format(Locale.ROOT, "%.1f", (totalBlocks * 1.0f));
+        guiGraphics.drawString(this.font, Component.translatable(ModI18n.Screen.CONTROL_STRUCTURAL_BLOCKS, blockCountStr, massStr), startX + 10, startY + 43, 0xEEEEEE, false);
+        guiGraphics.drawString(this.font, Component.translatable(ModI18n.Screen.CONTROL_STRUCTURAL_BOUNDS, spanX, spanY, spanZ), startX + 10, startY + 55, 0xA7F3D0, false);
+        guiGraphics.drawString(this.font, Component.translatable(ModI18n.Screen.CONTROL_STRUCTURAL_ANCHOR, anchor.getX(), anchor.getY(), anchor.getZ()), startX + 10, startY + 67, 0x81C784, false);
+
+        // Panel B: Subsystem-Register Header & Aufzählung
+        guiGraphics.drawString(this.font, Component.translatable(ModI18n.Screen.CONTROL_SUBSYSTEM_HEADER), startX + 10, startY + 90, 0x00E676, false);
+
+        int reactorCount = 0;
+        int shieldCount = 0;
+        int heavyTurretCount = 0;
+        int pulseTurretCount = 0;
+        int miningLaserCount = 0;
+        int helmCount = 0;
+
+        if (this.minecraft != null && this.minecraft.level != null && relativeBlocks != null && !relativeBlocks.isEmpty()) {
+            for (BlockPos rel : relativeBlocks) {
+                BlockPos worldPos = anchor.offset(rel);
+                var block = this.minecraft.level.getBlockState(worldPos).getBlock();
+                if (block instanceof com.peaceman.alpha.block.SpaceshipReactorBlock) {
+                    reactorCount++;
+                } else if (block instanceof com.peaceman.alpha.block.SpaceshipShieldBlock) {
+                    shieldCount++;
+                } else if (block instanceof com.peaceman.alpha.block.HeavyBeamBlock) {
+                    heavyTurretCount++;
+                } else if (block instanceof com.peaceman.alpha.block.PulseLaserBlock) {
+                    pulseTurretCount++;
+                } else if (block instanceof com.peaceman.alpha.block.MiningLaserBlock) {
+                    miningLaserCount++;
+                } else if (block instanceof com.peaceman.alpha.block.SpaceshipHelmBlock) {
+                    helmCount++;
+                }
+            }
+        }
+
+        int totalTurrets = heavyTurretCount + pulseTurretCount + miningLaserCount;
+        guiGraphics.drawString(this.font, Component.translatable(ModI18n.Screen.CONTROL_SUBSYSTEM_CORES, reactorCount, shieldCount), startX + 10, startY + 104, 0xEEEEEE, false);
+        guiGraphics.drawString(this.font, Component.translatable(ModI18n.Screen.CONTROL_SUBSYSTEM_WEAPONS, totalTurrets, heavyTurretCount, pulseTurretCount, miningLaserCount), startX + 10, startY + 117, 0xFFA726, false);
+        guiGraphics.drawString(this.font, Component.translatable(ModI18n.Screen.CONTROL_SUBSYSTEM_NAV, helmCount), startX + 10, startY + 130, 0x66BB6A, false);
     }
 }

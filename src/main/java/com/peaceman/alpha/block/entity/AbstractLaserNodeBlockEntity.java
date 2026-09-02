@@ -62,6 +62,8 @@ public abstract class AbstractLaserNodeBlockEntity extends AbstractSpaceshipNode
 
     public abstract void serverTick(Level level, BlockPos pos, BlockState state);
 
+    public abstract boolean handleFire(Level level, com.peaceman.alpha.ship.domain.ShipState shooterShip, BlockPos weaponPos);
+
     // --- Zielsystem & Ausrichtung ---
 
     public float getTargetYaw() {

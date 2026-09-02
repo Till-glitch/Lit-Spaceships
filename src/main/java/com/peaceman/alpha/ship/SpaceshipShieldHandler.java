@@ -19,10 +19,10 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.level.ExplosionEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -111,9 +111,31 @@ public class SpaceshipShieldHandler {
         return newState;
     }
 
+    public static void toggleShieldZone(Level level, ShipState ship, BlockPos generatorPos) {
+        if (ship == null || level.isClientSide()) return;
+
+        // Find the shield zone ID matching the block pos
+        byte targetZoneId = 0;
+        for (com.peaceman.alpha.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
+            if (zone.generatorPos() != null && zone.generatorPos().equals(generatorPos)) {
+                targetZoneId = zone.id();
+                break;
+            }
+        }
+
+        if (targetZoneId > 0) {
+            ship.toggleShieldZoneActive(targetZoneId);
+            ServerShipManager.syncShieldZoneStates(level, ship);
+            ServerShipManager.saveData(level);
+            Alpha.LOGGER.info("[SpaceshipShieldHandler] Schild-Zone {} (Pos: {}) fuer Schiff '{}' umgeschaltet.",
+                    targetZoneId, generatorPos, ship.getId());
+        }
+    }
+
     /**
      * Wird aufgerufen, wenn ein Schildgenerator-Block abgebaut oder zerstört wird.
      * Deaktiviert den Schild sofort und leert das VBO-Mesh auf den Clients, falls kein weiterer Generator mehr existiert.
+     * Existieren noch weitere Generatoren, wird die zerstörte Zone permanent kollabiert (Loch im Schild im PvP).
      */
     public static void onShieldBlockDestroyed(Level level, BlockPos pos, UUID shipId) {
         if (level.isClientSide() || shipId == null) return;
@@ -125,6 +147,15 @@ public class SpaceshipShieldHandler {
         ship.getShields().remove(pos);
         ship.getBlocks().remove(pos);
 
+        // Finde und deaktiviere die zugehörige ShieldZone (Generator zerstört)
+        for (java.util.Map.Entry<Byte, com.peaceman.alpha.ship.domain.ShieldZone> entry : ship.getShieldZones().entrySet()) {
+            com.peaceman.alpha.ship.domain.ShieldZone z = entry.getValue();
+            if (z.generatorPos() != null && z.generatorPos().equals(pos)) {
+                ship.setShieldZone(new com.peaceman.alpha.ship.domain.ShieldZone(z.id(), null, 0, z.maxEnergy(), Long.MAX_VALUE, false));
+                break;
+            }
+        }
+
         if (ship.getShields().isEmpty()) {
             // Letzter Generator zerstört: Schild sofort deaktivieren und leeres Mesh an alle Clients senden!
             ship.setShieldActive(false);
@@ -134,10 +165,11 @@ public class SpaceshipShieldHandler {
             PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(ship.getId(), 0, false,
                     ship.getShieldCooldownRemaining(level.getGameTime()),
                     ship.getMovementCooldownRemaining(level.getGameTime())));
-            PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(ship.getId(), ship.getControllerPos(), Collections.emptySet()));
+            PacketDistributor.sendToAllPlayers(new ShieldBubbleSyncPacket(ship.getId(), ship.getControllerPos(), java.util.Collections.emptyMap()));
         } else {
-            // Noch weitere Generatoren vorhanden: Schildblase neu berechnen
-            com.peaceman.alpha.ship.service.ServerShipManager.populateAndSyncShipState(level, ship);
+            // Noch weitere Generatoren vorhanden: KEINE Neuberechnung der Schildblase!
+            // Das Schildsegment des zerstörten Generators fällt aus (Loch entsteht).
+            ServerShipManager.syncShieldZoneStates(level, ship);
         }
 
         ServerShipManager.saveData(level);
@@ -157,6 +189,45 @@ public class SpaceshipShieldHandler {
                 onShieldBlockDestroyed(level, pos, shipId);
             }
         }
+    }
+
+    /**
+     * Versucht, dem für die gegebene Position verantwortlichen Schildgenerator
+     * Energie abzuziehen. Findet den Generator via VoxelGridCache oder per
+     * geometrischer Distanz (für Blöcke außerhalb der Hülle).
+     */
+    public static boolean tryConsumeShieldEnergyAt(Level level, ShipState ship, BlockPos hitPos, int energyCost, byte fallbackShieldId) {
+        if (ship == null || ship.getShieldZones().isEmpty()) return false;
+
+        byte shieldId = 0;
+
+        // 1. Ist es Teil der Huelle? (O(1) Lookup)
+        if (ship.getHullVoxelCache() != null) {
+            BlockPos localPos = hitPos.subtract(ship.getControllerPos());
+            shieldId = ship.getHullVoxelCache().getShieldId(localPos);
+        }
+
+        // 2. Fallback: Naechster Generator zum Explosionszentrum
+        if (shieldId == 0) {
+            shieldId = fallbackShieldId;
+        }
+
+        // 3. Energie abziehen, falls moeglich
+        if (shieldId > 0) {
+            com.peaceman.alpha.ship.domain.ShieldZone zone = ship.getShieldZone(shieldId);
+            long gameTime = level.getGameTime();
+            if (zone != null && !zone.isCollapsed(gameTime) && zone.currentEnergy() >= energyCost) {
+                int newEnergy = zone.currentEnergy() - energyCost;
+                long cooldown = newEnergy <= 0 ? gameTime + ShipState.SHIELD_COOLDOWN_TICKS : zone.cooldownUntil();
+                ship.updateShieldZoneEnergyAndCooldown(shieldId, newEnergy, cooldown);
+
+                if (newEnergy <= 0) {
+                    ServerShipManager.syncShieldZoneStates(level, ship);
+                }
+                return true;
+            }
+        }
+        return false;
     }
 
     @SubscribeEvent
@@ -179,6 +250,21 @@ public class SpaceshipShieldHandler {
 
             int radius = getShieldRadius(ship);
             List<BlockPos> shipProtectedBlocks = new ArrayList<>();
+            
+            // Finde naehsten Generator zur Explosionsmitte (O(Generators) einmal pro Explosion statt pro Block)
+            byte fallbackShieldId = 0;
+            BlockPos explosionCenter = BlockPos.containing(event.getExplosion().center());
+            double minSq = Double.MAX_VALUE;
+            long gameTime = level.getGameTime();
+            for (com.peaceman.alpha.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
+                if (!zone.isCollapsed(gameTime) && zone.generatorPos() != null) {
+                    double dist = zone.generatorPos().distSqr(explosionCenter);
+                    if (dist < minSq) {
+                        minSq = dist;
+                        fallbackShieldId = zone.id();
+                    }
+                }
+            }
 
             // 2. Betroffene Blöcke gegen den Schild prüfen
             for (BlockPos affectedBlock : event.getAffectedBlocks()) {
@@ -189,7 +275,7 @@ public class SpaceshipShieldHandler {
                 // 3. Algorithmischer Check gegen die Schildmorphologie
                 if (ShieldMorphology.isBlockProtected(ship.getBlocks(), affectedBlock, radius)) {
                     // 4. Energieverbrauch prüfen
-                    if (SpaceshipEnergyManager.tryConsumeEnergyAmount(level, ship, ENERGY_COST_PER_BLOCK)) {
+                    if (tryConsumeShieldEnergyAt(level, ship, affectedBlock, ENERGY_COST_PER_BLOCK, fallbackShieldId)) {
                         protectedBlocks.add(affectedBlock);
                         shipProtectedBlocks.add(affectedBlock);
                     }
@@ -223,6 +309,34 @@ public class SpaceshipShieldHandler {
         // 5. Gerettete Blöcke aus der Zerstörungsliste entfernen
         if (!protectedBlocks.isEmpty()) {
             event.getAffectedBlocks().removeAll(protectedBlocks);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLevelTick(LevelTickEvent.Post event) {
+        Level level = event.getLevel();
+        if (level.isClientSide() || !(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        // Verteile periodisch Energie auf aktive Schildzonen (hier 1x pro Tick)
+        long gameTime = serverLevel.getGameTime();
+        for (ShipState ship : ServerShipManager.getShipsInDimension(serverLevel.dimension()).values()) {
+            if (ship.isShieldActive() && hasShieldGenerator(ship)) {
+                // Merke alte Maske
+                long oldMask = ServerShipManager.calculateShieldActiveMask(ship, gameTime);
+                
+                int distributed = com.peaceman.alpha.ship.SpaceshipEnergyManager.distributeEnergyToShields(serverLevel, ship);
+                
+                long newMask = ServerShipManager.calculateShieldActiveMask(ship, gameTime);
+                
+                // Falls Energie verteilt wurde oder sich der Masken-Status geändert hat, synchronisiere
+                if (distributed > 0 || newMask != oldMask) {
+                    ServerShipManager.syncShieldZoneStates(serverLevel, ship);
+                }
+            }
+            // Schließe Telemetrie für diesen Tick ab (Rollover von Puffer zu Last-Drain)
+            ship.endTickTelemetry();
         }
     }
 }

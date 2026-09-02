@@ -16,8 +16,13 @@ public record RaycastHitResult(
         BlockPos worldBlockPos,
         Vec3 worldHitPos,
         Direction hitFace,
-        double distance
+        double distance,
+        byte shieldId
 ) {
+    public RaycastHitResult(HitType type, UUID hitShipId, BlockPos localPos, BlockPos worldBlockPos, Vec3 worldHitPos, Direction hitFace, double distance) {
+        this(type, hitShipId, localPos, worldBlockPos, worldHitPos, hitFace, distance, (byte) 0);
+    }
+
     public enum HitType {
         MISS,
         SHIP_SHIELD,
@@ -26,19 +31,27 @@ public record RaycastHitResult(
     }
 
     public static RaycastHitResult miss(Vec3 endPos, double maxRange) {
-        return new RaycastHitResult(HitType.MISS, null, null, null, endPos, Direction.UP, maxRange);
+        return new RaycastHitResult(HitType.MISS, null, null, null, endPos, Direction.UP, maxRange, (byte) 0);
+    }
+
+    public static RaycastHitResult shipShield(UUID shipId, BlockPos localPos, BlockPos worldPos, Vec3 hitPos, Direction face, double distance, byte shieldId) {
+        return new RaycastHitResult(HitType.SHIP_SHIELD, shipId, localPos, worldPos, hitPos, face, distance, shieldId);
     }
 
     public static RaycastHitResult shipShield(UUID shipId, BlockPos localPos, BlockPos worldPos, Vec3 hitPos, Direction face, double distance) {
-        return new RaycastHitResult(HitType.SHIP_SHIELD, shipId, localPos, worldPos, hitPos, face, distance);
+        return shipShield(shipId, localPos, worldPos, hitPos, face, distance, (byte) 0);
+    }
+
+    public static RaycastHitResult shipHull(UUID shipId, BlockPos localPos, BlockPos worldPos, Vec3 hitPos, Direction face, double distance, byte shieldId) {
+        return new RaycastHitResult(HitType.SHIP_HULL, shipId, localPos, worldPos, hitPos, face, distance, shieldId);
     }
 
     public static RaycastHitResult shipHull(UUID shipId, BlockPos localPos, BlockPos worldPos, Vec3 hitPos, Direction face, double distance) {
-        return new RaycastHitResult(HitType.SHIP_HULL, shipId, localPos, worldPos, hitPos, face, distance);
+        return shipHull(shipId, localPos, worldPos, hitPos, face, distance, (byte) 0);
     }
 
     public static RaycastHitResult block(BlockPos worldPos, Vec3 hitPos, Direction face, double distance) {
-        return new RaycastHitResult(HitType.BLOCK, null, null, worldPos, hitPos, face, distance);
+        return new RaycastHitResult(HitType.BLOCK, null, null, worldPos, hitPos, face, distance, (byte) 0);
     }
 
     public boolean isHit() {
