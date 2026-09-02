@@ -34,7 +34,11 @@ public class ClientPayloadHandler {
                 Level clientLevel = Minecraft.getInstance().level;
                 boolean isLoaded = (clientLevel != null && clientLevel.isLoaded(packet.controllerPos()));
                 ShieldLifecycleLogger.logClientPayloadReceived("ShipStructureSyncPayload", packet.shipId(), packet.controllerPos(), isLoaded);
-                ClientShipManager.updateShipStructure(packet.shipId(), packet.controllerPos(), packet.relativeBlocks());
+                if (packet.relativeBlocks() == null || packet.relativeBlocks().isEmpty()) {
+                    ClientShipManager.removeShip(packet.shipId());
+                } else {
+                    ClientShipManager.updateShipStructure(packet.shipId(), packet.controllerPos(), packet.relativeBlocks());
+                }
             });
         }
     }

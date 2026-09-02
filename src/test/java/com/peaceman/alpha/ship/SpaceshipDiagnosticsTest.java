@@ -83,4 +83,51 @@ class SpaceshipDiagnosticsTest {
         assertEquals(4, ship.getBlocks().size());
         assertEquals(ctrl, ship.getControllerPos());
     }
+
+    @Test
+    @DisplayName("Unbound Preview berechnet Relativpositionen und BoundingBox aus Weltkoordinaten fehlerfrei")
+    void testUnboundStructurePreviewCalculation() {
+        BlockPos controllerPos = new BlockPos(50, 70, 50);
+        Set<BlockPos> scannedAbsoluteBlocks = Set.of(
+                new BlockPos(50, 70, 50),
+                new BlockPos(48, 70, 45),
+                new BlockPos(55, 74, 52)
+        );
+
+        Set<BlockPos> relative = new HashSet<>();
+        for (BlockPos abs : scannedAbsoluteBlocks) {
+            relative.add(abs.subtract(controllerPos));
+        }
+
+        assertEquals(3, relative.size());
+        assertTrue(relative.contains(BlockPos.ZERO));
+        assertTrue(relative.contains(new BlockPos(-2, 0, -5)));
+        assertTrue(relative.contains(new BlockPos(5, 4, 2)));
+
+        int minX = 0, maxX = 0, minY = 0, maxY = 0, minZ = 0, maxZ = 0;
+        boolean first = true;
+        for (BlockPos pos : relative) {
+            if (first) {
+                minX = maxX = pos.getX();
+                minY = maxY = pos.getY();
+                minZ = maxZ = pos.getZ();
+                first = false;
+            } else {
+                if (pos.getX() < minX) minX = pos.getX();
+                if (pos.getX() > maxX) maxX = pos.getX();
+                if (pos.getY() < minY) minY = pos.getY();
+                if (pos.getY() > maxY) maxY = pos.getY();
+                if (pos.getZ() < minZ) minZ = pos.getZ();
+                if (pos.getZ() > maxZ) maxZ = pos.getZ();
+            }
+        }
+
+        int spanX = maxX - minX + 1;
+        int spanY = maxY - minY + 1;
+        int spanZ = maxZ - minZ + 1;
+
+        assertEquals(8, spanX); // 5 - (-2) + 1 = 8
+        assertEquals(5, spanY); // 4 - 0 + 1 = 5
+        assertEquals(8, spanZ); // 2 - (-5) + 1 = 8
+    }
 }

@@ -116,6 +116,11 @@ public class ServerShipManager {
 
             saveData(level);
             int energy = com.peaceman.alpha.ship.SpaceshipEnergyManager.getTotalAvailableEnergy(level, newShip);
+            Set<BlockPos> relative = new HashSet<>(shipBlocks.size());
+            for (BlockPos b : shipBlocks) {
+                relative.add(b.subtract(startPos));
+            }
+            PacketDistributor.sendToAllPlayers(new ShipStructureSyncPayload(newShip.getId(), startPos, relative));
             PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(newShip.getId(), energy, newShip.isShieldActive(), 0L, 0L));
             PacketDistributor.sendToAllPlayers(new ShipDimensionSyncPayload(newShip.getId(), level.dimension()));
             return newShip;
@@ -130,12 +135,21 @@ public class ServerShipManager {
             populateAndSyncShipState(level, ship);
 
             for (BlockPos pos : newBlocks) {
-                if (level.getBlockEntity(pos) instanceof ISpaceshipNode node) {
+                BlockEntity entityAtPos = level.getBlockEntity(pos);
+                if (entityAtPos instanceof ISpaceshipNode node) {
                     node.setShipId(ship.getId());
+                    entityAtPos.setChanged();
+                    level.sendBlockUpdated(pos, entityAtPos.getBlockState(), entityAtPos.getBlockState(), 3);
                 }
             }
             saveData(level);
             int energy = com.peaceman.alpha.ship.SpaceshipEnergyManager.getTotalAvailableEnergy(level, ship);
+            BlockPos ctrl = ship.getControllerPos();
+            Set<BlockPos> relative = new HashSet<>(newBlocks.size());
+            for (BlockPos b : newBlocks) {
+                relative.add(b.subtract(ctrl));
+            }
+            PacketDistributor.sendToAllPlayers(new ShipStructureSyncPayload(ship.getId(), ctrl, relative));
             PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(ship.getId(), energy, ship.isShieldActive(),
                     ship.getShieldCooldownRemaining(level.getGameTime()),
                     ship.getMovementCooldownRemaining(level.getGameTime())));
@@ -145,10 +159,14 @@ public class ServerShipManager {
     public static void deleteShip(Level level, ShipState ship) {
         if (ship != null) {
             for (BlockPos pos : ship.getBlocks()) {
-                if (level.getBlockEntity(pos) instanceof ISpaceshipNode node) {
+                BlockEntity entityAtPos = level.getBlockEntity(pos);
+                if (entityAtPos instanceof ISpaceshipNode node) {
                     node.setShipId(null);
+                    entityAtPos.setChanged();
+                    level.sendBlockUpdated(pos, entityAtPos.getBlockState(), entityAtPos.getBlockState(), 3);
                 }
             }
+            PacketDistributor.sendToAllPlayers(new ShipStructureSyncPayload(ship.getId(), ship.getControllerPos(), java.util.Collections.emptySet()));
             unregisterShip(ship);
             saveData(level);
         }

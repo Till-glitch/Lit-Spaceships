@@ -30,6 +30,9 @@ public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
     private Button disassembleButton;
     private Button highlightButton;
 
+    private Set<BlockPos> cachedUnboundBlocks = null;
+    private long lastScanTime = -100L;
+
     public SpaceshipControlScreen(UUID shipId, BlockPos pos) {
         super(Component.translatable(ModI18n.Screen.CONTROL_TITLE), pos);
         this.shipId = shipId;
@@ -52,12 +55,14 @@ public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
         // 1. Schiff erstellen / Binden
         this.createButton = Button.builder(Component.translatable(ModI18n.Screen.CONTROL_BTN_CREATE), button -> {
             sendShipAction(ActionType.CREATE);
+            this.cachedUnboundBlocks = null;
         }).bounds(startX + 8, startY + 158, btnWidth, btnHeight).build();
         this.addRenderableWidget(this.createButton);
 
         // 2. Struktur-Grenzen aktualisieren
         this.updateButton = Button.builder(Component.translatable(ModI18n.Screen.CONTROL_BTN_UPDATE), button -> {
             sendShipAction(ActionType.UPDATE_BLOCKS);
+            this.cachedUnboundBlocks = null;
         }).bounds(startX + 124, startY + 158, btnWidth, btnHeight).build();
         this.addRenderableWidget(this.updateButton);
 
@@ -72,6 +77,8 @@ public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
                         absoluteBlocks.add(anchor.offset(rel));
                     }
                     ShipHighlightRenderer.toggleHighlight(absoluteBlocks);
+                } else if (this.cachedUnboundBlocks != null && !this.cachedUnboundBlocks.isEmpty()) {
+                    ShipHighlightRenderer.toggleHighlight(this.cachedUnboundBlocks);
                 } else {
                     ShipHighlightRenderer.toggleHighlight(this.minecraft.level, this.blockPos);
                 }
@@ -83,6 +90,8 @@ public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
         // 4. Schiff auflösen
         this.disassembleButton = Button.builder(Component.translatable(ModI18n.Screen.CONTROL_BTN_DISASSEMBLE), button -> {
             sendShipAction(ActionType.DELETE_SHIP);
+            this.cachedUnboundBlocks = null;
+            this.shipId = null;
         }).bounds(startX + 124, startY + 184, btnWidth, btnHeight).build();
         this.addRenderableWidget(this.disassembleButton);
     }
@@ -152,17 +161,37 @@ public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
         // Panel A: Struktur-Diagnostik Header & Metriken
         guiGraphics.drawString(this.font, Component.translatable(ModI18n.Screen.CONTROL_STRUCTURAL_HEADER), startX + 10, startY + 30, 0x00E676, false);
 
-        int totalBlocks = 0;
+        // Ermittle aktive oder gescannte Blöcke
+        BlockPos anchor = (isBound && clientState != null && clientState.getAnchorPos() != null)
+                ? clientState.getAnchorPos()
+                : this.blockPos;
+
+        Set<BlockPos> relativeBlocks = null;
+        if (isBound && clientState != null && !clientState.getRelativeStructureBlocks().isEmpty()) {
+            relativeBlocks = clientState.getRelativeStructureBlocks();
+        } else if (this.minecraft != null && this.minecraft.level != null) {
+            long now = this.minecraft.level.getGameTime();
+            if (this.cachedUnboundBlocks == null || (now - this.lastScanTime >= 20)) {
+                this.cachedUnboundBlocks = com.peaceman.alpha.ship.service.ShipScannerService.scan(this.minecraft.level, this.blockPos);
+                this.lastScanTime = now;
+            }
+            if (this.cachedUnboundBlocks != null && !this.cachedUnboundBlocks.isEmpty()) {
+                Set<BlockPos> rel = new HashSet<>();
+                for (BlockPos abs : this.cachedUnboundBlocks) {
+                    rel.add(abs.subtract(this.blockPos));
+                }
+                relativeBlocks = rel;
+                anchor = this.blockPos;
+            }
+        }
+
+        int totalBlocks = (relativeBlocks != null) ? relativeBlocks.size() : 0;
         int spanX = 1, spanY = 1, spanZ = 1;
-        BlockPos anchor = (clientState != null && clientState.getAnchorPos() != null) ? clientState.getAnchorPos() : this.blockPos;
 
-        if (clientState != null && !clientState.getRelativeStructureBlocks().isEmpty()) {
-            Set<BlockPos> relBlocks = clientState.getRelativeStructureBlocks();
-            totalBlocks = relBlocks.size();
-
+        if (relativeBlocks != null && !relativeBlocks.isEmpty()) {
             int minX = 0, maxX = 0, minY = 0, maxY = 0, minZ = 0, maxZ = 0;
             boolean first = true;
-            for (BlockPos pos : relBlocks) {
+            for (BlockPos pos : relativeBlocks) {
                 if (first) {
                     minX = maxX = pos.getX();
                     minY = maxY = pos.getY();
@@ -198,8 +227,8 @@ public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
         int miningLaserCount = 0;
         int helmCount = 0;
 
-        if (this.minecraft != null && this.minecraft.level != null && clientState != null && !clientState.getRelativeStructureBlocks().isEmpty()) {
-            for (BlockPos rel : clientState.getRelativeStructureBlocks()) {
+        if (this.minecraft != null && this.minecraft.level != null && relativeBlocks != null && !relativeBlocks.isEmpty()) {
+            for (BlockPos rel : relativeBlocks) {
                 BlockPos worldPos = anchor.offset(rel);
                 var block = this.minecraft.level.getBlockState(worldPos).getBlock();
                 if (block instanceof com.peaceman.alpha.block.SpaceshipReactorBlock) {

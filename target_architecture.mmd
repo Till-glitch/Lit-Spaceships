@@ -346,6 +346,13 @@ classDiagram
             +LaserWeaponTier tier
         }
 
+        class ShipStructureSyncPayload {
+            <<record>>
+            +UUID shipId
+            +BlockPos controllerPos
+            +Set~BlockPos~ relativeBlocks
+        }
+
         class ShipStructureDeltaPayload {
             <<record>>
             +UUID shipId
@@ -387,6 +394,7 @@ classDiagram
         }
 
         class ClientPayloadHandler {
+            +handleStructureSync(ShipStructureSyncPayload packet, IPayloadContext context)$ void
             +handleStructureDelta(ShipStructureDeltaPayload packet, IPayloadContext context)$ void
             +handlePositionSync(ShipPositionSyncPayload packet, IPayloadContext context)$ void
             +handleLaserFire(LaserFirePayload packet, IPayloadContext context)$ void

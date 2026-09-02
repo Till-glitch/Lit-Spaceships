@@ -18,22 +18,36 @@ import java.util.UUID;
  */
 public abstract class AbstractSpaceshipNodeBlockEntity extends BlockEntity implements ISpaceshipNode {
 
+    private UUID cachedShipId = null;
+
     public AbstractSpaceshipNodeBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
     }
 
-    // --- GETTER & SETTER via Data Attachment ---
+    // --- GETTER & SETTER via Data Attachment & Fallback ---
     @Override
     public UUID getShipId() {
-        return this.hasData(ModAttachments.SHIP_ID) ? this.getData(ModAttachments.SHIP_ID) : null;
+        try {
+            if (this.hasData(ModAttachments.SHIP_ID)) {
+                return this.getData(ModAttachments.SHIP_ID);
+            }
+        } catch (IllegalStateException e) {
+            return this.cachedShipId;
+        }
+        return this.cachedShipId;
     }
 
     @Override
     public void setShipId(UUID shipId) {
-        if (shipId != null) {
-            this.setData(ModAttachments.SHIP_ID, shipId);
-        } else {
-            this.removeData(ModAttachments.SHIP_ID);
+        this.cachedShipId = shipId;
+        try {
+            if (shipId != null) {
+                this.setData(ModAttachments.SHIP_ID, shipId);
+            } else {
+                this.removeData(ModAttachments.SHIP_ID);
+            }
+        } catch (IllegalStateException ignored) {
+            // Fallback für JUnit-Testumgebungen ohne aktives NeoForge-Registry-Binding
         }
         setChanged();
         if (this.level != null && !this.level.isClientSide) {
@@ -41,7 +55,26 @@ public abstract class AbstractSpaceshipNodeBlockEntity extends BlockEntity imple
         }
     }
 
-    // --- NETZWERK SYNC ---
+    // --- NBT & NETZWERK SYNC ---
+    @Override
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        UUID shipId = getShipId();
+        if (shipId != null) {
+            tag.putUUID("ship_id", shipId);
+        }
+    }
+
+    @Override
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        if (tag.hasUUID("ship_id")) {
+            setShipId(tag.getUUID("ship_id"));
+        } else {
+            setShipId(null);
+        }
+    }
+
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag tag = new CompoundTag();

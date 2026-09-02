@@ -7,10 +7,10 @@ An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21*
 ## Features
 
 * **Spaceship Controller (Core Lifecycle & Structure Management Terminal):**
-  * **Structural Diagnostics:** Displays total connected hull blocks, calculated ship mass in metric tons (`X.0 t`), 3D spatial extents ($\Delta X \times \Delta Y \times \Delta Z$), and origin anchor coordinates bound via Breadth-First Search (BFS).
-  * **Subsystem Registry Summary:** Real-time itemized overview of linked functional blocks (Reactors, Shield Generators, Heavy Beams, Pulse Lasers, Mining Lasers, and Navigation Helms).
+  * **Structural Diagnostics:** Displays total connected hull blocks, calculated ship mass in metric tons (`X.0 t`), 3D spatial extents ($\Delta X \times \Delta Y \times \Delta Z$), and origin anchor coordinates bound via Breadth-First Search (BFS). Supports real-time preview diagnostics for unbound standalone structures as well as bound active ships.
+  * **Subsystem Registry Summary:** Real-time itemized overview of linked functional blocks (Reactors, Shield Generators, Heavy Beams, Pulse Lasers, Mining Lasers, and Navigation Helms) both for bound ships and unbound pre-flight scans.
   * **Hull Highlight Control:** Interactive toggle button triggering real-time in-world particle outline highlighting of outer hull boundaries for inspection.
-  * **Ship Lifecycle Operations:** Safe interface controls to create/bind, update structure boundaries, or unbind/disassemble the ship entity.
+  * **Ship Lifecycle Operations:** Safe interface controls to create/bind, update structure boundaries, or unbind/disassemble the ship entity. Disassembling immediately unbinds nodes, frees client VBOs/VRAM, and reactivates the create ship control.
 * **Spaceship Helm (Navigation & Combat Console):** Full 6-axis flight controls (WASD for horizontal flight, Space to ascend, Left-Shift to descend), right-click to fire all shipboard weapons (`FIRE_ALL`), `M` key to open navigation/waypoint configuration while flying, and `H` key to exit helm control.
 * **Spaceship Reactor:** Energy storage supporting standard **Forge Energy (FE)** with up to 1,000,000 FE capacity. Powers flight maneuvers, proportional localized shield recharge, and laser weapon systems. *(Dev-Tip: Right-click with Redstone to charge 50,000 FE!)*
 * **Localized Shield Zones & 3D Voronoi Tessellation:**
