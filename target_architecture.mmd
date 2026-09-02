@@ -190,6 +190,48 @@ classDiagram
             +onServerTick(ServerTickEvent.Post event)$ void
         }
 
+        class BlockDependencyGraph {
+            +addNode(BlockPos oldPos, BlockPos newPos, BlockState state, CompoundTag nbt) RelocationNode
+            +buildDependencies(Level level) void
+            +resolveTopologicalBatches() List~List~RelocationNode~~
+        }
+
+        class RelocationNode {
+            +oldPos BlockPos
+            +newPos BlockPos
+            +state BlockState
+            +nbt CompoundTag
+            +addDependency(RelocationNode dependency) void
+            +getDependencies() Set~RelocationNode~
+            +getDependents() Set~RelocationNode~
+        }
+
+        class BlockRelocationRegistry {
+            +registerHandler(IBlockRelocationHandler handler)$ void
+            +isImmune(BlockState state)$ boolean
+            +isCluster(BlockState state)$ boolean
+            +dispatchPreRelocation(BlockPos pos, BlockState state, BlockEntity be, CompoundTag nbt, RelocationContext ctx)$ void
+            +dispatchPostRelocation(BlockPos oldPos, BlockPos newPos, BlockState state, BlockEntity be, RelocationContext ctx)$ void
+        }
+
+        class IBlockRelocationHandler {
+            <<interface>>
+            +shouldHandle(BlockState state) boolean
+            +onPreRelocation(BlockPos pos, BlockState state, BlockEntity be, CompoundTag nbt, RelocationContext ctx) void
+            +onPostRelocation(BlockPos oldPos, BlockPos newPos, BlockState state, BlockEntity be, RelocationContext ctx) void
+            +getPriority() int
+        }
+
+        class RelocationContext {
+            <<record>>
+            +ServerLevel level
+            +ShipState ship
+            +int dx
+            +int dy
+            +int dz
+            +Rotation rotation
+        }
+
         class ShipRotationMath {
             +rotateRelativeBlockPos(BlockPos relPos, Rotation rot)$ BlockPos
             +rotateAbsoluteBlockPos(BlockPos pos, BlockPos pivot, Rotation rot)$ BlockPos
@@ -417,9 +459,8 @@ classDiagram
             +create(PackOutput output, CompletableFuture lookupProvider)$ LootTableProvider
         }
 
-        class ModBlockLootTableProvider {
-            +generate() void
-            +getKnownBlocks() Iterable~Block~
+        class ModBlockTagsProvider {
+            +addTags(HolderLookup.Provider provider) void
         }
     }
 
@@ -432,7 +473,13 @@ classDiagram
     TurretBlockEntityRenderer ..> LaserNodeRenderState : extracts & submits
 
     ServerShipManager o-- "0..*" ShipState : manages
-    ShipState o-- "0..1" VoxelGridCache : holds
+    ShipMovementService ..> BlockDependencyGraph : builds DAG
+    ShipMovementService ..> BlockRelocationRegistry : dispatches & checks
+    ShipMovementService ..> NbtCoordinateRemapper : remaps BE coordinates
+    BlockDependencyGraph *-- "0..*" RelocationNode : contains
+    BlockDependencyGraph ..> VirtualSupportTestView : probes canSurvive
+    BlockRelocationRegistry o-- "0..*" IBlockRelocationHandler : manages SPI
+    IBlockRelocationHandler ..> RelocationContext : consumes
     LaserCombatService ..> LaserRaycastUtil : raycasts via
     LaserRaycastUtil ..> FastVoxelTraversal : 3D-DDA
     LaserRaycastUtil ..> RaycastHitResult : evaluates
@@ -454,6 +501,7 @@ classDiagram
     DataGenerators ..> ModEnglishLanguageProvider : instantiates client
     DataGenerators ..> ModGermanLanguageProvider : instantiates client
     DataGenerators ..> ModLootTableProvider : instantiates server
+    DataGenerators ..> ModBlockTagsProvider : instantiates server
     ModEnglishLanguageProvider ..> ModI18n : references keys
     ModGermanLanguageProvider ..> ModI18n : references keys
     ModLootTableProvider ..> ModBlockLootTableProvider : creates

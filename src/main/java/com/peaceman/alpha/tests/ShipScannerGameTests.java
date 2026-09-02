@@ -104,4 +104,29 @@ public class ShipScannerGameTests {
             }
         });
     }
+
+    @GameTest(template = "empty")
+    public static void testShipScannerPistonMultiblock(GameTestHelper helper) {
+        BlockPos controllerRel = new BlockPos(1, 2, 1);
+        BlockPos pistonBaseRel = new BlockPos(1, 2, 2);
+        BlockPos pistonHeadRel = new BlockPos(1, 3, 2);
+
+        helper.setBlock(controllerRel, ModBlocks.SPACESHIP_CONTROL.get());
+        // Ausgefahrenen Piston (Base nach UP) platzieren
+        helper.setBlock(pistonBaseRel, Blocks.PISTON.defaultBlockState()
+                .setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.EXTENDED, true)
+                .setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING, net.minecraft.core.Direction.UP));
+        helper.setBlock(pistonHeadRel, Blocks.PISTON_HEAD.defaultBlockState()
+                .setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING, net.minecraft.core.Direction.UP));
+
+        BlockPos controllerAbs = helper.absolutePos(controllerRel);
+        Set<BlockPos> scannedBlocks = ShipScannerService.scan(helper.getLevel(), controllerAbs);
+
+        helper.succeedIf(() -> {
+            BlockPos headAbs = helper.absolutePos(pistonHeadRel);
+            if (!scannedBlocks.contains(headAbs)) {
+                helper.fail("Multiblock-Erweiterung hat den ausgefahrenen Piston-Kopf nicht mit einbezogen!");
+            }
+        });
+    }
 }

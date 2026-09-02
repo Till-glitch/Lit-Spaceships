@@ -97,6 +97,7 @@ public class ModGermanLanguageProvider extends LanguageProvider {
         add(ModI18n.Message.MOVEMENT_COOLDOWN_ACTIVE, "[Antrieb] Abklingzeit aktiv! Noch %1$s Sekunden.");
         add(ModI18n.Message.COLLISION_WARNING, "[Kollisionswarnung] Kollision erkannt (%1$s)! Bewegung gestoppt.");
         add(ModI18n.Message.ROTATION_BLOCKED_COLLISION, "[Rotation blockiert] Hindernis oder Terrain im Drehbereich!");
+        add(ModI18n.Message.MOVEMENT_BLOCKED_IMMUNE, "[Bewegung blockiert] Schiff enthält einen unverschiebbaren Block!");
         add(ModI18n.Message.HELM_CONTROL_ENTER, "[Helm] Du steuerst nun das Schiff. WASD zum Fliegen, LSHIFT zum Sinken, LEERTASTE zum Steigen. H/ESC zum Verlassen.");
         add(ModI18n.Message.HELM_CONTROL_LEAVE, "[Helm] Du hast die Steuerung verlassen.");
         add(ModI18n.Message.DEV_CHEAT_ENERGY, "DEV-CHEAT: %1$s FE geladen!");

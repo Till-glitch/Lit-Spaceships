@@ -231,6 +231,48 @@ classDiagram
             +onServerTick(ServerTickEvent.Post event)$ void
         }
 
+        class BlockDependencyGraph {
+            +addNode(BlockPos oldPos, BlockPos newPos, BlockState state, CompoundTag nbt) RelocationNode
+            +buildDependencies(Level level) void
+            +resolveTopologicalBatches() List~List~RelocationNode~~
+        }
+
+        class RelocationNode {
+            +oldPos BlockPos
+            +newPos BlockPos
+            +state BlockState
+            +nbt CompoundTag
+            +addDependency(RelocationNode dependency) void
+            +getDependencies() Set~RelocationNode~
+            +getDependents() Set~RelocationNode~
+        }
+
+        class BlockRelocationRegistry {
+            +registerHandler(IBlockRelocationHandler handler)$ void
+            +isImmune(BlockState state)$ boolean
+            +isCluster(BlockState state)$ boolean
+            +dispatchPreRelocation(BlockPos pos, BlockState state, BlockEntity be, CompoundTag nbt, RelocationContext ctx)$ void
+            +dispatchPostRelocation(BlockPos oldPos, BlockPos newPos, BlockState state, BlockEntity be, RelocationContext ctx)$ void
+        }
+
+        class IBlockRelocationHandler {
+            <<interface>>
+            +shouldHandle(BlockState state) boolean
+            +onPreRelocation(BlockPos pos, BlockState state, BlockEntity be, CompoundTag nbt, RelocationContext ctx) void
+            +onPostRelocation(BlockPos oldPos, BlockPos newPos, BlockState state, BlockEntity be, RelocationContext ctx) void
+            +getPriority() int
+        }
+
+        class RelocationContext {
+            <<record>>
+            +ServerLevel level
+            +ShipState ship
+            +int dx
+            +int dy
+            +int dz
+            +Rotation rotation
+        }
+
         class ShipRotationMath {
             +rotateRelativeBlockPos(BlockPos relPos, Rotation rot)$ BlockPos
             +rotateAbsoluteBlockPos(BlockPos pos, BlockPos pivot, Rotation rot)$ BlockPos
@@ -547,7 +589,7 @@ Für 90°-Drehungen um den Spaceship-Controller als Pivot $(px, pz)$ wird eine d
 | **Impuls-Laser abfeuern** | Pilot drückt `FIRE_PULSE` | `ServerPayloadHandler` $\rightarrow$ `LaserCombatService.fireWeapon()` | Zieht 250 FE ab, raycastet via `LaserRaycastUtil`. Zerstört 1 Block sofort (`destroyBlock` bzw. `SHIP_HULL`-Delta). Sendet `LaserFirePayload`. |
 | **Dauerstrahl umschalten** | Pilot drückt `TOGGLE_HEAVY_BEAM` | `ServerPayloadHandler` $\rightarrow$ `LaserCombatService.fireWeapon()` | Schaltet `isFiring` im BE um, sendet `LaserStateSyncPayload`. BE konsumiert im `serverTick` 50 FE/Tick und führt progressiven Abbau durch. |
 | **Energiemangel bei Dauerfeuer** | Reaktor leer (`tryConsumeEnergyAmount == false`) | `HeavyBeamBlockEntity.serverTick()` | Schaltet sich sofort ab (`setFiring(false)`), bricht Drill ab und sendet `LaserStateSyncPayload(isFiring = false)`. |
-| **3-Pass Topologische Translation & Rotation** | Navigation / Helm `MOVE` / `ROTATE` | `ShipMovementService.moveShip()` / `rotateShip()` | Topologische 3-Stufen-Platzierung (Pass 1: Solids, Pass 2: Roots & Normals, Pass 3: Attachables & Tops). Freigewordene Positionen ($P_{\text{alt}} \setminus P_{\text{neu}}$) mit Flag 48 geleert, Pässe mit Flag 52 platziert. Synchronisiertes Client-Update (Flag 50) am Ende verhindert X-Ray-Flackern und schützt Multiblöcke (Türen, Betten) und Fackeln vor Item-Drops. |
+| **Universelle DAG-Relokation & Mod-Kompatibilität** | Navigation / Helm `MOVE` / `ROTATE` | `ShipMovementService` $\rightarrow$ `BlockDependencyGraph` $\rightarrow$ `BlockRelocationRegistry` | Prüft `#c:relocation_immune` (bricht bei Bedrock/Portalen ab). Baut dynamischen DAG via `canSurvive` & `isFaceSturdy`. Löst Zyklen via Tarjan SCC. Löscht $P_{\text{alt}} \setminus P_{\text{neu}}$ mit Flag 48 (Y absteigend). Platziert topologische Batches mit Flag 52. Restauriert BlockEntities (`loadStatic`, `clearRemoved()`), ruft `IBlockRelocationHandler` Lifecycle-Hooks auf und synchronisiert via Flag 50 ohne Item-Drops oder X-Ray-Flackern. |
 | **Orthogonale 90°-Rotation** | Helm `KEY_ROTATE_LEFT/RIGHT` / GUI-Button | `ServerPayloadHandler` $\rightarrow$ `ShipMovementService.rotateShip()` | Prüft Pre-Collision (`ShipCollisionService.checkRotationCollisions`) und Reaktor-Energie (`tryConsumeRotationEnergy`). Rotiert Voxel, NBT, Passagiere & Turrets im Time-Slicing Tick-Budget. Sendet `ShipStructureSyncPayload` & `ShieldBubbleSyncPacket`. |
 | **Laser-Rendering (Client)** | Render-Frame (`AFTER_TRANSLUCENT_BLOCKS`) | `LaserBeamRenderer.onRenderLevelStage()` | Berechnet Strahlenursprung aus Schiffsanker + relativem Offset. Führt `level.clip()` aus $\rightarrow$ Strahl stoppt exakt auf der Blockoberfläche. Rendert Quads additiv (`GL_ONE`). |
 | **VRAM & Laser-Freigabe** | Chunk entlädt / Schiff gelöscht / Logout | `ClientShipManager` & `ClientLaserState` | `ClientLaserState.removeBeamsForShip(shipId)` räumt Laser auf; `ClientShipState.dispose()` schließt VBOs im GL-Thread. |
@@ -558,8 +600,13 @@ Für 90°-Drehungen um den Spaceship-Controller als Pivot $(px, pz)$ wird eine d
 
 Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
 
-1. **JUnit 5 & Mockito Suite (63 Tests, 100% Erfolgsquote)**:
-   * **`ShipMovement3PassTest`**: Validierung der topologischen 3-Pass-Klassifizierung (`PASS_1_SOLIDS`, `PASS_2_ROOTS_AND_NORMALS`, `PASS_3_ATTACHABLES_AND_TOPS`) für Vollblöcke, untere/obere Türhälften, Betten, Treppen, Fackeln, Redstone und $Y$-Sortierung.
+1. **JUnit 5 & Mockito Suite (75 Tests, 100% Erfolgsquote)**:
+   * **`VirtualSupportTestViewTest`**: Datengetriebenes Support-Probing über virtuelle Nachbar-Maskierung mit `state.canSurvive()` (löst alle hardcodierten `instanceof`-Ketten für Mod-Attachables ab).
+   * **`NbtCoordinateRemapperTest`**: Rekursives Umschreiben von internen `BlockPos`-Referenzen (`masterPos`, `controllerPos`, Int-Arrays, Longs) in BlockEntity-NBTs für Master-Slave-Multiblöcke.
+   * **`BlockDependencyGraphTest`**: Validierung der gerichteten Kantenbildung via `canSurvive` und `isFaceSturdy` für Multiblöcke (Türen, Betten, ausgefahrene Pistons Base $\rightarrow$ Head) und Wand-Attachables (Wandfackeln); Prüfung der Schicht-Linearisierung.
+   * **`CycleDetectionTest`**: Validierung von Tarjan's SCC-Algorithmus zur Erkennung und Bündelung von Zyklen ($A \leftrightarrow B$) in simultane Injektions-Cluster.
+   * **`BlockRelocationRegistryTest`**: Immunitäts-Validierung für Vanilla-Weltblöcke (`BEDROCK`, `END_PORTAL`, `COMMAND_BLOCK`, `BARRIER`) sowie Registrierung, Prioritäts-Sortierung und Lifecycle-Dispatching (`onPreRelocation`, `onPostRelocation`) für `IBlockRelocationHandler`.
+   * **`ShipMovement3PassTest`**: Validierung der 3-Pass-Klassifizierung (`PASS_1_SOLIDS`, `PASS_2_ROOTS_AND_NORMALS`, `PASS_3_ATTACHABLES_AND_TOPS`) für Vollblöcke, untere/obere Türhälften, Betten, Treppen, Fackeln, Redstone, Piston-Köpfe und $Y$-Sortierung.
    * **`ShipMovementFragileSortingTest`**: Validierung von `isFragileBlock` für Redstone Wire, Fackeln, Repeater, Hebel vs. Vollblöcke & Luft; Überprüfung der absteigenden Y-Entfernungs- und aufsteigenden Y-Platzierungs-Sortierung.
    * **`ShipRotationMathTest`**: Orthogonale 90° CW / CCW Transformation für alle 4 Quadranten, Pivot-Verschiebungen, Fließkomma-Entitätsrotationen um das Pivot-Zentrum, Yaw-Normalisierung über $[-180^\circ, 180^\circ]$, 4x 90° Identitätsinvarianz und `BlockState.rotate` für Directional Facing.
    * **`LaserNodeRenderStateTest`**: Thread-sichere Render-State Extraktion, interpolierte Kinematik (Yaw/Pitch), 180°-Winkel-Wrap und alle 6 `FACING`-Ausrichtungen (`UP`, `DOWN`, `NORTH`, `SOUTH`, `WEST`, `EAST`).
@@ -572,11 +619,11 @@ Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
    * **`ShipCollisionMathTest`**: Continuous Swept-AABB Extrusion & BitSet-Linearisierung.
    * **`ShipStateTest`**: Domain-Zustand, AABB-Neuberechnung, Controller-Translation, Cooldown-Arithmetik.
    * **`CombatLogicTest`**: 3D-DDA Ray-Traversal, Normalenflächen (`WEST`, `DOWN`), Fehlschuss- & Reichweitenbegrenzung, Tier-Konfigurationen.
-   * **`PayloadSerializationTest`**: Symmetrische Serialisierung aller 10 Custom-Payloads via `FriendlyByteBuf` & `StreamCodecs`.
+   * **`PayloadSerializationTest`**: Symmetrische Serialisierung aller 11 Custom-Payloads via `FriendlyByteBuf` & `StreamCodecs`.
    * **`SpaceshipEnergyManagerTest`**: Multi-Reaktor-Bündelung, sequenzieller FE-Drain, Transaktionssicherheit (Rollback).
    * **`AimTransformMathTest`**: Quaternion-Transformationen, Euler-Winkel-Konvertierung, 16-Bit Kompression und GimbalLimits.
    * **`TurretSeatTest`**: TurretSeat DTO Attribute, NBT-Persistenz und Aim-Lock-Status.
-2. **NeoForge GameTests (`@GameTestHolder`, 20 Tests auf Dedicated GameTest-Server, 100% Erfolgsquote)**:
+2. **NeoForge GameTests (`@GameTestHolder`, 23 Tests auf Dedicated GameTest-Server, 100% Erfolgsquote)**:
    * **`ShipCollisionGameTests` (10 Tests)**:
      - `testOffVsOff_StandardCollision`: Gegenseitige Zerstörung von Hüllenvoxeln bei OFF vs. OFF.
      - `testOffVsOff_ExplosionDamage`: 5x5x8 Matrix (200 distinkte Voxel) mit Cluster-Explosionen im kinetischen Schwerpunkt.
@@ -589,11 +636,17 @@ Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
      - `testOnVsOn_StandardClash`: Schild-gegen-Schild Kollision mit beidseitigem FE-Drain und Stopp.
      - `testOnVsOn_AsymmetricCollapse`: Asymmetrischer Zusammenbruch des energieärmeren Schildes bei Kollision.
      - `testMultiCollision_ShieldPriority`: 3-Wege-Kollision (Schiff A schneidet gleichzeitig in Schild B und ungeschützte Hülle C): Schild-Blockade stoppt Schiff A deterministisch via `CollisionResolver.resolveMultiple()`, schützt Hülle C vor Phantom-Durchdringung.
-   * **`ShipScannerGameTests`**: Validierung des BFS-Scanners, Ausschluss diagonaler Blöcke, Multiblock-Ergänzung (Türen).
-   * **`ShipMovementGameTests` (3 Tests)**:
+   * **`ShipScannerGameTests` (4 Tests)**:
+     - `testShipScannerConnectedBlocks`: Validierung des BFS-Scanners für verbundene Blöcke.
+     - `testShipScannerDiagonalIgnored`: Ausschluss diagonaler Blöcke.
+     - `testShipScannerDoorMultiblock`: Multiblock-Ergänzung für zweiflügelige Türen.
+     - `testShipScannerPistonMultiblock`: Multiblock-Ergänzung für ausgefahrene Pistons und Piston-Heads.
+   * **`ShipMovementGameTests` (5 Tests)**:
      - `testShipMovementRelocation`: Physische Schiffstranslation im Testlevel mit `AIR`-Hinterlassung und Zielblock-Präsenz.
      - `testShipMovementDownWithRedstoneAndTorch`: Abwärtsbewegung mit Redstone Wire & Fackel; Verifikation der korrekten Platzierung und 0 Item-Drops.
-     - `testMovement_PreservesTorchesAndDoors`: 3-Pass-Validierung: Verschiebung einer Wand mit Fackel und einer zweiflügeligen Tür mit Erhalt aller Hälften und 0 Item-Drops.
+     - `testMovement_PreservesTorchesAndDoors`: Topologische Validierung: Verschiebung einer Wand mit Fackel und einer zweiflügeligen Tür mit Erhalt aller Hälften und 0 Item-Drops.
+     - `testMovement_BlockedByImmuneBlock`: Immunitäts-Validierung: Verschiebung eines Schiffs mit unzerstörbarem `BEDROCK` wird präemptiv abgebrochen; Blöcke bleiben unbewegt.
+     - `testMovement_PreservesExtendedPistons`: Erhaltung ausgefahrener Pistons (Base + Head nach oben) ohne Item-Drops oder Abbrechen.
    * **`ShipAttachmentGameTests`**: Persistenz von `ModAttachments.SHIP_ID` an BlockEntities.
    * **`SpaceshipGameTests`**: Schiffserstellung über Kontrollblöcke.
 3. **GitHub Actions CI/CD Pipeline (`.github/workflows/ci.yml`)**:

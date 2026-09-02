@@ -88,6 +88,7 @@ public final class ModI18n {
         public static final String MOVEMENT_COOLDOWN_ACTIVE = "message." + Alpha.MODID + ".movement.cooldown_active";
         public static final String COLLISION_WARNING = "message." + Alpha.MODID + ".collision.warning";
         public static final String ROTATION_BLOCKED_COLLISION = "message." + Alpha.MODID + ".rotation.blocked_collision";
+        public static final String MOVEMENT_BLOCKED_IMMUNE = "message." + Alpha.MODID + ".movement.blocked_immune";
         public static final String HELM_CONTROL_ENTER = "message." + Alpha.MODID + ".helm.control.enter";
         public static final String HELM_CONTROL_LEAVE = "message." + Alpha.MODID + ".helm.control.leave";
 

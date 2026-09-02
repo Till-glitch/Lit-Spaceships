@@ -195,4 +195,86 @@ public class ShipMovementGameTests {
             helper.assertItemEntityCountIs(net.minecraft.world.item.Items.OAK_DOOR, door1Lower, 10.0, 0);
         });
     }
+
+    @GameTest(template = "empty")
+    public static void testMovement_BlockedByImmuneBlock(GameTestHelper helper) {
+        BlockPos startCtrl = new BlockPos(1, 2, 1);
+        BlockPos bedrockPos = new BlockPos(1, 2, 2);
+
+        // 1. Schiff mit Kontrollblock und unverschiebbarem Bedrock aufbauen
+        helper.setBlock(startCtrl, ModBlocks.SPACESHIP_CONTROL.get());
+        helper.setBlock(bedrockPos, Blocks.BEDROCK);
+
+        BlockPos startAbs = helper.absolutePos(startCtrl);
+        ShipState ship = ServerShipManager.createShip(helper.getLevel(), startAbs);
+
+        // 2. Versuch, das Schiff zu verschieben (dx = 1)
+        ShipMovementService.moveShip(helper.getLevel(), ship, 1, 0, 0, null);
+
+        // 3. Überprüfung: Blöcke dürfen sich wegen Immunität nicht bewegt haben
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(ModBlocks.SPACESHIP_CONTROL.get(), startCtrl);
+            helper.assertBlockPresent(Blocks.BEDROCK, bedrockPos);
+            helper.assertBlockPresent(Blocks.AIR, new BlockPos(2, 2, 1));
+            helper.assertBlockPresent(Blocks.AIR, new BlockPos(2, 2, 2));
+        });
+    }
+
+    @GameTest(template = "empty")
+    public static void testMovement_PreservesExtendedPistons(GameTestHelper helper) {
+        BlockPos startCtrl = new BlockPos(1, 2, 1);
+        BlockPos startReactor = new BlockPos(1, 2, 2);
+        BlockPos floorPiston = new BlockPos(2, 2, 2);
+        BlockPos pistonBase = new BlockPos(2, 3, 2);
+        BlockPos pistonHead = new BlockPos(2, 4, 2);
+        BlockPos redstoneSource = new BlockPos(3, 3, 2);
+
+        // 1. Schiff mit Kontrollblock, Reaktor, Energie und ausgefahrenem Piston aufbauen
+        helper.setBlock(startCtrl, ModBlocks.SPACESHIP_CONTROL.get());
+        helper.setBlock(startReactor, ModBlocks.SPACESHIP_REACTOR.get());
+        helper.setBlock(floorPiston, Blocks.IRON_BLOCK);
+        helper.setBlock(redstoneSource, Blocks.REDSTONE_BLOCK);
+
+        // Ausgefahrenen Piston (Base + Head nach UP) platzieren
+        helper.setBlock(pistonBase, Blocks.PISTON.defaultBlockState()
+                .setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.EXTENDED, true)
+                .setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING, net.minecraft.core.Direction.UP));
+        helper.setBlock(pistonHead, Blocks.PISTON_HEAD.defaultBlockState()
+                .setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING, net.minecraft.core.Direction.UP));
+
+        BlockPos absReactorPos = helper.absolutePos(startReactor);
+        if (helper.getLevel().getBlockEntity(absReactorPos) instanceof SpaceshipReactorBlockEntity reactor) {
+            reactor.getEnergyStorage().receiveEnergy(100000, false);
+        }
+
+        BlockPos startAbs = helper.absolutePos(startCtrl);
+        ShipState ship = ServerShipManager.createShip(helper.getLevel(), startAbs);
+
+        // 2. Schiff um 2 Blöcke in X-Richtung verschieben (dx = 2)
+        ShipMovementService.moveShip(helper.getLevel(), ship, 2, 0, 0, null);
+
+        // 3. Überprüfung: Blöcke intakt am Ziel und KEINE Drops am Ursprung
+        helper.succeedWhen(() -> {
+            BlockPos targetCtrl = new BlockPos(3, 2, 1);
+            BlockPos targetReactor = new BlockPos(3, 2, 2);
+            BlockPos targetPistonBase = new BlockPos(4, 3, 2);
+            BlockPos targetPistonHead = new BlockPos(4, 4, 2);
+
+            // Alte Positionen müssen Luft sein
+            helper.assertBlockPresent(Blocks.AIR, startCtrl);
+            helper.assertBlockPresent(Blocks.AIR, startReactor);
+            helper.assertBlockPresent(Blocks.AIR, pistonBase);
+            helper.assertBlockPresent(Blocks.AIR, pistonHead);
+
+            // Neue Positionen müssen intakt existieren
+            helper.assertBlockPresent(ModBlocks.SPACESHIP_CONTROL.get(), targetCtrl);
+            helper.assertBlockPresent(ModBlocks.SPACESHIP_REACTOR.get(), targetReactor);
+            helper.assertBlockPresent(Blocks.PISTON, targetPistonBase);
+            helper.assertBlockPresent(Blocks.PISTON_HEAD, targetPistonHead);
+
+            // Keine gedroppten Piston-Items im Testbereich!
+            helper.assertItemEntityCountIs(net.minecraft.world.item.Items.PISTON, pistonBase, 10.0, 0);
+            helper.assertItemEntityCountIs(net.minecraft.world.item.Items.STICKY_PISTON, pistonBase, 10.0, 0);
+        });
+    }
 }

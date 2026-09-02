@@ -97,6 +97,7 @@ public class ModEnglishLanguageProvider extends LanguageProvider {
         add(ModI18n.Message.MOVEMENT_COOLDOWN_ACTIVE, "[Engines] Cooldown active! %1$s seconds remaining.");
         add(ModI18n.Message.COLLISION_WARNING, "[Collision Warning] Collision detected (%1$s)! Movement stopped.");
         add(ModI18n.Message.ROTATION_BLOCKED_COLLISION, "[Rotation Blocked] Obstacle or terrain in rotation path!");
+        add(ModI18n.Message.MOVEMENT_BLOCKED_IMMUNE, "[Movement Blocked] Ship contains an unmovable / immune block!");
         add(ModI18n.Message.HELM_CONTROL_ENTER, "[Helm] You are piloting the ship. WASD to fly, LSHIFT to descend, SPACE to ascend. H/ESC to exit.");
         add(ModI18n.Message.HELM_CONTROL_LEAVE, "[Helm] You have left helm control.");
         add(ModI18n.Message.DEV_CHEAT_ENERGY, "DEV-CHEAT: %1$s FE loaded!");

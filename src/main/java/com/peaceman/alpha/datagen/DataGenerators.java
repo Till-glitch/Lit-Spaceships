@@ -33,5 +33,6 @@ public class DataGenerators {
 
         // Server / Domain-bezogene Provider
         generator.addProvider(event.includeServer(), ModLootTableProvider.create(packOutput, lookupProvider));
+        generator.addProvider(event.includeServer(), new com.peaceman.alpha.datagen.provider.ModBlockTagsProvider(packOutput, lookupProvider, existingFileHelper));
     }
 }

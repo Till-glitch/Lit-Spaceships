@@ -1,0 +1,7 @@
+// 1.21	2026-09-02T19:43:21.2875423	Tags for minecraft:block mod id peaceman_alpha
+35133e95f1c8fdd7a1c21afcc231fc0bffefb9a8 data/c/tags/block/inventory_relocation_safe.json
+35133e95f1c8fdd7a1c21afcc231fc0bffefb9a8 data/c/tags/block/relocates_as_cluster.json
+0caac0652853bea5a32b39b29509b8026e6ad8b1 data/c/tags/block/relocation_immune.json
+80522ec4dc269b24a90c39d9ed2894fb391e9c52 data/forge/tags/block/inventory_relocation_safe.json
+ff5b3245137cb53b81b796f9ad04052b8781af64 data/forge/tags/block/relocates_as_cluster.json
+ab2c1434b80a8bdcf1806cf683533188ccd20a1f data/forge/tags/block/relocation_immune.json

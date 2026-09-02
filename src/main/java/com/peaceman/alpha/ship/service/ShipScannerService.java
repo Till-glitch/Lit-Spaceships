@@ -2,7 +2,11 @@ package com.peaceman.alpha.ship.service;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.IntArrayTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -11,6 +15,7 @@ import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Locale;
 import java.util.Queue;
 import java.util.Set;
 
@@ -89,7 +94,77 @@ public class ShipScannerService {
                     }
                 }
             }
+
+            // 4. Ausgefahrene Pistons & Piston-Heads
+            if (state.getBlock() instanceof net.minecraft.world.level.block.piston.PistonBaseBlock &&
+                    state.hasProperty(BlockStateProperties.EXTENDED) &&
+                    state.getValue(BlockStateProperties.EXTENDED) &&
+                    state.hasProperty(BlockStateProperties.FACING)) {
+                Direction facing = state.getValue(BlockStateProperties.FACING);
+                toAdd.add(pos.relative(facing));
+            } else if (state.getBlock() instanceof net.minecraft.world.level.block.piston.PistonHeadBlock &&
+                    state.hasProperty(BlockStateProperties.FACING)) {
+                Direction facing = state.getValue(BlockStateProperties.FACING);
+                toAdd.add(pos.relative(facing.getOpposite()));
+            }
+
+            // 5. Universelle Mod-Multiblock Erfassung über NBT-Pointers (masterPos, controllerPos)
+            BlockEntity be = level.getBlockEntity(pos);
+            if (be != null) {
+                try {
+                    CompoundTag tag = be.saveWithFullMetadata(level.registryAccess());
+                    findReferencedPositions(tag, pos, 32, toAdd, level);
+                } catch (Exception ignored) {
+                }
+            }
+
+            // 6. Cluster-Tag (#c:relocates_as_cluster)
+            if (state.is(com.peaceman.alpha.registry.ModTags.Blocks.RELOCATES_AS_CLUSTER)) {
+                for (Direction dir : Direction.values()) {
+                    BlockPos neighbor = pos.relative(dir);
+                    if (level.getBlockState(neighbor).is(com.peaceman.alpha.registry.ModTags.Blocks.RELOCATES_AS_CLUSTER)) {
+                        toAdd.add(neighbor);
+                    }
+                }
+            }
         }
         shipBlocks.addAll(toAdd);
+    }
+
+    private static void findReferencedPositions(CompoundTag tag, BlockPos origin, int maxDist, Set<BlockPos> out, Level level) {
+        if (tag == null) return;
+        if (tag.contains("x", Tag.TAG_INT) && tag.contains("y", Tag.TAG_INT) && tag.contains("z", Tag.TAG_INT)) {
+            BlockPos target = new BlockPos(tag.getInt("x"), tag.getInt("y"), tag.getInt("z"));
+            if (!target.equals(origin) && target.closerThan(origin, maxDist) && !level.getBlockState(target).isAir()) {
+                out.add(target);
+            }
+        }
+        for (String key : tag.getAllKeys()) {
+            String lowerKey = key.toLowerCase(Locale.ROOT);
+            Tag child = tag.get(key);
+            if (child instanceof CompoundTag childCompound) {
+                if (lowerKey.contains("master") || lowerKey.contains("controller") || lowerKey.contains("core")
+                        || lowerKey.contains("parent") || lowerKey.contains("link") || lowerKey.contains("target")) {
+                    if (childCompound.contains("x", Tag.TAG_INT) && childCompound.contains("y", Tag.TAG_INT) && childCompound.contains("z", Tag.TAG_INT)) {
+                        BlockPos target = new BlockPos(childCompound.getInt("x"), childCompound.getInt("y"), childCompound.getInt("z"));
+                        if (!target.equals(origin) && target.closerThan(origin, maxDist) && !level.getBlockState(target).isAir()) {
+                            out.add(target);
+                        }
+                    }
+                }
+                findReferencedPositions(childCompound, origin, maxDist, out, level);
+            } else if (child instanceof IntArrayTag intArrayTag) {
+                if (lowerKey.contains("master") || lowerKey.contains("controller") || lowerKey.contains("core")
+                        || lowerKey.contains("pos")) {
+                    int[] arr = intArrayTag.getAsIntArray();
+                    if (arr.length == 3) {
+                        BlockPos target = new BlockPos(arr[0], arr[1], arr[2]);
+                        if (!target.equals(origin) && target.closerThan(origin, maxDist) && !level.getBlockState(target).isAir()) {
+                            out.add(target);
+                        }
+                    }
+                }
+            }
+        }
     }
 }

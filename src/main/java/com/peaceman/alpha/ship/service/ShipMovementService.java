@@ -5,8 +5,14 @@ import com.peaceman.alpha.block.ISpaceshipNode;
 import com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity;
 import com.peaceman.alpha.block.entity.SpaceshipControlBlockEntity;
 import com.peaceman.alpha.network.ShipPositionSyncPayload;
+import com.peaceman.alpha.registry.ModI18n;
 import com.peaceman.alpha.ship.SpaceshipEnergyManager;
 import com.peaceman.alpha.ship.domain.ShipState;
+import com.peaceman.alpha.ship.relocation.api.RelocationContext;
+import com.peaceman.alpha.ship.relocation.graph.BlockDependencyGraph;
+import com.peaceman.alpha.ship.relocation.graph.RelocationNode;
+import com.peaceman.alpha.ship.relocation.registry.BlockRelocationRegistry;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
@@ -68,7 +74,7 @@ public class ShipMovementService {
             return PlacementPass.PASS_2_ROOTS_AND_NORMALS;
         }
 
-        // 1. Obere Multiblock-Hälften -> Pass 3
+        // 1. Obere Multiblock-Hälften & abhängige Multiblock-Teile -> Pass 3
         if (state.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.DOUBLE_BLOCK_HALF) &&
                 state.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.DOUBLE_BLOCK_HALF) == net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER) {
             return PlacementPass.PASS_3_ATTACHABLES_AND_TOPS;
@@ -77,26 +83,11 @@ public class ShipMovementService {
                 state.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.BED_PART) == net.minecraft.world.level.block.state.properties.BedPart.HEAD) {
             return PlacementPass.PASS_3_ATTACHABLES_AND_TOPS;
         }
-
-        // 2. Anhängende & zerbrechliche Blöcke -> Pass 3
-        net.minecraft.world.level.block.Block block = state.getBlock();
-        if (block instanceof net.minecraft.world.level.block.TorchBlock ||
-                block instanceof net.minecraft.world.level.block.RedStoneWireBlock ||
-                block instanceof net.minecraft.world.level.block.DiodeBlock ||
-                block instanceof net.minecraft.world.level.block.LeverBlock ||
-                block instanceof net.minecraft.world.level.block.ButtonBlock ||
-                block instanceof net.minecraft.world.level.block.LadderBlock ||
-                block instanceof net.minecraft.world.level.block.SignBlock ||
-                block instanceof net.minecraft.world.level.block.BannerBlock ||
-                block instanceof net.minecraft.world.level.block.CarpetBlock ||
-                block instanceof net.minecraft.world.level.block.BasePressurePlateBlock ||
-                block instanceof net.minecraft.world.level.block.TripWireHookBlock ||
-                block instanceof net.minecraft.world.level.block.TripWireBlock ||
-                block instanceof net.minecraft.world.level.block.FlowerPotBlock) {
+        if (state.getBlock() instanceof net.minecraft.world.level.block.piston.PistonHeadBlock) {
             return PlacementPass.PASS_3_ATTACHABLES_AND_TOPS;
         }
 
-        // 3. Untere Multiblock-Wurzeln -> Pass 2
+        // 2. Untere Multiblock-Wurzeln -> Pass 2
         if (state.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.DOUBLE_BLOCK_HALF) &&
                 state.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.DOUBLE_BLOCK_HALF) == net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER) {
             return PlacementPass.PASS_2_ROOTS_AND_NORMALS;
@@ -106,11 +97,26 @@ public class ShipMovementService {
             return PlacementPass.PASS_2_ROOTS_AND_NORMALS;
         }
 
+        // 3. Universelle Heuristik für anhängende & zerbrechliche Blöcke (Pass 3):
+        // Face-Attached Blöcke (Hebel, Knöpfe), oder Blöcke, die ohne Nachbarunterstützung nicht überleben können
+        if (state.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.ATTACH_FACE)) {
+            return PlacementPass.PASS_3_ATTACHABLES_AND_TOPS;
+        }
+        try {
+            BlockPos targetPos = pos != null ? pos : BlockPos.ZERO;
+            com.peaceman.alpha.ship.relocation.graph.VirtualSupportTestView virtualView =
+                    new com.peaceman.alpha.ship.relocation.graph.VirtualSupportTestView(level, null, targetPos.below());
+            if (!state.canSurvive(virtualView, targetPos)) {
+                return PlacementPass.PASS_3_ATTACHABLES_AND_TOPS;
+            }
+        } catch (Exception ignored) {
+        }
+
         // 4. Reine feste Vollblöcke (Fundamente) -> Pass 1
-        if (level != null && state.isSolidRender(level, pos)) {
+        if (level != null && state.isSolidRender(level, pos != null ? pos : BlockPos.ZERO)) {
             return PlacementPass.PASS_1_SOLIDS;
         }
-        if (state.isCollisionShapeFullBlock(level != null ? level : net.minecraft.world.level.EmptyBlockGetter.INSTANCE, pos)) {
+        if (state.isCollisionShapeFullBlock(level != null ? level : net.minecraft.world.level.EmptyBlockGetter.INSTANCE, pos != null ? pos : BlockPos.ZERO)) {
             return PlacementPass.PASS_1_SOLIDS;
         }
 
@@ -131,14 +137,9 @@ public class ShipMovementService {
         int phase = 0;
         Map<BlockPos, BlockData> snapshot = new HashMap<>();
 
-        List<Map.Entry<BlockPos, BlockData>> pass1Blocks = new ArrayList<>();
-        int pass1Index = 0;
-
-        List<Map.Entry<BlockPos, BlockData>> pass2Blocks = new ArrayList<>();
-        int pass2Index = 0;
-
-        List<Map.Entry<BlockPos, BlockData>> pass3Blocks = new ArrayList<>();
-        int pass3Index = 0;
+        List<List<RelocationNode>> topologicalBatches = new ArrayList<>();
+        int currentBatchIndex = 0;
+        int currentBatchNodeIndex = 0;
 
         List<BlockPos> blocksToRemove = new ArrayList<>();
         int removeIndex = 0;
@@ -147,6 +148,7 @@ public class ShipMovementService {
         List<Entity> entitiesToMove = new ArrayList<>();
         Set<ChunkPos> destinationChunks = new HashSet<>();
         BlockPos startPos;
+        RelocationContext relocationContext;
 
         public MovementTask(ServerLevel level, ShipState ship, int dx, int dy, int dz, Player player) {
             this.level = level;
@@ -172,19 +174,30 @@ public class ShipMovementService {
                 return true; // Keine Bewegung erforderlich
             }
 
-            // Phase 0: Vorbereitung, Chunk-Loading & Snapshot
+            // Phase 0: Vorbereitung, Immunitätsprüfung, Chunk-Loading & Graph-Konstruktion
             if (phase == 0) {
                 Set<BlockPos> shipBlocks = ship.getBlocks();
 
-                // 1. Energieprüfung
+                // 1. Immunitätsprüfung (#c:relocation_immune / unverschiebbare Blöcke)
+                for (BlockPos pos : shipBlocks) {
+                    BlockState state = level.getBlockState(pos);
+                    if (BlockRelocationRegistry.isImmune(state)) {
+                        if (player != null) {
+                            player.sendSystemMessage(Component.translatable(ModI18n.Message.MOVEMENT_BLOCKED_IMMUNE).withStyle(ChatFormatting.RED));
+                        }
+                        return true; // Abbruch: Schiff enthält unverschiebbaren Block
+                    }
+                }
+
+                // 2. Energieprüfung
                 if (!SpaceshipEnergyManager.tryConsumeFlightEnergy(level, ship, dx, dy, dz, player)) {
                     return true; // Abbruch wegen Energiemangel
                 }
 
-                // 2. Chunks im Zielgebiet vorbereiten und forceloaden
+                // 3. Chunks im Zielgebiet vorbereiten und forceloaden
                 destinationChunks = prepareDestinationChunks(level, ship, new Vec3(dx, dy, dz));
 
-                // 3. Bounding Box & Passagier-Matrix erfassen
+                // 4. Bounding Box & Passagier-Matrix erfassen
                 int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
                 int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
                 for (BlockPos pos : shipBlocks) {
@@ -207,70 +220,77 @@ public class ShipMovementService {
                     return false;
                 }).toList();
 
-                // 4. Snapshot erstellen
+                // 5. Zielpositionen berechnen
+                for (BlockPos pos : shipBlocks) {
+                    newShipBlocks.add(pos.offset(dx, dy, dz));
+                }
+
+                relocationContext = new RelocationContext(
+                        level, ship, dx, dy, dz, net.minecraft.world.level.block.Rotation.NONE,
+                        shipBlocks, newShipBlocks, player
+                );
+
+                // 6. Snapshot erstellen & onPreRelocation dispatchen
                 for (BlockPos pos : shipBlocks) {
                     BlockState state = level.getBlockState(pos);
                     BlockEntity be = level.getBlockEntity(pos);
                     CompoundTag nbt = (be != null) ? be.saveWithFullMetadata(level.registryAccess()) : null;
+                    if (nbt != null) {
+                        com.peaceman.alpha.ship.relocation.util.NbtCoordinateRemapper.remapCoordinates(
+                                nbt, shipBlocks, p -> p.offset(dx, dy, dz));
+                    }
+                    BlockRelocationRegistry.dispatchPreRelocation(pos, state, be, nbt, relocationContext);
                     snapshot.put(pos, new BlockData(state, nbt));
                 }
 
-                // 5. Inventare sichern & BlockEntities vorab entfernen (verhindert Containers.dropContents)
+                // 7. Inventare sichern & BlockEntities vorab entfernen (verhindert Containers.dropContents)
                 for (BlockPos pos : shipBlocks) {
                     if (level.getBlockEntity(pos) != null) {
                         level.removeBlockEntity(pos);
                     }
                 }
 
-                // 6. Zielpositionen berechnen
+                // 7b. Ausgefahrene Pistons in der Welt vorab entwaffnen (EXTENDED = false mit Flag 48),
+                // um zu verhindern, dass PistonHeadBlock.onRemove beim Abbau alter Positionen level.destroyBlock() triggert!
                 for (BlockPos pos : shipBlocks) {
-                    newShipBlocks.add(pos.offset(dx, dy, dz));
+                    BlockState s = level.getBlockState(pos);
+                    if (s.getBlock() instanceof net.minecraft.world.level.block.piston.PistonBaseBlock &&
+                            s.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.EXTENDED) &&
+                            s.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.EXTENDED)) {
+                        level.setBlock(pos, s.setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.EXTENDED, false), 48);
+                    }
                 }
 
-                // 7. Vorabbereinigung im Weg stehender Weltblöcke
+                // 8. Vorabbereinigung im Weg stehender Weltblöcke
                 for (BlockPos newPos : newShipBlocks) {
                     if (!shipBlocks.contains(newPos) && !level.getBlockState(newPos).isAir()) {
                         level.destroyBlock(newPos, true);
                     }
                 }
 
-                // 8. Controller entkoppeln
+                // 9. Controller entkoppeln
                 if (level.getBlockEntity(startPos) instanceof SpaceshipControlBlockEntity be) {
                     be.setShipId(null);
                 }
                 BlockPos newStartPos = startPos.offset(dx, dy, dz);
                 ship.setControllerPos(newStartPos);
 
-                // 9. Freigewordene alte Positionen (P_alt \ P_neu) zur Löschung vormerken
+                // 10. Freigewordene alte Positionen (P_alt \ P_neu) zur Löschung vormerken
                 for (BlockPos pos : shipBlocks) {
                     if (!newShipBlocks.contains(pos)) {
                         blocksToRemove.add(pos);
                     }
                 }
-                // Von oben nach unten löschen
+                // Von oben nach unten löschen (Attachables vor Fundamenten)
                 blocksToRemove.sort((a, b) -> Integer.compare(b.getY(), a.getY()));
 
-                // 10. Blöcke in 3 Pässe sortieren (jeweils aufsteigend nach Ziel-Y)
-                List<Map.Entry<BlockPos, BlockData>> p1 = new ArrayList<>();
-                List<Map.Entry<BlockPos, BlockData>> p2 = new ArrayList<>();
-                List<Map.Entry<BlockPos, BlockData>> p3 = new ArrayList<>();
-
+                // 11. Topologischen Abhängigkeitsgraphen konstruieren & Schichten lösen
+                BlockDependencyGraph graph = new BlockDependencyGraph();
                 for (Map.Entry<BlockPos, BlockData> entry : snapshot.entrySet()) {
-                    PlacementPass pass = getPlacementPass(entry.getValue().state(), level, entry.getKey());
-                    switch (pass) {
-                        case PASS_1_SOLIDS -> p1.add(entry);
-                        case PASS_2_ROOTS_AND_NORMALS -> p2.add(entry);
-                        case PASS_3_ATTACHABLES_AND_TOPS -> p3.add(entry);
-                    }
+                    graph.addNode(entry.getKey(), entry.getKey().offset(dx, dy, dz), entry.getValue().state(), entry.getValue().nbt());
                 }
-
-                p1.sort(Comparator.comparingInt(e -> e.getKey().getY() + dy));
-                p2.sort(Comparator.comparingInt(e -> e.getKey().getY() + dy));
-                p3.sort(Comparator.comparingInt(e -> e.getKey().getY() + dy));
-
-                pass1Blocks.addAll(p1);
-                pass2Blocks.addAll(p2);
-                pass3Blocks.addAll(p3);
+                graph.buildDependencies(level);
+                topologicalBatches = graph.resolveTopologicalBatches();
 
                 phase = 1;
             }
@@ -287,44 +307,25 @@ public class ShipMovementService {
                 phase = 2;
             }
 
-            // Phase 2: Pass 1 (Solids) mit Flag 52 platzieren
+            // Phase 2: Topologische Batches sequenziell mit Flag 52 platzieren
             if (phase == 2) {
-                while (pass1Index < pass1Blocks.size()) {
-                    if (System.nanoTime() >= deadlineNanos) {
-                        return false;
+                while (currentBatchIndex < topologicalBatches.size()) {
+                    List<RelocationNode> batch = topologicalBatches.get(currentBatchIndex);
+                    while (currentBatchNodeIndex < batch.size()) {
+                        if (System.nanoTime() >= deadlineNanos) {
+                            return false;
+                        }
+                        RelocationNode node = batch.get(currentBatchNodeIndex++);
+                        placeNode(level, node, ship.getId(), 52, relocationContext);
                     }
-                    Map.Entry<BlockPos, BlockData> entry = pass1Blocks.get(pass1Index++);
-                    placeBlockFromSnapshot(level, entry, dx, dy, dz, ship.getId(), 52);
+                    currentBatchIndex++;
+                    currentBatchNodeIndex = 0;
                 }
                 phase = 3;
             }
 
-            // Phase 3: Pass 2 (Roots & Normals) mit Flag 52 platzieren
+            // Phase 3: Abschluss & Synchronisation
             if (phase == 3) {
-                while (pass2Index < pass2Blocks.size()) {
-                    if (System.nanoTime() >= deadlineNanos) {
-                        return false;
-                    }
-                    Map.Entry<BlockPos, BlockData> entry = pass2Blocks.get(pass2Index++);
-                    placeBlockFromSnapshot(level, entry, dx, dy, dz, ship.getId(), 52);
-                }
-                phase = 4;
-            }
-
-            // Phase 4: Pass 3 (Attachables & Tops) mit Flag 52 platzieren
-            if (phase == 4) {
-                while (pass3Index < pass3Blocks.size()) {
-                    if (System.nanoTime() >= deadlineNanos) {
-                        return false;
-                    }
-                    Map.Entry<BlockPos, BlockData> entry = pass3Blocks.get(pass3Index++);
-                    placeBlockFromSnapshot(level, entry, dx, dy, dz, ship.getId(), 52);
-                }
-                phase = 5;
-            }
-
-            // Phase 5: Abschluss & Synchronisation
-            if (phase == 5) {
                 // Abschluss: RAM-Daten aktualisieren
                 ship.setBlocksRaw(newShipBlocks);
 
@@ -383,25 +384,35 @@ public class ShipMovementService {
             return true;
         }
 
-        private void placeBlockFromSnapshot(Level lvl, Map.Entry<BlockPos, BlockData> entry, int dx, int dy, int dz, UUID shipId, int flags) {
-            BlockPos newPos = entry.getKey().offset(dx, dy, dz);
-            BlockState state = entry.getValue().state();
-            CompoundTag nbt = entry.getValue().nbt();
+        private void placeNode(Level lvl, RelocationNode node, UUID shipId, int flags, RelocationContext context) {
+            BlockPos newPos = node.getNewPos();
+            BlockState state = node.getState();
+            CompoundTag nbt = node.getNbt();
 
             lvl.setBlock(newPos, state, flags);
 
+            BlockEntity newBe = null;
             if (nbt != null) {
                 nbt.putInt("x", newPos.getX());
                 nbt.putInt("y", newPos.getY());
                 nbt.putInt("z", newPos.getZ());
-                BlockEntity newBe = BlockEntity.loadStatic(newPos, state, nbt, lvl.registryAccess());
+                newBe = BlockEntity.loadStatic(newPos, state, nbt, lvl.registryAccess());
                 if (newBe != null) {
+                    newBe.clearRemoved();
                     lvl.setBlockEntity(newBe);
                 }
             }
 
-            if (lvl.getBlockEntity(newPos) instanceof ISpaceshipNode node) {
-                node.setShipId(shipId);
+            if (newBe == null) {
+                newBe = lvl.getBlockEntity(newPos);
+            }
+
+            if (newBe instanceof ISpaceshipNode spaceshipNode) {
+                spaceshipNode.setShipId(shipId);
+            }
+
+            if (context != null) {
+                BlockRelocationRegistry.dispatchPostRelocation(node.getOldPos(), newPos, state, newBe, context);
             }
         }
     }
@@ -415,14 +426,9 @@ public class ShipMovementService {
         int phase = 0;
         Map<BlockPos, BlockData> snapshot = new HashMap<>();
 
-        List<Map.Entry<BlockPos, BlockData>> pass1Blocks = new ArrayList<>();
-        int pass1Index = 0;
-
-        List<Map.Entry<BlockPos, BlockData>> pass2Blocks = new ArrayList<>();
-        int pass2Index = 0;
-
-        List<Map.Entry<BlockPos, BlockData>> pass3Blocks = new ArrayList<>();
-        int pass3Index = 0;
+        List<List<RelocationNode>> topologicalBatches = new ArrayList<>();
+        int currentBatchIndex = 0;
+        int currentBatchNodeIndex = 0;
 
         List<BlockPos> blocksToRemove = new ArrayList<>();
         int removeIndex = 0;
@@ -431,6 +437,7 @@ public class ShipMovementService {
         List<Entity> entitiesToMove = new ArrayList<>();
         Set<ChunkPos> destinationChunks = new HashSet<>();
         BlockPos startPos;
+        RelocationContext relocationContext;
 
         public RotationTask(ServerLevel level, ShipState ship, net.minecraft.world.level.block.Rotation rotation, Player player) {
             this.level = level;
@@ -451,23 +458,34 @@ public class ShipMovementService {
                 return true;
             }
 
-            // Phase 0: Vorbereitung, Chunk-Loading & Snapshot
+            // Phase 0: Vorbereitung, Immunitätsprüfung, Chunk-Loading & Graph-Konstruktion
             if (phase == 0) {
                 Set<BlockPos> shipBlocks = ship.getBlocks();
 
-                // 1. Energieprüfung
+                // 1. Immunitätsprüfung (#c:relocation_immune / unverschiebbare Blöcke)
+                for (BlockPos pos : shipBlocks) {
+                    BlockState state = level.getBlockState(pos);
+                    if (BlockRelocationRegistry.isImmune(state)) {
+                        if (player != null) {
+                            player.sendSystemMessage(Component.translatable(ModI18n.Message.MOVEMENT_BLOCKED_IMMUNE).withStyle(ChatFormatting.RED));
+                        }
+                        return true; // Abbruch: Schiff enthält unverschiebbaren Block
+                    }
+                }
+
+                // 2. Energieprüfung
                 if (!SpaceshipEnergyManager.tryConsumeRotationEnergy(level, ship, rotation, player)) {
                     return true;
                 }
 
-                // 2. Zielpositionen berechnen und Chunks im Zielgebiet vorbereiten
+                // 3. Zielpositionen berechnen und Chunks im Zielgebiet vorbereiten
                 for (BlockPos pos : shipBlocks) {
                     newShipBlocks.add(ShipRotationMath.rotateAbsoluteBlockPos(pos, startPos, rotation));
                 }
 
                 destinationChunks = prepareDestinationChunksForBlocks(level, newShipBlocks, shipBlocks);
 
-                // 3. Bounding Box & Passagier-Matrix erfassen
+                // 4. Bounding Box & Passagier-Matrix erfassen
                 int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
                 int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
                 for (BlockPos pos : shipBlocks) {
@@ -490,34 +508,55 @@ public class ShipMovementService {
                     return false;
                 }).toList();
 
-                // 4. Snapshot erstellen
+                relocationContext = new RelocationContext(
+                        level, ship, 0, 0, 0, rotation,
+                        shipBlocks, newShipBlocks, player
+                );
+
+                // 5. Snapshot erstellen & onPreRelocation dispatchen
                 for (BlockPos pos : shipBlocks) {
                     BlockState state = level.getBlockState(pos);
                     BlockEntity be = level.getBlockEntity(pos);
                     CompoundTag nbt = (be != null) ? be.saveWithFullMetadata(level.registryAccess()) : null;
+                    if (nbt != null) {
+                        com.peaceman.alpha.ship.relocation.util.NbtCoordinateRemapper.remapCoordinates(
+                                nbt, shipBlocks, p -> ShipRotationMath.rotateAbsoluteBlockPos(p, startPos, rotation));
+                    }
+                    BlockRelocationRegistry.dispatchPreRelocation(pos, state, be, nbt, relocationContext);
                     snapshot.put(pos, new BlockData(state, nbt));
                 }
 
-                // 5. Inventare sichern & BlockEntities vorab entfernen
+                // 6. Inventare sichern & BlockEntities vorab entfernen
                 for (BlockPos pos : shipBlocks) {
                     if (level.getBlockEntity(pos) != null) {
                         level.removeBlockEntity(pos);
                     }
                 }
 
-                // 6. Vorabbereinigung im Weg stehender Weltblöcke
+                // 6b. Ausgefahrene Pistons in der Welt vorab entwaffnen (EXTENDED = false mit Flag 48),
+                // um zu verhindern, dass PistonHeadBlock.onRemove beim Abbau alter Positionen level.destroyBlock() triggert!
+                for (BlockPos pos : shipBlocks) {
+                    BlockState s = level.getBlockState(pos);
+                    if (s.getBlock() instanceof net.minecraft.world.level.block.piston.PistonBaseBlock &&
+                            s.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.EXTENDED) &&
+                            s.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.EXTENDED)) {
+                        level.setBlock(pos, s.setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.EXTENDED, false), 48);
+                    }
+                }
+
+                // 7. Vorabbereinigung im Weg stehender Weltblöcke
                 for (BlockPos newPos : newShipBlocks) {
                     if (!shipBlocks.contains(newPos) && !level.getBlockState(newPos).isAir()) {
                         level.destroyBlock(newPos, true);
                     }
                 }
 
-                // 7. Controller entkoppeln
+                // 8. Controller entkoppeln
                 if (level.getBlockEntity(startPos) instanceof SpaceshipControlBlockEntity be) {
                     be.setShipId(null);
                 }
 
-                // 8. Freigewordene alte Positionen (P_alt \ P_neu) zur Löschung vormerken
+                // 9. Freigewordene alte Positionen (P_alt \ P_neu) zur Löschung vormerken
                 for (BlockPos pos : shipBlocks) {
                     if (!newShipBlocks.contains(pos)) {
                         blocksToRemove.add(pos);
@@ -525,31 +564,15 @@ public class ShipMovementService {
                 }
                 blocksToRemove.sort((a, b) -> Integer.compare(b.getY(), a.getY()));
 
-                // 9. Blöcke mit Rotation in 3 Pässe sortieren (jeweils aufsteigend nach Ziel-Y)
-                List<Map.Entry<BlockPos, BlockData>> p1 = new ArrayList<>();
-                List<Map.Entry<BlockPos, BlockData>> p2 = new ArrayList<>();
-                List<Map.Entry<BlockPos, BlockData>> p3 = new ArrayList<>();
-
+                // 10. Topologischen Abhängigkeitsgraphen für rotierte Blöcke konstruieren
+                BlockDependencyGraph graph = new BlockDependencyGraph();
                 for (Map.Entry<BlockPos, BlockData> entry : snapshot.entrySet()) {
                     BlockPos newPos = ShipRotationMath.rotateAbsoluteBlockPos(entry.getKey(), startPos, rotation);
                     BlockState rotState = entry.getValue().state().rotate(rotation);
-                    Map.Entry<BlockPos, BlockData> rotEntry = Map.entry(newPos, new BlockData(rotState, entry.getValue().nbt()));
-
-                    PlacementPass pass = getPlacementPass(rotState, level, newPos);
-                    switch (pass) {
-                        case PASS_1_SOLIDS -> p1.add(rotEntry);
-                        case PASS_2_ROOTS_AND_NORMALS -> p2.add(rotEntry);
-                        case PASS_3_ATTACHABLES_AND_TOPS -> p3.add(rotEntry);
-                    }
+                    graph.addNode(entry.getKey(), newPos, rotState, entry.getValue().nbt());
                 }
-
-                p1.sort(Comparator.comparingInt(e -> e.getKey().getY()));
-                p2.sort(Comparator.comparingInt(e -> e.getKey().getY()));
-                p3.sort(Comparator.comparingInt(e -> e.getKey().getY()));
-
-                pass1Blocks.addAll(p1);
-                pass2Blocks.addAll(p2);
-                pass3Blocks.addAll(p3);
+                graph.buildDependencies(level);
+                topologicalBatches = graph.resolveTopologicalBatches();
 
                 phase = 1;
             }
@@ -566,44 +589,25 @@ public class ShipMovementService {
                 phase = 2;
             }
 
-            // Phase 2: Pass 1 (Solids) mit Flag 52 platzieren
+            // Phase 2: Topologische Batches sequenziell mit Flag 52 platzieren
             if (phase == 2) {
-                while (pass1Index < pass1Blocks.size()) {
-                    if (System.nanoTime() >= deadlineNanos) {
-                        return false;
+                while (currentBatchIndex < topologicalBatches.size()) {
+                    List<RelocationNode> batch = topologicalBatches.get(currentBatchIndex);
+                    while (currentBatchNodeIndex < batch.size()) {
+                        if (System.nanoTime() >= deadlineNanos) {
+                            return false;
+                        }
+                        RelocationNode node = batch.get(currentBatchNodeIndex++);
+                        placeRotatedNode(level, node, rotation, ship.getId(), 52, relocationContext);
                     }
-                    Map.Entry<BlockPos, BlockData> entry = pass1Blocks.get(pass1Index++);
-                    placeRotatedBlock(level, entry, rotation, ship.getId(), 52);
+                    currentBatchIndex++;
+                    currentBatchNodeIndex = 0;
                 }
                 phase = 3;
             }
 
-            // Phase 3: Pass 2 (Roots & Normals) mit Flag 52 platzieren
+            // Phase 3: Abschluss & Synchronisation
             if (phase == 3) {
-                while (pass2Index < pass2Blocks.size()) {
-                    if (System.nanoTime() >= deadlineNanos) {
-                        return false;
-                    }
-                    Map.Entry<BlockPos, BlockData> entry = pass2Blocks.get(pass2Index++);
-                    placeRotatedBlock(level, entry, rotation, ship.getId(), 52);
-                }
-                phase = 4;
-            }
-
-            // Phase 4: Pass 3 (Attachables & Tops) mit Flag 52 platzieren
-            if (phase == 4) {
-                while (pass3Index < pass3Blocks.size()) {
-                    if (System.nanoTime() >= deadlineNanos) {
-                        return false;
-                    }
-                    Map.Entry<BlockPos, BlockData> entry = pass3Blocks.get(pass3Index++);
-                    placeRotatedBlock(level, entry, rotation, ship.getId(), 52);
-                }
-                phase = 5;
-            }
-
-            // Phase 5: Abschluss & Synchronisation
-            if (phase == 5) {
                 // Abschluss: RAM-Daten aktualisieren
                 ship.setBlocksRaw(newShipBlocks);
 
@@ -690,29 +694,39 @@ public class ShipMovementService {
             return true;
         }
 
-        private void placeRotatedBlock(Level lvl, Map.Entry<BlockPos, BlockData> entry, net.minecraft.world.level.block.Rotation rot, UUID shipId, int flags) {
-            BlockPos newPos = entry.getKey();
-            BlockState state = entry.getValue().state();
-            CompoundTag nbt = entry.getValue().nbt();
+        private void placeRotatedNode(Level lvl, RelocationNode node, net.minecraft.world.level.block.Rotation rot, UUID shipId, int flags, RelocationContext context) {
+            BlockPos newPos = node.getNewPos();
+            BlockState state = node.getState();
+            CompoundTag nbt = node.getNbt();
 
             lvl.setBlock(newPos, state, flags);
 
+            BlockEntity newBe = null;
             if (nbt != null) {
                 nbt.putInt("x", newPos.getX());
                 nbt.putInt("y", newPos.getY());
                 nbt.putInt("z", newPos.getZ());
-                BlockEntity newBe = BlockEntity.loadStatic(newPos, state, nbt, lvl.registryAccess());
+                newBe = BlockEntity.loadStatic(newPos, state, nbt, lvl.registryAccess());
                 if (newBe != null) {
+                    newBe.clearRemoved();
                     lvl.setBlockEntity(newBe);
                 }
             }
 
-            if (lvl.getBlockEntity(newPos) instanceof ISpaceshipNode node) {
-                node.setShipId(shipId);
+            if (newBe == null) {
+                newBe = lvl.getBlockEntity(newPos);
             }
 
-            if (lvl.getBlockEntity(newPos) instanceof AbstractLaserNodeBlockEntity laserBe) {
+            if (newBe instanceof ISpaceshipNode spaceshipNode) {
+                spaceshipNode.setShipId(shipId);
+            }
+
+            if (newBe instanceof AbstractLaserNodeBlockEntity laserBe) {
                 laserBe.rotateTurret(rot);
+            }
+
+            if (context != null) {
+                BlockRelocationRegistry.dispatchPostRelocation(node.getOldPos(), newPos, state, newBe, context);
             }
         }
     }

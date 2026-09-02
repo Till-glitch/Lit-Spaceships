@@ -41,6 +41,13 @@ An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21*
   * **Deterministic Asset Generation:** Full procedural asset generation via Blockbench Model Context Protocol (MCP) bridge.
   * **Standard Machine Blocks:** 16x16x16 Cube-Directional models (`spaceship_controller`, `spaceship_reactor`, `spaceship_shield`) with Sci-Fi Industrial palette and Ambient-Occlusion beveling.
   * **Split-Model Laser Kinematics:** Exact pivot-aligned (`[8, 0, 8]`) standalone turret models (`laser_turret_heavy`, `laser_turret_pulse`, `laser_turret_mining`) and 16x4x16 static baseplate (`laser_base`) eliminating orbital drift during real-time freelook aiming.
+* **Universal DAG Block Relocation & Mod Compatibility:**
+  * **Directed Acyclic Graph (DAG):** Replaces rigid hardcoded block lists with datadriven dependency graphs derived from `canSurvive` and `isFaceSturdy` heuristics.
+  * **Topological Kahn Sorting:** Computes causal placement order in $O(V + E)$ ensuring floors, walls, and lower door/bed halves are placed before fragile attachables (torches, redstone wire, repeaters, ladders, levers) and upper halves.
+  * **Tarjan SCC Cycle Resolution:** Detects mutually supporting cyclic dependencies and resolves them into atomic, simultaneously injected component batches.
+  * **Pluggable Architecture (SPI):** Extensible `IBlockRelocationHandler` service provider interface for seamless integration with complex modded machines, multiblock controllers, and networks (Mekanism, Create, Applied Energistics 2).
+  * **Community Block Tags & Immunity:** Automatic DataGen for `#c:relocation_immune`, `#forge:relocation_immune`, `#c:relocates_as_cluster`, and `#c:inventory_relocation_safe`. Prevents movement of bedrock, end portals, and command blocks with clear pilot feedback.
+  * **Zero Item Drops & Zero X-Ray Flickering:** Pre-emptively detaches BlockEntities (`removeBlockEntity`) to suppress `dropContents`. Clears only freewarded blocks ($P_{\text{alt}} \setminus P_{\text{neu}}$) with Flag 48 ($Y$ descending) and places DAG layers with Flag 52 before synchronizing via Flag 50.
 * **Backflip Tool (Klasingscher Degen):** Developer item demonstrating entity manipulation by launching targets into the air with forced backflips.
 
 ---
@@ -253,11 +260,16 @@ classDiagram
 
 The project enforces continuous testing according to the **70/20 Rule** (70% Unit / Math Tests, 20% Engine GameTests, 10% Manual QA).
 
-### Automated Test Matrix (63 Unit Tests & 5 GameTest Suites / 20 GameTests)
+### Automated Test Matrix (75 Unit Tests & 5 GameTest Suites / 23 GameTests)
 
 | Test-Suite | Typ | Abdeckung |
 | :--- | :--- | :--- |
-| **`ShipMovement3PassTest`** | JUnit 5 | Topologische 3-Pass-Klassifizierung (`PASS_1_SOLIDS`, `PASS_2_ROOTS_AND_NORMALS`, `PASS_3_ATTACHABLES_AND_TOPS`) für Multiblöcke (Türen, Betten) und Fackeln/Redstone. |
+| **`VirtualSupportTestViewTest`** | JUnit 5 | Datengetriebenes Support-Probing über virtuelle Nachbar-Maskierung mit `state.canSurvive()` (löst alle hardcodierten `instanceof`-Ketten für Mod-Attachables ab). |
+| **`NbtCoordinateRemapperTest`** | JUnit 5 | Rekursives Umschreiben von internen `BlockPos`-Referenzen (`masterPos`, `controllerPos`, Int-Arrays, Longs) in BlockEntity-NBTs für Master-Slave-Multiblöcke. |
+| **`BlockDependencyGraphTest`** | JUnit 5 | Datengetriebene Abhängigkeits-Erkennung via `canSurvive` und `isFaceSturdy`, Multiblock-Verknüpfung (Türen, Betten, ausgefahrene Pistons) und topologische Schicht-Linearisierung. |
+| **`CycleDetectionTest`** | JUnit 5 | Tarjan SCC-Algorithmus: Erkennung und Bündelung zyklischer Abhängigkeiten ($A \leftrightarrow B$) in simultane Injektions-Cluster. |
+| **`BlockRelocationRegistryTest`** | JUnit 5 | Immunitätsprüfung für Weltblöcke (`BEDROCK`, `END_PORTAL`, `COMMAND_BLOCK`, `BARRIER`) und Handler-SPI Lifecycle (`onPreRelocation`, `onPostRelocation`). |
+| **`ShipMovement3PassTest`** | JUnit 5 | 3-Pass-Klassifizierung (`PASS_1_SOLIDS`, `PASS_2_ROOTS_AND_NORMALS`, `PASS_3_ATTACHABLES_AND_TOPS`) für Multiblöcke (Türen, Betten) und Fackeln/Redstone/PistonHeads. |
 | **`ShipMovementFragileSortingTest`** | JUnit 5 | Zerbrechliche Block-Erkennung (`isFragileBlock`) und aufsteigende/absteigende $Y$-Sortierung für Translation und Rotation. |
 | **`ShipRotationMathTest`** | JUnit 5 | Orthogonale 90° CW/CCW Transformation, Pivot-Translation, Fließkomma-Entitätsrotationen und Yaw-Normalisierung. |
 | **`LaserNodeRenderStateTest`** | JUnit 5 (Mockito) | Thread-sichere Render-State Extraktion, interpolierte Kinematik (Yaw/Pitch), 180°-Winkel-Wrap und alle 6 `FACING`-Ausrichtungen (`UP`, `DOWN`, `NORTH`, `SOUTH`, `WEST`, `EAST`). |
@@ -274,8 +286,8 @@ The project enforces continuous testing according to the **70/20 Rule** (70% Uni
 | **`SpaceshipEnergyManagerTest`** | JUnit 5 (Mockito) | Reaktor-Bündelung, sequenzieller Energieabzug, Rollback bei Energiemangel, Flugkosten-Berechnung. |
 | **`AimTransformMathTest`** | JUnit 5 | Quaternion-Transformationen, Euler-Winkel-Konvertierung, 16-Bit Kompression und GimbalLimits. |
 | **`TurretSeatTest`** | JUnit 5 | TurretSeat DTO Attribute, NBT-Persistenz und Aim-Lock-Status. |
-| **`ShipScannerGameTests`** | GameTest | Orthogonale BFS-Erkennung, Ausschluss diagonaler Blöcke, Multipart-Erfassung (Türen, Betten, Truhen). |
-| **`ShipMovementGameTests` (3 Tests)** | GameTest | Physische Welt-Translation, Abwärtsbewegung mit Redstone/Fackeln und 3-Pass Erhaltung zweiflügeliger Türen und Fackeln ohne Drops. |
+| **`ShipScannerGameTests` (4 Tests)** | GameTest | Orthogonale BFS-Erkennung, Ausschluss diagonaler Blöcke, Multipart-Erfassung (Türen, Betten, Truhen, ausgefahrene Pistons). |
+| **`ShipMovementGameTests` (5 Tests)** | GameTest | Physische Welt-Translation, Abwärtsbewegung mit Redstone/Fackeln, Erhaltung zweiflügeliger Türen und Fackeln ohne Drops, Abbruch bei immunen Blöcken (`BEDROCK`) sowie Erhaltung ausgefahrener Pistons ohne Drops. |
 | **`ShipAttachmentGameTests`** | GameTest | Typsichere Persistenz von `ModAttachments.SHIP_ID` an BlockEntities. |
 | **`SpaceshipGameTests`** | GameTest | Schiffserstellung und UUID-Verknüpfung via Kontrollblock. |
 | **`ShipCollisionGameTests` (10 Tests)** | GameTest | Vollständige Simulation aller 4 physikalischen Szenarien (`OFF_vs_OFF`, `OFF_vs_ON`, `ON_vs_OFF`, `ON_vs_ON`) inklusive Point-Zero Boundary Collapse, asynchronem Floating-Blocks Item-Drop (`Block.UPDATE_ALL`) und 3-Wege Multi-Kollisions-Schild-Priorisierung (`CollisionResolver.resolveMultiple`). |
