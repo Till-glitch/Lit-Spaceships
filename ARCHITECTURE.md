@@ -694,7 +694,7 @@ Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
    * **`SpaceshipEnergyManagerTest`**: Multi-Reaktor-Bündelung, sequenzieller FE-Drain, Transaktionssicherheit (Rollback).
    * **`AimTransformMathTest`**: Quaternion-Transformationen, Euler-Winkel-Konvertierung, 16-Bit Kompression und GimbalLimits.
    * **`TurretSeatTest`**: TurretSeat DTO Attribute, NBT-Persistenz und Aim-Lock-Status.
-2. **NeoForge GameTests (`@GameTestHolder`, 25 Tests auf Dedicated GameTest-Server, 100% Erfolgsquote)**:
+2. **NeoForge GameTests (`@GameTestHolder`, 26 Tests auf Dedicated GameTest-Server, 100% Erfolgsquote)**:
    * **`ShipScannerVoronoiGameTest`**: Voronoi-Zonierung und ShieldZone-Erfassung bei mehreren Schildgeneratoren im Schiff.
    * **`LaserCombatPiercingGameTest`**: Zonen-Kollaps und Durchschlag auf darunterliegende Schiffshülle bei inaktiver ShieldZone.
    * **`ShipCollisionGameTests` (10 Tests)**:
@@ -714,8 +714,9 @@ Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
      - `testShipScannerDiagonalIgnored`: Ausschluss diagonaler Blöcke.
      - `testShipScannerDoorMultiblock`: Multiblock-Ergänzung für zweiflügelige Türen.
      - `testShipScannerPistonMultiblock`: Multiblock-Ergänzung für ausgefahrene Pistons und Piston-Heads.
-   * **`ShipMovementGameTests` (5 Tests)**:
+   * **`ShipMovementGameTests` (6 Tests)**:
      - `testShipMovementRelocation`: Physische Schiffstranslation im Testlevel mit `AIR`-Hinterlassung und Zielblock-Präsenz.
+     - `testShipMovementPreservesShieldEnergy`: Erhaltung der Schildzonen-Energie und Generator-Zuordnung bei Schiffstranslation.
      - `testShipMovementDownWithRedstoneAndTorch`: Abwärtsbewegung mit Redstone Wire & Fackel; Verifikation der korrekten Platzierung und 0 Item-Drops.
      - `testMovement_PreservesTorchesAndDoors`: Topologische Validierung: Verschiebung einer Wand mit Fackel und einer zweiflügeligen Tür mit Erhalt aller Hälften und 0 Item-Drops.
      - `testMovement_BlockedByImmuneBlock`: Immunitäts-Validierung: Verschiebung eines Schiffs mit unzerstörbarem `BEDROCK` wird präemptiv abgebrochen; Blöcke bleiben unbewegt.

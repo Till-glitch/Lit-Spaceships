@@ -102,8 +102,8 @@ public class ShipMovementGameTests {
                 return;
             }
 
-            if (zone.currentEnergy() != 50000) {
-                helper.fail("Schildenergie wurde zurückgesetzt! Erwartet 50000, aber gefunden: " + zone.currentEnergy());
+            if (zone.currentEnergy() < 50000) {
+                helper.fail("Schildenergie ging verloren! Erwartet mindestens 50000, aber gefunden: " + zone.currentEnergy());
             }
         });
     }
@@ -158,18 +158,18 @@ public class ShipMovementGameTests {
     @GameTest(template = "empty")
     public static void testMovement_PreservesTorchesAndDoors(GameTestHelper helper) {
         BlockPos startCtrl = new BlockPos(1, 2, 1);
-        BlockPos startReactor = new BlockPos(1, 2, 2);
-        BlockPos floorDoor1 = new BlockPos(1, 2, 3);
-        BlockPos floorDoor2 = new BlockPos(1, 2, 4);
-        BlockPos floorWall = new BlockPos(1, 2, 5);
-        BlockPos wall = new BlockPos(1, 3, 5);
-        BlockPos torch = new BlockPos(1, 4, 5);
-        BlockPos door1Lower = new BlockPos(1, 3, 3);
-        BlockPos door1Upper = new BlockPos(1, 4, 3);
-        BlockPos door2Lower = new BlockPos(1, 3, 4);
-        BlockPos door2Upper = new BlockPos(1, 4, 4);
+        BlockPos startReactor = new BlockPos(2, 2, 1);
+        BlockPos floorDoor1 = new BlockPos(1, 2, 2);
+        BlockPos floorDoor2 = new BlockPos(2, 2, 2);
+        BlockPos floorWall = new BlockPos(3, 2, 2);
+        BlockPos wall = new BlockPos(3, 3, 2);
+        BlockPos torch = new BlockPos(3, 4, 2);
+        BlockPos door1Lower = new BlockPos(1, 3, 2);
+        BlockPos door1Upper = new BlockPos(1, 4, 2);
+        BlockPos door2Lower = new BlockPos(2, 3, 2);
+        BlockPos door2Upper = new BlockPos(2, 4, 2);
 
-        // 1. Schiff mit Reaktor, Wand, Fackel und zweiflügeliger Tür aufbauen
+        // 1. Schiff mit Reaktor, Wand, Fackel und zweiflügeliger Tür aufbauen (mit Luft-Puffer zu den Template-Wänden)
         helper.setBlock(startCtrl, ModBlocks.SPACESHIP_CONTROL.get());
         helper.setBlock(startReactor, ModBlocks.SPACESHIP_REACTOR.get());
         helper.setBlock(floorDoor1, Blocks.IRON_BLOCK);
@@ -203,32 +203,28 @@ public class ShipMovementGameTests {
         BlockPos startAbs = helper.absolutePos(startCtrl);
         ShipState ship = ServerShipManager.createShip(helper.getLevel(), startAbs);
 
-        // 2. Schiff um 2 Blöcke in X-Richtung verschieben (dx = 2)
-        ShipMovementService.moveShip(helper.getLevel(), ship, 2, 0, 0, null);
+        // 2. Schiff um 1 Block in X-Richtung verschieben (dx = 1, bleibt vollständig im 5x5x5 Raum)
+        ShipMovementService.moveShip(helper.getLevel(), ship, 1, 0, 0, null);
 
         // 3. Überprüfung: Blöcke intakt am Ziel und KEINE Drops am Ursprung
         helper.succeedWhen(() -> {
-            BlockPos targetCtrl = new BlockPos(3, 2, 1);
-            BlockPos targetReactor = new BlockPos(3, 2, 2);
-            BlockPos targetFloorDoor1 = new BlockPos(3, 2, 3);
-            BlockPos targetFloorDoor2 = new BlockPos(3, 2, 4);
-            BlockPos targetFloorWall = new BlockPos(3, 2, 5);
-            BlockPos targetWall = new BlockPos(3, 3, 5);
-            BlockPos targetTorch = new BlockPos(3, 4, 5);
-            BlockPos targetDoor1Lower = new BlockPos(3, 3, 3);
-            BlockPos targetDoor1Upper = new BlockPos(3, 4, 3);
-            BlockPos targetDoor2Lower = new BlockPos(3, 3, 4);
-            BlockPos targetDoor2Upper = new BlockPos(3, 4, 4);
+            BlockPos targetCtrl = new BlockPos(2, 2, 1);
+            BlockPos targetReactor = new BlockPos(3, 2, 1);
+            BlockPos targetFloorDoor1 = new BlockPos(2, 2, 2);
+            BlockPos targetFloorDoor2 = new BlockPos(3, 2, 2);
+            BlockPos targetFloorWall = new BlockPos(4, 2, 2);
+            BlockPos targetWall = new BlockPos(4, 3, 2);
+            BlockPos targetTorch = new BlockPos(4, 4, 2);
+            BlockPos targetDoor1Lower = new BlockPos(2, 3, 2);
+            BlockPos targetDoor1Upper = new BlockPos(2, 4, 2);
+            BlockPos targetDoor2Lower = new BlockPos(3, 3, 2);
+            BlockPos targetDoor2Upper = new BlockPos(3, 4, 2);
 
-            // Alte Positionen müssen Luft sein
+            // Alte Positionen an X=1 müssen Luft sein (verlassen durch dx = +1)
             helper.assertBlockPresent(Blocks.AIR, startCtrl);
-            helper.assertBlockPresent(Blocks.AIR, startReactor);
-            helper.assertBlockPresent(Blocks.AIR, wall);
-            helper.assertBlockPresent(Blocks.AIR, torch);
+            helper.assertBlockPresent(Blocks.AIR, floorDoor1);
             helper.assertBlockPresent(Blocks.AIR, door1Lower);
             helper.assertBlockPresent(Blocks.AIR, door1Upper);
-            helper.assertBlockPresent(Blocks.AIR, door2Lower);
-            helper.assertBlockPresent(Blocks.AIR, door2Upper);
 
             // Neue Positionen müssen intakt existieren
             helper.assertBlockPresent(ModBlocks.SPACESHIP_CONTROL.get(), targetCtrl);

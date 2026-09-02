@@ -309,7 +309,7 @@ classDiagram
 
 The project enforces continuous testing according to the **70/20 Rule** (70% Unit / Math Tests, 20% Engine GameTests, 10% Manual QA).
 
-### Automated Test Matrix (82 Unit Tests & 5 GameTest Suites / 25 GameTests)
+### Automated Test Matrix (82 Unit Tests & 7 GameTest Suites / 26 GameTests)
 
 | Test-Suite | Typ | Abdeckung |
 | :--- | :--- | :--- |
@@ -345,7 +345,7 @@ The project enforces continuous testing according to the **70/20 Rule** (70% Uni
 | **`ShipScannerVoronoiGameTest`** | GameTest | Voronoi-Zonierung und ShieldZone-Erfassung bei mehreren Schildgeneratoren im Schiff. |
 | **`LaserCombatPiercingGameTest`** | GameTest | Zonen-Kollaps und Durchschlag auf darunterliegende Schiffshülle bei inaktiver ShieldZone. |
 | **`ShipScannerGameTests` (4 Tests)** | GameTest | Orthogonale BFS-Erkennung, Ausschluss diagonaler Blöcke, Multipart-Erfassung (Türen, Betten, Truhen, ausgefahrene Pistons). |
-| **`ShipMovementGameTests` (5 Tests)** | GameTest | Physische Welt-Translation, Abwärtsbewegung mit Redstone/Fackeln, Erhaltung zweiflügeliger Türen und Fackeln ohne Drops, Abbruch bei immunen Blöcken (`BEDROCK`) sowie Erhaltung ausgefahrener Pistons ohne Drops. |
+| **`ShipMovementGameTests` (6 Tests)** | GameTest | Physische Welt-Translation, Schildzonen-Energieerhaltung bei Bewegung, Abwärtsbewegung mit Redstone/Fackeln, Erhaltung zweiflügeliger Türen und Fackeln ohne Drops, Abbruch bei immunen Blöcken (`BEDROCK`) sowie Erhaltung ausgefahrener Pistons ohne Drops. |
 | **`ShipAttachmentGameTests`** | GameTest | Typsichere Persistenz von `ModAttachments.SHIP_ID` an BlockEntities. |
 | **`SpaceshipGameTests`** | GameTest | Schiffserstellung und UUID-Verknüpfung via Kontrollblock. |
 | **`ShipCollisionGameTests` (10 Tests)** | GameTest | Vollständige Simulation aller 4 physikalischen Szenarien (`OFF_vs_OFF`, `OFF_vs_ON`, `ON_vs_OFF`, `ON_vs_ON`) inklusive Point-Zero Boundary Collapse, asynchronem Floating-Blocks Item-Drop (`Block.UPDATE_ALL`) und 3-Wege Multi-Kollisions-Schild-Priorisierung (`CollisionResolver.resolveMultiple`). |
