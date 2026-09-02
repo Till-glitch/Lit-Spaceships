@@ -263,8 +263,59 @@ classDiagram
             +TICK_BUDGET_NANOS long$
             +SHIP_TICKET TicketType~ChunkPos~$
             +moveShip(Level level, ShipState ship, int dx, int dy, int dz, Player player)$ void
+            +rotateShip(Level level, ShipState ship, Rotation rotation, Player player)$ void
             +isShipMoving(UUID shipId)$ boolean
             +onServerTick(ServerTickEvent.Post event)$ void
+        }
+
+        class BlockDependencyGraph {
+            +addNode(BlockPos oldPos, BlockPos newPos, BlockState state, CompoundTag nbt) RelocationNode
+            +buildDependencies(Level level) void
+            +resolveTopologicalBatches() List~List~RelocationNode~~
+        }
+
+        class RelocationNode {
+            +oldPos BlockPos
+            +newPos BlockPos
+            +state BlockState
+            +nbt CompoundTag
+            +addDependency(RelocationNode dependency) void
+            +getDependencies() Set~RelocationNode~
+            +getDependents() Set~RelocationNode~
+        }
+
+        class BlockRelocationRegistry {
+            +registerHandler(IBlockRelocationHandler handler)$ void
+            +isImmune(BlockState state)$ boolean
+            +isCluster(BlockState state)$ boolean
+            +dispatchPreRelocation(BlockPos pos, BlockState state, BlockEntity be, CompoundTag nbt, RelocationContext ctx)$ void
+            +dispatchPostRelocation(BlockPos oldPos, BlockPos newPos, BlockState state, BlockEntity be, RelocationContext ctx)$ void
+        }
+
+        class IBlockRelocationHandler {
+            <<interface>>
+            +shouldHandle(BlockState state) boolean
+            +onPreRelocation(BlockPos pos, BlockState state, BlockEntity be, CompoundTag nbt, RelocationContext ctx) void
+            +onPostRelocation(BlockPos oldPos, BlockPos newPos, BlockState state, BlockEntity be, RelocationContext ctx) void
+            +getPriority() int
+        }
+
+        class RelocationContext {
+            <<record>>
+            +ServerLevel level
+            +ShipState ship
+            +int dx
+            +int dy
+            +int dz
+            +Rotation rotation
+        }
+
+        class ShipRotationMath {
+            +rotateRelativeBlockPos(BlockPos relPos, Rotation rot)$ BlockPos
+            +rotateAbsoluteBlockPos(BlockPos pos, BlockPos pivot, Rotation rot)$ BlockPos
+            +rotateEntityPos(Vec3 entityPos, BlockPos pivot, Rotation rot)$ Vec3
+            +rotateYaw(float yaw, Rotation rot)$ float
+            +normalizeYaw(float yaw)$ float
         }
 
         class ShipCollisionService {
@@ -274,6 +325,7 @@ classDiagram
             +calculateIntersection(AABB a, AABB b)$ Optional~AABB~
             +findPotentialCollisions(ShipState movingShip, Vec3 moveVec)$ List~BroadPhaseCandidate~
             +calculateVoxelIntersection(ShipState shipA, BlockPos originA, ShipState shipB, BlockPos originB, AABB intersectionBox)$ VoxelCollisionResult
+            +checkRotationCollisions(ServerLevel level, ShipState ship, Rotation rotation)$ boolean
         }
 
         class CollisionResolver {
@@ -295,10 +347,12 @@ classDiagram
 
         class SpaceshipEnergyManager {
             +calculateMovementCost(ShipState ship, int dx, int dy, int dz)$ int
+            +calculateRotationCost(ShipState ship, Rotation rotation)$ int
             +getTotalAvailableEnergy(Level level, ShipState ship)$ int
             +consumeEnergy(Level level, ShipState ship, int amount)$ void
             +tryConsumeEnergyAmount(Level level, ShipState ship, int amount)$ boolean
             +tryConsumeFlightEnergy(Level level, ShipState ship, int dx, int dy, int dz, Player player)$ boolean
+            +tryConsumeRotationEnergy(Level level, ShipState ship, Rotation rotation, Player player)$ boolean
             +distributeEnergyToShields(Level level, ShipState ship)$ int
             +distributeEnergyToShields(int availableEnergy, ShipState ship, long currentGameTime)$ int
         }
@@ -537,9 +591,8 @@ classDiagram
             +create(PackOutput output, CompletableFuture lookupProvider)$ LootTableProvider
         }
 
-        class ModBlockLootTableProvider {
-            +generate() void
-            +getKnownBlocks() Iterable~Block~
+        class ModBlockTagsProvider {
+            +addTags(HolderLookup.Provider provider) void
         }
     }
 
@@ -557,6 +610,13 @@ classDiagram
     ShipScannerService ..> VoxelGridCache : Voronoi partitioning
     SpaceshipEnergyManager ..> ShieldZone : routes proportional FE
     ServerShipManager ..> ShieldZoneStatePayload : syncs 64-bit mask
+    ShipMovementService ..> BlockDependencyGraph : builds DAG
+    ShipMovementService ..> BlockRelocationRegistry : dispatches & checks
+    ShipMovementService ..> NbtCoordinateRemapper : remaps BE coordinates
+    BlockDependencyGraph *-- "0..*" RelocationNode : contains
+    BlockDependencyGraph ..> VirtualSupportTestView : probes canSurvive
+    BlockRelocationRegistry o-- "0..*" IBlockRelocationHandler : manages SPI
+    IBlockRelocationHandler ..> RelocationContext : consumes
     LaserCombatService ..> LaserRaycastUtil : raycasts via
     LaserRaycastUtil ..> FastVoxelTraversal : 3D-DDA
     LaserRaycastUtil ..> RaycastHitResult : evaluates
@@ -578,6 +638,7 @@ classDiagram
     DataGenerators ..> ModEnglishLanguageProvider : instantiates client
     DataGenerators ..> ModGermanLanguageProvider : instantiates client
     DataGenerators ..> ModLootTableProvider : instantiates server
+    DataGenerators ..> ModBlockTagsProvider : instantiates server
     ModEnglishLanguageProvider ..> ModI18n : references keys
     ModGermanLanguageProvider ..> ModI18n : references keys
     ModLootTableProvider ..> ModBlockLootTableProvider : creates

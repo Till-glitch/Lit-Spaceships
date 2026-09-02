@@ -92,6 +92,8 @@ public class ServerPayloadHandler {
                     ship.setPowerPriority(com.peaceman.alpha.ship.domain.PowerPriority.fromId(payload.value()));
                     ServerShipManager.saveData(level);
                 }
+                case ROTATE_CW -> ShipMovementService.rotateShip(level, ship, net.minecraft.world.level.block.Rotation.CLOCKWISE_90, player);
+                case ROTATE_CCW -> ShipMovementService.rotateShip(level, ship, net.minecraft.world.level.block.Rotation.COUNTERCLOCKWISE_90, player);
                 default -> {}
             }
         });

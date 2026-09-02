@@ -3,6 +3,8 @@ package com.peaceman.alpha.ship;
 import com.peaceman.alpha.block.entity.SpaceshipReactorBlockEntity;
 import com.peaceman.alpha.ship.domain.ShipState;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
@@ -203,5 +205,25 @@ public class SpaceshipEnergyManager {
         }
 
         return totalTransferred;
+    }
+
+    // 6. Die Methode für 90-Grad Schiffsrotationen
+    public static int calculateRotationCost(ShipState ship, net.minecraft.world.level.block.Rotation rotation) {
+        if (ship == null || rotation == null || rotation == net.minecraft.world.level.block.Rotation.NONE) return 0;
+        return ship.getBlocks().size() * 5;
+    }
+
+    public static boolean tryConsumeRotationEnergy(Level level, ShipState ship, net.minecraft.world.level.block.Rotation rotation, Player player) {
+        int cost = calculateRotationCost(ship, rotation);
+        boolean success = tryConsumeEnergyAmount(level, ship, cost);
+
+        if (!success && player != null) {
+            int available = getTotalAvailableEnergy(level, ship);
+            player.displayClientMessage(
+                    Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.ENERGY_INSUFFICIENT,
+                            String.format("%,d", cost), String.format("%,d", available)), true);
+        }
+
+        return success;
     }
 }

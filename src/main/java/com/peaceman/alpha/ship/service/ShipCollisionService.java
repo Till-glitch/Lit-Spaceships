@@ -276,4 +276,61 @@ public class ShipCollisionService {
             }
         }
     }
+
+    /**
+     * Prüft vor einer Schiffsrotation, ob die rotierte Voxel-Struktur mit Terrain oder anderen Schiffen kollidiert.
+     */
+    public static boolean checkRotationCollisions(net.minecraft.server.level.ServerLevel level, ShipState ship, net.minecraft.world.level.block.Rotation rotation) {
+        if (level == null || ship == null || rotation == null || rotation == net.minecraft.world.level.block.Rotation.NONE) {
+            return false;
+        }
+
+        BlockPos pivot = ship.getControllerPos();
+        if (pivot == null) return false;
+
+        Set<BlockPos> currentBlocks = ship.getBlocks();
+        Set<BlockPos> rotatedBlocks = new HashSet<>(currentBlocks.size());
+
+        int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
+
+        for (BlockPos pos : currentBlocks) {
+            BlockPos rotPos = ShipRotationMath.rotateAbsoluteBlockPos(pos, pivot, rotation);
+            rotatedBlocks.add(rotPos);
+
+            if (rotPos.getX() < minX) minX = rotPos.getX();
+            if (rotPos.getY() < minY) minY = rotPos.getY();
+            if (rotPos.getZ() < minZ) minZ = rotPos.getZ();
+            if (rotPos.getX() > maxX) maxX = rotPos.getX();
+            if (rotPos.getY() > maxY) maxY = rotPos.getY();
+            if (rotPos.getZ() > maxZ) maxZ = rotPos.getZ();
+
+            // 1. Terrain / World-Block Check (nur fuer Positionen, die nicht schon Teil des Schiffs sind)
+            if (!currentBlocks.contains(rotPos)) {
+                var blockState = level.getBlockState(rotPos);
+                if (!blockState.isAir() && !blockState.canBeReplaced()) {
+                    return true; // Kollision mit solidem Block in der Welt
+                }
+            }
+        }
+
+        AABB rotatedBoundingBox = new AABB(minX, minY, minZ, maxX + 1, maxY + 1, maxZ + 1);
+
+        // 2. Schiff-zu-Schiff-Kollisionspruefung
+        for (ShipState other : ServerShipManager.ACTIVE_SHIPS.values()) {
+            if (other == null || other.getId().equals(ship.getId())) continue;
+            if (!level.dimension().equals(other.getDimension())) continue;
+
+            AABB otherBox = other.getTotalBoundingBox();
+            if (otherBox != null && rotatedBoundingBox.intersects(otherBox)) {
+                for (BlockPos rotPos : rotatedBlocks) {
+                    if (other.getBlocks().contains(rotPos)) {
+                        return true; // Kollision mit anderem Schiff
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
 }

@@ -120,6 +120,8 @@ public class ModEnglishLanguageProvider extends LanguageProvider {
         add(ModI18n.Screen.CONTROL_SHIELD_COOLDOWN, "Shield (%1$ss)");
         add(ModI18n.Screen.CONTROL_SHIELD_ACTIVE, "Shield: Active");
         add(ModI18n.Screen.CONTROL_SHIELD_INACTIVE, "Shield: Inactive");
+        add(ModI18n.Screen.CONTROL_BTN_ROTATE_CW, "Rotate CW (90°)");
+        add(ModI18n.Screen.CONTROL_BTN_ROTATE_CCW, "Rotate CCW (90°)");
 
         add(ModI18n.Screen.HUD_TACTICAL_HEADER, "--- Tactical ---");
         add(ModI18n.Screen.HUD_TACTICAL_SHIELD_CRITICAL, "Shields: Critical");
@@ -131,7 +133,7 @@ public class ModEnglishLanguageProvider extends LanguageProvider {
         add(ModI18n.Screen.HUD_HELM_HEADER, "--- Helm HUD ---");
         add(ModI18n.Screen.HUD_HELM_WARP_COOLDOWN, "Warp Cooldown: %1$ss");
         add(ModI18n.Screen.HUD_HELM_READY, "Engines Ready");
-        add(ModI18n.Screen.HUD_HELM_CONTROLS, "[H] Exit | [M] Config | [R-Click] Fire");
+        add(ModI18n.Screen.HUD_HELM_CONTROLS, "[H] Exit | [M] Nav | [Arrows] Rotate | [R-Click] Fire");
 
         // 5. Messages (Chat / Action-Bar)
         add(ModI18n.Message.TURRET_AIM_LOCKED, "[Turret] Aim locked (Yaw: %1$s°, Pitch: %2$s°)");
@@ -147,6 +149,8 @@ public class ModEnglishLanguageProvider extends LanguageProvider {
         add(ModI18n.Message.WAYPOINT_NOT_FOUND, "Error: Waypoint '%1$s' does not exist!");
         add(ModI18n.Message.MOVEMENT_COOLDOWN_ACTIVE, "[Engines] Cooldown active! %1$s seconds remaining.");
         add(ModI18n.Message.COLLISION_WARNING, "[Collision Warning] Collision detected (%1$s)! Movement stopped.");
+        add(ModI18n.Message.ROTATION_BLOCKED_COLLISION, "[Rotation Blocked] Obstacle or terrain in rotation path!");
+        add(ModI18n.Message.MOVEMENT_BLOCKED_IMMUNE, "[Movement Blocked] Ship contains an unmovable / immune block!");
         add(ModI18n.Message.HELM_CONTROL_ENTER, "[Helm] You are piloting the ship. WASD to fly, LSHIFT to descend, SPACE to ascend. H/ESC to exit.");
         add(ModI18n.Message.HELM_CONTROL_LEAVE, "[Helm] You have left helm control.");
         add(ModI18n.Message.DEV_CHEAT_ENERGY, "DEV-CHEAT: %1$s FE loaded!");
@@ -160,6 +164,8 @@ public class ModEnglishLanguageProvider extends LanguageProvider {
         add(ModI18n.Keybind.EXIT_HELM, "Exit Helm Console");
         add(ModI18n.Keybind.OPEN_HELM_CONFIG, "Open Helm Navigation Config");
         add(ModI18n.Keybind.MOUNT_TURRET, "Man Turret Seat");
+        add(ModI18n.Keybind.ROTATE_LEFT, "Rotate Ship Left (CCW)");
+        add(ModI18n.Keybind.ROTATE_RIGHT, "Rotate Ship Right (CW)");
 
         // 7. Tooltips & Environments
         add(ModI18n.Tooltip.REACTOR_CAPACITY, "Max Capacity: %1$s FE");

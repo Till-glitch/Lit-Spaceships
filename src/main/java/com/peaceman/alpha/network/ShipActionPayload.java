@@ -37,7 +37,9 @@ public record ShipActionPayload(
         TP_HOME(11),
         TOGGLE_SHIELD_ZONE(12),
         CYCLE_POWER_PRIORITY(13),
-        SET_POWER_PRIORITY(14);
+        SET_POWER_PRIORITY(14),
+        ROTATE_CW(15),
+        ROTATE_CCW(16);
 
         private final int id;
 
