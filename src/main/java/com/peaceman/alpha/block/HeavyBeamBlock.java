@@ -93,10 +93,9 @@ public class HeavyBeamBlock extends BaseEntityBlock {
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (!state.is(newState.getBlock())) {
             if (!level.isClientSide() && level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
-                if (level.getBlockEntity(pos) instanceof HeavyBeamBlockEntity be && be.isFiring()) {
-                    boolean isMovingShip = be.getShipId() != null
-                            && com.peaceman.alpha.ship.service.ShipMovementService.isShipMoving(be.getShipId());
-                    if (!isMovingShip) {
+                if (level.getBlockEntity(pos) instanceof HeavyBeamBlockEntity be) {
+                    be.clearDrillProgress(level);
+                    if (be.isFiring()) {
                         be.setFiring(false);
                         if (be.getShipId() != null) {
                             net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingChunk(
@@ -104,8 +103,6 @@ public class HeavyBeamBlock extends BaseEntityBlock {
                                     new com.peaceman.alpha.network.LaserStateSyncPayload(be.getShipId(), pos, false,
                                             com.peaceman.alpha.ship.combat.LaserWeaponTier.HEAVY_BEAM));
                         }
-                    } else {
-                        be.clearDrillProgress(level);
                     }
                 }
             }

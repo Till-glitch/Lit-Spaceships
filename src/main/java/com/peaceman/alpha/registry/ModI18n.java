@@ -19,6 +19,27 @@ public final class ModI18n {
         // Reactor Screen
         public static final String REACTOR_TITLE = "screen." + Alpha.MODID + ".reactor.title";
         public static final String REACTOR_ENERGY = "screen." + Alpha.MODID + ".reactor.energy";
+        public static final String REACTOR_STORAGE_LOCAL = "screen." + Alpha.MODID + ".reactor.storage_local";
+        public static final String REACTOR_STORAGE_GRID = "screen." + Alpha.MODID + ".reactor.storage_grid";
+        public static final String REACTOR_GENERATION = "screen." + Alpha.MODID + ".reactor.generation";
+        public static final String REACTOR_CONSUMPTION = "screen." + Alpha.MODID + ".reactor.consumption";
+        public static final String REACTOR_NET_FLOW = "screen." + Alpha.MODID + ".reactor.net_flow";
+        public static final String REACTOR_DRAIN_BREAKDOWN = "screen." + Alpha.MODID + ".reactor.drain_breakdown";
+        public static final String REACTOR_PRIORITY_BTN = "screen." + Alpha.MODID + ".reactor.priority_btn";
+        public static final String REACTOR_PRIORITY_BALANCED = "screen." + Alpha.MODID + ".reactor.priority_balanced";
+        public static final String REACTOR_PRIORITY_SHIELDS = "screen." + Alpha.MODID + ".reactor.priority_shields";
+        public static final String REACTOR_PRIORITY_WEAPONS = "screen." + Alpha.MODID + ".reactor.priority_weapons";
+        public static final String REACTOR_PRIORITY_ENGINES = "screen." + Alpha.MODID + ".reactor.priority_engines";
+        public static final String REACTOR_ALLOCATION_RATIO = "screen." + Alpha.MODID + ".reactor.allocation_ratio";
+        public static final String REACTOR_FOCUS_BALANCED = "screen." + Alpha.MODID + ".reactor.focus_balanced";
+        public static final String REACTOR_FOCUS_SHIELDS = "screen." + Alpha.MODID + ".reactor.focus_shields";
+        public static final String REACTOR_FOCUS_WEAPONS = "screen." + Alpha.MODID + ".reactor.focus_weapons";
+        public static final String REACTOR_FOCUS_ENGINES = "screen." + Alpha.MODID + ".reactor.focus_engines";
+        public static final String REACTOR_STATUS_OPTIMAL = "screen." + Alpha.MODID + ".reactor.status_optimal";
+        public static final String REACTOR_STATUS_HIGH_LOAD = "screen." + Alpha.MODID + ".reactor.status_high_load";
+        public static final String REACTOR_STATUS_CRITICAL = "screen." + Alpha.MODID + ".reactor.status_critical";
+        public static final String REACTOR_STATUS_STANDBY = "screen." + Alpha.MODID + ".reactor.status_standby";
+        public static final String REACTOR_STATUS_UNLINKED = "screen." + Alpha.MODID + ".reactor.status_unlinked";
 
         // Helm Config Screen
         public static final String HELM_NAV_TITLE = "screen." + Alpha.MODID + ".helm.navigation";
@@ -43,10 +64,22 @@ public final class ModI18n {
 
         // Control Screen
         public static final String CONTROL_TITLE = "screen." + Alpha.MODID + ".control.title";
+        public static final String CONTROL_STATUS_BOUND = "screen." + Alpha.MODID + ".control.status_bound";
+        public static final String CONTROL_STATUS_UNBOUND = "screen." + Alpha.MODID + ".control.status_unbound";
+        public static final String CONTROL_STRUCTURAL_HEADER = "screen." + Alpha.MODID + ".control.structural_header";
+        public static final String CONTROL_STRUCTURAL_BLOCKS = "screen." + Alpha.MODID + ".control.structural_blocks";
+        public static final String CONTROL_STRUCTURAL_BOUNDS = "screen." + Alpha.MODID + ".control.structural_bounds";
+        public static final String CONTROL_STRUCTURAL_ANCHOR = "screen." + Alpha.MODID + ".control.structural_anchor";
+        public static final String CONTROL_SUBSYSTEM_HEADER = "screen." + Alpha.MODID + ".control.subsystem_header";
+        public static final String CONTROL_SUBSYSTEM_CORES = "screen." + Alpha.MODID + ".control.subsystem_cores";
+        public static final String CONTROL_SUBSYSTEM_WEAPONS = "screen." + Alpha.MODID + ".control.subsystem_weapons";
+        public static final String CONTROL_SUBSYSTEM_NAV = "screen." + Alpha.MODID + ".control.subsystem_nav";
         public static final String CONTROL_BTN_CREATE = "screen." + Alpha.MODID + ".control.btn.create";
         public static final String CONTROL_BTN_UPDATE = "screen." + Alpha.MODID + ".control.btn.update";
         public static final String CONTROL_BTN_DISASSEMBLE = "screen." + Alpha.MODID + ".control.btn.disassemble";
         public static final String CONTROL_BTN_HIGHLIGHT = "screen." + Alpha.MODID + ".control.btn.highlight";
+        public static final String CONTROL_HIGHLIGHT_ACTIVE = "screen." + Alpha.MODID + ".control.highlight_active";
+        public static final String CONTROL_HIGHLIGHT_INACTIVE = "screen." + Alpha.MODID + ".control.highlight_inactive";
         public static final String CONTROL_BTN_SHIELD = "screen." + Alpha.MODID + ".control.btn.shield";
         public static final String CONTROL_SHIELD_COOLDOWN = "screen." + Alpha.MODID + ".control.shield_cooldown";
         public static final String CONTROL_SHIELD_ACTIVE = "screen." + Alpha.MODID + ".control.shield_active";
@@ -59,6 +92,27 @@ public final class ModI18n {
         public static final String HUD_TACTICAL_SHIELD_OFFLINE = "screen." + Alpha.MODID + ".hud.tactical.shield_offline";
         public static final String HUD_TACTICAL_REBOOT = "screen." + Alpha.MODID + ".hud.tactical.reboot";
         public static final String HUD_TACTICAL_SHIELD_DISABLED = "screen." + Alpha.MODID + ".hud.tactical.shield_disabled";
+        
+        // Shield Screen
+        public static final String SHIELD_TITLE = "screen." + Alpha.MODID + ".shield.title";
+        public static final String SHIELD_TOGGLE = "screen." + Alpha.MODID + ".shield.toggle";
+        public static final String SHIELD_STATUS = "screen." + Alpha.MODID + ".shield.status";
+        public static final String SHIELD_ACTIVE = "screen." + Alpha.MODID + ".shield.active";
+        public static final String SHIELD_INACTIVE = "screen." + Alpha.MODID + ".shield.inactive";
+        public static final String SHIELD_ENERGY = "screen." + Alpha.MODID + ".shield.energy";
+        public static final String SHIELD_POWER_FLOW = "screen." + Alpha.MODID + ".shield.power_flow";
+        public static final String SHIELD_SECTOR_ID = "screen." + Alpha.MODID + ".shield.sector_id";
+        public static final String SHIELD_STATUS_OPTIMAL = "screen." + Alpha.MODID + ".shield.status_optimal";
+        public static final String SHIELD_STATUS_CHARGING = "screen." + Alpha.MODID + ".shield.status_charging";
+        public static final String SHIELD_STATUS_COLLAPSED = "screen." + Alpha.MODID + ".shield.status_collapsed";
+        public static final String SHIELD_STATUS_RECHARGE_CD = "screen." + Alpha.MODID + ".shield.status_recharge_cd";
+        public static final String SHIELD_STATUS_OFFLINE = "screen." + Alpha.MODID + ".shield.status_offline";
+        public static final String SHIELD_STATUS_UNLINKED = "screen." + Alpha.MODID + ".shield.status_unlinked";
+        public static final String SHIELD_COVERAGE_VOXELS = "screen." + Alpha.MODID + ".shield.coverage_voxels";
+        public static final String SHIELD_COVERAGE_BOUNDS = "screen." + Alpha.MODID + ".shield.coverage_bounds";
+        public static final String SHIELD_COVERAGE_SPAN = "screen." + Alpha.MODID + ".shield.coverage_span";
+        public static final String SHIELD_DEFICIT = "screen." + Alpha.MODID + ".shield.deficit";
+        public static final String SHIELD_FULLY_CHARGED = "screen." + Alpha.MODID + ".shield.fully_charged";
         public static final String HUD_TACTICAL_ENERGY = "screen." + Alpha.MODID + ".hud.tactical.energy";
         public static final String HUD_HELM_HEADER = "screen." + Alpha.MODID + ".hud.helm.header";
         public static final String HUD_HELM_WARP_COOLDOWN = "screen." + Alpha.MODID + ".hud.helm.warp_cooldown";

@@ -181,7 +181,8 @@ public class SpaceshipHelmConfigScreen extends AbstractContainerScreen<Spaceship
         // Cooldown-Warnung
         if (onWarpCooldown) {
             double cdSeconds = clientState.getMovementCooldownDisplay(currentTick) / 20.0;
-            guiGraphics.drawCenteredString(this.font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HELM_WARP_COOLDOWN, cdSeconds), left + this.imageWidth / 2, top + 185, 0xFF5555);
+            String cdStr = String.format(java.util.Locale.ROOT, "%.1f", cdSeconds);
+            guiGraphics.drawCenteredString(this.font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HELM_WARP_COOLDOWN, cdStr), left + this.imageWidth / 2, top + 185, 0xFF5555);
         }
 
         this.renderTooltip(guiGraphics, mouseX, mouseY);

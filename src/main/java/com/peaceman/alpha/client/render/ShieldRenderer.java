@@ -12,7 +12,6 @@ import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -23,8 +22,6 @@ import org.joml.Matrix4f;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Set;
-import java.util.UUID;
 
 public class ShieldRenderer {
 
@@ -40,7 +37,7 @@ public class ShieldRenderer {
         @SubscribeEvent
         public static void onRegisterShaders(RegisterShadersEvent event) throws IOException {
             event.registerShader(
-                    new ShaderInstance(event.getResourceProvider(), ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "hex_shield"), DefaultVertexFormat.POSITION_TEX),
+                    new ShaderInstance(event.getResourceProvider(), ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "hex_shield"), DefaultVertexFormat.POSITION_TEX_COLOR),
                     shaderInstance -> hexShieldShader = shaderInstance
             );
         }
@@ -74,7 +71,7 @@ public class ShieldRenderer {
             RenderSystem.setShader(() -> hexShieldShader);
 
             for (ClientShipState shipState : ships) {
-                if (!shipState.isShieldActive() || shipState.getAnchorPos() == null || shipState.getShieldMesh() == null) {
+                if (!shipState.isShieldActive() || shipState.getActiveMask() == 0L || shipState.getAnchorPos() == null || shipState.getShieldMesh() == null) {
                     continue;
                 }
 
@@ -149,19 +146,21 @@ public class ShieldRenderer {
      * Baut ein effizientes Mesh aus den Voxel-Daten.
      * Nur die Seiten, die nach außen zeigen, werden gezeichnet!
      */
-    public static MeshData buildShieldMesh(Set<BlockPos> relativeBlocks) {
+    public static MeshData buildShieldMesh(java.util.Map<BlockPos, Byte> relativeBlocks) {
         if (relativeBlocks == null || relativeBlocks.isEmpty()) return null;
 
         Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder bufferbuilder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+        BufferBuilder bufferbuilder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
 
-        for (BlockPos pos : relativeBlocks) {
+        for (java.util.Map.Entry<BlockPos, Byte> entry : relativeBlocks.entrySet()) {
+            BlockPos pos = entry.getKey();
+            byte shieldId = entry.getValue();
 
             // Jeden Voxel prüfen
             for (Direction dir : Direction.values()) {
                 // Nur Seiten zeichnen, die an Luft grenzen!
-                if (!relativeBlocks.contains(pos.relative(dir))) {
-                    drawFace(bufferbuilder, pos, dir);
+                if (!relativeBlocks.containsKey(pos.relative(dir))) {
+                    drawFace(bufferbuilder, pos, dir, shieldId);
                 }
             }
         }
@@ -184,49 +183,50 @@ public class ShieldRenderer {
     /**
      * Hilfsfunktion, um eine einzelne Voxel-Seite mit korrekten UVs zu zeichnen (Minecraft 1.21+).
      */
-    private static void drawFace(VertexConsumer buffer, BlockPos pos, Direction dir) {
+    private static void drawFace(VertexConsumer buffer, BlockPos pos, Direction dir, byte shieldId) {
         float x1 = pos.getX(); float y1 = pos.getY(); float z1 = pos.getZ();
         float x2 = x1 + 1.0f;  float y2 = y1 + 1.0f;  float z2 = z1 + 1.0f;
 
         // UV-Koordinaten basierend auf der Position
         float scale = 0.1f;
+        int id = shieldId & 0xFF;
 
         switch (dir) {
             case DOWN -> {
-                buffer.addVertex(x1, y1, z2).setUv(x1 * scale, z2 * scale);
-                buffer.addVertex(x1, y1, z1).setUv(x1 * scale, z1 * scale);
-                buffer.addVertex(x2, y1, z1).setUv(x2 * scale, z1 * scale);
-                buffer.addVertex(x2, y1, z2).setUv(x2 * scale, z2 * scale);
+                buffer.addVertex(x1, y1, z2).setColor(id, 255, 255, 255).setUv(x1 * scale, z2 * scale);
+                buffer.addVertex(x1, y1, z1).setColor(id, 255, 255, 255).setUv(x1 * scale, z1 * scale);
+                buffer.addVertex(x2, y1, z1).setColor(id, 255, 255, 255).setUv(x2 * scale, z1 * scale);
+                buffer.addVertex(x2, y1, z2).setColor(id, 255, 255, 255).setUv(x2 * scale, z2 * scale);
             }
             case UP -> {
-                buffer.addVertex(x1, y2, z1).setUv(x1 * scale, z1 * scale);
-                buffer.addVertex(x1, y2, z2).setUv(x1 * scale, z2 * scale);
-                buffer.addVertex(x2, y2, z2).setUv(x2 * scale, z2 * scale);
-                buffer.addVertex(x2, y2, z1).setUv(x2 * scale, z1 * scale);
+                buffer.addVertex(x1, y2, z1).setColor(id, 255, 255, 255).setUv(x1 * scale, z1 * scale);
+                buffer.addVertex(x1, y2, z2).setColor(id, 255, 255, 255).setUv(x1 * scale, z2 * scale);
+                buffer.addVertex(x2, y2, z2).setColor(id, 255, 255, 255).setUv(x2 * scale, z2 * scale);
+                buffer.addVertex(x2, y2, z1).setColor(id, 255, 255, 255).setUv(x2 * scale, z1 * scale);
             }
             case NORTH -> {
-                buffer.addVertex(x2, y2, z1).setUv(x2 * scale, y2 * scale);
-                buffer.addVertex(x2, y1, z1).setUv(x2 * scale, y1 * scale);
-                buffer.addVertex(x1, y1, z1).setUv(x1 * scale, y1 * scale);
-                buffer.addVertex(x1, y2, z1).setUv(x1 * scale, y2 * scale);
+                buffer.addVertex(x2, y2, z1).setColor(id, 255, 255, 255).setUv(x2 * scale, y2 * scale);
+                buffer.addVertex(x2, y1, z1).setColor(id, 255, 255, 255).setUv(x2 * scale, y1 * scale);
+                buffer.addVertex(x1, y1, z1).setColor(id, 255, 255, 255).setUv(x1 * scale, y1 * scale);
+                buffer.addVertex(x1, y2, z1).setColor(id, 255, 255, 255).setUv(x1 * scale, y2 * scale);
             }
             case SOUTH -> {
-                buffer.addVertex(x1, y2, z2).setUv(x1 * scale, y2 * scale);
-                buffer.addVertex(x1, y1, z2).setUv(x1 * scale, y1 * scale);
-                buffer.addVertex(x2, y1, z2).setUv(x2 * scale, y1 * scale);
-                buffer.addVertex(x2, y2, z2).setUv(x2 * scale, y2 * scale);
+                buffer.addVertex(x1, y2, z2).setColor(id, 255, 255, 255).setUv(x1 * scale, y2 * scale);
+                buffer.addVertex(x1, y1, z2).setColor(id, 255, 255, 255).setUv(x1 * scale, y1 * scale);
+                buffer.addVertex(x2, y1, z2).setColor(id, 255, 255, 255).setUv(x2 * scale, y1 * scale);
+                buffer.addVertex(x2, y2, z2).setColor(id, 255, 255, 255).setUv(x2 * scale, y2 * scale);
             }
             case WEST -> {
-                buffer.addVertex(x1, y2, z1).setUv(z1 * scale, y2 * scale);
-                buffer.addVertex(x1, y1, z1).setUv(z1 * scale, y1 * scale);
-                buffer.addVertex(x1, y1, z2).setUv(z2 * scale, y1 * scale);
-                buffer.addVertex(x1, y2, z2).setUv(z2 * scale, y2 * scale);
+                buffer.addVertex(x1, y2, z1).setColor(id, 255, 255, 255).setUv(z1 * scale, y2 * scale);
+                buffer.addVertex(x1, y1, z1).setColor(id, 255, 255, 255).setUv(z1 * scale, y1 * scale);
+                buffer.addVertex(x1, y1, z2).setColor(id, 255, 255, 255).setUv(z2 * scale, y1 * scale);
+                buffer.addVertex(x1, y2, z2).setColor(id, 255, 255, 255).setUv(z2 * scale, y2 * scale);
             }
             case EAST -> {
-                buffer.addVertex(x2, y2, z2).setUv(z2 * scale, y2 * scale);
-                buffer.addVertex(x2, y1, z2).setUv(z2 * scale, y1 * scale);
-                buffer.addVertex(x2, y1, z1).setUv(z1 * scale, y1 * scale);
-                buffer.addVertex(x2, y2, z1).setUv(z1 * scale, y2 * scale);
+                buffer.addVertex(x2, y2, z2).setColor(id, 255, 255, 255).setUv(z2 * scale, y2 * scale);
+                buffer.addVertex(x2, y1, z2).setColor(id, 255, 255, 255).setUv(z2 * scale, y1 * scale);
+                buffer.addVertex(x2, y1, z1).setColor(id, 255, 255, 255).setUv(z1 * scale, y1 * scale);
+                buffer.addVertex(x2, y2, z1).setColor(id, 255, 255, 255).setUv(z1 * scale, y2 * scale);
             }
         }
     }

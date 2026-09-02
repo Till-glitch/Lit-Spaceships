@@ -88,7 +88,7 @@ public class TurretBlockEntityRenderer<T extends AbstractLaserNodeBlockEntity> i
 
         VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.cutout());
         this.blockRenderer.getModelRenderer().renderModel(poseStack.last(), vertexConsumer, null, bakedModel, 1.0f,
-                1.0f, 1.0f, packedLight, packedOverlay);
+                1.0f, 1.0f, packedLight, packedOverlay, net.neoforged.neoforge.client.model.data.ModelData.EMPTY, RenderType.cutout());
 
         poseStack.popPose();
     }

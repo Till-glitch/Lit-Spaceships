@@ -63,6 +63,7 @@ public class ModPayloads {
         registrar.playToClient(LaserFirePayload.TYPE, LaserFirePayload.STREAM_CODEC, (p, c) -> {});
         registrar.playToClient(LaserStateSyncPayload.TYPE, LaserStateSyncPayload.STREAM_CODEC, (p, c) -> {});
         registrar.playToClient(ShipDimensionSyncPayload.TYPE, ShipDimensionSyncPayload.STREAM_CODEC, (p, c) -> {});
+        registrar.playToClient(ShieldZoneStatePayload.TYPE, ShieldZoneStatePayload.STREAM_CODEC, (p, c) -> {});
         registrar.playBidirectional(TurretAimPayload.TYPE, TurretAimPayload.STREAM_CODEC, (p, c) -> {
             if (c.flow().isServerbound()) {
                 ServerPayloadHandler.handleTurretAim(p, c);

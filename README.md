@@ -6,14 +6,33 @@ An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21*
 
 ## Features
 
-* **Spaceship Control Block:** The heart and core of every ship. Detects connected blocks via breadth-first search (BFS), binds them to a ship entity, and manages lifecycle operations (creation, structure update, deletion) with real-time hull highlighting.
+* **Spaceship Controller (Core Lifecycle & Structure Management Terminal):**
+  * **Structural Diagnostics:** Displays total connected hull blocks, calculated ship mass in metric tons (`X.0 t`), 3D spatial extents ($\Delta X \times \Delta Y \times \Delta Z$), and origin anchor coordinates bound via Breadth-First Search (BFS). Supports real-time preview diagnostics for unbound standalone structures as well as bound active ships.
+  * **Subsystem Registry Summary:** Real-time itemized overview of linked functional blocks (Reactors, Shield Generators, Heavy Beams, Pulse Lasers, Mining Lasers, and Navigation Helms) both for bound ships and unbound pre-flight scans.
+  * **Hull Highlight Control:** Interactive toggle button triggering real-time in-world particle outline highlighting of outer hull boundaries for inspection.
+  * **Ship Lifecycle Operations:** Safe interface controls to create/bind, update structure boundaries, or unbind/disassemble the ship entity. Disassembling immediately unbinds nodes, frees client VBOs/VRAM, and reactivates the create ship control.
 * **Spaceship Helm (Navigation & Combat Console):** Full 6-axis flight controls (WASD for horizontal flight, Space to ascend, Left-Shift to descend), right-click to fire all shipboard weapons (`FIRE_ALL`), `M` key to open navigation/waypoint configuration while flying, and `H` key to exit helm control.
-* **Spaceship Reactor:** Energy storage supporting standard **Forge Energy (FE)** with up to 1,000,000 FE capacity. Powers flight maneuvers, shield absorption, and laser weapon systems. *(Dev-Tip: Right-click with Redstone to charge 50,000 FE!)*
-* **Shield Generator & Hex-Shader:** Protects ship blocks against explosive damage (TNT, Creepers) and unauthorized block manipulation. Shields consume reactor energy upon impact and are rendered as procedural hexagon bubble meshes via custom shaders with impact ripples and low-energy alerts.
+* **Spaceship Reactor:** Energy storage supporting standard **Forge Energy (FE)** with up to 1,000,000 FE capacity. Powers flight maneuvers, proportional localized shield recharge, and laser weapon systems. *(Dev-Tip: Right-click with Redstone to charge 50,000 FE!)*
+* **Localized Shield Zones & 3D Voronoi Tessellation:**
+  * **Modular Shield Generators:** Place up to 64 independent shield generator blocks across the hull. Each generator dynamically anchors its own localized shield partition with distinct energy capacity and cooldown timers.
+  * **Deterministic 3D-Voronoi Partitioning:** `ShipScannerService` maps hull voxels and dilatated shield bubble volumes to the nearest generator via squared Euclidean distance with deterministic ID tie-breaking, storing assignments in an $O(1)$ flat `byte[] shieldMap` inside `VoxelGridCache`.
+  * **Proportional Deficit Energy Routing:** `SpaceshipEnergyManager` distributes available reactor energy proportionally according to each zone's deficit ratio ($D_i / D_{total}$) with zero-loss remainder trickle distribution, completely isolating collapsed/cooldown sectors.
+  * **Localized Shield Penetration & Tactical Combat:** Enemy lasers strike specific shield partitions; if a local zone collapses to 0 FE or its shield generator is destroyed in combat, enemy fire instantly penetrates the bubble and inflicts direct kinetic destruction on the underlying hull. Surviving shield zones do NOT automatically regenerate or expand to cover destroyed sectors during combat, preserving tactical breach holes for attackers.
+  * **Dynamic Visual Culling:** Exhausted shield zones that fall to 0 FE or lose their generator block instantaneously vanish on a per-voxel level via dynamic GLSL shader discarding (`discard`), driven by a highly compressed 64-Bit sync mask (`ShieldZoneStatePayload`).
+  * **Shield Generator Tactical Terminal GUI & Voronoi Telemetry:**
+    * **Reactor Power Routing Indicator:** Real-time energy transfer rate monitor (`+X FE/t`) streaming live proportional energy feed from central reactors directly to the local sector buffer.
+    * **Sector Status & Health Badge:** Multi-state tactical status readout (`OPTIMAL [100%]`, `ACTIVE [CHARGING]`, `COLLAPSED [0 FE - BREACH]`, `REGENERATING IN X.Xs`, `OFFLINE`, `UNLINKED`) with countdown timer during collapse recovery.
+    * **Sector Coverage & Voronoi Visualizer:** Real-time spatial telemetry displaying assigned hull block counts and coverage ratios (`142 / 450 Blocks (31.6%)`), sector partition indices (`Sector #1 / 4`), and 3D bounding dimensions (`ΔX: 15m × ΔY: 7m × ΔZ: 18m`).
+* **Spaceship Reactor Terminal & Power Management (Crimson UI):**
+  * **Total Energy Storage Gauge:** Real-time FE gauge tracking massive capacity (1,000,000 FE per core) with animated gradient indicators and multi-reactor grid aggregation (`Ship Grid: X / Y FE`).
+  * **Energy Flow Metrics:** Live generation (`+FE/t`), total ship subsystem consumption (`-FE/t`), and net throughput ($\Delta\text{FE/t}$) with individual breakdown for Engines, Shields, and Weapons.
+  * **Power Distribution Priority:** Interactive tactical priority cycling (`BALANCED`, `SHIELDS FIRST [70% Def]`, `WEAPONS FIRST [70% Atk]`, `ENGINES FIRST [70% Spd]`) persisted in NBT and synchronized via network packets.
+  * **Reactor Status & Core Diagnostics:** Real-time multi-state status monitoring (`OPTIMAL`, `HIGH LOAD`, `CRITICAL DEPLETION`, `STANDBY`, `UNLINKED`) reflecting live energy throughput and grid saturation.
+* **Shield Generator & Hex-Shader:** Protects ship blocks against explosive damage (TNT, Creepers) and unauthorized block manipulation. Shields consume reactor energy upon impact and are rendered as procedural hexagon bubble meshes via custom shaders with impact ripples, dynamic culling, and low-energy alerts.
 * **Shipborne Laser Weapon System & Dynamic Turrets:**
   * **Pulse Laser:** High-energy burst cannon (250 FE/shot, 20 ticks cooldown). Instantly vaporizes 1 block on hit or inflicts massive shield drain with kinetic shockwaves.
-  * **Heavy Beam:** High-intensity continuous combat beam (50 FE/tick). Progressively melts and burns through hull blocks and terrain with visual breaking animations.
-  * **Mining Laser:** Continuous industrial excavation laser (25 FE/tick). Rapidly drills through asteroid stone, ores, and terrain without causing entity damage.
+  * **Heavy Beam:** High-intensity continuous combat beam (50 FE/tick). Progressively melts and burns through hull blocks and terrain with visual breaking animations. Automatically and safely powers down upon ship movement/thrusting to prevent desync.
+  * **Mining Laser:** Continuous industrial excavation laser (25 FE/tick). Rapidly drills through asteroid stone, ores, and terrain without causing entity damage. Automatically and safely powers down upon ship movement/thrusting to prevent desync.
   * **Co-Pilot / Freelook Aiming System:** Right-click laser turrets to man the gunner seat (`TurretSeatEntity`). Aim turrets dynamically in real-time via camera freelook, stabilized against ship translation and rotation using quaternion transformations ($Q_{ship}^{-1} \otimes \vec{V}_{world} \otimes Q_{ship}$).
   * **Interactive Firing & Locking Controls:** Right-click while seated to fire the specific occupied turret (`FIRE_SPECIFIC`). Left-click while seated to lock/arretiere the turret's orientation with acoustic feedback and Action-Bar notification. When dismounting, during ship movement, and across interdimensional teleports, the locked angle remains permanently stored in NBT until intentionally realigned.
   * **Mechanical Gimbal Limits:** Strict joint angle clamping prevents turrets from cutting or firing into the ship's own hull.
@@ -185,6 +204,29 @@ classDiagram
             +dispose() void
         }
 
+        class SpaceshipControlScreen {
+            -Button createButton
+            -Button updateButton
+            -Button disassembleButton
+            -Button highlightButton
+            +render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) void
+        }
+
+        class SpaceshipReactorScreen {
+            +render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) void
+        }
+
+        class SpaceshipShieldScreen {
+            +render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) void
+        }
+
+        class ShipHighlightRenderer {
+            +boolean isHighlightActive$
+            +toggleHighlight(Level level, BlockPos startPos)$ void
+            +toggleHighlight(Set~BlockPos~ blocks)$ void
+            +isHighlightActive()$ boolean
+        }
+
         class ClientLaserState {
             +addPulse(UUID shooterId, Vec3 start, Vec3 end, LaserWeaponTier tier)$ void
             +setContinuousBeam(UUID shooterId, BlockPos pos, boolean firing, LaserWeaponTier tier)$ void
@@ -251,6 +293,13 @@ The project enforces continuous testing according to the **70/20 Rule** (70% Uni
 
 | Test-Suite | Typ | Abdeckung |
 | :--- | :--- | :--- |
+| **`VoxelGridCacheShieldTest`** | JUnit 5 | $O(1)$ Flach-Array `byte[] shieldMap` Adressierung, Rand- und Out-of-Bounds-Absicherung im `VoxelGridCache`. |
+| **`ShipStateShieldZoneTest`** | JUnit 5 | Thread-sichere CRUD-Operationen auf `shieldZones`, `isCollapsed`-Auswertung bei Cooldown und Energiemangel. |
+| **`VoronoiTessellationTest`** | JUnit 5 | 3D-Voronoi-Tesselierung über quadrierte euklidische Distanz, deterministischer ID-Tie-Break und 64-Generatoren-Cap. |
+| **`ProportionalEnergyRoutingTest`** | JUnit 5 | Proportionale FE-Verteilung im Verhältnis der Zonendefizite ($D_i / D_{total}$) und Ausschluss kollabierter Zonen. |
+| **`EnergyRoutingRemainderTest`** | JUnit 5 | Exakter Rest-Tröpfchen-Loop (+1 FE) für verlustfreie Energieerhaltung bei krummen Primzahl-Werten (3333 FE auf 7 Generatoren). |
+| **`FastVoxelTraversalShieldTest`** | JUnit 5 | 3D-DDA-Traversierung mit extrahierter `shieldId` im `VoxelHit` bei Treffern auf Hülle und Schild. |
+| **`ShieldZonePayloadSerializationTest`** | JUnit 5 | Bit-genaue 64-Bit Bitmasken-Serialisierung und -Dekodierung in $< 32$ Bytes via `ShieldZoneStatePayload`. |
 | **`LaserNodeRenderStateTest`** | JUnit 5 (Mockito) | Thread-sichere Render-State Extraktion, interpolierte Kinematik (Yaw/Pitch), 180°-Winkel-Wrap und alle 6 `FACING`-Ausrichtungen (`UP`, `DOWN`, `NORTH`, `SOUTH`, `WEST`, `EAST`). |
 | **`DataGeneratorsTest`** | JUnit 5 (Mockito) | Event-Handling für `GatherDataEvent`, Provider-Registrierung und HolderLookup-Lifecycle. |
 | **`ModBlockStateProviderTest`** | JUnit 5 | 6-Achsen Euler-Winkel-Transformation (`rotX`, `rotY`) für `FACING` Split-Modell Basisplatten und `cubeAll` Generierung. |
@@ -261,10 +310,12 @@ The project enforces continuous testing according to the **70/20 Rule** (70% Uni
 | **`ShipCollisionMathTest`** | JUnit 5 | Continuous Swept-AABB Extrusion (positive/negative/zero), VoxelGridCache BitSet Indexing & Bounds. |
 | **`ShipStateTest`** | JUnit 5 | Domain-Zustand, AABB-Neuberechnung bei Blockmutation, Controller-Translation, Cooldown-Arithmetik. |
 | **`CombatLogicTest`** | JUnit 5 | FastVoxelTraversal 3D-DDA Treffererkennung, Normalenflächen (`WEST`, `DOWN`), Reichweiten- & Tier-Konstanten. |
-| **`PayloadSerializationTest`** | JUnit 5 | Symmetrische Serialisierung & Deserialisierung aller 11 CustomPacketPayload-Records via StreamCodecs. |
+| **`PayloadSerializationTest`** | JUnit 5 | Symmetrische Serialisierung & Deserialisierung aller 12 CustomPacketPayload-Records via StreamCodecs. |
 | **`SpaceshipEnergyManagerTest`** | JUnit 5 (Mockito) | Reaktor-Bündelung, sequenzieller Energieabzug, Rollback bei Energiemangel, Flugkosten-Berechnung. |
 | **`AimTransformMathTest`** | JUnit 5 | Quaternion-Transformationen, Euler-Winkel-Konvertierung, 16-Bit Kompression und GimbalLimits. |
 | **`TurretSeatTest`** | JUnit 5 | TurretSeat DTO Attribute, NBT-Persistenz und Aim-Lock-Status. |
+| **`ShipScannerVoronoiGameTest`** | GameTest | Voronoi-Zonierung und ShieldZone-Erfassung bei mehreren Schildgeneratoren im Schiff. |
+| **`LaserCombatPiercingGameTest`** | GameTest | Zonen-Kollaps und Durchschlag auf darunterliegende Schiffshülle bei inaktiver ShieldZone. |
 | **`ShipScannerGameTests`** | GameTest | Orthogonale BFS-Erkennung, Ausschluss diagonaler Blöcke, Multipart-Erfassung (Türen, Betten, Truhen). |
 | **`ShipMovementGameTests`** | GameTest | Physische Welt-Translation, `AIR`-Hinterlassung und Zielblock-Präsenzprüfung. |
 | **`ShipAttachmentGameTests`** | GameTest | Typsichere Persistenz von `ModAttachments.SHIP_ID` an BlockEntities. |

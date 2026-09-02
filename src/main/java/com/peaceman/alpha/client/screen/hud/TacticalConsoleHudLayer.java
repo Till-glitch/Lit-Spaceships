@@ -46,8 +46,9 @@ public class TacticalConsoleHudLayer implements LayeredDraw.Layer {
         } else {
             if (shipState.isShieldOnCooldown(currentTick)) {
                 long cd = shipState.getShieldCooldownDisplay(currentTick);
+                String cdStr = String.format(java.util.Locale.ROOT, "%.1f", (cd / 20.0f));
                 guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_TACTICAL_SHIELD_OFFLINE).withStyle(net.minecraft.ChatFormatting.RED), startX + 5, startY + 20, 0xFFFFFF);
-                guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_TACTICAL_REBOOT, (cd / 20.0f)).withStyle(net.minecraft.ChatFormatting.RED), startX + 5, startY + 35, 0xFFFFFF);
+                guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_TACTICAL_REBOOT, cdStr).withStyle(net.minecraft.ChatFormatting.RED), startX + 5, startY + 35, 0xFFFFFF);
             } else {
                 guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_TACTICAL_SHIELD_DISABLED).withStyle(net.minecraft.ChatFormatting.DARK_RED), startX + 5, startY + 20, 0xFFFFFF);
             }

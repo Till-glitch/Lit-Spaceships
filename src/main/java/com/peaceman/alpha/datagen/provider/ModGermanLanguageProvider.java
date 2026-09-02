@@ -36,8 +36,29 @@ public class ModGermanLanguageProvider extends LanguageProvider {
         add(ModItems.BACKFLIP_TOOL.getId().toLanguageKey("item"), "Klasingscher Degen");
 
         // 4. UI / Screens
-        add(ModI18n.Screen.REACTOR_TITLE, "Reaktorkern-Diagnose");
+        add(ModI18n.Screen.REACTOR_TITLE, "Raumschiff Reaktor-Terminal");
         add(ModI18n.Screen.REACTOR_ENERGY, "Energie: %1$s FE");
+        add(ModI18n.Screen.REACTOR_STORAGE_LOCAL, "Kern-Speicher: %1$s / %2$s FE (%3$s%%)");
+        add(ModI18n.Screen.REACTOR_STORAGE_GRID, "Schiffsnetz: %1$s / %2$s FE (%3$d Reaktoren)");
+        add(ModI18n.Screen.REACTOR_GENERATION, "Generierung: +%1$s FE/t");
+        add(ModI18n.Screen.REACTOR_CONSUMPTION, "Gesamtlast: -%1$s FE/t");
+        add(ModI18n.Screen.REACTOR_NET_FLOW, "Netto-Fluss: %1$s FE/t");
+        add(ModI18n.Screen.REACTOR_DRAIN_BREAKDOWN, "Antrieb: %1$s | Schilde: %2$s | Waffen: %3$s FE/t");
+        add(ModI18n.Screen.REACTOR_PRIORITY_BTN, "Priorität: %1$s");
+        add(ModI18n.Screen.REACTOR_PRIORITY_BALANCED, "AUSGEGLICHEN (1:1:1)");
+        add(ModI18n.Screen.REACTOR_PRIORITY_SHIELDS, "SCHILDE ZUERST (70% Def)");
+        add(ModI18n.Screen.REACTOR_PRIORITY_WEAPONS, "WAFFEN ZUERST (70% Atk)");
+        add(ModI18n.Screen.REACTOR_PRIORITY_ENGINES, "ANTRIEB ZUERST (70% Spd)");
+        add(ModI18n.Screen.REACTOR_ALLOCATION_RATIO, "Allokation: Antrieb: %1$d%% | Schilde: %2$d%% | Waffen: %3$d%%");
+        add(ModI18n.Screen.REACTOR_FOCUS_BALANCED, "Fokus: Gleichmäßige Lastverteilung auf alle Systeme");
+        add(ModI18n.Screen.REACTOR_FOCUS_SHIELDS, "Fokus: Maximale Schildladung & Regenerationsrate");
+        add(ModI18n.Screen.REACTOR_FOCUS_WEAPONS, "Fokus: Waffenfeuer & Laser-Dauerstrahl-Kapazität");
+        add(ModI18n.Screen.REACTOR_FOCUS_ENGINES, "Fokus: Schneller Schub & Hyperraum-Manöver");
+        add(ModI18n.Screen.REACTOR_STATUS_OPTIMAL, "ONLINE (OPTIMAL)");
+        add(ModI18n.Screen.REACTOR_STATUS_HIGH_LOAD, "HOHE LAST");
+        add(ModI18n.Screen.REACTOR_STATUS_CRITICAL, "KRITISCHE ENTLADUNG (0 FE)");
+        add(ModI18n.Screen.REACTOR_STATUS_STANDBY, "STANDBY (NETZ VOLL)");
+        add(ModI18n.Screen.REACTOR_STATUS_UNLINKED, "NICHT VERBUNDEN");
         add(ModI18n.Screen.HELM_NAV_TITLE, "Nav-Computer & Wegpunkte");
         add(ModI18n.Screen.HELM_BTN_SAVE, "Speichern");
         add(ModI18n.Screen.HELM_BTN_FLYTO, "Anfliegen");
@@ -55,16 +76,48 @@ public class ModGermanLanguageProvider extends LanguageProvider {
         add(ModI18n.Screen.HELM_COST_READY, "Kosten für %1$dm Sprung: %2$s FE (Bereit)");
         add(ModI18n.Screen.HELM_COST_MISSING, "Kosten: %1$s FE (Fehlen: %2$s FE)");
         add(ModI18n.Screen.HELM_ENTER_DISTANCE, "Distanz in Blöcken eingeben");
-        add(ModI18n.Screen.HELM_WARP_COOLDOWN, "Warp-Cooldown aktiv (%1$.1fs)");
+        add(ModI18n.Screen.HELM_WARP_COOLDOWN, "Warp-Cooldown aktiv (%1$ss)");
         add(ModI18n.Screen.HELM_SCREEN_TITLE, "Navigation & Sprung-Computer");
 
-        add(ModI18n.Screen.CONTROL_TITLE, "Raumschiff Steuerung");
-        add(ModI18n.Screen.CONTROL_BTN_CREATE, "Schiff erstellen");
-        add(ModI18n.Screen.CONTROL_BTN_UPDATE, "Struktur updaten");
+        add(ModI18n.Screen.SHIELD_TITLE, "Schildgenerator Interface");
+        add(ModI18n.Screen.SHIELD_TOGGLE, "Sektor-Schild An/Aus");
+        add(ModI18n.Screen.SHIELD_STATUS, "Status: %1$s");
+        add(ModI18n.Screen.SHIELD_ACTIVE, "Aktiv");
+        add(ModI18n.Screen.SHIELD_INACTIVE, "Inaktiv");
+        add(ModI18n.Screen.SHIELD_ENERGY, "Puffer: %1$s / %2$s FE");
+        add(ModI18n.Screen.SHIELD_POWER_FLOW, "Reaktor-Einspeisung: +%1$s FE/t");
+        add(ModI18n.Screen.SHIELD_SECTOR_ID, "Sektor #%1$d / %2$d");
+        add(ModI18n.Screen.SHIELD_STATUS_OPTIMAL, "OPTIMAL (100% GELADEN)");
+        add(ModI18n.Screen.SHIELD_STATUS_CHARGING, "AKTIV (LÄDT)");
+        add(ModI18n.Screen.SHIELD_STATUS_COLLAPSED, "KOLLABIERT (0 FE - DURCHSCHLAG)");
+        add(ModI18n.Screen.SHIELD_STATUS_RECHARGE_CD, "REGENERATION IN %1$ss");
+        add(ModI18n.Screen.SHIELD_STATUS_OFFLINE, "DEAKTIVIERT");
+        add(ModI18n.Screen.SHIELD_STATUS_UNLINKED, "NICHT VERBUNDEN");
+        add(ModI18n.Screen.SHIELD_COVERAGE_VOXELS, "Geschützte Hüllenblöcke: %1$d / %2$d (%3$s%%)");
+        add(ModI18n.Screen.SHIELD_COVERAGE_BOUNDS, "Sektor-Ausdehnung: %1$dm x %2$dm x %3$dm");
+        add(ModI18n.Screen.SHIELD_COVERAGE_SPAN, "Lokale Spanne: [%1$d, %2$d, %3$d] bis [%4$d, %5$d, %6$d]");
+        add(ModI18n.Screen.SHIELD_DEFICIT, "Ladebedarf: %1$s FE");
+        add(ModI18n.Screen.SHIELD_FULLY_CHARGED, "Voll aufgeladen");
+
+        add(ModI18n.Screen.CONTROL_TITLE, "Raumschiff Kontroll-Terminal");
+        add(ModI18n.Screen.CONTROL_STATUS_BOUND, "VERBUNDEN (ONLINE)");
+        add(ModI18n.Screen.CONTROL_STATUS_UNBOUND, "NICHT VERBUNDEN (STANDALONE)");
+        add(ModI18n.Screen.CONTROL_STRUCTURAL_HEADER, "STRUKTUR-DIAGNOSE");
+        add(ModI18n.Screen.CONTROL_STRUCTURAL_BLOCKS, "Verbundene Hülle: %1$s Blöcke | Masse: %2$s t");
+        add(ModI18n.Screen.CONTROL_STRUCTURAL_BOUNDS, "Ausdehnung: ΔX: %1$dm × ΔY: %2$dm × ΔZ: %3$dm");
+        add(ModI18n.Screen.CONTROL_STRUCTURAL_ANCHOR, "Anker-Ursprung: [%1$d, %2$d, %3$d]");
+        add(ModI18n.Screen.CONTROL_SUBSYSTEM_HEADER, "SUBSYSTEM-REGISTER");
+        add(ModI18n.Screen.CONTROL_SUBSYSTEM_CORES, "⚡ Reaktoren: %1$d Kerne | 🛡 Schilde: %2$d Generatoren");
+        add(ModI18n.Screen.CONTROL_SUBSYSTEM_WEAPONS, "⚔ Geschütztürme: %1$d (Schwer: %2$d | Puls: %3$d | Bergbau: %4$d)");
+        add(ModI18n.Screen.CONTROL_SUBSYSTEM_NAV, "🧭 Navigation: %1$d Steuerkonsole");
+        add(ModI18n.Screen.CONTROL_BTN_CREATE, "Schiff binden");
+        add(ModI18n.Screen.CONTROL_BTN_UPDATE, "Grenzen updaten");
         add(ModI18n.Screen.CONTROL_BTN_DISASSEMBLE, "Schiff auflösen");
-        add(ModI18n.Screen.CONTROL_BTN_HIGHLIGHT, "Markierung An/Aus");
+        add(ModI18n.Screen.CONTROL_BTN_HIGHLIGHT, "Hülle hervorheben");
+        add(ModI18n.Screen.CONTROL_HIGHLIGHT_ACTIVE, "Markierung: AKTIV");
+        add(ModI18n.Screen.CONTROL_HIGHLIGHT_INACTIVE, "Markierung: AUS");
         add(ModI18n.Screen.CONTROL_BTN_SHIELD, "Schild An/Aus");
-        add(ModI18n.Screen.CONTROL_SHIELD_COOLDOWN, "Schild (%1$.1fs)");
+        add(ModI18n.Screen.CONTROL_SHIELD_COOLDOWN, "Schild (%1$ss)");
         add(ModI18n.Screen.CONTROL_SHIELD_ACTIVE, "Schild: Aktiv");
         add(ModI18n.Screen.CONTROL_SHIELD_INACTIVE, "Schild: Inaktiv");
 
@@ -72,16 +125,16 @@ public class ModGermanLanguageProvider extends LanguageProvider {
         add(ModI18n.Screen.HUD_TACTICAL_SHIELD_CRITICAL, "Schilde: Kritisch");
         add(ModI18n.Screen.HUD_TACTICAL_SHIELD_ACTIVE, "Schilde: Aktiv");
         add(ModI18n.Screen.HUD_TACTICAL_SHIELD_OFFLINE, "Schilde: Offline");
-        add(ModI18n.Screen.HUD_TACTICAL_REBOOT, "Reboot: %1$.1fs");
+        add(ModI18n.Screen.HUD_TACTICAL_REBOOT, "Reboot: %1$ss");
         add(ModI18n.Screen.HUD_TACTICAL_SHIELD_DISABLED, "Schilde: Deaktiviert");
         add(ModI18n.Screen.HUD_TACTICAL_ENERGY, "Energie: %1$d%%");
         add(ModI18n.Screen.HUD_HELM_HEADER, "--- Helm HUD ---");
-        add(ModI18n.Screen.HUD_HELM_WARP_COOLDOWN, "Warp Cooldown: %1$.1fs");
+        add(ModI18n.Screen.HUD_HELM_WARP_COOLDOWN, "Warp Cooldown: %1$ss");
         add(ModI18n.Screen.HUD_HELM_READY, "Antrieb Bereit");
         add(ModI18n.Screen.HUD_HELM_CONTROLS, "[H] Verlassen | [M] Konfig | [Rechtsklick] Feuern");
 
         // 5. Messages (Chat / Action-Bar)
-        add(ModI18n.Message.TURRET_AIM_LOCKED, "[Geschützturm] Ausrichtung eingeloggt (Yaw: %1$.1f°, Pitch: %2$.1f°)");
+        add(ModI18n.Message.TURRET_AIM_LOCKED, "[Geschützturm] Ausrichtung eingeloggt (Yaw: %1$s°, Pitch: %2$s°)");
         add(ModI18n.Message.TURRET_AIM_RELEASED, "[Geschützturm] Ausrichtung freigegeben (Freelook aktiv)");
         add(ModI18n.Message.TURRET_GIMBAL_LIMIT, "[Warnung] Gimbal-Limit erreicht! Ausrichtung blockiert.");
         add(ModI18n.Message.TURRET_OCCUPIED, "Dieser Geschützturm ist bereits belegt!");

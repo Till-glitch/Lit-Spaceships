@@ -136,6 +136,18 @@ classDiagram
             +register(IEventBus bus)$ void
         }
 
+        class ShieldZone {
+            <<record>>
+            +byte id
+            +BlockPos generatorPos
+            +int currentEnergy
+            +int maxEnergy
+            +long cooldownUntil
+            +isCollapsed(long currentTick) boolean
+            +withEnergy(int newEnergy) ShieldZone
+            +withEnergyAndCooldown(int newEnergy, long newCooldown) ShieldZone
+        }
+
         class ShipState {
             -UUID id
             -BlockPos controllerPos
@@ -144,12 +156,18 @@ classDiagram
             -List~BlockPos~ reactors
             -List~BlockPos~ shields
             -List~BlockPos~ weapons
+            -Map~Byte, ShieldZone~ shieldZones
             -boolean isShieldActive
             -long shieldCooldownUntil
             -long movementCooldownUntil
             -VoxelGridCache hullVoxelCache
             -VoxelGridCache shieldVoxelCache
             +getImmutableBlockSnapshot() Set~BlockPos~
+            +getShieldZone(byte id) ShieldZone
+            +setShieldZone(ShieldZone zone) void
+            +setShieldZones(Map~Byte, ShieldZone~ zones) void
+            +updateShieldZoneEnergy(byte id, int energy) void
+            +updateShieldZoneEnergyAndCooldown(byte id, int energy, long cooldown) void
             +setBlocksRaw(Set~BlockPos~ blocks) void
             +recalculateHullBounds() void
             +isShieldOnCooldown(long gameTime) boolean
@@ -165,8 +183,17 @@ classDiagram
             +updateShipBlocks(Level level, ShipState ship)$ void
             +deleteShip(Level level, ShipState ship)$ void
             +saveData(Level level)$ void
+            +syncShieldZoneStates(Level level, ShipState ship)$ void
+            +calculateShieldActiveMask(ShipState ship, long gameTime)$ long
             +onServerStarted(ServerStartedEvent event)$ void
             +onChunkSent(ChunkWatchEvent.Sent event)$ void
+        }
+
+        class ShipScannerService {
+            +MAX_SHIP_BLOCKS int$
+            +MAX_SHIELD_GENERATORS int$
+            +scan(Level level, BlockPos startPos)$ Set~BlockPos~
+            +calculateVoronoiZones(VoxelGridCache cache, List~BlockPos~ generators, BlockPos controllerPos)$ void
         }
 
         class ShipSavedData {
@@ -180,6 +207,7 @@ classDiagram
             +tickContinuousWeapon(Level level, ShipState shooter, BlockPos pos, AbstractLaserNodeBE be)$ void
             -processPulseHit(Level level, ShipState shooter, LaserWeaponTier tier, RaycastHitResult hit)$ void
             -processContinuousHit(Level level, ShipState shooter, BlockPos pos, AbstractLaserNodeBE be, LaserWeaponTier tier, RaycastHitResult hit)$ void
+            -processHullDrilling(Level level, ShipState targetShip, BlockPos weaponPos, AbstractLaserNodeBE laserBe, LaserWeaponTier tier, BlockPos targetPos, Vec3 worldHitPos)$ void
             -destroyShipHullBlock(Level level, ShipState targetShip, BlockPos hitBlock, Vec3 worldHitPos)$ void
         }
 
@@ -211,6 +239,7 @@ classDiagram
             +Vec3 worldHitPos
             +Direction hitFace
             +double distance
+            +byte shieldId
             +isHit() boolean
             +isShipHit() boolean
         }
@@ -218,7 +247,10 @@ classDiagram
         class VoxelGridCache {
             +BlockPos minOffset
             +BitSet bitSet
+            +byte[] shieldMap
             +isSet(int x, int y, int z) boolean
+            +getShieldId(int x, int y, int z) byte
+            +setShieldId(int x, int y, int z, byte shieldId) void
             +buildFromAbsolute(Collection~BlockPos~ abs, BlockPos ctrl)$ VoxelGridCache
         }
 
@@ -253,6 +285,8 @@ classDiagram
             +consumeEnergy(Level level, ShipState ship, int amount)$ void
             +tryConsumeEnergyAmount(Level level, ShipState ship, int amount)$ boolean
             +tryConsumeFlightEnergy(Level level, ShipState ship, int dx, int dy, int dz, Player player)$ boolean
+            +distributeEnergyToShields(Level level, ShipState ship)$ int
+            +distributeEnergyToShields(int availableEnergy, ShipState ship, long currentGameTime)$ int
         }
     }
 
@@ -262,6 +296,12 @@ classDiagram
     namespace Network_Layer {
         class ModPayloads {
             +register(IEventBus bus)$ void
+        }
+
+        class ShieldZoneStatePayload {
+            <<record>>
+            +UUID shipId
+            +long activeMask
         }
 
         class ShipCombatActionPayload {
@@ -358,7 +398,7 @@ classDiagram
             -BlockPos anchorPos
             -VertexBuffer shieldMesh
             -boolean isShieldActive
-            +updateMesh(Set~BlockPos~ relativeBlocks) void
+            +updateMesh(Map~BlockPos, Byte~ relativeBlocks) void
             +removeStructureBlocks(List~BlockPos~ removed) void
             +dispose() void
         }
@@ -516,6 +556,23 @@ $$\Delta \text{Progress} = \frac{k_{\text{tier}}}{\max(0.5, H)}$$
 * **Heavy Beam**: $k_{\text{tier}} = 0.15$ (z. B. Stein $\implies 10\text{ Ticks} = 0.5\text{s}$).
 * **Optische Rückkopplung**: Der Server synchronisiert den Fortschritt über `level.destroyBlockProgress(id, pos, (int)(P \cdot 10))` direkt an alle Clients.
 
+### C. 3D-Voronoi-Tesselierung & Proportionales Defizit-Routing
+1. **3D-Voronoi-Partitionierung (`ShipScannerService`)**:
+   Jedem Voxel des Schiffs wird der nächstgelegene Schildgenerator $g \in \{1, \dots, N\}$ ($N \le 64$) über die quadrierte euklidische Distanz zugewiesen:
+   $$g^*(x,y,z) = \arg\min_{g} \left( (x - x_g)^2 + (y - y_g)^2 + (z - z_g)^2 \right)$$
+   Grenzflächen mit identischer Distanz werden deterministisch über die niedrigere Generator-ID aufgelöst ($g_1 < g_2$).
+   Die Ergebnisse werden in einem linearen Flach-Array `byte[] shieldMap` ($O(1)$ Indizierung) innerhalb von `VoxelGridCache` abgelegt.
+
+2. **Proportionales Defizit-Routing (`SpaceshipEnergyManager`)**:
+   Verfügbare Energie $E_{\text{avail}}$ wird im Verhältnis der Zonendefizite $D_i = E_{\text{max}, i} - E_{\text{curr}, i}$ auf alle aktiven Zonen (nicht kollabiert, kein Cooldown) verteilt:
+   $$E_{\text{transfer}, i} = \left\lfloor E_{\text{avail}} \cdot \frac{D_i}{D_{\text{total}}} \right\rfloor, \quad \text{wobei } D_{\text{total}} = \sum_{j} D_j$$
+   Ein nachgelagerter Rest-Tröpfchen-Loop verteilt verbleibende Rest-FE ($E_{\text{rest}} = E_{\text{avail}} - \sum E_{\text{transfer}, i}$) deterministisch (+1 FE pro Zone mit Restdefizit) für 100% verlustfreie Energieerhaltung.
+
+3. **64-Bit Bitmasken-Synchronisation (`ShieldZoneStatePayload`)**:
+   Zonen-Aktivitätszustände werden bitweise in einer einzelnen `long activeMask` gebündelt:
+   $$\text{Bit } k = 1 \iff \text{Zone } (k+1) \text{ ist intakt} \quad (k \in [0, 63])$$
+   Übermittlung an Clients erfolgt in unter 32 Bytes per Frame. Im Client-Shader (`hex_shield.fsh`) können inaktive Schildzonen lokal gerendert oder ausgeblendet werden.
+
 ---
 
 ## 4. Datenfluss & Lebenszyklus-Matrix
@@ -535,7 +592,14 @@ $$\Delta \text{Progress} = \frac{k_{\text{tier}}}{\max(0.5, H)}$$
 
 Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
 
-1. **JUnit 5 & Mockito Suite (51 Tests, 100% Erfolgsquote)**:
+1. **JUnit 5 & Mockito Suite (58 Tests, 100% Erfolgsquote)**:
+   * **`VoxelGridCacheShieldTest`**: $O(1)$ Flach-Array `byte[] shieldMap` Adressierung, Rand- und Out-of-Bounds-Absicherung im `VoxelGridCache`.
+   * **`ShipStateShieldZoneTest`**: Thread-sichere CRUD-Operationen auf `shieldZones`, `isCollapsed`-Auswertung bei Cooldown und Energiemangel.
+   * **`VoronoiTessellationTest`**: 3D-Voronoi-Tesselierung über quadrierte euklidische Distanz, deterministischer ID-Tie-Break und 64-Generatoren-Cap.
+   * **`ProportionalEnergyRoutingTest`**: Proportionale FE-Verteilung im Verhältnis der Zonendefizite ($D_i / D_{total}$) und Ausschluss kollabierter Zonen.
+   * **`EnergyRoutingRemainderTest`**: Exakter Rest-Tröpfchen-Loop (+1 FE) für verlustfreie Energieerhaltung bei krummen Primzahl-Werten (3333 FE auf 7 Generatoren).
+   * **`FastVoxelTraversalShieldTest`**: 3D-DDA-Traversierung mit extrahierter `shieldId` im `VoxelHit` bei Treffern auf Hülle und Schild.
+   * **`ShieldZonePayloadSerializationTest`**: Bit-genaue 64-Bit Bitmasken-Serialisierung und -Dekodierung in $< 32$ Bytes via `ShieldZoneStatePayload`.
    * **`LaserNodeRenderStateTest`**: Thread-sichere Render-State Extraktion, interpolierte Kinematik (Yaw/Pitch), 180°-Winkel-Wrap und alle 6 `FACING`-Ausrichtungen (`UP`, `DOWN`, `NORTH`, `SOUTH`, `WEST`, `EAST`).
    * **`DataGeneratorsTest`**: Event-Handling für `GatherDataEvent`, Client/Server-Provider-Registrierung und HolderLookup-Lifecycle.
    * **`ModBlockStateProviderTest`**: 6-Achsen Euler-Winkel-Transformation (`rotX`, `rotY`) für `FACING` Split-Modell Basisplatten und `cubeAll` Generierung.
@@ -546,11 +610,13 @@ Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
    * **`ShipCollisionMathTest`**: Continuous Swept-AABB Extrusion & BitSet-Linearisierung.
    * **`ShipStateTest`**: Domain-Zustand, AABB-Neuberechnung, Controller-Translation, Cooldown-Arithmetik.
    * **`CombatLogicTest`**: 3D-DDA Ray-Traversal, Normalenflächen (`WEST`, `DOWN`), Fehlschuss- & Reichweitenbegrenzung, Tier-Konfigurationen.
-   * **`PayloadSerializationTest`**: Symmetrische Serialisierung aller 10 Custom-Payloads via `FriendlyByteBuf` & `StreamCodecs`.
+   * **`PayloadSerializationTest`**: Symmetrische Serialisierung aller 12 Custom-Payloads via `FriendlyByteBuf` & `StreamCodecs`.
    * **`SpaceshipEnergyManagerTest`**: Multi-Reaktor-Bündelung, sequenzieller FE-Drain, Transaktionssicherheit (Rollback).
    * **`AimTransformMathTest`**: Quaternion-Transformationen, Euler-Winkel-Konvertierung, 16-Bit Kompression und GimbalLimits.
    * **`TurretSeatTest`**: TurretSeat DTO Attribute, NBT-Persistenz und Aim-Lock-Status.
-2. **NeoForge GameTests (`@GameTestHolder`, 18 Tests auf Dedicated GameTest-Server, 100% Erfolgsquote)**:
+2. **NeoForge GameTests (`@GameTestHolder`, 20 Tests auf Dedicated GameTest-Server, 100% Erfolgsquote)**:
+   * **`ShipScannerVoronoiGameTest`**: Voronoi-Zonierung und ShieldZone-Erfassung bei mehreren Schildgeneratoren im Schiff.
+   * **`LaserCombatPiercingGameTest`**: Zonen-Kollaps und Durchschlag auf darunterliegende Schiffshülle bei inaktiver ShieldZone.
    * **`ShipCollisionGameTests` (10 Tests)**:
      - `testOffVsOff_StandardCollision`: Gegenseitige Zerstörung von Hüllenvoxeln bei OFF vs. OFF.
      - `testOffVsOff_ExplosionDamage`: 5x5x8 Matrix (200 distinkte Voxel) mit Cluster-Explosionen im kinetischen Schwerpunkt.

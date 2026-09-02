@@ -101,11 +101,27 @@ public class PayloadSerializationTest {
     }
 
     @Test
+    @DisplayName("ShipStructureSyncPayload mit leerer Blockmenge (Schiffsaufloesung) serialisiert fehlerfrei")
+    void testShipStructureSyncPayload_EmptyBlocks_Disassembly() {
+        UUID shipId = UUID.randomUUID();
+        BlockPos anchor = new BlockPos(10, 64, 10);
+        ShipStructureSyncPayload original = new ShipStructureSyncPayload(shipId, anchor, Set.of());
+
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        ShipStructureSyncPayload.STREAM_CODEC.encode(buf, original);
+        ShipStructureSyncPayload decoded = ShipStructureSyncPayload.STREAM_CODEC.decode(buf);
+
+        assertEquals(original.shipId(), decoded.shipId());
+        assertEquals(original.controllerPos(), decoded.controllerPos());
+        assertTrue(decoded.relativeBlocks().isEmpty());
+    }
+
+    @Test
     @DisplayName("ShieldBubbleSyncPacket serialisiert und deserialisiert fehlerfrei")
     void testShieldBubbleSyncPacket_Codec() {
         UUID shipId = UUID.randomUUID();
         BlockPos anchor = new BlockPos(50, 70, 50);
-        Set<BlockPos> shieldBlocks = Set.of(new BlockPos(51, 70, 50), new BlockPos(50, 71, 50));
+        Map<BlockPos, Byte> shieldBlocks = Map.of(new BlockPos(51, 70, 50), (byte) 1, new BlockPos(50, 71, 50), (byte) 2);
         ShieldBubbleSyncPacket original = new ShieldBubbleSyncPacket(shipId, anchor, shieldBlocks);
 
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());

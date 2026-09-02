@@ -68,6 +68,12 @@ public class ClientPayloadRegistrar {
                 ClientPayloadHandler::handleDimensionSync
         );
 
+        registrar.playToClient(
+                ShieldZoneStatePayload.TYPE,
+                ShieldZoneStatePayload.STREAM_CODEC,
+                ClientPayloadHandler::handleShieldZoneStateSync
+        );
+
         registrar.playBidirectional(
                 TurretAimPayload.TYPE,
                 TurretAimPayload.STREAM_CODEC,

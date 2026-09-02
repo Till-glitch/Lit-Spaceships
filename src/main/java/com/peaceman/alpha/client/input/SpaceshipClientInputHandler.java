@@ -3,7 +3,6 @@ package com.peaceman.alpha.client.input;
 import com.peaceman.alpha.Alpha;
 import com.peaceman.alpha.block.SpaceshipControlBlock;
 import com.peaceman.alpha.block.SpaceshipHelmBlock;
-import com.peaceman.alpha.block.entity.SpaceshipControlBlockEntity;
 import com.peaceman.alpha.client.ClientHooks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Block;

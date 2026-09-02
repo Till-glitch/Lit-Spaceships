@@ -115,10 +115,9 @@ public class MiningLaserBlock extends BaseEntityBlock {
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (!state.is(newState.getBlock())) {
             if (!level.isClientSide() && level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
-                if (level.getBlockEntity(pos) instanceof MiningLaserBlockEntity be && be.isMining()) {
-                    boolean isMovingShip = be.getShipId() != null
-                            && com.peaceman.alpha.ship.service.ShipMovementService.isShipMoving(be.getShipId());
-                    if (!isMovingShip) {
+                if (level.getBlockEntity(pos) instanceof MiningLaserBlockEntity be) {
+                    be.clearDrillProgress(level);
+                    if (be.isMining()) {
                         be.setMining(false);
                         if (be.getShipId() != null) {
                             net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingChunk(
@@ -126,8 +125,6 @@ public class MiningLaserBlock extends BaseEntityBlock {
                                     new com.peaceman.alpha.network.LaserStateSyncPayload(be.getShipId(), pos, false,
                                             com.peaceman.alpha.ship.combat.LaserWeaponTier.MINING_LASER));
                         }
-                    } else {
-                        be.clearDrillProgress(level);
                     }
                 }
             }

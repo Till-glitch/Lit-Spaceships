@@ -71,6 +71,11 @@ public class TurretSeatTest {
         @Override
         public void serverTick(net.minecraft.world.level.Level level, BlockPos pos, net.minecraft.world.level.block.state.BlockState state) {}
 
+        @Override
+        public boolean handleFire(net.minecraft.world.level.Level level, com.peaceman.alpha.ship.domain.ShipState shooterShip, BlockPos weaponPos) {
+            return true;
+        }
+
         public void saveToNbt(net.minecraft.nbt.CompoundTag tag) {
             saveAdditional(tag, net.minecraft.core.RegistryAccess.EMPTY);
         }

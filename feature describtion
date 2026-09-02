@@ -1,230 +1,201 @@
-I18n & Localization Specification Document: Architektur und Implementation für Mod AlphaExecutive Summary und Architektonische VisionDie Überführung der hardcodierten Zeichenketten der Modifikation "Mod Alpha" in ein vollständig datengesteuertes Internationalisierungs- (I18n) und Lokalisierungs-System (L10n) erfordert eine strikte Trennung von Geschäftslogik und Darstellungspräsentation. Gemäß den modernen Architekturrichtlinien für NeoForge 1.21 basiert die Textverarbeitung auf der statischen API der Component-Schnittstelle, welche rohe Zeichenketten durch Metadaten-angereicherte Objekte ersetzt. Die zugrundeliegende Systemarchitektur der Modifikation, welche auf einem rigorosen Model-View-Controller-Muster (MVC) mit vollständiger logischer Client-Server-Entkopplung aufbaut, bedingt zwingend eine Auslagerung jeglicher textuellen Repräsentation in den Client-Bereich.Ein fundamentales Paradigma dieses Entwurfs ist die ausnahmslose Einhaltung der Client-Server-Sidedness. Der dedizierte Server, repräsentiert durch zentrale Instanzen wie den ServerShipManager oder den LaserCombatService, darf niemals eine Übersetzung auflösen oder lokalisierte Strings generieren. Jeglicher Text, der dem Spieler präsentiert wird, verlässt den Server ausschließlich als unaufgelöste Component.translatable-Instanz oder wird gänzlich clientseitig durch Netzwerk-Payloads in der View-Schicht initiiert und gerendert. Dieser Ansatz garantiert nicht nur die Funktionalität auf internationalen Servern mit heterogenen Client-Sprachen, sondern stellt auch sicher, dass die VRAM- und Netzwerk-Lebenszyklen der Modifikation unberührt bleiben und asynchrone Berechnungen wie der Amanatides-and-Woo 3D-DDA-Algorithmus nicht durch synchrone String-Konkatenationen blockiert werden.Das folgende Dokument spezifiziert die hierarchische Taxonomie, die dynamische Variablenformatierung, den Code-Ansatz via DataGen und liefert ein vollständiges Audit aller zu migrierenden Features der Spaceship-Modifikation. Durch die Etablierung einer Single-Source-of-Truth-Klasse für alle Übersetzungsschlüssel wird ein Fundament geschaffen, welches primär auf Englisch (en_us) fokussiert ist, jedoch architektonisch zu einhundert Prozent darauf vorbereitet ist, nahtlos durch weitere linguistische Provider wie Deutsch (de_de) erweitert zu werden.Translation Key Taxonomy: Hierarchische NamenskonventionenUm Kollisionen im globalen Namensraum von Minecraft zu verhindern und die Wartbarkeit der Sprachdateien bei der Skalierung auf weitere Provider zu gewährleisten, wird eine deterministische, hierarchische Nomenklatur etabliert. Die Struktur für Translation Keys in NeoForge 1.21 folgt dem etablierten Pattern der Registrierungsnamen, typischerweise strukturiert als <kategorie>.<modid>.<bezeichner>.<unterbezeichner>. Diese Taxonomie stellt sicher, dass selbst bei der Integration der "Mod Alpha" in massive Modpacks mit hunderten von Erweiterungen keine Konflikte bei der Textauflösung auftreten.Die Generierung von Übersetzungsschlüsseln muss strikt in Kleinbuchstaben (Lowercase) erfolgen. Als Trennzeichen für zusammengesetzte Bezeichner wird der Unterstrich (Snake-Case) verwendet, während der Punkt ausschließlich als Separator der Hierarchieebenen fungiert. Die Verwendung von Leerzeichen, Sonderzeichen oder Großbuchstaben ist im Übersetzungsschlüssel strikt untersagt, um eine deterministische Verarbeitung durch den JSON-Parser des DataGen-Systems zu garantieren.Regelwerk der Taxonomie-KategorienDie Kategorisierung der Übersetzungsschlüssel orientiert sich an den logischen Bestandteilen der Modifikation. Jede Kategorie besitzt ein spezifisches Präfix, welches den Verwendungszweck im Quellcode eindeutig identifiziert.KategoriePräfix / MusterBeispiel für Mod AlphaKontext / Analytische BegründungBlöckeblock.peaceman_alpha.<block_name>block.peaceman_alpha.spaceship_reactorVerwendet für Inventar-Namen, Waila/Jade-Integrationen und Block-Drops. Die Block-Registry von NeoForge löst diese Keys automatisch auf.Itemsitem.peaceman_alpha.<item_name>item.peaceman_alpha.backflip_toolIdentifiziert freie Items, die keine Blöcke sind. Die API differenziert hier strikt zwischen BlockItems und regulären Items.Kreativ-TabsitemGroup.peaceman_alpha.<tab_name>itemGroup.peaceman_alpha.main_tabDefiniert den Namen des Mod-Reiters im Creative Mode. Diese Keys sind essenziell für die initiale Orientierung des Spielers in der Mod.UI / Screensscreen.peaceman_alpha.<ui_name>.<feld>screen.peaceman_alpha.reactor.energyDient der Lokalisierung von Titeln und Labels in GUI-Menüs. Das Suffix definiert spezifische UI-Elemente wie Buttons, Checkboxen oder Textfelder.Nachrichtenmessage.peaceman_alpha.<system>.<ereignis>message.peaceman_alpha.turret.aim_lockedSystem-Feedback an den Spieler (Chat oder Action-Bar). Diese Keys repräsentieren dynamische Ereignisse, oft gepaart mit Variablen-Interpolation.Keybindingskey.peaceman_alpha.<aktion>key.peaceman_alpha.fire_allAnzeigename für spezifische Tastenbelegungen in den Optionen. Erlaubt die intuitive Konfiguration der Schiffssteuerung.Tasten-Kategorienkey.categories.peaceman_alphakey.categories.peaceman_alphaGruppierung der Mod-Tasten im übergeordneten Steuerungsmenü von Minecraft, um alle Funktionen des Spaceship-Helms übersichtlich zu bündeln.Tooltipstooltip.peaceman_alpha.<kontext>.<info>tooltip.peaceman_alpha.reactor.capacityZusätzliche Item-Informationen, die beim Hovern über ein Objekt generiert werden (HoverableText). Essenziell für technische Metadaten.Dimensionenbiome.peaceman_alpha.<name>biome.peaceman_alpha.deep_spaceTextuelle Repräsentation für den Debug-Screen (F3), Biome-Scanner und Server-Listen zur Identifikation des unendlichen Vakuums.Diese strikte Taxonomie transformiert chaotische Textfragmente in ein strukturiertes Datenmodell. Wenn beispielsweise der SpaceshipReactorBlock im Code instanziiert wird, generiert NeoForge den Description-Key automatisch aus dem Registry-Namen. Durch die Einhaltung dieser Konvention greifen die internen Mechanismen der Engine nahtlos in die von uns definierten Lokalisierungsdateien.I18n-Architektur: Der Single-Source-of-Truth AnsatzIn der klassischen Mod-Entwicklung stellt die fehlerhafte manuelle Eingabe von Übersetzungsschlüsseln eine signifikante Fehlerquelle dar. Wenn Programmierer Strings wie "screen.peaceman_alpha.reactor.energy" händisch in die View-Schicht tippen, entstehen unweigerlich Tippfehler. Da NeoForge bei unbekannten Keys keine Exception wirft, sondern den rohen String als Fallback im HUD des Spielers ausgibt, bleiben solche Fehler oft bis zur Laufzeit oder manuellen Qualitätssicherung unentdeckt.Um diese Fehlerklasse architektonisch zu eliminieren, wird eine statische Konstanten-Klasse (ModI18n) als Single-Source-of-Truth etabliert. Diese Klasse dient als exklusives Register für alle im System verwendeten Translation Keys. Sie wird bidirektional genutzt: Einerseits vom ModLanguageProvider innerhalb der DataGen-Pipeline zur Generierung der JSON-Dateien, andererseits von der Feature-Logik in Screens, BlockEntities und PayloadHandlers zur Erstellung der Component-Instanzen. Durch diesen Ansatz wird jeder Übersetzungsschlüssel zur Compile-Zeit verifiziert. Ein Tippfehler im Variablennamen führt zu einem sofortigen Compiler-Fehler, wodurch die Laufzeitstabilität des Textsystems mathematisch garantiert wird.Implementation der Konstanten-KlasseDie Klasse ModI18n wird in logische statische Sub-Klassen unterteilt, welche die zuvor definierte Taxonomie exakt widerspiegeln. Diese hierarchische Schachtelung innerhalb der Klasse bietet den Entwicklern eine saubere Autovervollständigung in der IDE und verhindert semantische Kollisionen.Javapackage com.peaceman.alpha.registry;
+Architekturbericht und Implementierungsplan: Lokalisierte Schildzonen (NeoForge 1.21)
+Die Evolution des Energieschild-Systems innerhalb des Spaceship-Frameworks erfordert einen Paradigmenwechsel von einer monolithischen, schiffsweiten Schildblase hin zu einer geometrisch tesselierten, bereichsspezifischen Schildarchitektur. Diese Transition ermöglicht es, das Zerstörungsmodell im Raumkampf massiv zu diversifizieren und die taktische Tiefe zu erhöhen. Anstatt dass ein Schiff als singulärer Energiepuffer agiert, werden nun lokale Schildgeneratoren implementiert, die autonome Forge Energy (FE) Puffer verwalten1. Das resultierende System erfordert eine präzise Raumaufteilung durch Voronoi-Tesselierung3, hocheffiziente -Lookups für den 3D-DDA-Raycaster (Amanatides & Woo) und eine extrem bandbreitenschonende Netzwerksynchronisation unter strikter Ausnutzung der neuen NeoForge 1.21 CustomPacketPayload-Architektur6.
+Der vorliegende Bericht spezifiziert die theoretischen Grundlagen, die mathematischen Modelle und die konkreten Implementierungsschritte in fünf iterativen Phasen. Jede Phase schließt mit einer strikt atomaren, testgetriebenen Task-Liste ab, die präzise für die Ausführung durch autonome Coding-Agenten strukturiert ist, um den strengen Model-View-Controller (MVC) Architekturvorgaben gerecht zu werden.
+Phase 1: Domain-Modellierung und Cache-Erweiterung
+Die grundlegende Herausforderung der ersten Phase besteht in der Speichereffizienz und der Wahrung des strikten MVC-Paradigmas. Bislang nutzte der VoxelGridCache ein eindimensionales BitSet, um das Vorhandensein von Schiffsvoxeln abzubilden1. Die Zuordnung jedes Voxels zu einem spezifischen Schildgenerator erfordert eine Erweiterung dieser Datenstruktur, ohne die Allokationskosten von Objektinstanzen im Hot-Path des Speichers in Kauf zu nehmen.
+Speichermodell und VoxelGridCache-Architektur
+Ein BitSet benötigt lediglich ein Bit pro Voxel. Um bis zu 64 Schildgeneratoren pro Schiff zu unterstützen, werden mindestens 6 Bit pro Voxel benötigt. Aus Gründen der Byte-Alignment-Effizienz in der Java Virtual Machine (JVM) und der Cache-Kohärenz der CPU wird die Implementierung eines parallelen eindimensionalen Arrays vom Typ byte[] festgelegt. Die Länge dieses Arrays entspricht exakt der maximalen Kapazität des existierenden BitSet, welche durch die Dimensionen der dreidimensionalen Bounding-Box des Schiffes determiniert wird2. Ein Wert von 0 im Array indiziert, dass der Voxel ungeschützt ist oder kein Rumpf-Voxel darstellt, während Werte von 1 bis 64 die ID des zuständigen Schildgenerators repräsentieren.
+Die Linearisierung der dreidimensionalen Koordinaten in den eindimensionalen Index erfolgt weiterhin über die etablierte mathematische Transformation, die garantierte Zugriffszeiten ermöglicht:
 
-import com.peaceman.alpha.Alpha;
+Dieser Ansatz garantiert einen  Lese- und Schreibzugriff ohne den signifikanten Overhead des Autoboxings von primitiven Datentypen, der bei der Verwendung von Objekten wie Map<BlockPos, Byte> unweigerlich entstehen würde. Die Vermeidung von Objektallokationen verhindert proaktive Garbage-Collection-Spikes während der dynamischen Schiffsrekonstruktion im Gefecht.
+Datenstruktur-Kandidat
+Speicherkosten pro 100.000 Voxel
+Lookup-Zeitkomplexität
+GC-Impact bei Rekonstruktion
+Architektur-Bewertung
+Map<BlockPos, Byte>
+~3,2 MB (Node, Objekt, Boxed Byte)
+ bis 
+Hoch (Tausende Node-Allokationen)
+Inakzeptabel für Echtzeit-Combat
+int[][][] (3D Array)
+~400 KB + Array-Header-Overhead
+ (Pointer-Chasing)
+Mittel (Fragmentierung)
+Suboptimal durch Pointer-Indirektion
+byte[] (Flat 1D Array)
+100 KB (Zusammenhängend)
+ (Direkter Speicherzugriff)
+Minimal (Eine Array-Allokation)
+Optimal für CPU-Cache-Lines
 
-/**
- * Single-Source-of-Truth für alle Translation Keys der Mod Alpha.
- * Diese Klasse bündelt alle textuellen Bezeichner zur Vermeidung von 
- * Magic Strings in der Geschäfts- und Darstellungskoordination.
- */
-public final class ModI18n {
-    
-    // Privater Konstruktor verhindert die unerwünschte Instanziierung der Utility-Klasse
-    private ModI18n() {} 
+Domain-Record: ShieldZone und State-Management
+Um den Status der Schildgeneratoren im ShipState autoritativ zu verwalten, wird ein neues, unveränderliches Data Transfer Object (DTO) in Form eines Java Records eingeführt. Der ShipState verliert sein globales isShieldActive-Flag und seine shieldCooldownUntil-Variable zugunsten einer statusführenden Map2. Die Datenhaltung stellt sicher, dass der Server-Tick eine deterministische und Thread-sichere Quelle der Wahrheit besitzt, die jederzeit synchronisationsfrei in das Netzwerk-Layer übergeben werden kann.
+Die Struktur der ShieldZone umfasst die ID, die absolute Position des Generators im globalen Raum, die aktuell gepufferte Energie, die maximale Kapazität sowie den abgeleiteten Kollaps-Status. Fällt die Energie auf null, wird der Cooldown-Timer ausgelöst, um ein Flackern des Schildes bei minimaler Energiezufuhr zu unterbinden.
+Entwicklungs-Tasks: Phase 1
+[ ] Implementiere den Record ShieldZone(byte id, BlockPos generatorPos, int currentEnergy, int maxEnergy, long cooldownUntil) im Package com.peaceman.alpha.ship.domain.
+[ ] Erstelle in ShieldZone eine Hilfsmethode boolean isCollapsed(long currentTick), die true zurückgibt, wenn `currentEnergy <= 0 |
+| currentTick < cooldownUntil`.
+[ ] Erweitere die Klasse VoxelGridCache um ein privates Feld byte[] shieldMap. Initialisiere dieses Array im Konstruktor mit der exakten Länge, die auch für die Dimensionierung des BitSet berechnet wird (width * height * depth).
+[ ] Implementiere in VoxelGridCache die Methode void setShieldId(int x, int y, int z, byte id). Nutze dieselbe Index-Berechnung wie bei isSet(...). Werfe eine IndexOutOfBoundsException, falls die übergebenen Koordinaten die Grid-Bounds überschreiten.
+[ ] Implementiere in VoxelGridCache die Methode byte getShieldId(int x, int y, int z). Diese liefert den Wert am berechneten eindimensionalen Index in  zurück.
+[ ] Refaktorisiere die Domain-Klasse ShipState: Entferne die obsoleten Felder boolean isShieldActive und long shieldCooldownUntil. Füge stattdessen das Feld Map<Byte, ShieldZone> shieldZones = new ConcurrentHashMap<>() hinzu.
+[ ] Aktualisiere alle Konstruktoren und die Methode getImmutableSnapshot() des ShipState, um sicherzustellen, dass die shieldZones-Map threadsicher tiefenkopiert wird (Deep Copy der Map, Records sind inhärent immutable).
+[ ] JUnit-Test VoxelGridCacheShieldTest: Instanziiere einen VoxelGridCache mit den Dimensionen 10x10x10. Setze an den Randkoordinaten (z. B. 0, 0, 0 und 9, 9, 9) spezifische Schild-IDs. Verifiziere mittels Assertions, dass getShieldId exakt diese Werte in  zurückgibt und bei nicht modifizierten Koordinaten 0 liefert. Teste negative Out-of-Bounds Eingaben auf korrekten Exception-Wurf.
+[ ] JUnit-Test ShipStateShieldZoneTest: Teste die isCollapsed-Logik der ShieldZone bei verschiedenen Energiewerten (0, 1, maxEnergy) und simulierten Server-Ticks (currentTick < cooldownUntil vs currentTick >= cooldownUntil), um die korrekte Zustandsableitung zu garantieren.
+Phase 2: Voronoi-Zuweisung im ShipScannerService
+Sobald die Datenstruktur etabliert ist, muss das System berechnen, welcher Rumpf-Voxel von welchem Schildgenerator geschützt wird. Diese räumliche Zuordnung wird durch ein dreidimensionales Voronoi-Diagramm realisiert3. Ein Voronoi-Diagramm partitioniert einen metrischen Raum basierend auf Distanzen zu einer definierten Menge von Knoten, in diesem Kontext den Schildgeneratoren. Jeder Punkt beziehungsweise Voxel des Raumes wird der Zelle des nächstgelegenen Generators zugeordnet, wodurch konvexe Schutzzonen entstehen4.
+Metriken und Algorithmus-Design
+In diskreten Voxel-Räumen stehen für die Berechnung von Tesselationen primär zwei Distanzmetriken zur Disposition: Die euklidische Distanz und die Manhattan-Distanz. Die Wahl der Metrik beeinflusst maßgeblich die Topologie der resultierenden Schildblasen.
+Metrik-Typ
+Mathematische Definition
+Geometrische Charakteristik
+Performance-Kosten
+Architektur-Eignung
+Manhattan-Distanz
 
-    public static final class Tab {
-        public static final String MAIN = "itemGroup." + Alpha.MODID + ".main";
-    }
+Rauten-/Diamantförmige Zellen
+Extrem niedrig (nur Addition)
+Gering, erzeugt unnatürliche Schildschnitte
+Euklidisch (Standard)
 
-    public static final class Screen {
-        public static final String REACTOR_TITLE = "screen." + Alpha.MODID + ".reactor.title";
-        public static final String REACTOR_ENERGY = "screen." + Alpha.MODID + ".reactor.energy";
-        public static final String HELM_NAV_TITLE = "screen." + Alpha.MODID + ".helm.navigation";
-        public static final String HELM_BTN_WAYPOINT = "screen." + Alpha.MODID + ".helm.waypoint.set";
-    }
+Sphärische, isotrope Zellen
+Hoch (Quadratwurzel-Berechnung)
+Schlecht für den Hot-Path des Scanners
+Euklidisch (Quadriert)
 
-    public static final class Message {
-        public static final String TURRET_AIM_LOCKED = "message." + Alpha.MODID + ".turret.aim_locked";
-        public static final String TURRET_GIMBAL_LIMIT = "message." + Alpha.MODID + ".turret.gimbal_limit";
-        public static final String SHIELD_COLLAPSE = "message." + Alpha.MODID + ".shield.collapse";
-        public static final String REACTOR_DEPLETED = "message." + Alpha.MODID + ".reactor.depleted";
-        public static final String COMBAT_TARGET_DESTROYED = "message." + Alpha.MODID + ".combat.destroyed";
-        public static final String WARP_PHASE_STATUS = "message." + Alpha.MODID + ".warp.phase";
-    }
+Identisch zu Standard-Euklidisch
+Sehr niedrig (Ganzzahlarithmetik)
+Optimal, physikalisch korrekte Tesselierung
 
-    public static final class Keybind {
-        public static final String CATEGORY = "key.categories." + Alpha.MODID;
-        public static final String FIRE_ALL = "key." + Alpha.MODID + ".fire_all";
-        public static final String NAV_MENU = "key." + Alpha.MODID + ".nav_menu";
-        public static final String EXIT_HELM = "key." + Alpha.MODID + ".exit_helm";
-        public static final String MOUNT_TURRET = "key." + Alpha.MODID + ".mount_turret";
-    }
+Die Architektur-Spezifikation fordert physikalisch glaubhafte, sphärische Schildblasen. Daher wird die quadrierte euklidische Distanz als Standardmetrik festgelegt. Durch den vollständigen Verzicht auf das Berechnen der Quadratwurzel bleibt die Performance extrem hoch, da der Algorithmus ausschließlich mit Ganzzahlarithmetik (Multiplikation und Addition) operiert.
+Der Two-Pass Scanning Algorithmus
+Die Integration dieser mathematischen Modelle erfolgt im ShipScannerService, der für die Identifikation zusammenhängender Schiffsstrukturen eine iterative Breitensuche (Breadth-First Search, BFS) durchführt1. Um die Tesselierung zu berechnen, wird der Scan-Vorgang in zwei isolierte Durchläufe unterteilt.
+Während des initialen Passes der BFS werden alle aufgefundenen Blöcke des Typs SpaceshipShieldBlock in einer temporären Struktur registriert. Jedem entdeckten Generator wird fortlaufend eine eindeutige ID von 1 bis  (maximal 64) zugewiesen. Diese Zuordnung wird initial in die shieldZones-Map des ShipState geschrieben. Nach Abschluss der BFS und der Festlegung der Bounding-Box für den VoxelGridCache beginnt der zweite Pass. Hierbei wird iterativ über jeden im BitSet gesetzten Hüllen-Voxel iteriert. Für jeden Voxel wird die quadrierte euklidische Distanz zu allen registrierten Schildgeneratoren berechnet. Die ID des Generators mit dem absoluten Minimum der Distanz wird am entsprechenden Index in das shieldMap-Array geschrieben.
+Die algorithmische Zeitkomplexität dieses iterativen Passes beläuft sich auf , wobei  die Anzahl der Rumpf-Voxel (bis zu 100.000 bei maximaler Schiffsgröße) und  die Anzahl der Generatoren (strikt limitiert auf 64) darstellt. Die Obergrenze der mathematischen Operationen liegt somit im Bereich von  Iterationen, was auf modernen Prozessoren im niedrigen einstelligen Millisekundenbereich abgewickelt wird und das kritische Tick-Budget von 10 Millisekunden pro Server-Tick nicht gefährdet2.
+Entwicklungs-Tasks: Phase 2
+[ ] Modifiziere den existierenden BFS-Algorithmus im ShipScannerService. Implementiere eine lokale Liste List<BlockPos> discoveredGenerators, die während des Scans die absoluten Positionen aller Blöcke vom Typ SpaceshipShieldBlock sammelt.
+[ ] Implementiere nach der Terminierung der BFS-Schleife eine Kapazitätsprüfung: Überprüfe, ob discoveredGenerators.size() > 64. Falls dies zutrifft, protokolliere eine Warnung (WARN) im Server-Logger und trunkiere die Liste auf die ersten 64 Elemente, um die Bitmasken-Limits der Netzwerk-Payloads einzuhalten.
+[ ] Iteriere über die verifizierte Generator-Liste. Instanziiere für jeden Generator eine neue ShieldZone (mit Startenergie 0, maximaler Energie basierend auf Config-Werten, z.B. 100.000 FE). Weise IDs von 1 bis N zu und speichere diese im ShipState.
+[ ] Implementiere den Algorithmus-Pass calculateVoronoiZones(VoxelGridCache cache, List<BlockPos> generators). Iteriere über den dreidimensionalen Raum der Bounding-Box. Überspringe Voxel, bei denen cache.isSet(x, y, z) false zurückgibt.
+[ ] Berechne in der innersten Schleife die quadrierte euklidische Distanz (dx*dx + dy*dy + dz*dz) des aktuellen Voxels zu allen aktiven Generatoren. Ermittle den Generator mit dem geringsten Distanzwert.
+[ ] Schreibe die gewonnene ID mittels cache.setShieldId(x, y, z, bestId) in den Cache. Implementiere einen deterministischen Tie-Break: Bei exakt gleicher Distanz zu zwei Generatoren gewinnt stets der Generator mit der niedrigeren ID.
+[ ] JUnit-Test VoronoiTessellationTest: Erstelle ein künstliches 30x10x10 Voxel-Grid im Speicher. Platziere zwei fiktive Schildgeneratoren an den relativen Koordinaten (5, 5, 5) und (25, 5, 5). Führe die Zuweisungsmethode isoliert aus. Verifiziere durch iteratives Asserting, dass alle Voxel bei x < 15 der ID 1 zugeordnet sind, alle Voxel bei x > 15 der ID 2, und Voxel bei exakt x == 15 konsistent durch den Tie-Break der ID 1 zugeschlagen werden.
+[ ] GameTest ShipScannerVoronoiGameTest: Nutze das NeoForge GameTest-Framework. Platziere in der Test-Dimension einen Schiffs-Controller, zwanzig Hüllenblöcke und drei Schildgeneratoren in einer asymmetrischen Formation. Triggere den strukturellen Scan-Prozess via Controller-Interaktion. Prüfe im Anschluss den erstellten ShipState, ob exakt drei ShieldZone-Einträge existieren und der VoxelGridCache an keiner Position eines Hüllenblocks den ID-Wert 0 aufweist.
+Phase 3: Energie-Topologie und Routing
+Mit den geometrisch zugewiesenen Schutzzonen muss die logische Versorgung dieser Sektoren durch den zentralen Reaktor gesichert werden. Das physikalische Modell des Mod-Ökosystems sieht vor, dass Schiffe Energie (Forge Energy oder FE) in zentralen Reaktor-Blöcken speichern1. Diese Energie muss in einer asynchronen, serverseitigen Tick-Logik an die dezentralen Schild-Puffer transferiert werden.
+Fair-Share Energie-Verteilung (Tick-Logik)
+In intensiven Gefechtssituationen werden zwangsläufig mehrere Schutzzonen simultan energetisch belastet. Wenn die maximale Abgabekapazität des Reaktors nicht ausreicht, um das aggregierte Defizit aller Schilde im selben Tick zu decken, muss ein deterministischer und spielmechanisch fairer Algorithmus die knappe Ressource verwalten. Ein naiver Round-Robin-Ansatz, bei dem die Energie strikt sequenziell verteilt wird (Generator A wird vollständig aufgeladen, bevor Generator B Energie erhält), würde zu asymmetrischen Schwachstellen führen. Bestimmte Sektoren blieben schutzlos, während andere überversorgt wären.
+Die Architektur erfordert daher eine proportionale Energieverteilung, die sich an der relativen Größe des Defizits jedes individuellen Generators orientiert. Sei  die vom zentralen Reaktor pro Server-Tick maximal bereitgestellte Transfermenge. Das Defizit  eines Generators  definiert sich als die Differenz aus Maximalkapazität und aktueller Energie: . Das kumulierte Defizit des gesamten Schiffes ist .
+Für den Fall, dass das Angebot die Nachfrage deckt oder übersteigt (), wird jedem Generator exakt sein Defizit  zugewiesen. Der Reaktor wird in der Folge exakt um  dekrementiert. Übersteigt die Nachfrage jedoch das Angebot (), tritt das System in einen Mangelzustand ein. Die Energie muss mathematisch proportional verteilt werden:
 
-    public static final class Tooltip {
-        public static final String REACTOR_CAPACITY = "tooltip." + Alpha.MODID + ".reactor.capacity";
-        public static final String WEAPON_TIER = "tooltip." + Alpha.MODID + ".weapon.tier";
-        public static final String ENERGY_COST = "tooltip." + Alpha.MODID + ".weapon.energy_cost";
-        public static final String SHIELD_STATUS = "tooltip." + Alpha.MODID + ".shield.status";
-    }
-    
-    public static final class Structure {
-        public static final String SHIPWRECK = "structure." + Alpha.MODID + ".shipwreck";
-    }
-    
-    public static final class Biome {
-        public static final String DEEP_SPACE = "biome." + Alpha.MODID + ".deep_space";
-    }
-}
-Durch die Deklaration als static final String werden diese Werte vom Java-Compiler direkt in die aufrufenden Klassen ge-inlined. Dies bedeutet, dass die Nutzung der ModI18n-Klasse keinerlei Overhead zur Laufzeit erzeugt, während sie gleichzeitig die Sicherheit und Wartbarkeit des Codes drastisch erhöht.Automatisierte Datengenerierung (DataGen)Das Datengenerierungs-Framework von NeoForge 1.21 ermöglicht die vollautomatische Erstellung aller Asset- und Data-Dateien, einschließlich der Lokalisierungs-JSONs. Anstatt die en_us.json manuell zu pflegen, was unweigerlich zu Desynchronisationen zwischen Quellcode und Ressourcen führt, wird die Datei programmatisch über den ModLanguageProvider erzeugt. Dieser Provider wird in der Gather-Data-Phase der Mod-Initialisierung aufgerufen und iteriert über die definierten Keys, um ein konsistentes Wörterbuch zu kompilieren.Der ModLanguageProvider für Englisch (en_us)Die Implementierung des ModEnglishLanguageProvider nutzt die in der ModI18n hinterlegten Konstanten, um die englischen Primärtexte zuzuordnen. Für Blöcke und Items bietet die API überladene add()-Methoden, welche direkt die referenzierten DeferredRegister-Objekte konsumieren. Dies verknüpft die physischen Elemente der Mod untrennbar mit ihren textuellen Repräsentationen.Javapackage com.peaceman.alpha.datagen.provider;
+Aufgrund der notwendigen Ganzzahldivision und der Abrundung durch den Floor-Operator verbleibt zwangsläufig ein Rundungsrest . Um Energieverlust zu verhindern und eine saubere Erhaltung der FE-Masse zu gewährleisten, wird dieser Restbetrag in einer sekundären Fallback-Schleife aufgelöst. Dieser minimale Betrag (stets kleiner als die Anzahl der Generatoren, maximal 63 FE) wird über einen sequenziellen Tröpfchenansatz (+1 FE) an die defizitären Generatoren verteilt.
+Routing-Szenario
+Reaktor-Angebot
+Defizit (Gen 1 / Gen 2)
+Zuweisung (Gen 1 / Gen 2)
+Fallback-Verhalten (Rest)
+Vollversorgung
+10.000 FE
+2.000 / 3.000 FE
+2.000 / 3.000 FE
+Nicht erforderlich (Rest 0)
+Proportional (Gerade)
+5.000 FE
+5.000 / 5.000 FE
+2.500 / 2.500 FE
+Nicht erforderlich (Rest 0)
+Proportional (Ungerade)
+5.000 FE
+8.000 / 2.000 FE
+4.000 / 1.000 FE
+Nicht erforderlich (Rest 0)
+Mathematischer Rest
+1.000 FE
+1.000 / 2.000 FE
+333 / 666 FE
+1 FE verbleibt  Gen 1 erhält +1 FE
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.registry.ModBlocks;
-import com.peaceman.alpha.registry.ModI18n;
-import com.peaceman.alpha.registry.ModItems;
-import net.minecraft.data.PackOutput;
-import net.neoforged.neoforge.common.data.LanguageProvider;
+Zusätzlich erfordert das System eine Restriktion für kollabierte Schilde. Fällt die Energie eines Schildes auf exakt 0, kollabiert der Sektor. Um das optische und physikalische Flackern (das Schild schaltet sich jeden Tick für einen Sekundenbruchteil wieder ein, um sofort wieder zerstört zu werden) zu unterdrücken, wird die Energiezufuhr während der Cooldown-Phase vollständig blockiert. Der Generator wird für die Dauer des Cooldowns (z. B. 100 Ticks / 5 Sekunden) aus der proportionalen Berechnung ausgeschlossen ().
+Entwicklungs-Tasks: Phase 3
+[ ] Erweitere den SpaceshipEnergyManager um die zentrale Routine distributeEnergyToShields(Level level, ShipState ship), welche im globalen ServerTickEvent.Post für jedes aktive Schiff aufgerufen wird.
+[ ] Berechne in dieser Routine die aggregierte, zur Verfügung stehende FE aus allen mit dem Schiff verbundenen SpaceshipReactorBlockEntity-Instanzen, gedeckelt durch die konfigurierte maximale Extraktionsrate pro Tick.
+[ ] Iteriere über alle Werte der ship.getShieldZones() Map. Überspringe Zonen, für die zone.isCollapsed(gameTime) zutrifft, um die Cooldown-Blockade durchzusetzen.
+[ ] Summiere das Gesamtdefizit D_total über alle aktiven und ladefähigen Zonen. Breche die Methode ab, falls D_total == 0.
+[ ] Implementiere den primären Zuweisungs-Loop: Berechne den Transferwert E_transfer = (int) (E_avail * (double) D_i / D_total) für jede Zone und ziehe die Summe dieser Transfers von einer verbleibenden Rest-Variable E_rest (initial gleich E_avail) ab.
+[ ] Implementiere den sekundären Fallback-Loop: Iteriere erneut über die Generatoren, deren Defizit noch nicht gedeckt ist, und addiere jeweils 1 FE, bis E_rest == 0.
+[ ] Aktualisiere die Record-Instanzen im ShipState über eine threadsichere Methode updateShieldZoneEnergy(byte id, int newEnergy). Aktualisiere parallel dazu die Reaktor-BlockEntities, um die abgeflossene Energie aus deren ForgeEnergy-Storage zu subtrahieren.
+[ ] JUnit-Test ProportionalEnergyRoutingTest: Mappe in einer Testumgebung drei Generatoren mit den Defiziten 1000, 2000 und 3000 FE. Stelle eine simulierte Reaktorleistung von 3000 FE zur Verfügung. Verifiziere per Assertion, dass die Zuweisungslogik die Energie exakt im Verhältnis 1:2:3 aufteilt (500, 1000 und 1500 FE).
+[ ] JUnit-Test EnergyRoutingRemainderTest: Teste Edge-Cases der Ganzzahlarithmetik. Simuliere eine ungerade Primzahl-Reaktorleistung (z.B. 3333 FE) und 7 Generatoren mit gleichem Defizit (jeweils 2000 FE). Verifiziere, dass nach Durchlauf beider Loops exakt 3333 FE vom fiktiven Reaktor abgezogen wurden und die Summe aller Schild-Inkremente exakt 3333 FE ergibt, ohne dass Energie verloren geht oder aus dem Nichts generiert wird.
+Phase 4: Combat-Lookup & Raycasting-Integration
+Die fundamentale Effizienz des Raumkampf-Systems in der vorliegenden NeoForge-Architektur basiert auf dem Einsatz des 3D Digital Differential Analyzer (3D-DDA) Algorithmus, originär entwickelt von Amanatides und Woo. Dieser ist im LaserCombatService und FastVoxelTraversal implementiert1. Der Algorithmus durchschreitet den Voxel-Raum entlang eines mathematischen Vektors (Raycast) deterministisch in  anstelle einer ineffizienten iterativen Überprüfung des gesamten Schiffs-Gitters in .
+Die Zuweisung lokalisierter Schildzonen erfordert einen präzisen, nicht-blockierenden Eingriff in die innerste Schleife dieser Sub-Routinen.
+Amanatides & Woo Modifikation und O(1) Lookup
+Der klassische DDA-Algorithmus berechnet in jedem Schritt die Distanz zur nächsten Voxel-Grenze () und rückt auf der Achse vor, die den geringsten -Wert aufweist. Sobald der Algorithmus evaluiert, dass der getroffene Voxel im eindimensionalen BitSet des VoxelGridCache gesetzt ist (also einen realen Schiffsblock darstellt), muss unmittelbar identifiziert werden, welcher Schild diesen spezifischen Block schützt.
+Durch die in Phase 1 implementierte Array-Struktur (byte[] shieldMap) erfolgt dieser Lookup in absoluter -Zeitkomplexität. Der Array-Index, der bereits für den Nachweis der Existenz im BitSet evaluiert wurde, wird exakt repliziert, um den assoziierten Schild-Identifikator auszulesen. Dies eliminiert jeglichen Bedarf für räumliche Suchen oder rechenintensive Map-Lookups während der DDA-Traversierung. Die Rückgabe der Traversierungsmethode, traditionell gekapselt in einem Optional<VoxelHit>, wird architektonisch um den Parameter byte shieldId erweitert.
+Im aufrufenden LaserCombatService wird dieses Hit-Resultat tiefgreifend ausgewertet. Die Kontrollfluss-Logik divergiert hierbei radikal vom obsoleten globalen Schild-System2.
+Der Service extrahiert die gelieferte shieldId und ruft die assoziierte ShieldZone aus dem zuständigen ShipState ab.
+Szenario A (Schutz intakt): Ist die identifizierte Schildzone aktiv (currentEnergy > 0 und kein Cooldown), wird der auftreffende Strahl kinetisch und energetisch absorbiert. Der Waffenschaden (z. B. 250 FE für den Pulse Laser) wird von der Zonen-Energie subtrahiert. Fällt die resultierende Energie auf 0 oder darunter, wird der Status des Sektors auf kollabiert gesetzt und der systemweite Cooldown-Timestamp für diese Zone evaluiert.
+Szenario B (Durchschlag/Penetration): Ist die Schildzone bereits kollabiert oder weist der getroffene Voxel keine Schutz-ID auf (ID == 0), passiert der energetische Strahl die virtuelle Schildbarriere ungehindert. Der Treffer wird algorithmisch an den physikalischen Block weitergereicht, was zur unmittelbaren Zerstörung (destroyBlock) oder progressiven Hüllenschmelze (destroyBlockProgress) führt.
+Diese Abfolge erzwingt eine strikte Transaktionssicherheit innerhalb des Server-Ticks. Um Race-Conditions durch simultane Salven diverser Waffensysteme (Turrets) auszuschließen, müssen Schild-Dekremente atomar evaluiert werden.
+Waffen-Typ
+Schild-Aktion (Zone Aktiv)
+Hüllen-Aktion (Zone Kollabiert)
+Mechanik
+Pulse Laser
+-250 FE (Sofort)
+Zerstört 1 Block sofort
+Kinetischer Einzelschuss, keine Penetration bei Schild.
+Heavy Beam
+-50 FE / Tick
+Progressiver Block-Abbau
+Kontinuierliches Schmelzen, abhängig von der Blockhärte.
+Mining Laser
+-25 FE / Tick
+Progressiver Stein-Abbau
+Industrieller Strahl, ignoriert Schilde teilweise (Konfiguration).
 
-/**
- * Generiert die en_us.json Sprachdatei für die Mod Alpha.
- * Diese Klasse fungiert als primärer Datenlieferant für das I18n-System.
- */
-public class ModEnglishLanguageProvider extends LanguageProvider {
+Entwicklungs-Tasks: Phase 4
+[ ] Erweitere den bestehenden Daten-Record VoxelHit innerhalb der Klasse FastVoxelTraversal um das numerische Feld byte shieldId.
+[ ] Modifiziere die zentrale Schleife der Methode traverse() in FastVoxelTraversal: Sobald der Ausdruck cache.isSet(x, y, z) den Wert true zurückliefert, evaluiere unmittelbar cache.getShieldId(x, y, z). Instanziiere den zurückgegebenen VoxelHit mit dieser ID.
+[ ] Überarbeite die Schadensauswertungsmethoden processPulseHit() und processContinuousHit() im LaserCombatService. Extrahiere die shieldId aus dem RaycastHitResult.
+[ ] Implementiere den transaktionssicheren Schadensverlauf: Rufe die ShieldZone über die ID aus dem ShipState ab. Überprüfe die Bedingung !zone.isCollapsed(gameTime). Trifft dies zu, subtrahiere den modellspezifischen Waffenschaden über den SpaceshipEnergyManager.
+[ ] Implementiere die Penetrations-Logik: Ergibt die Prüfung zone.isCollapsed(gameTime) == true oder ist die shieldId == 0, leite den Trefferaufruf (HitType.HULL) an die physikalische Hüllenzerstörungsroutine destroyShipHullBlock weiter.
+[ ] JUnit-Test FastVoxelTraversalShieldTest: Simuliere einen gerichteten Vektor durch ein artifizielles 5x5x5 Array. Modifiziere den Cache derart, dass der getroffene Block eine spezifische Schild-ID besitzt. Verifiziere, dass der Hit-Request des 3D-DDA-Algorithmus exakt die erwartete ID extrahiert und zurückgibt, ohne an Präzision der Traversierung zu verlieren.
+[ ] GameTest LaserCombatPiercingGameTest: Konstruiere eine Test-Arena mit einem autarken PulseLaserBlock, ausgerichtet auf eine Schiffs-Hülle. Manipuliere den generierenden SpaceshipShieldBlock im Status auf 0 FE (Kollaps erzwingen). Feuere die Laserkanone algorithmisch ab und belege durch Assertions, dass der anvisierte Hüllenblock physisch zerstört wird (Blocks.AIR), da das lokale Schildfeld nicht absorbiert hat. Konfiguriere und teste den logischen Gegenfall (Schild besitzt 10.000 FE), wobei der Block intakt verbleiben und die Schildenergie abnehmen muss.
+Phase 5: Rendering und Netzwerk-Synchronisation
+Die physikalische Fragmentierung der vormaligen Schutzblase in bis zu 64 voneinander unabhängige Sektoren impliziert eine profunde Überarbeitung des Netzwerk-Stacks und der clientseitigen Rendering-Pipeline. Fluktuiert der Status eines lokalen Schildgenerators zwischen Aktivität und Kollaps, muss diese Zustandsänderung hochperformant, latenzfrei und mit minimalem Bandbreitenfußabdruck an alle relevanten Clients distribuiert werden, die sich im Chunk-Tracking-Radius des Schiffes befinden.
+Bandbreitenoptimierung via StreamCodec und Bitmasking
+Das Framework der Modifikation nutzt die restriktiven Vorgaben der NeoForge 1.21 Architektur, welche deklarative CustomPacketPayload-Strukturen zwingend vorschreibt6. Um den binären Status (An/Aus) von maximal 64 Schildgeneratoren effizient zu aggregieren, wird ein primitiver 64-Bit Integer-Wert (long) als Bitmaske genutzt. In dieser Maske korrespondiert Bit  (wobei ) direkt mit dem Status der zugehörigen Schildzone. Ist das Bit auf 1 gesetzt, ist der Schild aktiv; bei 0 ist er kollabiert.
+Die Payload-Klasse (ShieldZoneStatePayload) umfasst in Konsequenz lediglich einen 16 Byte umfassenden Identifikator (UUID) für das anvisierte Schiff sowie die 8 Byte der Datenmaske (long). Inklusive des systemimmanenten Protokoll-Overheads beläuft sich das gesamte Netzwerkpaket auf weniger als 32 Byte. Diese drastische Reduzierung im Vergleich zu Listen-Strukturen oder unstrukturierten NBT-Tags (Named Binary Tag) verhindert Netzwerkstaus selbst in Massengefechten mit dutzenden simultan kollabierenden Schilden.
+Die Registrierung erfolgt über die NeoForge API im RegisterPayloadHandlersEvent, wobei ein zustandsfreier StreamCodec über die Composite-Methoden definiert wird, welcher die Serialisierung direkt in den FriendlyByteBuf der Netzwerk-Socket schreibt6.
+Clientseitige Rendering-Pipeline (Shader vs. VBO-Splitting)
+Auf der Client-Seite existierten historische Ansätze, die das gesamte hexagonale Schild-Mesh als ein statisches Vertex Buffer Object (VBO) konstruierten1. Um lokale Zerstörungen optisch darzustellen, standen der Architektur zwei diametrale Lösungswege offen:
+Rendering-Ansatz
+Mechanismus
+VRAM-Auswirkungen
+CPU-Belastung
+Architektur-Bewertung
+VBO-Splitting
+Zerschneiden des Meshes bei Ausfall, Upload neuer Sub-VBOs
+Hoch (Fragmentierung durch Neuzuweisung)
+Sehr hoch (Mesh-Rekonstruktion auf Render-Thread)
+Verursacht Stuttering (Frametime-Spikes)
+Fragment-Shader Discard
+Einheitliches VBO bleibt intakt. Shader blendet Segmente via Bitmaske aus.
+Null (Keine Änderung am Buffer)
+Null (GPU übernimmt die Auswertung)
+Optimal (Modernes OpenGL 3.3+ Paradigma)
 
-    public ModEnglishLanguageProvider(PackOutput output) {
-        // Zuweisung der Mod-ID und des spezifischen Locales
-        super(output, Alpha.MODID, "en_us");
-    }
-
-    @Override
-    protected void addTranslations() {
-        // 1. Creative Tabs
-        add(ModI18n.Tab.MAIN, "Mod Alpha");
-
-        // 2. Blöcke (Automatische Extraktion der Translation Keys aus der Registry)
-        add(ModBlocks.SPACESHIP_CONTROL_BLOCK.get(), "Spaceship Controller");
-        add(ModBlocks.SPACESHIP_HELM_BLOCK.get(), "Spaceship Helm");
-        add(ModBlocks.SPACESHIP_REACTOR_BLOCK.get(), "Spaceship Reactor");
-        add(ModBlocks.SPACESHIP_SHIELD_BLOCK.get(), "Shield Generator");
-        add(ModBlocks.HEAVY_BEAM_BLOCK.get(), "Heavy Laser Beam");
-        add(ModBlocks.MINING_LASER_BLOCK.get(), "Mining Laser");
-        add(ModBlocks.PULSE_LASER_BLOCK.get(), "Pulse Laser Cannon");
-        add(ModBlocks.LASER_BASE.get(), "Turret Baseplate");
-
-        // 3. Items
-        add(ModItems.BACKFLIP_TOOL.get(), "Backflip Tool");
-
-        // 4. UI / Screens
-        add(ModI18n.Screen.REACTOR_TITLE, "Reactor Core Diagnostics");
-        add(ModI18n.Screen.REACTOR_ENERGY, "Energy Level: %1$s / %2$s FE");
-        add(ModI18n.Screen.HELM_NAV_TITLE, "Nav-Computer & Waypoints");
-        add(ModI18n.Screen.HELM_BTN_WAYPOINT, "Set Coordinates");
-
-        // 5. Messages (Chat / Action-Bar) mit dynamischen Platzhaltern
-        add(ModI18n.Message.TURRET_AIM_LOCKED, "[Turret] Aim locked (Yaw: %1$.1f°, Pitch: %2$.1f°)");
-        add(ModI18n.Message.TURRET_GIMBAL_LIMIT, "[Warning] Gimbal limit reached! Cannot aim further hull-ward.");
-        add(ModI18n.Message.SHIELD_COLLAPSE, "[Alert] Shield Generator collapsed! Energy depleted.");
-        add(ModI18n.Message.REACTOR_DEPLETED, "[System] Critical energy failure. Systems shutting down.");
-        add(ModI18n.Message.COMBAT_TARGET_DESTROYED, "Target neutralized: %1$s");
-        add(ModI18n.Message.WARP_PHASE_STATUS, "Warp Sequence Phase %1$d: %2$s");
-
-        // 6. Keybindings und Kategorien
-        add(ModI18n.Keybind.CATEGORY, "Mod Alpha Controls");
-        add(ModI18n.Keybind.FIRE_ALL, "Fire All Ship Weapons");
-        add(ModI18n.Keybind.NAV_MENU, "Open Navigation Menu");
-        add(ModI18n.Keybind.EXIT_HELM, "Exit Helm Console");
-        add(ModI18n.Keybind.MOUNT_TURRET, "Man Turret Seat");
-
-        // 7. Tooltips und Umgebung
-        add(ModI18n.Tooltip.REACTOR_CAPACITY, "Max Capacity: %1$s FE");
-        add(ModI18n.Tooltip.WEAPON_TIER, "Weapon Tier: %1$s");
-        add(ModI18n.Tooltip.ENERGY_COST, "Energy Cost: %1$s FE/shot");
-        add(ModI18n.Tooltip.SHIELD_STATUS, "Shield Matrix: %1$s");
-        add(ModI18n.Structure.SHIPWRECK, "Derelict Spacecraft Wreck");
-        add(ModI18n.Biome.DEEP_SPACE, "Deep Space Void");
-    }
-}
-Die Einbindung in den Event-Bus der Mod erfolgt über die DataGenerators-Klasse. Wenn das System den Befehl zur Datengenerierung erhält (beispielsweise durch den Gradle-Task runData), instanziiert das Framework den Provider und triggert die Schreibvorgänge in das src/generated/resources-Verzeichnis.Javapackage com.peaceman.alpha.datagen;
-
-import com.peaceman.alpha.datagen.provider.ModEnglishLanguageProvider;
-import net.minecraft.data.DataGenerator;
-import net.minecraft.data.PackOutput;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.data.event.GatherDataEvent;
-
-@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
-public class DataGenerators {
-
-    @SubscribeEvent
-    public static void onGatherData(GatherDataEvent event) {
-        DataGenerator generator = event.getGenerator();
-        PackOutput packOutput = generator.getPackOutput();
-        
-        // Registrierung des en_us Language Providers auf dem Client-View Layer
-        generator.addProvider(
-            event.includeClient(),
-            new ModEnglishLanguageProvider(packOutput)
-        );
-    }
-}
-Durch diese Architektur ist das System zu einhundert Prozent darauf vorbereitet, künftig erweitert zu werden. Die Implementierung eines ModGermanLanguageProvider erfordert lediglich eine Vererbungskopie dieser Klasse mit dem Parameter "de_de" und der Übersetzung der Value-Strings. Die Keys aus ModI18n bleiben unverändert, was eine absolute Symmetrie zwischen allen unterstützten Sprachen erzwingt und fehlende Übersetzungs-Einträge systematisch eliminiert.Dynamische Formatierung und StylingIn der Architektur von NeoForge 1.21 ist die statische Konkatenation von Strings (wie "Energy: " + amount + " FE") ein Anti-Pattern, da die grammatikalische Struktur in verschiedenen Sprachen massiv variiert. Stattdessen erfolgt die Zuweisung von Variablen an übersetzte Strings durch String-Interpolation, welche sich syntaktisch an String.format() in Java anlehnt.Um die semantische Integrität bei Übersetzungen zu wahren, müssen ausnahmslos positionale Argument-Indizes (wie %1$s, %2$s) verwendet werden. Ein Satz wie "Phase 1: Suspension" könnte in einer anderen Sprache als "Suspension ist Phase 1" übersetzt werden. Ohne positionale Indizes würde die Engine die Variablen in der falschen Reihenfolge injizieren.Interpolation von Telemetriedaten und FließkommawertenEin prägnantes Beispiel für komplexe Variablenübergabe ist das Turret-Aiming-System der Modifikation. Das Zielen via Freelook-System basiert auf Quaternion-Transformationen, welche hochpräzise Gier- und Nickwinkel generieren. Würden diese Rohdaten direkt als String konvertiert, entstünden Endlosbrüche, die in der Action-Bar des Spielers visuell flackern.Fehlerhafter Ansatz (Legacy): §a[Geschützturm] Ausrichtung eingeloggt (Yaw: X.X°, Pitch: Y.Y°)Korrekter I18n-Ansatz (JSON): "[Turret] Aim locked (Yaw: %1$.1f°, Pitch: %2$.1f°)"Der Index %1$ referenziert hierbei das erste übergebene Argument (den Gierwinkel), während %2$ auf das zweite Argument (den Nickwinkel) verweist. Die spezifische Formatierungs-Notation .1f forciert eine Fließkommadarstellung mit exakt einer Nachkommastelle auf Client-Seite. Dies delegiert die Formatierungslogik an die Darstellungs-Schicht und hält die Netzwerk-Payloads leichtgewichtig.Die Component API und visuelles StylingDas Einfärben von Texten darf unter keinen Umständen innerhalb der Übersetzungsdatei über das veraltete und missbilligte §-Zeichen erfolgen. In NeoForge 1.21 wird das optische Feedback strikt im Quellcode über die Style-API des MutableComponent definiert. Dies ermöglicht es der Rendering-Engine, Farben, Fett- und Kursivdruck dynamisch an Kontrast- und Barrierefreiheits-Einstellungen des jeweiligen Clients anzupassen.Wenn das TurretSeatEntity arretiert wird, empfängt der Client ein TurretLockTogglePayload. Die Konstruktion der darzustellenden Nachricht erfolgt dann ressourcenschonend im GUI-Thread:Javaimport net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.ChatFormatting;
-
-// Extraktion der Winkel aus dem Netzwerk-Paket
-float yaw = payload.yaw();
-float pitch = payload.pitch();
-
-// Erzeugung des übersetzbaren Components mit injizierten Float-Argumenten
-MutableComponent message = Component.translatable(
-    ModI18n.Message.TURRET_AIM_LOCKED, 
-    yaw, 
-    pitch
-).withStyle(ChatFormatting.GREEN); // Clientseitiges Styling
-
-// Übermittlung an den HUD-Renderer
-Minecraft.getInstance().gui.setOverlayMessage(message, false);
-Durch den Einsatz von Component.translatable(key, arg1, arg2) wandelt NeoForge die übergebenen Argumente automatisch in interpolierte Sub-Components um. Der Server muss somit keine Strings berechnen, sondern übermittelt lediglich die Rohdaten, was die Netzwerkbandbreite bei der hohen Delta-Tick-Rate des Zielsystems (20 Hz) signifikant schont.Umfassendes System-Audit bestehender FeaturesBasierend auf der Analyse der Systemarchitektur (@ARCHITECTURE.md) und der Feature-Dokumentation (@README.md) der "Mod Alpha", offenbart sich ein hochkomplexes Geflecht aus modularen Schiffsblöcken, dimensionenübergreifenden Teleportationsmechaniken und prozeduralen Kampfsystemen. Jeder dieser Berührungspunkte mit dem Endanwender erfordert eine systematische Lokalisierung.Die folgende Audit-Matrix identifiziert alle Mod-Elemente, klassifiziert ihren Kontext und verknüpft sie mit der entsprechenden Taxonomie-Spezifikation. Dies stellt sicher, dass kein string-basiertes Kundenfeedback während der Migration übersehen wird.Physische Schiffskomponenten und Item-AssetsAlle funktionalen Knotenpunkte des Schiffes (implementiert über das Interface ISpaceshipNode), die der Spieler im Survival- oder Creative-Modus manipulieren kann, benötigen Deskriptoren für das Inventar, Drop-Events und die Waila/Jade-Integration.Registry BezeichnerGeplanter Lokalisierungstext (Englisch)Kontext & Translation Typspaceship_controllerSpaceship ControllerBlock-Description für den BFS-Schiffs-Corespaceship_helmSpaceship HelmBlock-Description für das 6-Achsen-Flugpultspaceship_reactorSpaceship ReactorBlock-Description für den Forge Energy (FE) Speicherspaceship_shieldShield GeneratorBlock-Description für den Hex-Shader-Emitterlaser_turret_heavyHeavy Laser BeamBlock-Description des kontinuierlichen Schmelzlaserslaser_turret_pulsePulse Laser CannonBlock-Description der kinetischen Burst-Kanonelaser_turret_miningMining LaserBlock-Description des industriellen Bohrerslaser_baseTurret BaseplateBlock-Description der statischen Turret-Basisplattebackflip_toolBackflip ToolItem-Description des Klasingschen Degens zur Entitäts-ManipulationBenutzeroberflächen (UI) und Blaze3D-ScreensDie graphischen Schnittstellen, welche über den SpaceshipClientInputHandler entkoppelt aufgerufen werden, enthalten vielschichtige Labels und dynamische Informationsanzeigen. Diese erfordern eine besondere Behandlung bei der Formatierung großer Zahlenwerte.Zugehöriges ModulTextueller Inhalt / FunktionTranslation Key Evaluierung (ModI18n)SpaceshipReactorMenuTitel des Diagnose-InventarsScreen.REACTOR_TITLESpaceshipReactorMenuEnergie-Status (Format: X / Y FE)Screen.REACTOR_ENERGY (benötigt Tausendertrennzeichen-Interpolation)SpaceshipHelmBlockTitel des interaktiven NavigationsmenüsScreen.HELM_NAV_TITLESpaceshipHelmBlockInteraktive Schaltfläche: "Set Waypoint"Screen.HELM_BTN_WAYPOINTSpaceshipHelmBlockStatusanzeige der Flug-CooldownsScreen.HELM_COOLDOWN_STATUSSystem-Telemetrie und Action-Bar WarnungenDas HUD des Spielers ist die primäre Informationsquelle während Raumgefechten. Die Nachrichten basieren auf asynchronen Raycast-Ergebnissen (FastVoxelTraversal) und kinetischen Schildaufprallen (CollisionResolver), die latenzfrei kommuniziert werden müssen.Auslöser / Sub-SystemDynamischer TextTranslation Key Evaluierung (ModI18n)Turret Seat (Left-Click)Aim locked (Yaw: %1$.1f°, Pitch: %2$.1f°)Message.TURRET_AIM_LOCKED (Interpolation der Quaternion-Winkel)Turret Seat (Winkelgrenze)[Warning] Gimbal limit reached!Message.TURRET_GIMBAL_LIMITShield System (Aufprall)[Alert] Shield collapsed! Energy depleted.Message.SHIELD_COLLAPSE (Wird bei 0 FE Boundary Collapse getriggert)Energy Manager (Drain)[System] Critical energy failure.Message.REACTOR_DEPLETEDCombat Service (Raycast)Target neutralized: %1$sMessage.COMBAT_TARGET_DESTROYEDWarp Travel ServiceWarp Sequence Phase %1$d: \%2$sMessage.WARP_PHASE_STATUS (Visualisiert die 6 Phasen der Transition)Interaktionssteuerung und KeybindingsDie physische Steuerung der Schiffe verlangt nach klaren Deskriptoren in den Steuerungsoptionen des Clients, strukturiert in einer dedizierten Mod-Kategorie.Physische InteraktionGeplante BeschreibungTranslation Key Evaluierung (ModI18n)Globale KategorieMod Alpha ControlsKeybind.CATEGORYRight-Click im HelmFire All Ship WeaponsKeybind.FIRE_ALLTastendruck MOpen Navigation MenuKeybind.NAV_MENUTastendruck HExit Helm ConsoleKeybind.EXIT_HELMRight-Click auf TurretMan Turret SeatKeybind.MOUNT_TURRETKosmische Umgebungen und Metadaten-TooltipsDie Mod generiert weitreichende prozedurale Umgebungen und komplexe Waffen-Tiers, deren Metadaten bei der Inspektion von Items via Tooltips (HoverableText) oder im F3-Debug-Screen zugänglich gemacht werden müssen.Kontextuelles ElementEvaluierter Text / DeskriptorTranslation Key Evaluierung (ModI18n)Deep Space DimensionDeep Space VoidBiome.DEEP_SPACE (Identifikation in der Leere bei Y=-64 bis Y=320)Asteroid Field GenDerelict Spacecraft WreckStructure.SHIPWRECK (Bezeichnet die END_CITY_TREASURE Ruinen)Spaceship ReactorMax Capacity: %1$s FETooltip.REACTOR_CAPACITYPulse Laser ItemEnergy Cost: 250 FE/shotTooltip.ENERGY_COSTHeavy Beam ItemWeapon Tier: HEAVY_BEAMTooltip.WEAPON_TIER (Spezifiziert das kontinuierliche Schmelzverhalten)Dieses Audit demonstriert den massiven Umfang an textuellen Schnittstellen, die durch den konsequenten Einsatz der ModI18n zentralisiert und durch die DataGen-Architektur abgebildet werden. Jeder identifizierte Eintrag garantiert eine lückenlose Lokalisierungserfahrung für den Endanwender.Refactoring-Leitfaden: Migration dynamischer Component-AufrufeDie Erfüllung der Vorgabe, dass "kein einziger kundenorientierter String im Java-Logik-Code verbleibt", bedingt eine tiefgreifende Refaktorierung der existierenden Code-Basis. Es ist zwingend erforderlich, die Nutzung der Methode Component.literal(...) in jeglichem Produktionscode, welcher GUI-Elemente, Chat-Nachrichten oder Tooltips rendert, vollständig zu eliminieren. Component.literal entzieht den Text dem I18n-Kreislauf und erzwingt eine harte, unabänderliche Darstellung.Szenario 1: Action-Bar und TurretSeatEntity RefactoringIm gegenwärtigen Zustand wird die Arretierung der Laserkanonen im TurretSeatEntity oder dem verarbeitenden Payload-Handler über eine fehleranfällige und hardcodierte String-Konkatenation berechnet. Der veraltete Ansatz nutzte zudem das mittlerweile als toxisch geltende §-Zeichen für das farbliche Rendering.Alt (Legacy & Hardcodiert):Java// ClientPayloadHandler.java
-float yaw = payload.yaw();
-float pitch = payload.pitch();
-// Anti-Pattern: String-Konkatenation und hardcodierte Farbcodes
-String msg = "§a[Geschützturm] Ausrichtung eingeloggt (Yaw: " + yaw + "°, Pitch: " + pitch + "°)";
-Minecraft.getInstance().gui.setOverlayMessage(Component.literal(msg), false);
-Neu (L10n-konform & Datadriven):
-Das Refactoring bedient sich des in ModI18n spezifizierten Schlüssels. Die Parameter yaw und pitch werden der Component.translatable-Methode übergeben, welche diese positionsgenau (%1$.1f, %2$.1f) in den aufgelösten String injiziert. Die Typisierung der Farbe erfolgt sicher über das ChatFormatting-Enum auf dem resultierenden MutableComponent. Da dieses Paket über das Netzwerk eintrifft, ist zudem auf die korrekte Thread-Synchronisation via context.enqueueWork() zu achten.Java// ClientPayloadHandler.java
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.ChatFormatting;
-import com.peaceman.alpha.registry.ModI18n;
-
-public static void handleTurretLockToggle(TurretLockTogglePayload payload, IPayloadContext context) {
-    // Kontext-Wechsel: Lokale Ausführung strikt auf dem Render-Main-Thread des Clients
-    context.enqueueWork(() -> {
-        float yaw = payload.yaw();
-        float pitch = payload.pitch();
-
-        // Dynamische Auflösung der Übersetzung inklusive Formatierung und Variablen
-        MutableComponent lockedMessage = Component.translatable(
-            ModI18n.Message.TURRET_AIM_LOCKED, 
-            yaw, 
-            pitch
-        ).withStyle(ChatFormatting.GREEN);
-
-        // Anzeige in der Action-Bar (false = keine Chat-Nachricht, sondern temporäres HUD-Overlay)
-        Minecraft.getInstance().gui.setOverlayMessage(lockedMessage, false);
-    });
-}
-Architektonische Implikation: Falls die serverseitige Logik im LaserCombatService eine Fehlerbedingung identifiziert (beispielsweise das Erreichen der mechanischen Gimbal-Limits, um Beschuss der eigenen Hülle zu vermeiden), sendet der Server ein identisches, aber inhaltlich abstraktes Payload. Der Client übersetzt dieses anschließend selbstständig mittels Component.translatable(ModI18n.Message.TURRET_GIMBAL_LIMIT).withStyle(ChatFormatting.RED) in eine visuelle Warnung. Der Server generiert keine Texte.Szenario 2: UI-Screens und das SpaceshipReactorMenu RefactoringFür die grafische Darstellung innerhalb des SpaceshipReactorMenu oder verwandten Blaze3D-Screens muss das direkte Rendern von rohen Strings über den FontRenderer beziehungsweise die Methode GuiGraphics.drawString umfassend adaptiert werden. Insbesondere die Repräsentation großer numerischer Werte wie der Reaktor-Energie, welche bis zu 1.000.000 FE betragen kann, verlangt nach lokalisierungsgerechter Formatierung.Alt (Legacy & Hardcodiert):Java@Override
-protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-    // Anti-Pattern: Hardcodierter Titel
-    graphics.drawString(this.font, "Reactor Core", 8, 6, 0x404040, false);
-    
-    // Anti-Pattern: Primitive Konkatenation ohne Tausendertrennzeichen
-    String energyTxt = "Energy: " + this.currentEnergy + " / " + this.maxCapacity + " FE";
-    graphics.drawString(this.font, energyTxt, 8, 20, 0x00FF00, false);
-}
-Neu (L10n-konform & Datadriven):
-Im refaktorierten Zustand delegiert das UI das Holen des Titels an den entsprechenden Translation Key. Die Darstellung der Energiewerte nutzt zunächst das native String.format("%,d", ...) aus Java, um die Ziffern gemäß der lokalen Systemsprache des Benutzers mit Tausendertrennzeichen (beispielsweise Punkte im Deutschen, Kommata im Englischen) zu gliedern. Diese vorformatierten String-Segmente werden anschließend als Variablen in das Component übergeben.Java@Override
-protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-    // Rendern des statischen Titels über Component.translatable
-    graphics.drawString(
-        this.font, 
-        Component.translatable(ModI18n.Screen.REACTOR_TITLE), 
-        8, 6, 0x404040, false
-    );
-    
-    // Formatierung der rohen Integer-Werte zu visuell lesbaren Strings mit Trennzeichen
-    String formattedCurrent = String.format("%,d", this.currentEnergy);
-    String formattedMax = String.format("%,d", this.maxCapacity);
-
-    // Konstruktion der dynamischen Energieanzeige
-    MutableComponent energyText = Component.translatable(
-        ModI18n.Screen.REACTOR_ENERGY, 
-        formattedCurrent, 
-        formattedMax
-    ).withStyle(ChatFormatting.GREEN);
-
-    // Rendern der Component-Instanz im GUI
-    graphics.drawString(this.font, energyText, 8, 20, 0x00FF00, false);
-}
-Dieser Ansatz garantiert, dass die Zahl 1000000 dem Spieler visuell prägnant als 1,000,000 FE (im angloamerikanischen Standard) oder als 1.000.000 FE (im deutschsprachigen Raum) präsentiert wird, ohne dass die Kernlogik des SpaceshipEnergyManager sich um derlei Repräsentationsdetails kümmern muss.Systemische Resilienz und SchlussfolgerungenDas hier spezifizierte und entworfene I18n- und Lokalisierungs-Framework eliminiert jegliche hartcodierten Textartefakte aus dem Domain- und View-Layer der Modifikation "Mod Alpha". Durch die konsequente Dezentralisierung der Textauflösung auf die Client-Seite und die Konzentration auf die robuste DataGen-Architektur von NeoForge 1.21, profitiert das System von einer deterministischen, zur Compile-Zeit geprüften Verknüpfung aller textuellen Bezeichner. Die Taxonomie verhindert aktiv Namespace-Kollisionen, während die ModI18n-Klasse Typensicherheit in einem historisch fehleranfälligen Segment der Spieleentwicklung garantiert.Die strikte Einhaltung dieses Paradigmas stellt sicher, dass die Modifikation mühelos in internationale Märkte expandieren kann. Die Integration eines zusätzlichen linguistischen Providers, beispielsweise für Deutsch (de_de), erfordert zu keinem Zeitpunkt Eingriffe in die komplexe Logik der Voxel-Kollisionen, der Laser-Kampfsysteme oder der Teleportationsmechanismen. Die Trennung von Zustand und Repräsentation ist damit vollständig und architektonisch einwandfrei vollzogen.
+Um mikroskopische Einbrüche der Bildwiederholungsrate (Stuttering) bei Gefechten strikt zu unterbinden, schreibt die Architektur den Fragment-Shader-Ansatz verbindlich vor. Die Vertex-Deklaration des VBOs wird modifiziert, sodass jeder Eckpunkt des Hexagon-Meshes seine assoziierte Schild-ID als Vertex-Attribut mitführt. Der ClientShipManager empfängt die synchronisierte Bitmaske und hält sie im RAM bereit. Während der Render-Schleife wird dieser long-Wert (bei Restriktionen älterer OpenGL-Versionen aufgeteilt in zwei 32-Bit int Uniforms) direkt an den GLSL-Shader übergeben. Der Fragment-Shader liest für jedes Pixel das ID-Attribut aus, vergleicht es bitweise mit der Uniform-Maske und bricht die Render-Operation (discard; in GLSL) ab, sofern das korrespondierende Bit auf 0 steht.
+Entwicklungs-Tasks: Phase 5
+[ ] Erstelle den Java Record ShieldZoneStatePayload(UUID shipId, long activeMask) im logischen Namespace com.peaceman.alpha.network.
+[ ] Implementiere das CustomPacketPayload Interface. Definiere den statischen Identifikator: public static final CustomPacketPayload.Type<ShieldZoneStatePayload> TYPE = new CustomPacketPayload.Type<>(Identifier.of("peaceman_alpha", "shield_zone_state"))6.
+[ ] Erstelle den StreamCodec unter Verwendung der NeoForge Composite-API: StreamCodec.composite(UUIDUtil.STREAM_CODEC, ShieldZoneStatePayload::shipId, ByteBufCodecs.VARLONG, ShieldZoneStatePayload::activeMask, ShieldZoneStatePayload::new).
+[ ] Registriere diesen Codec in der Payload-Registry-Methode, die an das RegisterPayloadHandlersEvent gebunden ist8.
+[ ] Implementiere im ServerShipManager eine Überprüfungslogik, die bei einem detektierten Zustandswechsel eines Schildes (isCollapsed Boolean flippt) die 64-Bit-Maske neu berechnet (mask |= (1L << (id - 1)) für Aktivierung, mask &= ~(1L << (id - 1)) für Deaktivierung).
+[ ] Sende das Payload mithilfe der PacketDistributor.sendToPlayersTrackingChunk(...) Architektur an sämtliche relevanten Clients, die den Schiffs-Chunk betrachten7.
+[ ] Implementiere die clientseitige Verarbeitung im ClientPayloadHandler. Sorge zwingend dafür, dass die Manipulation der Daten via context.enqueueWork() an den Main-Thread (Render-Thread) delegiert wird, um Concurrency-Fehler zu vermeiden8. Aktualisiere die long activeMask im jeweiligen ClientShipState.
+[ ] Modifiziere den ClientShipState Mesh-Builder: Adaptiere das Vertex-Format (VertexFormat), um ein dediziertes Float- oder Integer-Attribut (die shieldId, evaluiert durch den VoxelGridCache) für jeden Vertex in das VBO zu schreiben.
+[ ] Aktualisiere den dedizierten GLSL-Shader (z. B. rendertype_spaceship_shield.fsh und .vsh). Deklariere die benötigten Uniform-Variablen für die Maske. Implementiere die logische Evaluierung: if ((activeMask & (1 << localId)) == 0) discard;, um die visuelle Präsentation kollabierter Sektoren hart auszublenden.
+[ ] JUnit-Test ShieldZonePayloadSerializationTest: Instanziiere ein künstliches ShieldZoneStatePayload mit der alternierenden Bitmaske 0b10101010L. Serialisiere das Objekt vollständig in einen FriendlyByteBuf der NeoForge-API. Deserialisiere den Puffer anschließend und verifiziere durch Assertions, dass sowohl die UUID als auch die 

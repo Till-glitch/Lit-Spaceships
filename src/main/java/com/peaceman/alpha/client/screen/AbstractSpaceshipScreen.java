@@ -33,6 +33,8 @@ public abstract class AbstractSpaceshipScreen extends Screen {
             // Prüfung auf ISpaceshipNode
             if (this.minecraft.level.getBlockEntity(this.blockPos) instanceof com.peaceman.alpha.block.ISpaceshipNode node) {
                 this.shipId = node.getShipId();
+            } else {
+                this.shipId = null;
             }
         }
     }
@@ -58,9 +60,7 @@ public abstract class AbstractSpaceshipScreen extends Screen {
     }
 
     protected com.peaceman.alpha.client.state.ClientShipState getClientShipState() {
-        if (this.shipId == null) {
-            updateShipIdFromBlock();
-        }
+        updateShipIdFromBlock();
         return this.shipId != null ? com.peaceman.alpha.client.state.ClientShipManager.getShip(this.shipId) : null;
     }
 

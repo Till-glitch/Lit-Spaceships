@@ -72,12 +72,21 @@ public class MiningLaserBlockEntity extends AbstractLaserNodeBlockEntity {
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
-        tag.putBoolean("IsMining", isMining);
+        // IsMining wird absichtlich nicht gespeichert, damit Laser beim Server-Neustart standardmäßig aus sind.
     }
 
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
-        this.isMining = tag.getBoolean("IsMining");
+        // isMining bleibt standardmäßig false.
+    }
+
+    @Override
+    public boolean handleFire(Level level, ShipState shooterShip, BlockPos weaponPos) {
+        boolean newState = !isMining();
+        setMining(newState);
+        PacketDistributor.sendToPlayersTrackingChunk((ServerLevel) level, new ChunkPos(weaponPos),
+                new LaserStateSyncPayload(shooterShip.getId(), weaponPos, newState, getTier()));
+        return newState;
     }
 }

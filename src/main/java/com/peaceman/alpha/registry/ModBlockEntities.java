@@ -1,7 +1,6 @@
 package com.peaceman.alpha.registry;
 
 import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.block.SpaceshipShieldBlock;
 import com.peaceman.alpha.block.entity.SpaceshipControlBlockEntity;
 import com.peaceman.alpha.block.entity.SpaceshipHelmBlockEntity;
 import com.peaceman.alpha.block.entity.SpaceshipReactorBlockEntity;

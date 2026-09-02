@@ -34,7 +34,11 @@ public class ClientPayloadHandler {
                 Level clientLevel = Minecraft.getInstance().level;
                 boolean isLoaded = (clientLevel != null && clientLevel.isLoaded(packet.controllerPos()));
                 ShieldLifecycleLogger.logClientPayloadReceived("ShipStructureSyncPayload", packet.shipId(), packet.controllerPos(), isLoaded);
-                ClientShipManager.updateShipStructure(packet.shipId(), packet.controllerPos(), packet.relativeBlocks());
+                if (packet.relativeBlocks() == null || packet.relativeBlocks().isEmpty()) {
+                    ClientShipManager.removeShip(packet.shipId());
+                } else {
+                    ClientShipManager.updateShipStructure(packet.shipId(), packet.controllerPos(), packet.relativeBlocks());
+                }
             });
         }
     }
@@ -54,6 +58,7 @@ public class ClientPayloadHandler {
             context.enqueueWork(() -> {
                 ShieldLifecycleLogger.logClientPayloadReceived("ShipPositionSyncPayload", packet.shipId(), packet.newAnchorPos(), true);
                 ClientShipManager.updateShipPosition(packet.shipId(), packet.newAnchorPos());
+                com.peaceman.alpha.client.state.ClientLaserState.removeBeamsForShip(packet.shipId());
             });
         }
     }
@@ -100,6 +105,15 @@ public class ClientPayloadHandler {
         if (context.flow().isClientbound()) {
             context.enqueueWork(() -> {
                 ClientShipManager.updateShipDimension(packet.shipId(), packet.dimension());
+                com.peaceman.alpha.client.state.ClientLaserState.removeBeamsForShip(packet.shipId());
+            });
+        }
+    }
+
+    public static void handleShieldZoneStateSync(final com.peaceman.alpha.network.ShieldZoneStatePayload packet, final IPayloadContext context) {
+        if (context.flow().isClientbound()) {
+            context.enqueueWork(() -> {
+                ClientShipManager.updateShieldZoneState(packet.shipId(), packet.activeMask(), packet.zoneEnergies());
             });
         }
     }

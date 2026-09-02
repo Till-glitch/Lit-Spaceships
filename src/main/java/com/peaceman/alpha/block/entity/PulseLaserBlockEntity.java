@@ -61,4 +61,32 @@ public class PulseLaserBlockEntity extends AbstractLaserNodeBlockEntity {
         super.loadAdditional(tag, registries);
         this.cooldownTicks = tag.getInt("CooldownTicks");
     }
+
+    @Override
+    public boolean handleFire(Level level, com.peaceman.alpha.ship.domain.ShipState shooterShip, BlockPos weaponPos) {
+        if (!canFire()) return false;
+        if (!com.peaceman.alpha.ship.SpaceshipEnergyManager.tryConsumeEnergyAmount(level, shooterShip, getEnergyCost())) {
+            return false;
+        }
+        triggerCooldown();
+        
+        LaserWeaponTier tier = getTier();
+        net.minecraft.world.phys.Vec3 dir = com.peaceman.alpha.ship.combat.LaserCombatService.calculateAimDirection(this, shooterShip);
+        net.minecraft.world.phys.Vec3 origin = net.minecraft.world.phys.Vec3.atCenterOf(weaponPos).add(dir.scale(0.55));
+        
+        com.peaceman.alpha.ship.combat.RaycastHitResult hit = com.peaceman.alpha.ship.combat.LaserRaycastUtil.raycast(level, shooterShip.getId(), origin, dir, getMaxRange(), true);
+        com.peaceman.alpha.ship.combat.LaserCombatService.processPulseHit(level, shooterShip, tier, hit);
+        
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingChunk((net.minecraft.server.level.ServerLevel) level, new net.minecraft.world.level.ChunkPos(weaponPos),
+                new com.peaceman.alpha.network.LaserFirePayload(shooterShip.getId(), origin, hit.worldHitPos(), tier));
+                
+        net.neoforged.neoforge.network.PacketDistributor.sendToAllPlayers(new com.peaceman.alpha.network.ShipStateSyncPayload(
+                shooterShip.getId(),
+                com.peaceman.alpha.ship.SpaceshipEnergyManager.getTotalAvailableEnergy(level, shooterShip),
+                shooterShip.isShieldActive(),
+                shooterShip.getShieldCooldownRemaining(level.getGameTime()),
+                shooterShip.getMovementCooldownRemaining(level.getGameTime())));
+                
+        return true;
+    }
 }

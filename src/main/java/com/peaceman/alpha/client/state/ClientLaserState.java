@@ -4,7 +4,6 @@ import com.peaceman.alpha.ship.combat.LaserWeaponTier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;

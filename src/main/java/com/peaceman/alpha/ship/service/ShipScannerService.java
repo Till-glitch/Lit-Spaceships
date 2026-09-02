@@ -1,5 +1,6 @@
 package com.peaceman.alpha.ship.service;
 
+import com.peaceman.alpha.ship.domain.VoxelGridCache;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
@@ -11,6 +12,7 @@ import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 
@@ -91,5 +93,115 @@ public class ShipScannerService {
             }
         }
         shipBlocks.addAll(toAdd);
+    }
+
+    public static final int MAX_SHIELD_GENERATORS = 64;
+
+    /**
+     * Berechnet die 3D-Voronoi-Tesselierung für jeden im VoxelGridCache gesetzten Hüllen-Voxel
+     * basierend auf der quadrierten euklidischen Distanz zu allen aktiven Schildgeneratoren
+     * und liefert die berechneten Sektor-Abdeckungsdaten (SectorCoverage) zurück.
+     *
+     * @param cache         Der zu aktualisierende VoxelGridCache
+     * @param generators    Liste der Generator-Positionen (absolut oder relativ zum controllerPos)
+     * @param controllerPos Position des Controllers (wenn null, werden generators als relativ interpretiert)
+     * @return Map aller berechneten SectorCoverages für jede Zonen-ID (1-basiert)
+     */
+    public static java.util.Map<Byte, com.peaceman.alpha.ship.domain.SectorCoverage> calculateVoronoiZones(
+            VoxelGridCache cache, List<BlockPos> generators, BlockPos controllerPos) {
+        if (cache == null || cache.isEmpty() || generators == null || generators.isEmpty()) {
+            return java.util.Collections.emptyMap();
+        }
+
+        int count = generators.size();
+        if (count > MAX_SHIELD_GENERATORS) {
+            com.peaceman.alpha.Alpha.LOGGER.warn("Ship has {} shield generators, exceeding max limit of {}. Truncating to {}.",
+                    count, MAX_SHIELD_GENERATORS, MAX_SHIELD_GENERATORS);
+            count = MAX_SHIELD_GENERATORS;
+        }
+
+        int[][] genRelCoords = new int[count][3];
+        for (int i = 0; i < count; i++) {
+            BlockPos genPos = generators.get(i);
+            if (controllerPos != null) {
+                genRelCoords[i][0] = genPos.getX() - controllerPos.getX();
+                genRelCoords[i][1] = genPos.getY() - controllerPos.getY();
+                genRelCoords[i][2] = genPos.getZ() - controllerPos.getZ();
+            } else {
+                genRelCoords[i][0] = genPos.getX();
+                genRelCoords[i][1] = genPos.getY();
+                genRelCoords[i][2] = genPos.getZ();
+            }
+        }
+
+        int[] assignedVoxels = new int[count];
+        int[] minRelX = new int[count]; java.util.Arrays.fill(minRelX, Integer.MAX_VALUE);
+        int[] maxRelX = new int[count]; java.util.Arrays.fill(maxRelX, Integer.MIN_VALUE);
+        int[] minRelY = new int[count]; java.util.Arrays.fill(minRelY, Integer.MAX_VALUE);
+        int[] maxRelY = new int[count]; java.util.Arrays.fill(maxRelY, Integer.MIN_VALUE);
+        int[] minRelZ = new int[count]; java.util.Arrays.fill(minRelZ, Integer.MAX_VALUE);
+        int[] maxRelZ = new int[count]; java.util.Arrays.fill(maxRelZ, Integer.MIN_VALUE);
+        int totalVoxels = 0;
+
+        BlockPos minOffset = cache.getMinOffset();
+        int sizeX = cache.getSizeX();
+        int sizeY = cache.getSizeY();
+        int sizeZ = cache.getSizeZ();
+
+        for (int x = 0; x < sizeX; x++) {
+            int relX = minOffset.getX() + x;
+            for (int y = 0; y < sizeY; y++) {
+                int relY = minOffset.getY() + y;
+                for (int z = 0; z < sizeZ; z++) {
+                    int relZ = minOffset.getZ() + z;
+
+                    if (!cache.isSet(relX, relY, relZ)) {
+                        continue;
+                    }
+
+                    totalVoxels++;
+                    long minDistanceSq = Long.MAX_VALUE;
+                    byte bestId = 1;
+
+                    for (int g = 0; g < count; g++) {
+                        long dx = relX - genRelCoords[g][0];
+                        long dy = relY - genRelCoords[g][1];
+                        long dz = relZ - genRelCoords[g][2];
+                        long distSq = dx * dx + dy * dy + dz * dz;
+
+                        // Deterministischer Tie-Break: Strikt kleiner (<) sorgt dafür, dass bei gleicher Distanz
+                        // stets die kleinere Generator-ID (früherer Index) gewinnt.
+                        if (distSq < minDistanceSq) {
+                            minDistanceSq = distSq;
+                            bestId = (byte) (g + 1);
+                        }
+                    }
+
+                    cache.setShieldId(relX, relY, relZ, bestId);
+
+                    int gIdx = (bestId & 0xFF) - 1;
+                    if (gIdx >= 0 && gIdx < count) {
+                        assignedVoxels[gIdx]++;
+                        if (relX < minRelX[gIdx]) minRelX[gIdx] = relX;
+                        if (relX > maxRelX[gIdx]) maxRelX[gIdx] = relX;
+                        if (relY < minRelY[gIdx]) minRelY[gIdx] = relY;
+                        if (relY > maxRelY[gIdx]) maxRelY[gIdx] = relY;
+                        if (relZ < minRelZ[gIdx]) minRelZ[gIdx] = relZ;
+                        if (relZ > maxRelZ[gIdx]) maxRelZ[gIdx] = relZ;
+                    }
+                }
+            }
+        }
+
+        java.util.Map<Byte, com.peaceman.alpha.ship.domain.SectorCoverage> coverages = new java.util.HashMap<>();
+        for (int i = 0; i < count; i++) {
+            byte zId = (byte) (i + 1);
+            BlockPos genPos = generators.get(i);
+            BlockPos minB = assignedVoxels[i] > 0 ? new BlockPos(minRelX[i], minRelY[i], minRelZ[i]) : BlockPos.ZERO;
+            BlockPos maxB = assignedVoxels[i] > 0 ? new BlockPos(maxRelX[i], maxRelY[i], maxRelZ[i]) : BlockPos.ZERO;
+            coverages.put(zId, new com.peaceman.alpha.ship.domain.SectorCoverage(zId, genPos, assignedVoxels[i], totalVoxels, minB, maxB));
+        }
+
+        return coverages;
     }
 }

@@ -3,7 +3,6 @@ package com.peaceman.alpha.datagen;
 import com.peaceman.alpha.Alpha;
 import com.peaceman.alpha.datagen.provider.ModBlockStateProvider;
 import com.peaceman.alpha.datagen.provider.ModItemModelProvider;
-import com.peaceman.alpha.datagen.provider.ModLanguageProvider;
 import com.peaceman.alpha.datagen.provider.ModLootTableProvider;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.DataGenerator;

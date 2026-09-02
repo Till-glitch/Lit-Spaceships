@@ -2,6 +2,7 @@ package com.peaceman.alpha.client;
 
 import com.peaceman.alpha.Alpha;
 import com.peaceman.alpha.client.screen.SpaceshipReactorScreen;
+import com.peaceman.alpha.client.screen.SpaceshipShieldScreen;
 import com.peaceman.alpha.registry.ModMenuTypes;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -15,6 +16,7 @@ public class ClientModEvents {
     public static void registerScreens(RegisterMenuScreensEvent event) {
         event.register(ModMenuTypes.REACTOR_MENU.get(), SpaceshipReactorScreen::new);
         event.register(ModMenuTypes.HELM_MENU.get(), com.peaceman.alpha.client.screen.SpaceshipHelmConfigScreen::new);
+        event.register(ModMenuTypes.SHIELD_MENU.get(), SpaceshipShieldScreen::new);
     }
 
     @SubscribeEvent
