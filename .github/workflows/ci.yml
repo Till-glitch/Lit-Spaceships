@@ -2,11 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "1.21.1" ] # Hier den neuen Branch eintragen
   pull_request:
-    branches:
-      - main
+    branches: [ "1.21.1" ]
 
 jobs:
   build-and-test:
