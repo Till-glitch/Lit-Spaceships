@@ -62,7 +62,27 @@ An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21*
   * **Symmetric Bilingual Localization:** Automated DataGen via `ModEnglishLanguageProvider` (`en_us`) and `ModGermanLanguageProvider` (`de_de`) ensuring 100% dictionary completeness with positional string interpolation (`%1$s`, `%2$s`, `%1$.1f`) and typed styling via `ChatFormatting`.
 * **Automated Data Generation Pipeline (`com.peaceman.alpha.datagen`):**
   * **Client DataGen (View Layer):** `ModBlockStateProvider` for automated `cubeAll` models and mathematical Euler angle rotation mapping (`FACING` direction property) for laser split-models; `ModItemModelProvider` for parent references (`laser_base`) and 2D item models (`BACKFLIP_TOOL`); `ModEnglishLanguageProvider` and `ModGermanLanguageProvider` for synchronized bilingual dictionaries (`en_us`, `de_de`).
-  * **Server DataGen (Domain Layer):** `ModLootTableProvider` and `ModBlockLootTableProvider` with asynchronous `HolderLookup.Provider` resolving, self-drop declarations, and programmatic registry validation via `getKnownBlocks()`.
+  * **Server DataGen (Domain Layer):** `ModLootTableProvider` and `ModBlockLootTableProvider` with asynchronous `HolderLookup.Provider` resolving, self-drop declarations, and programmatic registry validation via `getKnownBlocks()`; `ModRecipeProvider` for compile-time verified recipe and advancement generation.
+* **Crafting Recipe Architecture, Progression Tiering & Material Economy:**
+  * **Tier 1 (Terrestrial Navigation & Chassis):** Confined to Overworld resources (Iron, Copper, Redstone, Slime, Quartz).
+    * `peaceman_alpha:example_block` (Hull Plating / Chassis, 16x): Copper ingots, iron ingots, smooth stone. Mass-producible structural building block to mitigate BFS volume costs.
+    * `peaceman_alpha:spaceship_helm` (Navigation Console): Iron casing, glass pane, redstone, compass, smooth stone.
+    * `peaceman_alpha:backflip_tool` (Kinetic Pilot Utility): Iron sword mounted on piston and slime cushion with redstone impulse triggering.
+  * **Tier 2 (Sub-Orbital Utility & Local Defense):** Requires Nether expedition (Blaze Rods, Quartz, Obsidian, Amethyst, Diamonds).
+    * `peaceman_alpha:spaceship_reactor` (1M FE Storage): Iron and quartz containment shell, blaze rod thermal regulators, diamond reinforcement, redstone battery core.
+    * `peaceman_alpha:spaceship_shield` (Voronoi Generator): Eye of Ender resonance emitter, amethyst refraction shards, obsidian blast dampeners, diamond block base.
+    * `peaceman_alpha:mining_laser` (25 FE/t Industrial Drill): Copper heat-sink casing, quartz optics, diamond cutter, dispenser mechanism.
+  * **Tier 3 (Naval-Grade Military Weaponry - Smithing Table Upgrades):**
+    * Advanced weapon conversion in the **Smithing Table** using the `minecraft:netherite_upgrade_smithing_template` from Nether Bastions, upgrading directly from the utility `peaceman_alpha:mining_laser`.
+    * `peaceman_alpha:heavy_beam` (50 FE/t Sustained Thermal Beam): Mining Laser + Netherite Ingot. High-durability military beam.
+    * `peaceman_alpha:pulse_laser` (250 FE/shot Kinetic Burst Cannon): Mining Laser + Echo Shard (Ancient City). Acoustic-kinetic plasma cannon.
+  * **Tier 4 (Capital Entity Kernel & Dimensional Warp Core):**
+    * `peaceman_alpha:spaceship_control` (Ship Kernel): Survival-balanced endgame core crafted from Diamond Blocks, Lodestones (coordinate anchoring), End Crystal (dimensional warp), Nether Star (computational brain), and Eyes of Ender.
+* **Just Enough Items (JEI) & Recipe Viewer Integration (`com.peaceman.alpha.integration.jei`):**
+  * **Automatic Recipe Indexing:** Full automatic discovery for all shaped crafting and smithing transform recipes.
+  * **Recipe Catalysts:** Spaceship Reactor and Spaceship Controller registered as official catalysts for Crafting and Smithing tabs.
+  * **Interactive Screen Click Areas:** Clickable power/priority gauge region in `SpaceshipReactorScreen` directly displaying valid crafting and smithing recipes.
+  * **Dynamic GUI Exclusion Zones:** Registered `IGuiContainerHandler` exclusion areas for widescreen custom terminals (`SpaceshipReactorScreen`, `SpaceshipShieldScreen`), preventing JEI item grids from overlapping telemetry and control readouts.
 * **Blockbench MCP Voxel Asset Pipeline:**
   * **Deterministic Asset Generation:** Full procedural asset generation via Blockbench Model Context Protocol (MCP) bridge.
   * **Standard Machine Blocks:** 16x16x16 Cube-Directional models (`spaceship_controller`, `spaceship_reactor`, `spaceship_shield`) with Sci-Fi Industrial palette and Ambient-Occlusion beveling.

@@ -19,6 +19,10 @@ group = mod_group_id
 
 repositories {
     // Add here additional repositories if required by some of the dependencies below.
+    maven {
+        name = "BlameJared Maven"
+        url = "https://maven.blamejared.com/"
+    }
 }
 
 base {
@@ -114,12 +118,9 @@ configurations {
 }
 
 dependencies {
-    // Example optional mod dependency with JEI
-    // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
-    // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
-    // compileOnly "mezz.jei:jei-${mc_version}-neoforge-api:${jei_version}"
-    // We add the full version to localRuntime, not runtimeOnly, so that we do not publish a dependency on it
-    // localRuntime "mezz.jei:jei-${mc_version}-neoforge:${jei_version}"
+    // JEI (Just Enough Items) API and runtime (Version for Minecraft 1.21 / NeoForge 21.0.x)
+    compileOnly "mezz.jei:jei-1.21-neoforge-api:19.8.2.99"
+    localRuntime "mezz.jei:jei-1.21-neoforge:19.8.2.99"
 
     // Example mod dependency using a mod jar from ./libs with a flat dir repository
     // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar
