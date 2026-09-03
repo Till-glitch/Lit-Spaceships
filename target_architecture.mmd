@@ -541,6 +541,22 @@ classDiagram
             +generate() void
             +getKnownBlocks() Iterable~Block~
         }
+
+        class ModRecipeProvider {
+            +buildRecipes(RecipeOutput output) void
+        }
+    }
+
+    %% ==========================================
+    %% INTEGRATION LAYER (JEI & ADDONS)
+    %% ==========================================
+    namespace Integration {
+        class ModJeiPlugin {
+            +getPluginUid() ResourceLocation
+            +registerRecipeCatalysts(IRecipeCatalystRegistration registration) void
+            +registerGuiHandlers(IGuiHandlerRegistration registration) void
+            +registerRecipes(IRecipeRegistration registration) void
+        }
     }
 
     %% Relationships
@@ -581,3 +597,6 @@ classDiagram
     ModEnglishLanguageProvider ..> ModI18n : references keys
     ModGermanLanguageProvider ..> ModI18n : references keys
     ModLootTableProvider ..> ModBlockLootTableProvider : creates
+    DataGenerators ..> ModRecipeProvider : instantiates server
+    ModJeiPlugin ..> SpaceshipReactorScreen : exclusion & click area
+    ModJeiPlugin ..> SpaceshipShieldScreen : exclusion area

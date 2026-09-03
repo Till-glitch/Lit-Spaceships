@@ -1,201 +1,269 @@
-Architekturbericht und Implementierungsplan: Lokalisierte Schildzonen (NeoForge 1.21)
-Die Evolution des Energieschild-Systems innerhalb des Spaceship-Frameworks erfordert einen Paradigmenwechsel von einer monolithischen, schiffsweiten Schildblase hin zu einer geometrisch tesselierten, bereichsspezifischen Schildarchitektur. Diese Transition ermöglicht es, das Zerstörungsmodell im Raumkampf massiv zu diversifizieren und die taktische Tiefe zu erhöhen. Anstatt dass ein Schiff als singulärer Energiepuffer agiert, werden nun lokale Schildgeneratoren implementiert, die autonome Forge Energy (FE) Puffer verwalten1. Das resultierende System erfordert eine präzise Raumaufteilung durch Voronoi-Tesselierung3, hocheffiziente -Lookups für den 3D-DDA-Raycaster (Amanatides & Woo) und eine extrem bandbreitenschonende Netzwerksynchronisation unter strikter Ausnutzung der neuen NeoForge 1.21 CustomPacketPayload-Architektur6.
-Der vorliegende Bericht spezifiziert die theoretischen Grundlagen, die mathematischen Modelle und die konkreten Implementierungsschritte in fünf iterativen Phasen. Jede Phase schließt mit einer strikt atomaren, testgetriebenen Task-Liste ab, die präzise für die Ausführung durch autonome Coding-Agenten strukturiert ist, um den strengen Model-View-Controller (MVC) Architekturvorgaben gerecht zu werden.
-Phase 1: Domain-Modellierung und Cache-Erweiterung
-Die grundlegende Herausforderung der ersten Phase besteht in der Speichereffizienz und der Wahrung des strikten MVC-Paradigmas. Bislang nutzte der VoxelGridCache ein eindimensionales BitSet, um das Vorhandensein von Schiffsvoxeln abzubilden1. Die Zuordnung jedes Voxels zu einem spezifischen Schildgenerator erfordert eine Erweiterung dieser Datenstruktur, ohne die Allokationskosten von Objektinstanzen im Hot-Path des Speichers in Kauf zu nehmen.
-Speichermodell und VoxelGridCache-Architektur
-Ein BitSet benötigt lediglich ein Bit pro Voxel. Um bis zu 64 Schildgeneratoren pro Schiff zu unterstützen, werden mindestens 6 Bit pro Voxel benötigt. Aus Gründen der Byte-Alignment-Effizienz in der Java Virtual Machine (JVM) und der Cache-Kohärenz der CPU wird die Implementierung eines parallelen eindimensionalen Arrays vom Typ byte[] festgelegt. Die Länge dieses Arrays entspricht exakt der maximalen Kapazität des existierenden BitSet, welche durch die Dimensionen der dreidimensionalen Bounding-Box des Schiffes determiniert wird2. Ein Wert von 0 im Array indiziert, dass der Voxel ungeschützt ist oder kein Rumpf-Voxel darstellt, während Werte von 1 bis 64 die ID des zuständigen Schildgenerators repräsentieren.
-Die Linearisierung der dreidimensionalen Koordinaten in den eindimensionalen Index erfolgt weiterhin über die etablierte mathematische Transformation, die garantierte Zugriffszeiten ermöglicht:
+Technical Specification and Economic Balancing: Crafting Recipe Architecture, Progression Tiering, and JEI Integration for NeoForge 1.21Game Balancing and Vanilla Material EconomyThe integration of high-throughput vehicle mechanics into Minecraft introduces severe systemic balance disruptions. A functional spaceship compiled via Breadth-First Search (BFS) capable of mobilizing up to $10{,}000\text{ blocks}$ with transactional cross-dimensional teleportation, localized Voronoi energy shielding, and high-yield offensive laser systems alters survival gameplay loops. Left unregulated, unmetered access to dynamic 6-axis flight, structural invulnerability, and rapid block vaporization eliminates the challenges of terrain traversal, environmental hazard mitigation, and dimensional resource logistics. Establishing an unyielding economic progression using vanilla materials ensures that capital ship construction remains a deliberate, mid-to-endgame pursuit rather than an early-game exploit.Progression Tiering Philosophy and Dimensional GatingTechnological capability in the mod is partitioned across a strict four-tier hierarchy. Progression moves linearly through dimensional gates, anchoring technical capabilities to distinct vanilla survival milestones.In Tier 1, designated as Terrestrial Navigation and Structural Framework, operations are confined entirely to Overworld resources such as iron, copper, redstone, slimeballs, and quartz. This tier permits players to frame hulls, establish aesthetic bridges, and construct kinetic utility tools without granting active flight capabilities.Tier 2 represents Sub-Orbital Utility and Local Defense, introducing baseline automation, localized hexagonal Voronoi barrier projection, and initial energy storage capped at $1{,}000{,}000\text{ FE}$. Progression into Tier 2 requires basic Nether colonization to acquire Nether Quartz, Blaze Rods, and Obsidian, complemented by crystalline Overworld elements including Amethyst Shards and Diamonds. At this level, laser technology is restricted to industrial mining drills operating at $25\text{ FE/t}$, designed explicitly to excavate minerals without inflicting entity damage.Tier 3 introduces Naval-Grade Offensive Weaponry, transitioning laser systems into continuous thermal beams consuming $50\text{ FE/t}$ and kinetic burst cannons drawing $250\text{ FE/shot}$. The resource requirements shift into deep Nether excavation for Netherite Scrap and Crying Obsidian, alongside Deep Dark exploration for Echo Shards. These demands prevent players from deploying long-range block vaporizers or hull-melting beams prior to mastering high-threat vanilla environments.Tier 4 represents Capital Entity Kernels and Dimensional Warping, centered entirely on the Spaceship Controller (peaceman_alpha:spaceship_control). This block functions as the computational brain executing the 6-axis BFS assembly algorithm and cross-dimensional transit calculations. Constructing this kernel demands materials from the outer End dimension and the defeat of the Wither boss, including Nether Stars, Lodestones, End Crystals, and Eyes of Ender.The economic cost of gating functional ship assembly behind the Nether and the End addresses both game pacing and computational load. Compiling a $10{,}000\text{ block}$ structure into an active entity imposes heavy strain on world generation streaming, chunk meshing, and server thread ticks. Requiring a Lodestone mandates netherite synthesis, tethering vessel navigation to physical coordinate anchors. Gating trans-dimensional warping behind Nether Stars and End Crystals guarantees that players conquer baseline dimensions before executing transactional spatial shifts.Material Progression MatrixThe distribution of vanilla materials across the technological tiers aligns functional capabilities with survival resource rarities:Component IdentifierFunctional DesignationProgression TierDimensional RequirementPrimary Vanilla IngredientsEconomic and Functional Purposepeaceman_alpha:example_blockHull Plating / ChassisTier 1OverworldIron Ingot, Copper Ingot, Smooth StoneMass-produced structural framework (yields 16 per craft) designed to mitigate BFS volume costs.peaceman_alpha:spaceship_helmSpaceship Helm ConsoleTier 1OverworldSmooth Stone, Compass, Redstone Dust, Glass Pane, Iron IngotCockpit console for orientation. Low material cost allows aesthetic vessel design prior to core commissioning.peaceman_alpha:backflip_toolBackflip ToolTier 1OverworldIron Sword, Piston, Slimeball, Redstone DustKinetic utility sword providing localized entity launching and emergency pilot repositioning.peaceman_alpha:mining_laserMining Laser TurretTier 2Nether (Entry)Diamond, Nether Quartz, Copper Block, Dispenser, Redstone BlockIndustrial drill turret ($25\text{ FE/t}$). Requires quartz focus lenses and diamond cutting heads; deals zero entity damage.peaceman_alpha:spaceship_reactorSpaceship Reactor ($1\text{M FE}$)Tier 2NetherBlaze Rod, Nether Quartz, Iron Block, Redstone Block, DiamondHigh-density thermal containment cell. Blaze rods function as thermal stabilizers and quartz provides dielectric insulation.peaceman_alpha:spaceship_shieldShield GeneratorTier 2NetherAmethyst Shard, Obsidian, Diamond Block, Eye of EnderProjects 3D Voronoi partitions. Amethyst provides harmonic frequency refraction, while obsidian dampens blast impulses.peaceman_alpha:pulse_laserPulse Laser CannonTier 3Deep Nether / Ancient CityNetherite Scrap, Echo Shard, Crying Obsidian, Redstone Block, ObserverBurst turret ($250\text{ FE/shot}$). Echo shards focus acoustic-kinetic force into plasma; observers govern pulse timing.peaceman_alpha:heavy_beamHeavy Laser BeamTier 3Netherite / Nether FortressNetherite Ingot, Magma Cream, Blaze Rod, Nether Quartz, Diamond BlockContinuous thermal beam ($50\text{ FE/t}$). Netherite frames prevent thermal melting under sustained electrical discharge.peaceman_alpha:spaceship_controlSpaceship ControllerTier 4The End / Wither BossNether Star, Lodestone, End Crystal, Eye of Ender, Netherite BlockComputational entity kernel and dimensional warp core. High cost prevents early-game deployment of capital hulls.Grid Layouts and Thematic JustificationsThematic consistency demands that crafting recipes reflect the mechanical operation of each ship component through logical material arrangements:Component IdentifierStation TypeGrid Row 1 (Left to Right)Grid Row 2 (Left to Right)Grid Row 3 (Left to Right)Output Yieldpeaceman_alpha:example_blockCrafting TableCopper Ingot, Iron Ingot, Copper IngotIron Ingot, Smooth Stone, Iron IngotCopper Ingot, Iron Ingot, Copper Ingot16peaceman_alpha:spaceship_helmCrafting TableIron Ingot, Glass Pane, Iron IngotRedstone Dust, Compass, Redstone DustSmooth Stone, Smooth Stone, Smooth Stone1peaceman_alpha:backflip_toolCrafting TableEmpty, Slimeball, Iron SwordEmpty, Piston, SlimeballRedstone Dust, Empty, Empty1peaceman_alpha:spaceship_reactorCrafting TableIron Block, Quartz Block, Iron BlockBlaze Rod, Redstone Block, Blaze RodDiamond, Iron Block, Diamond1peaceman_alpha:spaceship_shieldCrafting TableObsidian, Amethyst Shard, ObsidianAmethyst Shard, Eye of Ender, Amethyst ShardObsidian, Diamond Block, Obsidian1peaceman_alpha:mining_laserCrafting TableCopper Block, Nether Quartz, Copper BlockNether Quartz, Diamond, Nether QuartzIron Block, Dispenser, Redstone Block1peaceman_alpha:spaceship_controlCrafting TableNetherite Block, End Crystal, Netherite BlockEye of Ender, Nether Star, Eye of EnderLodestone, Netherite Block, Lodestone1peaceman_alpha:heavy_beamSmithing TableTemplate: Netherite UpgradeBase: Mining LaserAddition: Netherite Ingot1peaceman_alpha:pulse_laserSmithing TableTemplate: Netherite UpgradeBase: Mining LaserAddition: Echo Shard1The structural logic of these recipes reflects their mechanical function in the game world. Hull Plating (peaceman_alpha:example_block) yields sixteen blocks per synthesis because large BFS hulls require substantial volumes of building materials. Copper acts as an outer conductive sheath against electrical discharge, iron ingots provide structural rigidity, and smooth stone forms the compressed aggregate core.The Spaceship Helm (peaceman_alpha:spaceship_helm) arranges an iron casing around a central navigation compass, flanked by redstone bus wiring and an upper glass pane that represents a cockpit display console.The Backflip Tool (peaceman_alpha:backflip_tool) uses an iron sword as a directional blade, mounted over an angled mechanical piston and cushioned by elastic slimeballs to convert stored redstone impulse energy into physical entity propulsion.For energy and defense systems, the Spaceship Reactor (peaceman_alpha:spaceship_reactor) balances thermal generation and containment. Blaze rods regulate internal heating, a central redstone block provides the electrical reservoir, quartz blocks provide dielectric resistance, and dense iron and diamond platings absorb high-energy flux.The Shield Generator (peaceman_alpha:spaceship_shield) surrounds an Eye of Ender with four Amethyst Shards, utilizing crystalline lattice resonance to project hexagonal Voronoi geometries, while an obsidian perimeter and a diamond block base absorb impact forces.The Mining Laser (peaceman_alpha:mining_laser) uses a dispenser payload base, quartz focusing optics, and a central diamond cutter housed inside heat-radiating copper blocks.The Spaceship Controller (peaceman_alpha:spaceship_control) represents the pinnacle of technology in the mod. It places a Nether Star at the center to serve as the autonomous computational engine. Dual Lodestones anchor positional vectors in three-dimensional space, an End Crystal channels dimensional rift energy for warp jumps, and Netherite blocks contain the gravitational forces generated during entity conversion.Crafting Station Mechanics: Crafting Table versus Smithing Table UpgradesA critical design choice is whether combat laser turrets (heavy_beam, pulse_laser) should be crafted directly in a standard 3x3 Crafting Table or upgraded from the industrial mining_laser using a Smithing Table.Employing the Smithing Table via SmithingTransformRecipe provides clear mechanical and economic advantages. The primary architectural benefit is the preservation of Data Components. Upgrading an item in a Smithing Table automatically transfers custom data components—such as energy charge, internal temperature history, kill tallies, or optical lens configurations—from the base mining_laser to the upgraded combat turret. By contrast, standard crafting recipes overwrite component attachments unless specialized, dynamically bound recipe serializers are introduced.From a balance perspective, routing military laser systems through the Smithing Table prevents players from skipping early industrial steps. The player must first assemble the utility-focused mining_laser before modifying it into an offensive naval weapon.Furthermore, integrating the minecraft:netherite_upgrade_smithing_template introduces an ongoing resource sink. Players must spend seven diamonds and one netherrack block to duplicate the template for every turret upgrade, preventing rapid naval stockpiling.This upgrade path also improves gameplay pacing: transitioning an industrial mining tool into a high-powered beam weapon through netherite reinforcement feels like a natural technological evolution.Automated DataGen Implementation in NeoForge 1.21Modern data generation establishes compile-time validation for recipe JSON declarations, ensuring that advancements, ingredients, and recipe definitions remain synchronized. NeoForge 1.21 refactors several recipe generation systems, updating RecipeProvider, RecipeOutput, and advancement trigger registries.RecipeProvider Architecture in NeoForge 1.21In NeoForge 1.21, a custom recipe provider must extend net.minecraft.data.recipes.RecipeProvider. The provider constructor receives a PackOutput path instance and a CompletableFuture<HolderLookup.Provider> asynchronous registry lookup. Recipe declarations are defined by overriding the protected void buildRecipes(RecipeOutput output) method.The RecipeOutput interface manages generated data serialization. It takes the recipe name, recipe instance, and generated advancement criteria, outputting JSON definitions directly to data/<modid>/recipe/ and data/<modid>/advancement/recipes/. NeoForge extends RecipeOutput with #withConditions, allowing runtime data conditions to be attached directly to recipe outputs during generation.Recipe Builders and Idiomatic APIsShapedRecipeBuilder: Instantiated using ShapedRecipeBuilder.shaped(RecipeCategory, ItemLike, int). Patterns are defined through .pattern(String), where each string row must have a consistent character width. Symbols are mapped via .define(Character, ItemLike) or .define(Character, Ingredient). Unlocking criteria are added via .unlockedBy(String, Criterion<?>), and recipes are finalized by calling .save(RecipeOutput, ResourceLocation).SmithingTransformRecipeBuilder: Instantiated via SmithingTransformRecipeBuilder.smithing(Ingredient template, Ingredient base, Ingredient addition, RecipeCategory category, Item result). Unlocking criteria are attached using .unlocks(String, Criterion<?>), and the recipe is saved via .save(RecipeOutput, ResourceLocation).Advancement Criteria (unlockedBy): Data generation requires every recipe builder to specify at least one unlock criterion; omitting this triggers an IllegalStateException during compile-time tasks. The helper method RecipeProvider.has(ItemLike) generates an InventoryChangeTrigger.TriggerInstance. To ensure recipes appear logically in the player's recipe book, triggers should track key signature materials (for example, unlocking the spaceship reactor when Items.BLAZE_ROD enters the inventory).Production Implementation: ModRecipeProvider.javaJavapackage com.peaceman.alpha.datagen;
 
-Dieser Ansatz garantiert einen  Lese- und Schreibzugriff ohne den signifikanten Overhead des Autoboxings von primitiven Datentypen, der bei der Verwendung von Objekten wie Map<BlockPos, Byte> unweigerlich entstehen würde. Die Vermeidung von Objektallokationen verhindert proaktive Garbage-Collection-Spikes während der dynamischen Schiffsrekonstruktion im Gefecht.
-Datenstruktur-Kandidat
-Speicherkosten pro 100.000 Voxel
-Lookup-Zeitkomplexität
-GC-Impact bei Rekonstruktion
-Architektur-Bewertung
-Map<BlockPos, Byte>
-~3,2 MB (Node, Objekt, Boxed Byte)
- bis 
-Hoch (Tausende Node-Allokationen)
-Inakzeptabel für Echtzeit-Combat
-int[][][] (3D Array)
-~400 KB + Array-Header-Overhead
- (Pointer-Chasing)
-Mittel (Fragmentierung)
-Suboptimal durch Pointer-Indirektion
-byte[] (Flat 1D Array)
-100 KB (Zusammenhängend)
- (Direkter Speicherzugriff)
-Minimal (Eine Array-Allokation)
-Optimal für CPU-Cache-Lines
+import com.peaceman.alpha.registry.ModBlocks;
+import com.peaceman.alpha.registry.ModItems;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.data.PackOutput;
+import net.minecraft.data.recipes.RecipeCategory;
+import net.minecraft.data.recipes.RecipeOutput;
+import net.minecraft.data.recipes.RecipeProvider;
+import net.minecraft.data.recipes.ShapedRecipeBuilder;
+import net.minecraft.data.recipes.SmithingTransformRecipeBuilder;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
 
-Domain-Record: ShieldZone und State-Management
-Um den Status der Schildgeneratoren im ShipState autoritativ zu verwalten, wird ein neues, unveränderliches Data Transfer Object (DTO) in Form eines Java Records eingeführt. Der ShipState verliert sein globales isShieldActive-Flag und seine shieldCooldownUntil-Variable zugunsten einer statusführenden Map2. Die Datenhaltung stellt sicher, dass der Server-Tick eine deterministische und Thread-sichere Quelle der Wahrheit besitzt, die jederzeit synchronisationsfrei in das Netzwerk-Layer übergeben werden kann.
-Die Struktur der ShieldZone umfasst die ID, die absolute Position des Generators im globalen Raum, die aktuell gepufferte Energie, die maximale Kapazität sowie den abgeleiteten Kollaps-Status. Fällt die Energie auf null, wird der Cooldown-Timer ausgelöst, um ein Flackern des Schildes bei minimaler Energiezufuhr zu unterbinden.
-Entwicklungs-Tasks: Phase 1
-[ ] Implementiere den Record ShieldZone(byte id, BlockPos generatorPos, int currentEnergy, int maxEnergy, long cooldownUntil) im Package com.peaceman.alpha.ship.domain.
-[ ] Erstelle in ShieldZone eine Hilfsmethode boolean isCollapsed(long currentTick), die true zurückgibt, wenn `currentEnergy <= 0 |
-| currentTick < cooldownUntil`.
-[ ] Erweitere die Klasse VoxelGridCache um ein privates Feld byte[] shieldMap. Initialisiere dieses Array im Konstruktor mit der exakten Länge, die auch für die Dimensionierung des BitSet berechnet wird (width * height * depth).
-[ ] Implementiere in VoxelGridCache die Methode void setShieldId(int x, int y, int z, byte id). Nutze dieselbe Index-Berechnung wie bei isSet(...). Werfe eine IndexOutOfBoundsException, falls die übergebenen Koordinaten die Grid-Bounds überschreiten.
-[ ] Implementiere in VoxelGridCache die Methode byte getShieldId(int x, int y, int z). Diese liefert den Wert am berechneten eindimensionalen Index in  zurück.
-[ ] Refaktorisiere die Domain-Klasse ShipState: Entferne die obsoleten Felder boolean isShieldActive und long shieldCooldownUntil. Füge stattdessen das Feld Map<Byte, ShieldZone> shieldZones = new ConcurrentHashMap<>() hinzu.
-[ ] Aktualisiere alle Konstruktoren und die Methode getImmutableSnapshot() des ShipState, um sicherzustellen, dass die shieldZones-Map threadsicher tiefenkopiert wird (Deep Copy der Map, Records sind inhärent immutable).
-[ ] JUnit-Test VoxelGridCacheShieldTest: Instanziiere einen VoxelGridCache mit den Dimensionen 10x10x10. Setze an den Randkoordinaten (z. B. 0, 0, 0 und 9, 9, 9) spezifische Schild-IDs. Verifiziere mittels Assertions, dass getShieldId exakt diese Werte in  zurückgibt und bei nicht modifizierten Koordinaten 0 liefert. Teste negative Out-of-Bounds Eingaben auf korrekten Exception-Wurf.
-[ ] JUnit-Test ShipStateShieldZoneTest: Teste die isCollapsed-Logik der ShieldZone bei verschiedenen Energiewerten (0, 1, maxEnergy) und simulierten Server-Ticks (currentTick < cooldownUntil vs currentTick >= cooldownUntil), um die korrekte Zustandsableitung zu garantieren.
-Phase 2: Voronoi-Zuweisung im ShipScannerService
-Sobald die Datenstruktur etabliert ist, muss das System berechnen, welcher Rumpf-Voxel von welchem Schildgenerator geschützt wird. Diese räumliche Zuordnung wird durch ein dreidimensionales Voronoi-Diagramm realisiert3. Ein Voronoi-Diagramm partitioniert einen metrischen Raum basierend auf Distanzen zu einer definierten Menge von Knoten, in diesem Kontext den Schildgeneratoren. Jeder Punkt beziehungsweise Voxel des Raumes wird der Zelle des nächstgelegenen Generators zugeordnet, wodurch konvexe Schutzzonen entstehen4.
-Metriken und Algorithmus-Design
-In diskreten Voxel-Räumen stehen für die Berechnung von Tesselationen primär zwei Distanzmetriken zur Disposition: Die euklidische Distanz und die Manhattan-Distanz. Die Wahl der Metrik beeinflusst maßgeblich die Topologie der resultierenden Schildblasen.
-Metrik-Typ
-Mathematische Definition
-Geometrische Charakteristik
-Performance-Kosten
-Architektur-Eignung
-Manhattan-Distanz
+import java.util.concurrent.CompletableFuture;
 
-Rauten-/Diamantförmige Zellen
-Extrem niedrig (nur Addition)
-Gering, erzeugt unnatürliche Schildschnitte
-Euklidisch (Standard)
+public class ModRecipeProvider extends RecipeProvider {
 
-Sphärische, isotrope Zellen
-Hoch (Quadratwurzel-Berechnung)
-Schlecht für den Hot-Path des Scanners
-Euklidisch (Quadriert)
+    public ModRecipeProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider) {
+        super(output, lookupProvider);
+    }
 
-Identisch zu Standard-Euklidisch
-Sehr niedrig (Ganzzahlarithmetik)
-Optimal, physikalisch korrekte Tesselierung
+    @Override
+    protected void buildRecipes(RecipeOutput output) {
+        // =====================================================================
+        // TIER 1: LOW-TIER / NAVIGATION & HULL
+        // =====================================================================
 
-Die Architektur-Spezifikation fordert physikalisch glaubhafte, sphärische Schildblasen. Daher wird die quadrierte euklidische Distanz als Standardmetrik festgelegt. Durch den vollständigen Verzicht auf das Berechnen der Quadratwurzel bleibt die Performance extrem hoch, da der Algorithmus ausschließlich mit Ganzzahlarithmetik (Multiplikation und Addition) operiert.
-Der Two-Pass Scanning Algorithmus
-Die Integration dieser mathematischen Modelle erfolgt im ShipScannerService, der für die Identifikation zusammenhängender Schiffsstrukturen eine iterative Breitensuche (Breadth-First Search, BFS) durchführt1. Um die Tesselierung zu berechnen, wird der Scan-Vorgang in zwei isolierte Durchläufe unterteilt.
-Während des initialen Passes der BFS werden alle aufgefundenen Blöcke des Typs SpaceshipShieldBlock in einer temporären Struktur registriert. Jedem entdeckten Generator wird fortlaufend eine eindeutige ID von 1 bis  (maximal 64) zugewiesen. Diese Zuordnung wird initial in die shieldZones-Map des ShipState geschrieben. Nach Abschluss der BFS und der Festlegung der Bounding-Box für den VoxelGridCache beginnt der zweite Pass. Hierbei wird iterativ über jeden im BitSet gesetzten Hüllen-Voxel iteriert. Für jeden Voxel wird die quadrierte euklidische Distanz zu allen registrierten Schildgeneratoren berechnet. Die ID des Generators mit dem absoluten Minimum der Distanz wird am entsprechenden Index in das shieldMap-Array geschrieben.
-Die algorithmische Zeitkomplexität dieses iterativen Passes beläuft sich auf , wobei  die Anzahl der Rumpf-Voxel (bis zu 100.000 bei maximaler Schiffsgröße) und  die Anzahl der Generatoren (strikt limitiert auf 64) darstellt. Die Obergrenze der mathematischen Operationen liegt somit im Bereich von  Iterationen, was auf modernen Prozessoren im niedrigen einstelligen Millisekundenbereich abgewickelt wird und das kritische Tick-Budget von 10 Millisekunden pro Server-Tick nicht gefährdet2.
-Entwicklungs-Tasks: Phase 2
-[ ] Modifiziere den existierenden BFS-Algorithmus im ShipScannerService. Implementiere eine lokale Liste List<BlockPos> discoveredGenerators, die während des Scans die absoluten Positionen aller Blöcke vom Typ SpaceshipShieldBlock sammelt.
-[ ] Implementiere nach der Terminierung der BFS-Schleife eine Kapazitätsprüfung: Überprüfe, ob discoveredGenerators.size() > 64. Falls dies zutrifft, protokolliere eine Warnung (WARN) im Server-Logger und trunkiere die Liste auf die ersten 64 Elemente, um die Bitmasken-Limits der Netzwerk-Payloads einzuhalten.
-[ ] Iteriere über die verifizierte Generator-Liste. Instanziiere für jeden Generator eine neue ShieldZone (mit Startenergie 0, maximaler Energie basierend auf Config-Werten, z.B. 100.000 FE). Weise IDs von 1 bis N zu und speichere diese im ShipState.
-[ ] Implementiere den Algorithmus-Pass calculateVoronoiZones(VoxelGridCache cache, List<BlockPos> generators). Iteriere über den dreidimensionalen Raum der Bounding-Box. Überspringe Voxel, bei denen cache.isSet(x, y, z) false zurückgibt.
-[ ] Berechne in der innersten Schleife die quadrierte euklidische Distanz (dx*dx + dy*dy + dz*dz) des aktuellen Voxels zu allen aktiven Generatoren. Ermittle den Generator mit dem geringsten Distanzwert.
-[ ] Schreibe die gewonnene ID mittels cache.setShieldId(x, y, z, bestId) in den Cache. Implementiere einen deterministischen Tie-Break: Bei exakt gleicher Distanz zu zwei Generatoren gewinnt stets der Generator mit der niedrigeren ID.
-[ ] JUnit-Test VoronoiTessellationTest: Erstelle ein künstliches 30x10x10 Voxel-Grid im Speicher. Platziere zwei fiktive Schildgeneratoren an den relativen Koordinaten (5, 5, 5) und (25, 5, 5). Führe die Zuweisungsmethode isoliert aus. Verifiziere durch iteratives Asserting, dass alle Voxel bei x < 15 der ID 1 zugeordnet sind, alle Voxel bei x > 15 der ID 2, und Voxel bei exakt x == 15 konsistent durch den Tie-Break der ID 1 zugeschlagen werden.
-[ ] GameTest ShipScannerVoronoiGameTest: Nutze das NeoForge GameTest-Framework. Platziere in der Test-Dimension einen Schiffs-Controller, zwanzig Hüllenblöcke und drei Schildgeneratoren in einer asymmetrischen Formation. Triggere den strukturellen Scan-Prozess via Controller-Interaktion. Prüfe im Anschluss den erstellten ShipState, ob exakt drei ShieldZone-Einträge existieren und der VoxelGridCache an keiner Position eines Hüllenblocks den ID-Wert 0 aufweist.
-Phase 3: Energie-Topologie und Routing
-Mit den geometrisch zugewiesenen Schutzzonen muss die logische Versorgung dieser Sektoren durch den zentralen Reaktor gesichert werden. Das physikalische Modell des Mod-Ökosystems sieht vor, dass Schiffe Energie (Forge Energy oder FE) in zentralen Reaktor-Blöcken speichern1. Diese Energie muss in einer asynchronen, serverseitigen Tick-Logik an die dezentralen Schild-Puffer transferiert werden.
-Fair-Share Energie-Verteilung (Tick-Logik)
-In intensiven Gefechtssituationen werden zwangsläufig mehrere Schutzzonen simultan energetisch belastet. Wenn die maximale Abgabekapazität des Reaktors nicht ausreicht, um das aggregierte Defizit aller Schilde im selben Tick zu decken, muss ein deterministischer und spielmechanisch fairer Algorithmus die knappe Ressource verwalten. Ein naiver Round-Robin-Ansatz, bei dem die Energie strikt sequenziell verteilt wird (Generator A wird vollständig aufgeladen, bevor Generator B Energie erhält), würde zu asymmetrischen Schwachstellen führen. Bestimmte Sektoren blieben schutzlos, während andere überversorgt wären.
-Die Architektur erfordert daher eine proportionale Energieverteilung, die sich an der relativen Größe des Defizits jedes individuellen Generators orientiert. Sei  die vom zentralen Reaktor pro Server-Tick maximal bereitgestellte Transfermenge. Das Defizit  eines Generators  definiert sich als die Differenz aus Maximalkapazität und aktueller Energie: . Das kumulierte Defizit des gesamten Schiffes ist .
-Für den Fall, dass das Angebot die Nachfrage deckt oder übersteigt (), wird jedem Generator exakt sein Defizit  zugewiesen. Der Reaktor wird in der Folge exakt um  dekrementiert. Übersteigt die Nachfrage jedoch das Angebot (), tritt das System in einen Mangelzustand ein. Die Energie muss mathematisch proportional verteilt werden:
+        // Hull Plating / Chassis (Yield: 16)
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, ModBlocks.EXAMPLE_BLOCK.get(), 16)
+                .pattern("CIC")
+                .pattern("ISI")
+                .pattern("CIC")
+                .define('C', Items.COPPER_INGOT)
+                .define('I', Items.IRON_INGOT)
+                .define('S', Items.SMOOTH_STONE)
+                .unlockedBy("has_iron_ingot", has(Items.IRON_INGOT))
+                .unlockedBy("has_copper_ingot", has(Items.COPPER_INGOT))
+                .save(output, ResourceLocation.fromNamespaceAndPath("peaceman_alpha", "example_block_crafting"));
 
-Aufgrund der notwendigen Ganzzahldivision und der Abrundung durch den Floor-Operator verbleibt zwangsläufig ein Rundungsrest . Um Energieverlust zu verhindern und eine saubere Erhaltung der FE-Masse zu gewährleisten, wird dieser Restbetrag in einer sekundären Fallback-Schleife aufgelöst. Dieser minimale Betrag (stets kleiner als die Anzahl der Generatoren, maximal 63 FE) wird über einen sequenziellen Tröpfchenansatz (+1 FE) an die defizitären Generatoren verteilt.
-Routing-Szenario
-Reaktor-Angebot
-Defizit (Gen 1 / Gen 2)
-Zuweisung (Gen 1 / Gen 2)
-Fallback-Verhalten (Rest)
-Vollversorgung
-10.000 FE
-2.000 / 3.000 FE
-2.000 / 3.000 FE
-Nicht erforderlich (Rest 0)
-Proportional (Gerade)
-5.000 FE
-5.000 / 5.000 FE
-2.500 / 2.500 FE
-Nicht erforderlich (Rest 0)
-Proportional (Ungerade)
-5.000 FE
-8.000 / 2.000 FE
-4.000 / 1.000 FE
-Nicht erforderlich (Rest 0)
-Mathematischer Rest
-1.000 FE
-1.000 / 2.000 FE
-333 / 666 FE
-1 FE verbleibt  Gen 1 erhält +1 FE
+        // Spaceship Helm
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModBlocks.SPACESHIP_HELM.get())
+                .pattern("IGI")
+                .pattern("RCR")
+                .pattern("SSS")
+                .define('I', Items.IRON_INGOT)
+                .define('G', Items.GLASS_PANE)
+                .define('R', Items.REDSTONE)
+                .define('C', Items.COMPASS)
+                .define('S', Items.SMOOTH_STONE)
+                .unlockedBy("has_compass", has(Items.COMPASS))
+                .save(output, ResourceLocation.fromNamespaceAndPath("peaceman_alpha", "spaceship_helm_crafting"));
 
-Zusätzlich erfordert das System eine Restriktion für kollabierte Schilde. Fällt die Energie eines Schildes auf exakt 0, kollabiert der Sektor. Um das optische und physikalische Flackern (das Schild schaltet sich jeden Tick für einen Sekundenbruchteil wieder ein, um sofort wieder zerstört zu werden) zu unterdrücken, wird die Energiezufuhr während der Cooldown-Phase vollständig blockiert. Der Generator wird für die Dauer des Cooldowns (z. B. 100 Ticks / 5 Sekunden) aus der proportionalen Berechnung ausgeschlossen ().
-Entwicklungs-Tasks: Phase 3
-[ ] Erweitere den SpaceshipEnergyManager um die zentrale Routine distributeEnergyToShields(Level level, ShipState ship), welche im globalen ServerTickEvent.Post für jedes aktive Schiff aufgerufen wird.
-[ ] Berechne in dieser Routine die aggregierte, zur Verfügung stehende FE aus allen mit dem Schiff verbundenen SpaceshipReactorBlockEntity-Instanzen, gedeckelt durch die konfigurierte maximale Extraktionsrate pro Tick.
-[ ] Iteriere über alle Werte der ship.getShieldZones() Map. Überspringe Zonen, für die zone.isCollapsed(gameTime) zutrifft, um die Cooldown-Blockade durchzusetzen.
-[ ] Summiere das Gesamtdefizit D_total über alle aktiven und ladefähigen Zonen. Breche die Methode ab, falls D_total == 0.
-[ ] Implementiere den primären Zuweisungs-Loop: Berechne den Transferwert E_transfer = (int) (E_avail * (double) D_i / D_total) für jede Zone und ziehe die Summe dieser Transfers von einer verbleibenden Rest-Variable E_rest (initial gleich E_avail) ab.
-[ ] Implementiere den sekundären Fallback-Loop: Iteriere erneut über die Generatoren, deren Defizit noch nicht gedeckt ist, und addiere jeweils 1 FE, bis E_rest == 0.
-[ ] Aktualisiere die Record-Instanzen im ShipState über eine threadsichere Methode updateShieldZoneEnergy(byte id, int newEnergy). Aktualisiere parallel dazu die Reaktor-BlockEntities, um die abgeflossene Energie aus deren ForgeEnergy-Storage zu subtrahieren.
-[ ] JUnit-Test ProportionalEnergyRoutingTest: Mappe in einer Testumgebung drei Generatoren mit den Defiziten 1000, 2000 und 3000 FE. Stelle eine simulierte Reaktorleistung von 3000 FE zur Verfügung. Verifiziere per Assertion, dass die Zuweisungslogik die Energie exakt im Verhältnis 1:2:3 aufteilt (500, 1000 und 1500 FE).
-[ ] JUnit-Test EnergyRoutingRemainderTest: Teste Edge-Cases der Ganzzahlarithmetik. Simuliere eine ungerade Primzahl-Reaktorleistung (z.B. 3333 FE) und 7 Generatoren mit gleichem Defizit (jeweils 2000 FE). Verifiziere, dass nach Durchlauf beider Loops exakt 3333 FE vom fiktiven Reaktor abgezogen wurden und die Summe aller Schild-Inkremente exakt 3333 FE ergibt, ohne dass Energie verloren geht oder aus dem Nichts generiert wird.
-Phase 4: Combat-Lookup & Raycasting-Integration
-Die fundamentale Effizienz des Raumkampf-Systems in der vorliegenden NeoForge-Architektur basiert auf dem Einsatz des 3D Digital Differential Analyzer (3D-DDA) Algorithmus, originär entwickelt von Amanatides und Woo. Dieser ist im LaserCombatService und FastVoxelTraversal implementiert1. Der Algorithmus durchschreitet den Voxel-Raum entlang eines mathematischen Vektors (Raycast) deterministisch in  anstelle einer ineffizienten iterativen Überprüfung des gesamten Schiffs-Gitters in .
-Die Zuweisung lokalisierter Schildzonen erfordert einen präzisen, nicht-blockierenden Eingriff in die innerste Schleife dieser Sub-Routinen.
-Amanatides & Woo Modifikation und O(1) Lookup
-Der klassische DDA-Algorithmus berechnet in jedem Schritt die Distanz zur nächsten Voxel-Grenze () und rückt auf der Achse vor, die den geringsten -Wert aufweist. Sobald der Algorithmus evaluiert, dass der getroffene Voxel im eindimensionalen BitSet des VoxelGridCache gesetzt ist (also einen realen Schiffsblock darstellt), muss unmittelbar identifiziert werden, welcher Schild diesen spezifischen Block schützt.
-Durch die in Phase 1 implementierte Array-Struktur (byte[] shieldMap) erfolgt dieser Lookup in absoluter -Zeitkomplexität. Der Array-Index, der bereits für den Nachweis der Existenz im BitSet evaluiert wurde, wird exakt repliziert, um den assoziierten Schild-Identifikator auszulesen. Dies eliminiert jeglichen Bedarf für räumliche Suchen oder rechenintensive Map-Lookups während der DDA-Traversierung. Die Rückgabe der Traversierungsmethode, traditionell gekapselt in einem Optional<VoxelHit>, wird architektonisch um den Parameter byte shieldId erweitert.
-Im aufrufenden LaserCombatService wird dieses Hit-Resultat tiefgreifend ausgewertet. Die Kontrollfluss-Logik divergiert hierbei radikal vom obsoleten globalen Schild-System2.
-Der Service extrahiert die gelieferte shieldId und ruft die assoziierte ShieldZone aus dem zuständigen ShipState ab.
-Szenario A (Schutz intakt): Ist die identifizierte Schildzone aktiv (currentEnergy > 0 und kein Cooldown), wird der auftreffende Strahl kinetisch und energetisch absorbiert. Der Waffenschaden (z. B. 250 FE für den Pulse Laser) wird von der Zonen-Energie subtrahiert. Fällt die resultierende Energie auf 0 oder darunter, wird der Status des Sektors auf kollabiert gesetzt und der systemweite Cooldown-Timestamp für diese Zone evaluiert.
-Szenario B (Durchschlag/Penetration): Ist die Schildzone bereits kollabiert oder weist der getroffene Voxel keine Schutz-ID auf (ID == 0), passiert der energetische Strahl die virtuelle Schildbarriere ungehindert. Der Treffer wird algorithmisch an den physikalischen Block weitergereicht, was zur unmittelbaren Zerstörung (destroyBlock) oder progressiven Hüllenschmelze (destroyBlockProgress) führt.
-Diese Abfolge erzwingt eine strikte Transaktionssicherheit innerhalb des Server-Ticks. Um Race-Conditions durch simultane Salven diverser Waffensysteme (Turrets) auszuschließen, müssen Schild-Dekremente atomar evaluiert werden.
-Waffen-Typ
-Schild-Aktion (Zone Aktiv)
-Hüllen-Aktion (Zone Kollabiert)
-Mechanik
-Pulse Laser
--250 FE (Sofort)
-Zerstört 1 Block sofort
-Kinetischer Einzelschuss, keine Penetration bei Schild.
-Heavy Beam
--50 FE / Tick
-Progressiver Block-Abbau
-Kontinuierliches Schmelzen, abhängig von der Blockhärte.
-Mining Laser
--25 FE / Tick
-Progressiver Stein-Abbau
-Industrieller Strahl, ignoriert Schilde teilweise (Konfiguration).
+        // Backflip Tool
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.BACKFLIP_TOOL.get())
+                .pattern(" SB")
+                .pattern(" PS")
+                .pattern("R  ")
+                .define('B', Items.IRON_SWORD)
+                .define('S', Items.SLIME_BALL)
+                .define('P', Items.PISTON)
+                .define('R', Items.REDSTONE)
+                .unlockedBy("has_slime_ball", has(Items.SLIME_BALL))
+                .save(output, ResourceLocation.fromNamespaceAndPath("peaceman_alpha", "backflip_tool_crafting"));
 
-Entwicklungs-Tasks: Phase 4
-[ ] Erweitere den bestehenden Daten-Record VoxelHit innerhalb der Klasse FastVoxelTraversal um das numerische Feld byte shieldId.
-[ ] Modifiziere die zentrale Schleife der Methode traverse() in FastVoxelTraversal: Sobald der Ausdruck cache.isSet(x, y, z) den Wert true zurückliefert, evaluiere unmittelbar cache.getShieldId(x, y, z). Instanziiere den zurückgegebenen VoxelHit mit dieser ID.
-[ ] Überarbeite die Schadensauswertungsmethoden processPulseHit() und processContinuousHit() im LaserCombatService. Extrahiere die shieldId aus dem RaycastHitResult.
-[ ] Implementiere den transaktionssicheren Schadensverlauf: Rufe die ShieldZone über die ID aus dem ShipState ab. Überprüfe die Bedingung !zone.isCollapsed(gameTime). Trifft dies zu, subtrahiere den modellspezifischen Waffenschaden über den SpaceshipEnergyManager.
-[ ] Implementiere die Penetrations-Logik: Ergibt die Prüfung zone.isCollapsed(gameTime) == true oder ist die shieldId == 0, leite den Trefferaufruf (HitType.HULL) an die physikalische Hüllenzerstörungsroutine destroyShipHullBlock weiter.
-[ ] JUnit-Test FastVoxelTraversalShieldTest: Simuliere einen gerichteten Vektor durch ein artifizielles 5x5x5 Array. Modifiziere den Cache derart, dass der getroffene Block eine spezifische Schild-ID besitzt. Verifiziere, dass der Hit-Request des 3D-DDA-Algorithmus exakt die erwartete ID extrahiert und zurückgibt, ohne an Präzision der Traversierung zu verlieren.
-[ ] GameTest LaserCombatPiercingGameTest: Konstruiere eine Test-Arena mit einem autarken PulseLaserBlock, ausgerichtet auf eine Schiffs-Hülle. Manipuliere den generierenden SpaceshipShieldBlock im Status auf 0 FE (Kollaps erzwingen). Feuere die Laserkanone algorithmisch ab und belege durch Assertions, dass der anvisierte Hüllenblock physisch zerstört wird (Blocks.AIR), da das lokale Schildfeld nicht absorbiert hat. Konfiguriere und teste den logischen Gegenfall (Schild besitzt 10.000 FE), wobei der Block intakt verbleiben und die Schildenergie abnehmen muss.
-Phase 5: Rendering und Netzwerk-Synchronisation
-Die physikalische Fragmentierung der vormaligen Schutzblase in bis zu 64 voneinander unabhängige Sektoren impliziert eine profunde Überarbeitung des Netzwerk-Stacks und der clientseitigen Rendering-Pipeline. Fluktuiert der Status eines lokalen Schildgenerators zwischen Aktivität und Kollaps, muss diese Zustandsänderung hochperformant, latenzfrei und mit minimalem Bandbreitenfußabdruck an alle relevanten Clients distribuiert werden, die sich im Chunk-Tracking-Radius des Schiffes befinden.
-Bandbreitenoptimierung via StreamCodec und Bitmasking
-Das Framework der Modifikation nutzt die restriktiven Vorgaben der NeoForge 1.21 Architektur, welche deklarative CustomPacketPayload-Strukturen zwingend vorschreibt6. Um den binären Status (An/Aus) von maximal 64 Schildgeneratoren effizient zu aggregieren, wird ein primitiver 64-Bit Integer-Wert (long) als Bitmaske genutzt. In dieser Maske korrespondiert Bit  (wobei ) direkt mit dem Status der zugehörigen Schildzone. Ist das Bit auf 1 gesetzt, ist der Schild aktiv; bei 0 ist er kollabiert.
-Die Payload-Klasse (ShieldZoneStatePayload) umfasst in Konsequenz lediglich einen 16 Byte umfassenden Identifikator (UUID) für das anvisierte Schiff sowie die 8 Byte der Datenmaske (long). Inklusive des systemimmanenten Protokoll-Overheads beläuft sich das gesamte Netzwerkpaket auf weniger als 32 Byte. Diese drastische Reduzierung im Vergleich zu Listen-Strukturen oder unstrukturierten NBT-Tags (Named Binary Tag) verhindert Netzwerkstaus selbst in Massengefechten mit dutzenden simultan kollabierenden Schilden.
-Die Registrierung erfolgt über die NeoForge API im RegisterPayloadHandlersEvent, wobei ein zustandsfreier StreamCodec über die Composite-Methoden definiert wird, welcher die Serialisierung direkt in den FriendlyByteBuf der Netzwerk-Socket schreibt6.
-Clientseitige Rendering-Pipeline (Shader vs. VBO-Splitting)
-Auf der Client-Seite existierten historische Ansätze, die das gesamte hexagonale Schild-Mesh als ein statisches Vertex Buffer Object (VBO) konstruierten1. Um lokale Zerstörungen optisch darzustellen, standen der Architektur zwei diametrale Lösungswege offen:
-Rendering-Ansatz
-Mechanismus
-VRAM-Auswirkungen
-CPU-Belastung
-Architektur-Bewertung
-VBO-Splitting
-Zerschneiden des Meshes bei Ausfall, Upload neuer Sub-VBOs
-Hoch (Fragmentierung durch Neuzuweisung)
-Sehr hoch (Mesh-Rekonstruktion auf Render-Thread)
-Verursacht Stuttering (Frametime-Spikes)
-Fragment-Shader Discard
-Einheitliches VBO bleibt intakt. Shader blendet Segmente via Bitmaske aus.
-Null (Keine Änderung am Buffer)
-Null (GPU übernimmt die Auswertung)
-Optimal (Modernes OpenGL 3.3+ Paradigma)
+        // =====================================================================
+        // TIER 2: MID-TIER / MINING & LOCAL DEFENSE
+        // =====================================================================
 
-Um mikroskopische Einbrüche der Bildwiederholungsrate (Stuttering) bei Gefechten strikt zu unterbinden, schreibt die Architektur den Fragment-Shader-Ansatz verbindlich vor. Die Vertex-Deklaration des VBOs wird modifiziert, sodass jeder Eckpunkt des Hexagon-Meshes seine assoziierte Schild-ID als Vertex-Attribut mitführt. Der ClientShipManager empfängt die synchronisierte Bitmaske und hält sie im RAM bereit. Während der Render-Schleife wird dieser long-Wert (bei Restriktionen älterer OpenGL-Versionen aufgeteilt in zwei 32-Bit int Uniforms) direkt an den GLSL-Shader übergeben. Der Fragment-Shader liest für jedes Pixel das ID-Attribut aus, vergleicht es bitweise mit der Uniform-Maske und bricht die Render-Operation (discard; in GLSL) ab, sofern das korrespondierende Bit auf 0 steht.
-Entwicklungs-Tasks: Phase 5
-[ ] Erstelle den Java Record ShieldZoneStatePayload(UUID shipId, long activeMask) im logischen Namespace com.peaceman.alpha.network.
-[ ] Implementiere das CustomPacketPayload Interface. Definiere den statischen Identifikator: public static final CustomPacketPayload.Type<ShieldZoneStatePayload> TYPE = new CustomPacketPayload.Type<>(Identifier.of("peaceman_alpha", "shield_zone_state"))6.
-[ ] Erstelle den StreamCodec unter Verwendung der NeoForge Composite-API: StreamCodec.composite(UUIDUtil.STREAM_CODEC, ShieldZoneStatePayload::shipId, ByteBufCodecs.VARLONG, ShieldZoneStatePayload::activeMask, ShieldZoneStatePayload::new).
-[ ] Registriere diesen Codec in der Payload-Registry-Methode, die an das RegisterPayloadHandlersEvent gebunden ist8.
-[ ] Implementiere im ServerShipManager eine Überprüfungslogik, die bei einem detektierten Zustandswechsel eines Schildes (isCollapsed Boolean flippt) die 64-Bit-Maske neu berechnet (mask |= (1L << (id - 1)) für Aktivierung, mask &= ~(1L << (id - 1)) für Deaktivierung).
-[ ] Sende das Payload mithilfe der PacketDistributor.sendToPlayersTrackingChunk(...) Architektur an sämtliche relevanten Clients, die den Schiffs-Chunk betrachten7.
-[ ] Implementiere die clientseitige Verarbeitung im ClientPayloadHandler. Sorge zwingend dafür, dass die Manipulation der Daten via context.enqueueWork() an den Main-Thread (Render-Thread) delegiert wird, um Concurrency-Fehler zu vermeiden8. Aktualisiere die long activeMask im jeweiligen ClientShipState.
-[ ] Modifiziere den ClientShipState Mesh-Builder: Adaptiere das Vertex-Format (VertexFormat), um ein dediziertes Float- oder Integer-Attribut (die shieldId, evaluiert durch den VoxelGridCache) für jeden Vertex in das VBO zu schreiben.
-[ ] Aktualisiere den dedizierten GLSL-Shader (z. B. rendertype_spaceship_shield.fsh und .vsh). Deklariere die benötigten Uniform-Variablen für die Maske. Implementiere die logische Evaluierung: if ((activeMask & (1 << localId)) == 0) discard;, um die visuelle Präsentation kollabierter Sektoren hart auszublenden.
-[ ] JUnit-Test ShieldZonePayloadSerializationTest: Instanziiere ein künstliches ShieldZoneStatePayload mit der alternierenden Bitmaske 0b10101010L. Serialisiere das Objekt vollständig in einen FriendlyByteBuf der NeoForge-API. Deserialisiere den Puffer anschließend und verifiziere durch Assertions, dass sowohl die UUID als auch die 
+        // Spaceship Reactor (1,000,000 FE Storage)
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModBlocks.SPACESHIP_REACTOR.get())
+                .pattern("IQI")
+                .pattern("BRB")
+                .pattern("DID")
+                .define('I', Items.IRON_BLOCK)
+                .define('Q', Items.QUARTZ_BLOCK)
+                .define('B', Items.BLAZE_ROD)
+                .define('R', Items.REDSTONE_BLOCK)
+                .define('D', Items.DIAMOND)
+                .unlockedBy("has_blaze_rod", has(Items.BLAZE_ROD))
+                .save(output, ResourceLocation.fromNamespaceAndPath("peaceman_alpha", "spaceship_reactor_crafting"));
+
+        // Shield Generator
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModBlocks.SPACESHIP_SHIELD.get())
+                .pattern("OAO")
+                .pattern("AEA")
+                .pattern("ODO")
+                .define('O', Items.OBSIDIAN)
+                .define('A', Items.AMETHYST_SHARD)
+                .define('E', Items.ENDER_EYE)
+                .define('D', Items.DIAMOND_BLOCK)
+                .unlockedBy("has_amethyst_shard", has(Items.AMETHYST_SHARD))
+                .unlockedBy("has_ender_eye", has(Items.ENDER_EYE))
+                .save(output, ResourceLocation.fromNamespaceAndPath("peaceman_alpha", "spaceship_shield_crafting"));
+
+        // Mining Laser Turret
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModBlocks.MINING_LASER.get())
+                .pattern("CQC")
+                .pattern("QDQ")
+                .pattern("IBR")
+                .define('C', Items.COPPER_BLOCK)
+                .define('Q', Items.QUARTZ)
+                .define('D', Items.DIAMOND)
+                .define('I', Items.IRON_BLOCK)
+                .define('B', Items.DISPENSER)
+                .define('R', Items.REDSTONE_BLOCK)
+                .unlockedBy("has_diamond", has(Items.DIAMOND))
+                .save(output, ResourceLocation.fromNamespaceAndPath("peaceman_alpha", "mining_laser_crafting"));
+
+        // =====================================================================
+        // TIER 3: HIGH-TIER / COMBAT WEAPONS (SMITHING TRANSFORMATION)
+        // =====================================================================
+
+        // Heavy Laser Beam (Upgraded from Mining Laser + Netherite Ingot)
+        SmithingTransformRecipeBuilder.smithing(
+                Ingredient.of(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE),
+                Ingredient.of(ModBlocks.MINING_LASER.get()),
+                Ingredient.of(Items.NETHERITE_INGOT),
+                RecipeCategory.COMBAT,
+                ModBlocks.HEAVY_BEAM.get().asItem()
+        )
+        .unlocks("has_netherite_ingot", has(Items.NETHERITE_INGOT))
+        .save(output, ResourceLocation.fromNamespaceAndPath("peaceman_alpha", "heavy_beam_smithing"));
+
+        // Pulse Laser Cannon (Upgraded from Mining Laser + Echo Shard)
+        SmithingTransformRecipeBuilder.smithing(
+                Ingredient.of(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE),
+                Ingredient.of(ModBlocks.MINING_LASER.get()),
+                Ingredient.of(Items.ECHO_SHARD),
+                RecipeCategory.COMBAT,
+                ModBlocks.PULSE_LASER.get().asItem()
+        )
+        .unlocks("has_echo_shard", has(Items.ECHO_SHARD))
+        .save(output, ResourceLocation.fromNamespaceAndPath("peaceman_alpha", "pulse_laser_smithing"));
+
+        // =====================================================================
+        // TIER 4: ENDGAME-TIER / SHIP CORE & WARP DRIVE
+        // =====================================================================
+
+        // Spaceship Controller (BFS Assembly Kernel & Warp Core)
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModBlocks.SPACESHIP_CONTROL.get())
+                .pattern("NEN")
+                .pattern("YSY")
+                .pattern("LNL")
+                .define('N', Items.NETHERITE_BLOCK)
+                .define('E', Items.END_CRYSTAL)
+                .define('Y', Items.ENDER_EYE)
+                .define('S', Items.NETHER_STAR)
+                .define('L', Items.LODESTONE)
+                .unlockedBy("has_nether_star", has(Items.NETHER_STAR))
+                .unlockedBy("has_lodestone", has(Items.LODESTONE))
+                .save(output, ResourceLocation.fromNamespaceAndPath("peaceman_alpha", "spaceship_control_crafting"));
+    }
+}
+Pipeline Registration: DataGenerators.javaThe recipe provider must be bound to the mod event bus within GatherDataEvent. Because recipe and advancement generation are server-side assets, registration must be guarded by event.includeServer() to prevent execution during client-only data runs.Javapackage com.peaceman.alpha.datagen;
+
+import net.minecraft.core.HolderLookup;
+import net.minecraft.data.DataGenerator;
+import net.minecraft.data.PackOutput;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.data.event.GatherDataEvent;
+
+import java.util.concurrent.CompletableFuture;
+
+@EventBusSubscriber(modid = "peaceman_alpha", bus = EventBusSubscriber.Bus.MOD)
+public class DataGenerators {
+
+    @SubscribeEvent
+    public static void gatherData(GatherDataEvent event) {
+        DataGenerator generator = event.getGenerator();
+        PackOutput packOutput = generator.getPackOutput();
+        CompletableFuture<HolderLookup.Provider> lookupProvider = event.getLookupProvider();
+
+        // Server-side Data Providers (Recipes, Advancements, Loot Tables, Tags)
+        if (event.includeServer()) {
+            generator.addProvider(
+                true, 
+                new ModRecipeProvider(packOutput, lookupProvider)
+            );
+        }
+
+        // Client-side Data Providers (BlockStates, ItemModels, Language)
+        if (event.includeClient()) {
+            // Existing client providers execute here...
+        }
+    }
+}
+Just Enough Items (JEI) and Recipe Viewer CompatibilityVanilla Recipe Discovery and Gradle ConfigurationIn NeoForge 1.21, Just Enough Items indexes recipes directly from the logical server's synchronized RecipeManager and RecipePropertySet data streams. Standard recipes generated via ModRecipeProvider—including minecraft:crafting_shaped, minecraft:crafting_shapeless, and minecraft:smithing_transform—are indexed, categorized, and made searchable automatically without requiring custom mod-side Java code.To compile against the JEI API and test recipes in local development environments, add Jared's Maven repository and the corresponding NeoForge dependencies to build.gradle:Groovyrepositories {
+    maven {
+        name = "BlameJared Maven"
+        url = "https://maven.blamejared.com/"
+    }
+}
+
+dependencies {
+    // Compile against the JEI API without packaging it inside the mod jar
+    compileOnly("mezz.jei:jei-1.21.1-neoforge-api:19.21.1.304")
+
+    // Run JEI in local development client runs
+    runtimeOnly("mezz.jei:jei-1.21.1-neoforge:19.21.1.304")
+}
+Dedicated JEI Plugin ScenariosA dedicated JEI plugin implementing mezz.jei.api.IModPlugin annotated with @mezz.jei.api.JeiPlugin is required in specific circumstances:Integration TargetCore JEI Interface / MethodPrimary PurposeNecessity for peaceman_alphaScreen GUI HandlersIGuiHandlerRegistration.addGuiContainerHandler()Defines GUI exclusion areas to prevent JEI item overlays from covering custom ship diagnostic readouts.Required for custom non-standard terminal screens.Screen Click AreasIGuiHandlerRegistration.addRecipeClickArea()Binds screen coordinates (e.g., energy gauge icons) to display recipe categories when clicked.Recommended for the Reactor and Shield GUI screens.Quick Recipe TransferIRecipeTransferRegistration.addRecipeTransferHandler()Enables the [+] button to move items from the player inventory into custom container slots.Required if the Helm or Reactor accepts slotted recipe inputs.Custom MechanicsIRecipeCategoryRegistration.addRecipeCategories()Renders non-vanilla processes such as shipyard frame fabrication or nuclear fuel transmutation.Required for custom non-crafting table systems.Recipe CatalystsIRecipeCatalystRegistration.addRecipeCatalyst()Binds physical blocks (e.g., ModBlocks.SPACESHIP_REACTOR) to custom JEI recipe tabs.Recommended to establish interactive workstation links.Standard screens like SpaceshipControlScreen, SpaceshipReactorScreen, and SpaceshipShieldScreen require custom GUI handlers if their UI panels extend beyond standard vanilla inventory dimensions. Without registered exclusion zones, JEI's searchable item grid can overlap ship status displays, warp coordinates, and Voronoi shield telemetry readouts.Non-crafting-table mechanics—such as reactor fuel transmutation or shipyard manufacturing—require dedicated processing categories. Implementing these systems involves creating an IRecipeCategory<T> to define category dimensions, labels, icons, and slot positions, while IRecipeRegistration.addRecipes() registers recipe instances parsed from server data packs.Reference Implementation: ModJeiPlugin.javaJavapackage com.peaceman.alpha.integration.jei;
+
+import com.peaceman.alpha.client.gui.SpaceshipReactorScreen;
+import com.peaceman.alpha.registry.ModBlocks;
+import mezz.jei.api.IModPlugin;
+import mezz.jei.api.JeiPlugin;
+import mezz.jei.api.constants.RecipeTypes;
+import mezz.jei.api.registration.IGuiHandlerRegistration;
+import mezz.jei.api.registration.IRecipeCatalystRegistration;
+import mezz.jei.api.registration.IRecipeRegistration;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+
+@JeiPlugin
+public class ModJeiPlugin implements IModPlugin {
+
+    private static final ResourceLocation PLUGIN_ID = 
+            ResourceLocation.fromNamespaceAndPath("peaceman_alpha", "jei_plugin");
+
+    @Override
+    public ResourceLocation getPluginUid() {
+        return PLUGIN_ID;
+    }
+
+    @Override
+    public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
+        // Register the Reactor as a catalyst for Crafting and Smithing tabs
+        registration.addRecipeCatalyst(
+                new ItemStack(ModBlocks.SPACESHIP_REACTOR.get()), 
+                RecipeTypes.CRAFTING, 
+                RecipeTypes.SMITHING
+        );
+    }
+
+    @Override
+    public void registerGuiHandlers(IGuiHandlerRegistration registration) {
+        // Define a clickable area over the reactor UI's power gauge (X:78, Y:35, W:20, H:16)
+        // to open smithing upgrade recipes
+        registration.addRecipeClickArea(
+                SpaceshipReactorScreen.class, 
+                78, 35, 20, 16, 
+                RecipeTypes.SMITHING
+        );
+    }
+
+    @Override
+    public void registerRecipes(IRecipeRegistration registration) {
+        // Programmatic recipe registration for custom processing machines goes here
+    }
+}
+Data Components in Minecraft 1.21 RecipesMinecraft 1.21 replaces legacy CompoundTag NBT systems with typed Data Components managed via DataComponentType<?> and DataComponentMap. This update changes recipe serialization, ingredient matching, and recipe viewer integration.Standard vanilla Ingredient classes check only base item definitions and tags, ignoring attached components. To require an item with specific component states—such as a battery cell with pre-charged energy or a pre-calibrated laser focus lens—recipes must use NeoForge's custom DataComponentIngredient. In recipe providers, this is constructed using DataComponentIngredient.of(boolean strict, ItemStack stack).Setting strict to false verifies that an item possesses the specified target components while allowing other non-conflicting components to remain present. Setting strict to true requires an exact match across all data components. In serialized JSON files, this generates the neoforge:components ingredient type:JSON{
+  "type": "neoforge:components",
+  "items": "peaceman_alpha:energy_cell",
+  "strict": false,
+  "components": {
+    "peaceman_alpha:energy_stored": 250000
+  }
+}
+Standard recipe builders output default, unmodified item states by default. To generate recipes that output items with pre-configured data components, such as a fully charged reactor or a pre-linked helm, the builder must accept an ItemStack containing a DataComponentPatch. The serialized JSON stores these in the "components" mapping within the "result" object:JSON"result": {
+  "count": 1,
+  "id": "peaceman_alpha:spaceship_reactor",
+  "components": {
+    "peaceman_alpha:energy_stored": 1000000
+  }
+}
+JEI inspects the DataComponentMap of output ItemStack instances, rendering dynamic tooltips, durability bars, energy capacity indicators, and custom component-based styling. For DataComponentIngredient inputs, JEI cycles through the accepted item stacks and displays their component information, allowing players to verify required charge states or lens tunings before crafting.ConclusionsBalancing high-tier vehicle systems requires coordinating resource gating, crafting station mechanics, and data-driven infrastructure. Requiring Nether and End resources for structural controllers, Voronoi energy shields, and naval laser turrets prevents players from bypassing survival milestones, ensuring that capital ship construction integrates smoothly into late-game survival progression.The DataGen pipeline automates recipe creation and maintenance. Extending RecipeProvider within NeoForge 1.21 establishes compile-time safety and generates the required advancement triggers automatically, eliminating manual JSON authoring.Using SmithingTransformRecipeBuilder to upgrade mining lasers into combat turrets reinforces industrial progression while preserving attached Data Components across transformations.Finally, building on vanilla recipe systems allows JEI to index all shaped, shapeless, and smithing recipes automatically. A lightweight IModPlugin then handles custom UI layouts, click areas, and modern 1.21 Data Component inputs. This unified architecture provides a balanced, technically sound foundation for spaceship combat and progression in NeoForge 1.21.
