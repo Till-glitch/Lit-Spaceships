@@ -2,7 +2,6 @@ package com.lit.spaceships.ship.combat;
 
 import com.lit.spaceships.ship.combat.aim.AimAngles;
 import com.lit.spaceships.ship.combat.aim.AimTransformMath;
-import com.lit.spaceships.ship.combat.aim.FreelookAimStrategy;
 import com.lit.spaceships.ship.combat.aim.GimbalLimits;
 import com.lit.spaceships.ship.domain.ShipState;
 import net.minecraft.core.BlockPos;

@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 // Diese Annotation meldet die Klasse automatisch am globalen Spiel-EventBus an
-@EventBusSubscriber(modid = LitSpaceships.MODID, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = LitSpaceships.MODID)
 public class ShieldTestHandler {
 
     // Hier merken wir uns temporär das Zentrum unseres Schildes

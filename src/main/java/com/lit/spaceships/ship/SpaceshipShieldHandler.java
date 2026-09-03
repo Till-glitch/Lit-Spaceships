@@ -34,7 +34,7 @@ import java.util.UUID;
  * - Schadensabfang bei Explosionen & Energieverbrauch
  * - Erweiterbar für variable Schildradien, Farbwerte und Generatortypen
  */
-@EventBusSubscriber(modid = LitSpaceships.MODID, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = LitSpaceships.MODID)
 public class SpaceshipShieldHandler {
 
     public static final int ENERGY_COST_PER_BLOCK = 50;

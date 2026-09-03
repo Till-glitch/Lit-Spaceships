@@ -14,7 +14,7 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
  * Verhindert VBO Zombie-Speicher im VRAM, indem bei jedem Dimensionswechsel
  * der VRAM-Cache geleert wird und Schiffsdaten für die neue Dimension frisch angefordert werden.
  */
-@EventBusSubscriber(modid = LitSpaceships.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+@EventBusSubscriber(modid = LitSpaceships.MODID, value = Dist.CLIENT)
 public class ClientDimensionLifecycleObserver {
 
     private static net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> lastClientDimension = null;

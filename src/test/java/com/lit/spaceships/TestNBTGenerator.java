@@ -1,11 +1,9 @@
 package com.lit.spaceships;
 
 import net.minecraft.SharedConstants;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.server.Bootstrap;
 
 import java.io.File;
 import java.io.FileOutputStream;

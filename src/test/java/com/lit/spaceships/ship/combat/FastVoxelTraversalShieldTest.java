@@ -77,18 +77,6 @@ class FastVoxelTraversalShieldTest {
         // Voxel is at (2, 2, 2).
         BlockPos genPos = new BlockPos(0, 2, 2);
 
-        FastVoxelTraversal.VoxelValidator validator = (id, x, y, z) -> {
-            if (id != 1) return false;
-            double toHitX = x - genPos.getX();
-            double toHitY = y - genPos.getY();
-            double toHitZ = z - genPos.getZ();
-            
-            // Vector from generator to hit is (2, 0, 0)
-            // If ray is moving in +X direction, it hits from inside. (Dot > 0)
-            // If ray is moving in -X direction, it hits from outside. (Dot < 0)
-            return (1.0 * toHitX + 0.0 * toHitY + 0.0 * toHitZ) <= 0; // Using a dummy dir (1,0,0) for inside, (-1,0,0) for outside
-        };
-
         // 1. Schuss von INNEN (Strahl bewegt sich nach +X, weg vom Generator)
         Vec3 originInside = new Vec3(1.0, 2.5, 2.5);
         Vec3 dirInside = new Vec3(1.0, 0.0, 0.0);

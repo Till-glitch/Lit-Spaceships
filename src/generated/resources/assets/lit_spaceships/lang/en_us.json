@@ -9,7 +9,7 @@
   "block.lit_spaceships.spaceship_reactor": "Spaceship Reactor",
   "block.lit_spaceships.spaceship_shield": "Shield Generator",
   "item.lit_spaceships.backflip_tool": "Klasingscher Degen",
-  "itemGroup.lit_spaceships.main": "Lit Spaceships",
+  "itemGroup.lit_spaceships.main": "Lit Spaceships - Spaceships",
   "key.categories.lit_spaceships": "Lit Spaceships Controls",
   "key.lit_spaceships.exit_helm": "Exit Helm Console",
   "key.lit_spaceships.fire_all": "Fire All Ship Weapons",

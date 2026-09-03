@@ -30,7 +30,7 @@ import java.util.UUID;
  * Rendert volumetrisch leuchtende Billboard-Strahlen mit additiver
  * Farbüberlagerung.
  */
-@EventBusSubscriber(modid = LitSpaceships.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+@EventBusSubscriber(modid = LitSpaceships.MODID, value = Dist.CLIENT)
 public class LaserBeamRenderer {
 
     public static void addPulseBeam(UUID shooterShipId, Vec3 startPos, Vec3 endPos, LaserWeaponTier tier) {

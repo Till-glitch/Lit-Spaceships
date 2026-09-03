@@ -8,7 +8,6 @@ import com.lit.spaceships.client.screen.SpaceshipShieldScreen;
 import com.lit.spaceships.datagen.provider.ModRecipeProvider;
 import com.lit.spaceships.integration.jei.ModJeiPlugin;
 import mezz.jei.api.constants.RecipeTypes;
-import mezz.jei.api.gui.handlers.IGuiContainerHandler;
 import mezz.jei.api.registration.IGuiHandlerRegistration;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import net.minecraft.data.PackOutput;

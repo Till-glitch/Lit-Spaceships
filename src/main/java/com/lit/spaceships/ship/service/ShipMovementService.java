@@ -43,7 +43,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * Service für translatorische Schiffsbewegungen mit Time-Slicing Tick-Budget (max. 10ms pro Tick),
  * atomarem Pre-Collision-Check (Intent-Lock-Execute) und Ticket-Management (Schritt 5).
  */
-@EventBusSubscriber(modid = LitSpaceships.MODID, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = LitSpaceships.MODID)
 public class ShipMovementService {
 
     public static final long TICK_BUDGET_NANOS = 10_000_000L; // 10 Millisekunden Budget pro Server-Tick

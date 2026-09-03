@@ -15,7 +15,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
 import java.util.UUID;
 
-@EventBusSubscriber(modid = LitSpaceships.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+@EventBusSubscriber(modid = LitSpaceships.MODID, value = Dist.CLIENT)
 public class SpaceshipClientInputHandler {
 
     public static UUID activeHelmShipId = null;

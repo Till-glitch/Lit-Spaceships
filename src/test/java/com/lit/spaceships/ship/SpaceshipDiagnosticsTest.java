@@ -20,7 +20,6 @@ class SpaceshipDiagnosticsTest {
     @Test
     @DisplayName("Berechnung von Bounding-Box-Ausdehnung und Schiffsmasse aus Relativ-Blöcken")
     void testStructuralDimensionsAndMass() {
-        BlockPos anchor = new BlockPos(100, 64, 100);
         Set<BlockPos> relativeBlocks = new HashSet<>();
         
         // Simuliere ein Schiff mit 15m x 5m x 20m Ausdehnung

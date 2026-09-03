@@ -24,7 +24,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Verwaltet den clientseitigen Lebenszyklus aller sichtbaren Schiffe.
  * Dient als View-Cache für Rendering-Systeme und verhindert VRAM-Leaks.
  */
-@EventBusSubscriber(modid = LitSpaceships.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+@EventBusSubscriber(modid = LitSpaceships.MODID, value = Dist.CLIENT)
 public class ClientShipManager {
 
     private static final Map<UUID, ClientShipState> ACTIVE_CLIENT_SHIPS = new ConcurrentHashMap<>();

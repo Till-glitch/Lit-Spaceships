@@ -24,7 +24,7 @@ import org.lwjgl.glfw.GLFW;
  * - Kontinuierlicher Aim-Sync (Client -> Server) via TurretAimSyncPayload
  * - Klick-Interceptor (Linksklick -> Server) via TurretLockTogglePayload
  */
-@EventBusSubscriber(modid = LitSpaceships.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+@EventBusSubscriber(modid = LitSpaceships.MODID, value = Dist.CLIENT)
 public class TurretClientInputHandler {
 
     private static float lastSentYaw = 0.0f;

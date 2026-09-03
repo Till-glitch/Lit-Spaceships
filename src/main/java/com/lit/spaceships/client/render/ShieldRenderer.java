@@ -32,7 +32,7 @@ public class ShieldRenderer {
 
     private static ShaderInstance hexShieldShader;
 
-    @EventBusSubscriber(modid = LitSpaceships.MODID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+    @EventBusSubscriber(modid = LitSpaceships.MODID, value = Dist.CLIENT)
     public static class ModClientEvents {
         @SubscribeEvent
         public static void onRegisterShaders(RegisterShadersEvent event) throws IOException {
@@ -43,7 +43,7 @@ public class ShieldRenderer {
         }
     }
 
-    @EventBusSubscriber(modid = LitSpaceships.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+    @EventBusSubscriber(modid = LitSpaceships.MODID, value = Dist.CLIENT)
     public static class ForgeClientEvents {
 
         @SubscribeEvent

@@ -168,6 +168,7 @@ public class ShipRotationMathTest {
 
     @Test
     @DisplayName("BlockState rotate mit Rotation.CLOCKWISE_90 dreht Directional FACING korrekt")
+    @SuppressWarnings("deprecation")
     void testRotateBlockState_Facing() {
         BlockState stairsNorth = Blocks.OAK_STAIRS.defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.NORTH);
 

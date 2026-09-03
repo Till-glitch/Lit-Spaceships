@@ -4,8 +4,6 @@ import com.lit.spaceships.LitSpaceships;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.io.InputStream;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ModDimensionsTest {
