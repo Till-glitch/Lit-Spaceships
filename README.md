@@ -44,7 +44,7 @@ An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21.
   * **Interactive Firing & Locking Controls:** Right-click while seated to fire the specific occupied turret (`FIRE_SPECIFIC`). Left-click while seated to lock/arretiere the turret's orientation with acoustic feedback and Action-Bar notification. When dismounting, during ship movement, and across interdimensional teleports, the locked angle remains permanently stored in NBT until intentionally realigned.
   * **Mechanical Gimbal Limits:** Strict joint angle clamping prevents turrets from cutting or firing into the ship's own hull.
   * **Delta-Tick Network Throttling:** 16-bit short compression and 20 Hz delta-throttling ($\Delta \ge 0.5^\circ$) eliminate network spam and deliver 0 ms client-predicted aiming response.
-* **Deep Space Dimension (`peaceman_alpha:space`):**
+* **Deep Space Dimension (`lit_spaceships:space`):**
   * **Infinite Void Environment:** Custom procedural dimension from $Y = -64$ to $Y = 320$ with permanent cosmic night, zero natural monster spawns, and no vanilla bedrock floors.
   * **Asteroid Fields & Ice Comets:** 3D procedural asteroid generation with diverse crusts (Stone, Basalt, Tuff, Deepslate) containing rich ore cores (Iron, Gold, Redstone, Diamond, Netherite Debris) and frozen ice comets.
   * **Derelict Spacecraft Wrecks:** Rare abandoned shipwrecks featuring intact spaceship reactor cores and ancient treasure chests (`END_CITY_TREASURE`).
@@ -52,27 +52,27 @@ An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21.
   * Fully transactional 6-phase warp travel (Suspension, Forceloading, Clipboard Serialization, Excision, Materialization, Passenger Entity Transition) across any dimension with ticket locking and zero chunk-boundary ghosting.
 * **Internationalization (I18n) & Localization (L10n) System:**
   * **Zero Hardcoded Strings:** Complete elimination of `Component.literal` in user-facing production code. All UI screens, HUD overlays, Action-Bar notifications, chat warnings, and keybindings resolve dynamically via `Component.translatable`.
-  * **Single-Source-of-Truth Registry (`ModI18n`):** Centralized compile-time constant registry for all translation keys categorized into `Tab`, `Screen`, `Message`, `Keybind`, `Tooltip`, `Structure`, and `Biome` following strict lowercase taxonomy (`<category>.peaceman_alpha.<identifier>`).
+  * **Single-Source-of-Truth Registry (`ModI18n`):** Centralized compile-time constant registry for all translation keys categorized into `Tab`, `Screen`, `Message`, `Keybind`, `Tooltip`, `Structure`, and `Biome` following strict lowercase taxonomy (`<category>.lit_spaceships.<identifier>`).
   * **Symmetric Bilingual Localization:** Automated DataGen via `ModEnglishLanguageProvider` (`en_us`) and `ModGermanLanguageProvider` (`de_de`) ensuring 100% dictionary completeness with positional string interpolation (`%1$s`, `%2$s`, `%1$.1f`) and typed styling via `ChatFormatting`.
-* **Automated Data Generation Pipeline (`com.peaceman.alpha.datagen`):**
+* **Automated Data Generation Pipeline (`com.lit.spaceships.datagen`):**
   * **Client DataGen (View Layer):** `ModBlockStateProvider` for automated `cubeAll` models and mathematical Euler angle rotation mapping (`FACING` direction property) for laser split-models; `ModItemModelProvider` for parent references (`laser_base`) and 2D item models (`BACKFLIP_TOOL`); `ModEnglishLanguageProvider` and `ModGermanLanguageProvider` for synchronized bilingual dictionaries (`en_us`, `de_de`).
   * **Server DataGen (Domain Layer):** `ModLootTableProvider` and `ModBlockLootTableProvider` with asynchronous `HolderLookup.Provider` resolving, self-drop declarations, and programmatic registry validation via `getKnownBlocks()`; `ModRecipeProvider` for compile-time verified recipe and advancement generation.
 * **Crafting Recipe Architecture, Progression Tiering & Material Economy:**
   * **Tier 1 (Terrestrial Navigation & Chassis):** Confined to Overworld resources (Iron, Copper, Redstone, Slime, Quartz).
-    * `peaceman_alpha:example_block` (Hull Plating / Chassis, 16x): Copper ingots, iron ingots, smooth stone. Mass-producible structural building block to mitigate BFS volume costs.
-    * `peaceman_alpha:spaceship_helm` (Navigation Console): Iron casing, glass pane, redstone, compass, smooth stone.
-    * `peaceman_alpha:backflip_tool` (Kinetic Pilot Utility): Iron sword mounted on piston and slime cushion with redstone impulse triggering.
+    * `lit_spaceships:example_block` (Hull Plating / Chassis, 16x): Copper ingots, iron ingots, smooth stone. Mass-producible structural building block to mitigate BFS volume costs.
+    * `lit_spaceships:spaceship_helm` (Navigation Console): Iron casing, glass pane, redstone, compass, smooth stone.
+    * `lit_spaceships:backflip_tool` (Kinetic Pilot Utility): Iron sword mounted on piston and slime cushion with redstone impulse triggering.
   * **Tier 2 (Sub-Orbital Utility & Local Defense):** Requires Nether expedition (Blaze Rods, Quartz, Obsidian, Amethyst, Diamonds).
-    * `peaceman_alpha:spaceship_reactor` (1M FE Storage): Iron and quartz containment shell, blaze rod thermal regulators, diamond reinforcement, redstone battery core.
-    * `peaceman_alpha:spaceship_shield` (Voronoi Generator): Eye of Ender resonance emitter, amethyst refraction shards, obsidian blast dampeners, diamond block base.
-    * `peaceman_alpha:mining_laser` (25 FE/t Industrial Drill): Copper heat-sink casing, quartz optics, diamond cutter, dispenser mechanism.
+    * `lit_spaceships:spaceship_reactor` (1M FE Storage): Iron and quartz containment shell, blaze rod thermal regulators, diamond reinforcement, redstone battery core.
+    * `lit_spaceships:spaceship_shield` (Voronoi Generator): Eye of Ender resonance emitter, amethyst refraction shards, obsidian blast dampeners, diamond block base.
+    * `lit_spaceships:mining_laser` (25 FE/t Industrial Drill): Copper heat-sink casing, quartz optics, diamond cutter, dispenser mechanism.
   * **Tier 3 (Naval-Grade Military Weaponry - Smithing Table Upgrades):**
-    * Advanced weapon conversion in the **Smithing Table** using the `minecraft:netherite_upgrade_smithing_template` from Nether Bastions, upgrading directly from the utility `peaceman_alpha:mining_laser`.
-    * `peaceman_alpha:heavy_beam` (50 FE/t Sustained Thermal Beam): Mining Laser + Netherite Ingot. High-durability military beam.
-    * `peaceman_alpha:pulse_laser` (250 FE/shot Kinetic Burst Cannon): Mining Laser + Echo Shard (Ancient City). Acoustic-kinetic plasma cannon.
+    * Advanced weapon conversion in the **Smithing Table** using the `minecraft:netherite_upgrade_smithing_template` from Nether Bastions, upgrading directly from the utility `lit_spaceships:mining_laser`.
+    * `lit_spaceships:heavy_beam` (50 FE/t Sustained Thermal Beam): Mining Laser + Netherite Ingot. High-durability military beam.
+    * `lit_spaceships:pulse_laser` (250 FE/shot Kinetic Burst Cannon): Mining Laser + Echo Shard (Ancient City). Acoustic-kinetic plasma cannon.
   * **Tier 4 (Capital Entity Kernel & Dimensional Warp Core):**
-    * `peaceman_alpha:spaceship_control` (Ship Kernel): Survival-balanced endgame core crafted from Diamond Blocks, Lodestones (coordinate anchoring), End Crystal (dimensional warp), Nether Star (computational brain), and Eyes of Ender.
-* **Just Enough Items (JEI) & Recipe Viewer Integration (`com.peaceman.alpha.integration.jei`):**
+    * `lit_spaceships:spaceship_control` (Ship Kernel): Survival-balanced endgame core crafted from Diamond Blocks, Lodestones (coordinate anchoring), End Crystal (dimensional warp), Nether Star (computational brain), and Eyes of Ender.
+* **Just Enough Items (JEI) & Recipe Viewer Integration (`com.lit.spaceships.integration.jei`):**
   * **Automatic Recipe Indexing:** Full automatic discovery for all shaped crafting and smithing transform recipes.
   * **Recipe Catalysts:** Spaceship Reactor and Spaceship Controller registered as official catalysts for Crafting and Smithing tabs.
   * **Interactive Screen Click Areas:** Clickable power/priority gauge region in `SpaceshipReactorScreen` directly displaying valid crafting and smithing recipes.
@@ -297,20 +297,20 @@ classDiagram
 
 ### Key Architectural Highlights
 
-#### 1. Server-Side Domain & Services (`com.peaceman.alpha.ship.*`)
+#### 1. Server-Side Domain & Services (`com.lit.spaceships.ship.*`)
 * **`ShipState`**: Pure domain Model holding authoritative ship data (UUID, controller position, functional block lists, reactor/shield associations, weapons list, waypoints, and `VoxelGridCache` bitsets). Contains **zero** client, rendering, or `Level` dependencies (Strict MVC).
 * **`ServerShipManager`**: Central lifecycle and CRUD controller. Coordinates ship creation, function-block categorization (via `populateAndSyncShipState`), updates, and spatial hashing distribution.
 * **`LaserCombatService`**: Handles combat routing for pulse weapons and continuous beams, energy transactions, kinetic shield shockwaves, and progressive block destruction with `destroyBlockProgress` scaling by block hardness.
 * **`LaserRaycastUtil` & `FastVoxelTraversal`**: High-performance Amanatides & Woo 3D Digital Differential Analyzer (3D-DDA) traversing voxels in $O(\text{Ray Length})$ time, protected by broadphase AABB intersection filters and step bounds (1024 steps).
 * **`ShipMovementService`**: Translates blocks and passengers using an incremental **Time-Slicing Tick-Budget (10ms per tick)** executed during `ServerTickEvent.Post`, with chunk region tickets (`TicketType`) and translation-invariant weapon tracking.
 
-#### 2. Network Layer (`com.peaceman.alpha.network.*`)
+#### 2. Network Layer (`com.lit.spaceships.network.*`)
 * **`CustomPacketPayload` Records**: 100% typed payload definitions using Mojang/NeoForge `StreamCodec` composites.
 * **`ShipCombatActionPayload`**: Dispatches pilot weapon commands (`FIRE_PULSE`, `TOGGLE_HEAVY_BEAM`, `TOGGLE_MINING_LASER`, `FIRE_ALL`).
 * **`LaserFirePayload` & `LaserStateSyncPayload`**: Broadcasts visual laser events and continuous beam states to chunk-tracking clients.
 * **`ShipStructureDeltaPayload`**: Transmits destroyed voxel lists during combat to update client highlight meshes without re-sending the entire ship structure.
 
-#### 3. Client View Model & Rendering (`com.peaceman.alpha.client.*`)
+#### 3. Client View Model & Rendering (`com.lit.spaceships.client.*`)
 * **`SpaceshipClientInputHandler`**: Event-Subscriber (`PlayerInteractEvent.RightClickBlock`) handling all client-side UI interactions (Screens). Completely decouples Client-GUI from Server-Blocks to guarantee strict Dedicated Server compatibility (Sidedness).
 * **`ClientLaserState`**: Thread-safe collection (`ConcurrentHashMap`, `CopyOnWriteArrayList`) managing pulse fadeouts and continuous beams keyed by invariant relative offsets (`shooterShipId + "_" + relativePos.asLong()`).
 * **`LaserBeamRenderer`**: Volumetric Blaze3D billboard beam rendering with additive blending (`GL_ONE`), core/glow dual-cylinder quads, oscillating pulses, and client-side block surface clipping (`level.clip`) preventing laser pass-through.
@@ -371,15 +371,15 @@ The repository runs an automated GitHub Actions CI/CD pipeline on every `push` a
 2. **Compile:** `./gradlew compileJava`
 3. **Unit Tests:** `./gradlew test` (JUnit 5 & Mockito)
 4. **GameTests:** `./gradlew runGameTestServer` (Headless Minecraft Server GameTests)
-5. **Package & Artifact:** `./gradlew build` and automated upload of `peaceman_alpha-*.jar` via `upload-artifact@v4`.
+5. **Package & Artifact:** `./gradlew build` and automated upload of `lit_spaceships-*.jar` via `upload-artifact@v4`.
 
 ---
 
 ## Package Directory Structure
 
 ```text
-src/main/java/com/peaceman/alpha/
-├── Alpha.java                       # Main mod initialization & GameTest registration
+src/main/java/com/lit/spaceships/
+├── LitSpaceships.java                       # Main mod initialization & GameTest registration
 ├── Config.java                      # Mod configuration
 ├── block/                           # Blocks & ISpaceshipNode interface
 │   ├── entity/                      # AbstractSpaceshipNodeBE, Laser BEs, Reactor BE, Shield BE

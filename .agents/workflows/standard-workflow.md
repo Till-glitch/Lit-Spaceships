@@ -19,7 +19,7 @@ Scaling (10.000 Voxel): Mathematische Bewertung der Big-O Zeitkomplexität im PR
 Quality Gates für /spec:
 Das PRD enthält dedizierte Sektionen für alle 4 Minecraft-Edge-Cases.
 Im Output befinden sich absolut keine ausführbaren Code-Snippets.
-Das PRD listet explizit alle betroffenen Pakete (com.peaceman.alpha.*) auf.
+Das PRD listet explizit alle betroffenen Pakete (com.*) auf.
 2. Planungsphase: /plan (Small, Atomic Tasks)
 Komplexe Anforderungen müssen in kleine, atomare und streng typisierte MVC-Schichten heruntergebrochen werden. Ein monolithischer Code-Ansatz ist verboten.
 Server-Domain: Reines Datenmodell und Autorität (z.B. ShipState). Keine Kenntnis von Client-Rendering oder Spielerkameras.

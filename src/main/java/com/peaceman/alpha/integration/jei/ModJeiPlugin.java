@@ -1,6 +1,6 @@
 package com.lit.spaceships.integration.jei;
 
-import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.Alpha;
 import com.lit.spaceships.client.screen.SpaceshipReactorScreen;
 import com.lit.spaceships.client.screen.SpaceshipShieldScreen;
 import com.lit.spaceships.registry.ModBlocks;
@@ -24,7 +24,7 @@ import java.util.List;
 @JeiPlugin
 public class ModJeiPlugin implements IModPlugin {
 
-    public static final ResourceLocation PLUGIN_ID = ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "jei_plugin");
+    public static final ResourceLocation PLUGIN_ID = ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "jei_plugin");
 
     @Override
     public ResourceLocation getPluginUid() {

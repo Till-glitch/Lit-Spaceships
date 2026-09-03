@@ -1,5 +1,5 @@
 {
-  "credit": "Made for Mod Alpha Split-Model Laser Node (Mining Laser)",
+  "credit": "Made for Lit Spaceships Split-Model Laser Node (Mining Laser)",
   "textures": {
     "particle": "lit_spaceships:block/laser_metal",
     "metal": "lit_spaceships:block/laser_metal"

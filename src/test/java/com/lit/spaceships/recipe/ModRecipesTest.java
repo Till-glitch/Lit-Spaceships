@@ -39,9 +39,10 @@ public class ModRecipesTest {
     private static final Path RECIPE_DIR = Files.exists(Path.of("src/generated/resources/data/lit_spaceships/recipe"))
             ? Path.of("src/generated/resources/data/lit_spaceships/recipe")
             : Path.of("src/generated/resources/data/peaceman_alpha/recipe");
-    private static final Path ADVANCEMENT_DIR = Files.exists(Path.of("src/generated/resources/data/lit_spaceships/advancement/recipes"))
-            ? Path.of("src/generated/resources/data/lit_spaceships/advancement/recipes")
-            : Path.of("src/generated/resources/data/peaceman_alpha/advancement/recipes");
+    private static final Path ADVANCEMENT_DIR = Files
+            .exists(Path.of("src/generated/resources/data/lit_spaceships/advancement/recipes"))
+                    ? Path.of("src/generated/resources/data/lit_spaceships/advancement/recipes")
+                    : Path.of("src/generated/resources/data/peaceman_alpha/advancement/recipes");
 
     @Test
     @DisplayName("ModRecipeProvider lässt sich instanziieren")
@@ -66,8 +67,7 @@ public class ModRecipesTest {
                 "mining_laser_crafting.json", "lit_spaceships:mining_laser",
                 "heavy_beam_smithing.json", "lit_spaceships:heavy_beam",
                 "pulse_laser_smithing.json", "lit_spaceships:pulse_laser",
-                "spaceship_control_crafting.json", "lit_spaceships:spaceship_control"
-        );
+                "spaceship_control_crafting.json", "lit_spaceships:spaceship_control");
 
         for (Map.Entry<String, String> entry : expectedRecipes.entrySet()) {
             Path file = RECIPE_DIR.resolve(entry.getKey());
@@ -80,7 +80,9 @@ public class ModRecipesTest {
 
                 JsonObject resultObj = json.getAsJsonObject("result");
                 String actualId = resultObj.get("id").getAsString();
-                assertTrue(actualId.equals(entry.getValue()) || actualId.equals(entry.getValue().replace("lit_spaceships:", "peaceman_alpha:")),
+                assertTrue(
+                        actualId.equals(entry.getValue())
+                                || actualId.equals(entry.getValue().replace("lit_spaceships:", "peaceman_alpha:")),
                         "Falsches Result-Item in: " + entry.getKey() + " (erhalten: " + actualId + ")");
             }
         }
@@ -167,8 +169,7 @@ public class ModRecipesTest {
         verify(guiHandlerRegistration).addRecipeClickArea(
                 eq(SpaceshipReactorScreen.class),
                 eq(10), eq(162), eq(220), eq(20),
-                eq(RecipeTypes.CRAFTING), eq(RecipeTypes.SMITHING)
-        );
+                eq(RecipeTypes.CRAFTING), eq(RecipeTypes.SMITHING));
 
         // Verifiziere GUI Exclusion Handler für Reactor & Shield Screens
         verify(guiHandlerRegistration).addGuiContainerHandler(eq(SpaceshipReactorScreen.class), any());

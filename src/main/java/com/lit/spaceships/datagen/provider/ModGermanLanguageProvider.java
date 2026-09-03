@@ -8,7 +8,7 @@ import net.minecraft.data.PackOutput;
 import net.neoforged.neoforge.common.data.LanguageProvider;
 
 /**
- * Generiert die de_de.json Sprachdatei für die Mod Alpha.
+ * Generiert die de_de.json Sprachdatei für Lit Spaceships.
  * Bildet alle Translation Keys symmetrisch zur englischen Primärdatei ab.
  */
 public class ModGermanLanguageProvider extends LanguageProvider {
@@ -20,7 +20,7 @@ public class ModGermanLanguageProvider extends LanguageProvider {
     @Override
     protected void addTranslations() {
         // 1. Creative Tabs
-        add(ModI18n.Tab.MAIN, "Mod Alpha - Raumschiffe");
+        add(ModI18n.Tab.MAIN, "Lit Spaceships - Raumschiffe");
 
         // 2. Blocks
         add(ModBlocks.EXAMPLE_BLOCK.getId().toLanguageKey("block"), "Beispielblock");
@@ -158,7 +158,7 @@ public class ModGermanLanguageProvider extends LanguageProvider {
         add(ModI18n.Message.SHADER_TEST_NO_SHIP, "[Shader-Test] Kein aktives Schiff am Zielort gefunden.");
 
         // 6. Keybindings
-        add(ModI18n.Keybind.CATEGORY, "Mod Alpha Steuerung");
+        add(ModI18n.Keybind.CATEGORY, "Lit Spaceships Steuerung");
         add(ModI18n.Keybind.FIRE_ALL, "Alle Schiffswaffen abfeuern");
         add(ModI18n.Keybind.NAV_MENU, "Navigationsmenü öffnen");
         add(ModI18n.Keybind.EXIT_HELM, "Steuerkonsole verlassen");

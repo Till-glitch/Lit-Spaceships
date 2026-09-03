@@ -8,7 +8,7 @@ import net.minecraft.data.PackOutput;
 import net.neoforged.neoforge.common.data.LanguageProvider;
 
 /**
- * Generiert die en_us.json Sprachdatei für die Mod Alpha.
+ * Generiert die en_us.json Sprachdatei für Lit Spaceships.
  * Diese Klasse fungiert als primärer Datenlieferant für das I18n-System.
  */
 public class ModEnglishLanguageProvider extends LanguageProvider {
@@ -20,7 +20,7 @@ public class ModEnglishLanguageProvider extends LanguageProvider {
     @Override
     protected void addTranslations() {
         // 1. Creative Tabs
-        add(ModI18n.Tab.MAIN, "Mod Alpha - Spaceships");
+        add(ModI18n.Tab.MAIN, "Lit Spaceships - Spaceships");
 
         // 2. Blocks
         add(ModBlocks.EXAMPLE_BLOCK.getId().toLanguageKey("block"), "Example Block");
@@ -158,7 +158,7 @@ public class ModEnglishLanguageProvider extends LanguageProvider {
         add(ModI18n.Message.SHADER_TEST_NO_SHIP, "[Shader-Test] No active ship found at target location.");
 
         // 6. Keybindings
-        add(ModI18n.Keybind.CATEGORY, "Mod Alpha Controls");
+        add(ModI18n.Keybind.CATEGORY, "Lit Spaceships Controls");
         add(ModI18n.Keybind.FIRE_ALL, "Fire All Ship Weapons");
         add(ModI18n.Keybind.NAV_MENU, "Open Navigation Menu");
         add(ModI18n.Keybind.EXIT_HELM, "Exit Helm Console");

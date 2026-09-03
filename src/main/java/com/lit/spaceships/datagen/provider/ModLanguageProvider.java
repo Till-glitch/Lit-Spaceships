@@ -39,7 +39,7 @@ public class ModLanguageProvider extends LanguageProvider {
         addItem(ModItems.BACKFLIP_TOOL, "Klasingscher Degen");
 
         // Creative Tabs & UI
-        add(com.lit.spaceships.registry.ModI18n.Tab.MAIN, "Mod Alpha - Spaceships");
+        add(com.lit.spaceships.registry.ModI18n.Tab.MAIN, "Lit Spaceships - Spaceships");
         add(com.lit.spaceships.registry.ModI18n.Screen.CONTROL_TITLE, "Spaceship Control");
         add(com.lit.spaceships.registry.ModI18n.Screen.HELM_NAV_TITLE, "Nav-Computer & Waypoints");
         add(com.lit.spaceships.registry.ModI18n.Screen.REACTOR_TITLE, "Reactor Core Diagnostics");
@@ -60,7 +60,7 @@ public class ModLanguageProvider extends LanguageProvider {
         addItem(ModItems.BACKFLIP_TOOL, "Klasingscher Degen");
 
         // Creative Tabs & UI
-        add(com.lit.spaceships.registry.ModI18n.Tab.MAIN, "Mod Alpha - Raumschiffe");
+        add(com.lit.spaceships.registry.ModI18n.Tab.MAIN, "Lit Spaceships - Raumschiffe");
         add(com.lit.spaceships.registry.ModI18n.Screen.CONTROL_TITLE, "Raumschiff Steuerung");
         add(com.lit.spaceships.registry.ModI18n.Screen.HELM_NAV_TITLE, "Nav-Computer & Wegpunkte");
         add(com.lit.spaceships.registry.ModI18n.Screen.REACTOR_TITLE, "Reaktorkern-Diagnose");

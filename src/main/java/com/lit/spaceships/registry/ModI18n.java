@@ -3,7 +3,7 @@ package com.lit.spaceships.registry;
 import com.lit.spaceships.LitSpaceships;
 
 /**
- * Single-Source-of-Truth für alle Translation Keys der Mod Alpha.
+ * Single-Source-of-Truth für alle Translation Keys von Lit Spaceships.
  * Diese Klasse bündelt alle textuellen Bezeichner zur Vermeidung von
  * Magic Strings in der Geschäfts- und Darstellungskoordination.
  */
