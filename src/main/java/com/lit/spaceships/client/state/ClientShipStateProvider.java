@@ -1,4 +1,4 @@
-package com.peaceman.alpha.client.state;
+package com.lit.spaceships.client.state;
 
 import java.util.Collection;
 import java.util.UUID;

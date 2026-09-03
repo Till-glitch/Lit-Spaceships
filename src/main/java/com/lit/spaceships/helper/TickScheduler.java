@@ -1,4 +1,4 @@
-package com.peaceman.alpha.helper;
+package com.lit.spaceships.helper;
 
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;

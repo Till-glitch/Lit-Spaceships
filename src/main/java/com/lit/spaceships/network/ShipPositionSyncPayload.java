@@ -1,6 +1,6 @@
-package com.peaceman.alpha.network;
+package com.lit.spaceships.network;
 
-import com.peaceman.alpha.Alpha;
+import com.lit.spaceships.LitSpaceships;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
@@ -20,7 +20,7 @@ public record ShipPositionSyncPayload(
 ) implements CustomPacketPayload {
 
     public static final Type<ShipPositionSyncPayload> TYPE =
-            new Type<>(ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "ship_position_sync"));
+            new Type<>(ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "ship_position_sync"));
 
     public static final StreamCodec<ByteBuf, ShipPositionSyncPayload> STREAM_CODEC = StreamCodec.composite(
             UUIDUtil.STREAM_CODEC, ShipPositionSyncPayload::shipId,

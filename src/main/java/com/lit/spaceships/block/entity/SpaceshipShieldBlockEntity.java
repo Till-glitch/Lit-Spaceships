@@ -1,10 +1,10 @@
-package com.peaceman.alpha.block.entity;
+package com.lit.spaceships.block.entity;
 
-import com.peaceman.alpha.menu.SpaceshipShieldMenu;
-import com.peaceman.alpha.registry.ModBlockEntities;
-import com.peaceman.alpha.ship.domain.ShieldZone;
-import com.peaceman.alpha.ship.domain.ShipState;
-import com.peaceman.alpha.ship.service.ServerShipManager;
+import com.lit.spaceships.menu.SpaceshipShieldMenu;
+import com.lit.spaceships.registry.ModBlockEntities;
+import com.lit.spaceships.ship.domain.ShieldZone;
+import com.lit.spaceships.ship.domain.ShipState;
+import com.lit.spaceships.ship.service.ServerShipManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
@@ -39,7 +39,7 @@ public class SpaceshipShieldBlockEntity extends AbstractSpaceshipNodeBlockEntity
                 }
             }
 
-            com.peaceman.alpha.ship.domain.SectorCoverage coverage = (myZone != null) ? ship.getSectorCoverage(myZone.id()) : null;
+            com.lit.spaceships.ship.domain.SectorCoverage coverage = (myZone != null) ? ship.getSectorCoverage(myZone.id()) : null;
             long gameTime = (level != null) ? level.getGameTime() : 0L;
             long cdRemaining = (myZone != null && myZone.cooldownUntil() > gameTime) ? (myZone.cooldownUntil() - gameTime) : 0L;
 
@@ -81,7 +81,7 @@ public class SpaceshipShieldBlockEntity extends AbstractSpaceshipNodeBlockEntity
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.peaceman_alpha.spaceship_shield");
+        return Component.translatable("block.lit_spaceships.spaceship_shield");
     }
 
     @Nullable

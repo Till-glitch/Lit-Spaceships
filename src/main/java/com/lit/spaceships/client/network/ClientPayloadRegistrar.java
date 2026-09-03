@@ -1,6 +1,6 @@
-package com.peaceman.alpha.client.network;
+package com.lit.spaceships.client.network;
 
-import com.peaceman.alpha.network.*;
+import com.lit.spaceships.network.*;
 import net.neoforged.neoforge.network.handling.DirectionalPayloadHandler;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 

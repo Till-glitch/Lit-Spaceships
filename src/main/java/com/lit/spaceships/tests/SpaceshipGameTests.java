@@ -1,15 +1,15 @@
-package com.peaceman.alpha.tests;
+package com.lit.spaceships.tests;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.block.ISpaceshipNode;
-import com.peaceman.alpha.registry.ModBlocks;
-import com.peaceman.alpha.ship.service.ServerShipManager;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.block.ISpaceshipNode;
+import com.lit.spaceships.registry.ModBlocks;
+import com.lit.spaceships.ship.service.ServerShipManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 
-@GameTestHolder(Alpha.MODID)
+@GameTestHolder(LitSpaceships.MODID)
 public class SpaceshipGameTests {
 
     @GameTest(template = "empty")
@@ -42,17 +42,17 @@ public class SpaceshipGameTests {
         
         helper.runAfterDelay(1, () -> {
             net.minecraft.world.level.block.state.BlockState state = helper.getBlockState(relativePos);
-            if (state.getValue(com.peaceman.alpha.block.SpaceshipReactorBlock.LIT)) {
+            if (state.getValue(com.lit.spaceships.block.SpaceshipReactorBlock.LIT)) {
                 helper.fail("Reactor was lit initially despite having no energy!");
             }
             
-            if (helper.getLevel().getBlockEntity(absolutePos) instanceof com.peaceman.alpha.block.entity.SpaceshipReactorBlockEntity reactor) {
+            if (helper.getLevel().getBlockEntity(absolutePos) instanceof com.lit.spaceships.block.entity.SpaceshipReactorBlockEntity reactor) {
                 reactor.getEnergyStorage().receiveEnergy(500, false);
             }
             
             helper.runAfterDelay(1, () -> {
                 net.minecraft.world.level.block.state.BlockState newState = helper.getBlockState(relativePos);
-                if (!newState.getValue(com.peaceman.alpha.block.SpaceshipReactorBlock.LIT)) {
+                if (!newState.getValue(com.lit.spaceships.block.SpaceshipReactorBlock.LIT)) {
                     helper.fail("Reactor was not lit after receiving energy!");
                 }
                 helper.succeed();

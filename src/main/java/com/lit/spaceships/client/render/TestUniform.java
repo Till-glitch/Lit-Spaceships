@@ -1,4 +1,4 @@
-package com.peaceman.alpha.client.render;
+package com.lit.spaceships.client.render;
 
 import com.mojang.blaze3d.shaders.Uniform;
 

@@ -1,6 +1,6 @@
-package com.peaceman.alpha.world;
+package com.lit.spaceships.world;
 
-import com.peaceman.alpha.registry.ModFeatures;
+import com.lit.spaceships.registry.ModFeatures;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -27,9 +27,9 @@ public class AsteroidFeatureTest {
     @Test
     @DisplayName("WorldGen Configured and Placed Feature JSONs existieren im Classpath")
     void testWorldGenFeatureFilesExist() {
-        assertNotNull(getClass().getResourceAsStream("/data/peaceman_alpha/worldgen/configured_feature/asteroid.json"), "asteroid configured feature fehlt");
-        assertNotNull(getClass().getResourceAsStream("/data/peaceman_alpha/worldgen/configured_feature/space_wreck.json"), "space_wreck configured feature fehlt");
-        assertNotNull(getClass().getResourceAsStream("/data/peaceman_alpha/worldgen/placed_feature/asteroid_placed.json"), "asteroid placed feature fehlt");
-        assertNotNull(getClass().getResourceAsStream("/data/peaceman_alpha/worldgen/placed_feature/space_wreck_placed.json"), "space_wreck placed feature fehlt");
+        assertNotNull(getClass().getResourceAsStream("/data/lit_spaceships/worldgen/configured_feature/asteroid.json"), "asteroid configured feature fehlt");
+        assertNotNull(getClass().getResourceAsStream("/data/lit_spaceships/worldgen/configured_feature/space_wreck.json"), "space_wreck configured feature fehlt");
+        assertNotNull(getClass().getResourceAsStream("/data/lit_spaceships/worldgen/placed_feature/asteroid_placed.json"), "asteroid placed feature fehlt");
+        assertNotNull(getClass().getResourceAsStream("/data/lit_spaceships/worldgen/placed_feature/space_wreck_placed.json"), "space_wreck placed feature fehlt");
     }
 }

@@ -1,7 +1,7 @@
-package com.peaceman.alpha.world.feature;
+package com.lit.spaceships.world.feature;
 
 import com.mojang.serialization.Codec;
-import com.peaceman.alpha.registry.ModBlocks;
+import com.lit.spaceships.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;

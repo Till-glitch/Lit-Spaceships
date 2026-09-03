@@ -1,4 +1,4 @@
-package com.peaceman.alpha.testutil;
+package com.lit.spaceships.testutil;
 
 import net.minecraft.SharedConstants;
 import net.minecraft.server.Bootstrap;

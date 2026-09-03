@@ -1,13 +1,13 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
-    "particle": "peaceman_alpha:block/machine_side",
-    "down": "peaceman_alpha:block/machine_side",
-    "up": "peaceman_alpha:block/machine_side",
-    "north": "peaceman_alpha:block/reactor_core",
-    "south": "peaceman_alpha:block/machine_side",
-    "west": "peaceman_alpha:block/machine_side",
-    "east": "peaceman_alpha:block/machine_side"
+    "particle": "lit_spaceships:block/machine_side",
+    "down": "lit_spaceships:block/machine_side",
+    "up": "lit_spaceships:block/machine_side",
+    "north": "lit_spaceships:block/reactor_core",
+    "south": "lit_spaceships:block/machine_side",
+    "west": "lit_spaceships:block/machine_side",
+    "east": "lit_spaceships:block/machine_side"
   },
   "elements": [
     {

@@ -1,9 +1,9 @@
-package com.peaceman.alpha.registry;
+package com.lit.spaceships.registry;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.menu.SpaceshipReactorMenu;
-import com.peaceman.alpha.menu.SpaceshipHelmMenu;
-import com.peaceman.alpha.menu.SpaceshipShieldMenu;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.menu.SpaceshipReactorMenu;
+import com.lit.spaceships.menu.SpaceshipHelmMenu;
+import com.lit.spaceships.menu.SpaceshipShieldMenu;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.inventory.MenuType;
 import net.neoforged.bus.api.IEventBus;
@@ -14,7 +14,7 @@ import java.util.function.Supplier;
 
 public class ModMenuTypes {
     public static final DeferredRegister<MenuType<?>> MENUS =
-            DeferredRegister.create(BuiltInRegistries.MENU, Alpha.MODID);
+            DeferredRegister.create(BuiltInRegistries.MENU, LitSpaceships.MODID);
 
     public static final Supplier<MenuType<SpaceshipReactorMenu>> REACTOR_MENU =
             MENUS.register("spaceship_reactor_menu", () -> IMenuTypeExtension.create(SpaceshipReactorMenu::new));

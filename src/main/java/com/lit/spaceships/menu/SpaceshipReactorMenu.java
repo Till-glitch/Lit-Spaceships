@@ -1,7 +1,7 @@
-package com.peaceman.alpha.menu;
+package com.lit.spaceships.menu;
 
-import com.peaceman.alpha.block.entity.SpaceshipReactorBlockEntity;
-import com.peaceman.alpha.registry.ModMenuTypes;
+import com.lit.spaceships.block.entity.SpaceshipReactorBlockEntity;
+import com.lit.spaceships.registry.ModMenuTypes;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -64,8 +64,8 @@ public class SpaceshipReactorMenu extends AbstractContainerMenu {
         return this.data.get(6);
     }
 
-    public com.peaceman.alpha.ship.domain.PowerPriority getPowerPriority() {
-        return com.peaceman.alpha.ship.domain.PowerPriority.fromId(this.data.get(7));
+    public com.lit.spaceships.ship.domain.PowerPriority getPowerPriority() {
+        return com.lit.spaceships.ship.domain.PowerPriority.fromId(this.data.get(7));
     }
 
     public int getStabilityPercentage() {

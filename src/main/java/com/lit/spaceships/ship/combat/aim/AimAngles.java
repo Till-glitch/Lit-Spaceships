@@ -1,4 +1,4 @@
-package com.peaceman.alpha.ship.combat.aim;
+package com.lit.spaceships.ship.combat.aim;
 
 /**
  * Repräsentiert lokale Euler-Winkel (Yaw und Pitch in Grad) eines Geschützturms.

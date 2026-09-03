@@ -1,4 +1,4 @@
-package com.peaceman.alpha.datagen.provider;
+package com.lit.spaceships.datagen.provider;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;

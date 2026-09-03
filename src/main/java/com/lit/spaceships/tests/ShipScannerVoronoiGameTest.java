@@ -1,9 +1,9 @@
-package com.peaceman.alpha.tests;
+package com.lit.spaceships.tests;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.registry.ModBlocks;
-import com.peaceman.alpha.ship.domain.ShipState;
-import com.peaceman.alpha.ship.service.ServerShipManager;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.registry.ModBlocks;
+import com.lit.spaceships.ship.domain.ShipState;
+import com.lit.spaceships.ship.service.ServerShipManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -13,7 +13,7 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 /**
  * GameTest für die Voronoi-Zuweisung und Erfassung lokalisierter Schildzonen.
  */
-@GameTestHolder(Alpha.MODID)
+@GameTestHolder(LitSpaceships.MODID)
 public class ShipScannerVoronoiGameTest {
 
     @GameTest(template = "empty")

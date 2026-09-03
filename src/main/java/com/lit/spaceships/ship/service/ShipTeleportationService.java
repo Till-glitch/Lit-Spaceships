@@ -1,15 +1,15 @@
-package com.peaceman.alpha.ship.service;
+package com.lit.spaceships.ship.service;
 
-import com.peaceman.alpha.block.ISpaceshipNode;
-import com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity;
-import com.peaceman.alpha.block.entity.SpaceshipReactorBlockEntity;
-import com.peaceman.alpha.block.entity.SpaceshipShieldBlockEntity;
-import com.peaceman.alpha.network.ShipDimensionSyncPayload;
-import com.peaceman.alpha.network.ShipPositionSyncPayload;
-import com.peaceman.alpha.network.ShipStateSyncPayload;
-import com.peaceman.alpha.network.ShipStructureSyncPayload;
-import com.peaceman.alpha.ship.SpaceshipEnergyManager;
-import com.peaceman.alpha.ship.domain.ShipState;
+import com.lit.spaceships.block.ISpaceshipNode;
+import com.lit.spaceships.block.entity.AbstractLaserNodeBlockEntity;
+import com.lit.spaceships.block.entity.SpaceshipReactorBlockEntity;
+import com.lit.spaceships.block.entity.SpaceshipShieldBlockEntity;
+import com.lit.spaceships.network.ShipDimensionSyncPayload;
+import com.lit.spaceships.network.ShipPositionSyncPayload;
+import com.lit.spaceships.network.ShipStateSyncPayload;
+import com.lit.spaceships.network.ShipStructureSyncPayload;
+import com.lit.spaceships.ship.SpaceshipEnergyManager;
+import com.lit.spaceships.ship.domain.ShipState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -45,7 +45,7 @@ public class ShipTeleportationService {
 
         // 1. Phase: Suspendierung
         ship.setJumping(true);
-        com.peaceman.alpha.ship.combat.LaserCombatService.stopAllContinuousLasers(originLevel, ship);
+        com.lit.spaceships.ship.combat.LaserCombatService.stopAllContinuousLasers(originLevel, ship);
 
         BlockPos currentCtrl = ship.getControllerPos();
         int dx = targetControllerPos.getX() - currentCtrl.getX();

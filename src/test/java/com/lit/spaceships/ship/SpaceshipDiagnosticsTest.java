@@ -1,6 +1,6 @@
-package com.peaceman.alpha.ship;
+package com.lit.spaceships.ship;
 
-import com.peaceman.alpha.ship.domain.ShipState;
+import com.lit.spaceships.ship.domain.ShipState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import org.junit.jupiter.api.DisplayName;

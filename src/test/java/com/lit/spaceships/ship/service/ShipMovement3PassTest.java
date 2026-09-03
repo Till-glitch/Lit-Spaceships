@@ -1,4 +1,4 @@
-package com.peaceman.alpha.ship.service;
+package com.lit.spaceships.ship.service;
 
 import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;

@@ -1,7 +1,7 @@
-package com.peaceman.alpha.ship;
+package com.lit.spaceships.ship;
 
-import com.peaceman.alpha.block.entity.SpaceshipReactorBlockEntity;
-import com.peaceman.alpha.ship.domain.ShipState;
+import com.lit.spaceships.block.entity.SpaceshipReactorBlockEntity;
+import com.lit.spaceships.ship.domain.ShipState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -103,7 +103,7 @@ public class SpaceshipEnergyManager {
     public static int distributeEnergyToShields(int availableEnergy, ShipState ship, long currentGameTime) {
         if (availableEnergy <= 0 || ship == null || ship.getShieldZones().isEmpty()) {
             if (ship != null) {
-                for (com.peaceman.alpha.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
+                for (com.lit.spaceships.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
                     if (zone.lastChargeRate() > 0) {
                         ship.updateShieldZoneEnergyAndChargeRate(zone.id(), zone.currentEnergy(), 0);
                     }
@@ -113,10 +113,10 @@ public class SpaceshipEnergyManager {
         }
 
         // 1. Defizite aller nicht-kollabierten / nicht-cooldown Zonen ermitteln
-        java.util.List<com.peaceman.alpha.ship.domain.ShieldZone> eligibleZones = new java.util.ArrayList<>();
+        java.util.List<com.lit.spaceships.ship.domain.ShieldZone> eligibleZones = new java.util.ArrayList<>();
         long totalDeficit = 0L;
 
-        for (com.peaceman.alpha.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
+        for (com.lit.spaceships.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
             if (!zone.isEnabled() || zone.generatorPos() == null || currentGameTime < zone.cooldownUntil()) {
                 continue; // Cooldown-Blockade aktiv oder Generator zerstört/deaktiviert
             }
@@ -130,7 +130,7 @@ public class SpaceshipEnergyManager {
         }
 
         if (totalDeficit <= 0 || eligibleZones.isEmpty()) {
-            for (com.peaceman.alpha.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
+            for (com.lit.spaceships.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
                 if (zone.lastChargeRate() > 0) {
                     ship.updateShieldZoneEnergyAndChargeRate(zone.id(), zone.currentEnergy(), 0);
                 }
@@ -144,7 +144,7 @@ public class SpaceshipEnergyManager {
         java.util.Map<Byte, Integer> allocations = new java.util.HashMap<>();
 
         // 2. Primärer proportionaler Loop: E_transfer = floor(E_avail * (D_i / D_total))
-        for (com.peaceman.alpha.ship.domain.ShieldZone zone : eligibleZones) {
+        for (com.lit.spaceships.ship.domain.ShieldZone zone : eligibleZones) {
             int deficit = zone.maxEnergy() - zone.currentEnergy();
             deficit = Math.min(deficit, MAX_CHARGE_RATE_PER_ZONE);
             int transfer = (int) ((double) energyToDistribute * (double) deficit / (double) totalDeficit);
@@ -155,8 +155,8 @@ public class SpaceshipEnergyManager {
 
         // 3. Sekundärer Fallback-Loop (Rest-Tröpfchen-Verteilung): Gleichmäßige Aufteilung des Restes
         if (remainingRest > 0) {
-            java.util.List<com.peaceman.alpha.ship.domain.ShieldZone> restZones = new java.util.ArrayList<>();
-            for (com.peaceman.alpha.ship.domain.ShieldZone zone : eligibleZones) {
+            java.util.List<com.lit.spaceships.ship.domain.ShieldZone> restZones = new java.util.ArrayList<>();
+            for (com.lit.spaceships.ship.domain.ShieldZone zone : eligibleZones) {
                 int deficit = zone.maxEnergy() - zone.currentEnergy();
                 deficit = Math.min(deficit, MAX_CHARGE_RATE_PER_ZONE);
                 if (allocations.getOrDefault(zone.id(), 0) < deficit) {
@@ -167,7 +167,7 @@ public class SpaceshipEnergyManager {
             if (!restZones.isEmpty()) {
                 int div = remainingRest / restZones.size();
                 int mod = remainingRest % restZones.size();
-                for (com.peaceman.alpha.ship.domain.ShieldZone zone : restZones) {
+                for (com.lit.spaceships.ship.domain.ShieldZone zone : restZones) {
                     int deficit = zone.maxEnergy() - zone.currentEnergy();
                     deficit = Math.min(deficit, MAX_CHARGE_RATE_PER_ZONE);
                     int currentAlloc = allocations.getOrDefault(zone.id(), 0);
@@ -181,7 +181,7 @@ public class SpaceshipEnergyManager {
                 boolean distributedAny = true;
                 while (remainingRest > 0 && distributedAny) {
                     distributedAny = false;
-                    for (com.peaceman.alpha.ship.domain.ShieldZone zone : restZones) {
+                    for (com.lit.spaceships.ship.domain.ShieldZone zone : restZones) {
                         if (remainingRest <= 0) break;
                         int deficit = zone.maxEnergy() - zone.currentEnergy();
                         deficit = Math.min(deficit, MAX_CHARGE_RATE_PER_ZONE);
@@ -198,7 +198,7 @@ public class SpaceshipEnergyManager {
 
         // 4. ShipState Zonen atomar aktualisieren
         int totalTransferred = 0;
-        for (com.peaceman.alpha.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
+        for (com.lit.spaceships.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
             int add = allocations.getOrDefault(zone.id(), 0);
             ship.updateShieldZoneEnergyAndChargeRate(zone.id(), zone.currentEnergy() + add, add);
             totalTransferred += add;
@@ -220,7 +220,7 @@ public class SpaceshipEnergyManager {
         if (!success && player != null) {
             int available = getTotalAvailableEnergy(level, ship);
             player.displayClientMessage(
-                    Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.ENERGY_INSUFFICIENT,
+                    Component.translatable(com.lit.spaceships.registry.ModI18n.Message.ENERGY_INSUFFICIENT,
                             String.format("%,d", cost), String.format("%,d", available)), true);
         }
 

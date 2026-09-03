@@ -1,4 +1,4 @@
-# NeoForge-Alpha: Mod-Architektur & Klassendesign
+# Lit Spaceships: Mod-Architektur & Klassendesign
 
 Dieses Dokument beschreibt die Architektur, Datenflüsse, Klassenhierarchien und mathematischen Modelle des Spaceship-, Schutzschild- und Raumkampf-Systems für **Minecraft 1.21.1 (NeoForge 21.1.x)** inklusive aller Concurrency-, Lifecycle- und Edge-Case-Absicherungen.
 
@@ -10,7 +10,7 @@ Das Gesamtsystem folgt einer strikten **Model-View-Controller (MVC) / Service-Ar
 
 1. **Server (Domain & Authoritative Services)**:
    * Hält die alleinige Autorität über alle Schiffe (`ShipState`), persistiert ausschließlich reine Domain-Daten (`ShipSavedData`) und berechnet komplexe Schiffsgeometrien asynchron oder zeitbegrenzt.
-   * **Kampf- & Raycast-Mathematik (`com.peaceman.alpha.ship.combat.*`)**: Nutzt den **Amanatides-and-Woo 3D-DDA-Algorithmus** (`FastVoxelTraversal`) in Kombination mit einer zweistufigen Broadphase-/Narrowphase-Filterung (`LaserRaycastUtil`), um Strahlen kollisionsgenau in $O(\text{Ray-Länge})$ anstelle von $O(\text{Blockanzahl})$ zu berechnen.
+   * **Kampf- & Raycast-Mathematik (`com.lit.spaceships.ship.combat.*`)**: Nutzt den **Amanatides-and-Woo 3D-DDA-Algorithmus** (`FastVoxelTraversal`) in Kombination mit einer zweistufigen Broadphase-/Narrowphase-Filterung (`LaserRaycastUtil`), um Strahlen kollisionsgenau in $O(\text{Ray-Länge})$ anstelle von $O(\text{Blockanzahl})$ zu berechnen.
    * **Time-Sliced Mover (`ShipMovementService`)**: Führt translatorische Schiffsbewegungen mit einem festen **10ms Tick-Budget** pro Server-Tick aus und forceloaded Ziel-Chunks via `TicketType` (`SHIP_TICKET`).
 2. **Network (Deklarative StreamCodecs & Thread-Safety)**:
    * Alle Netzwerkinteraktionen sind als unveränderliche `CustomPacketPayload`-Records mit Mojang/NeoForge `StreamCodec`-Composites implementiert.
@@ -725,4 +725,4 @@ Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
    * **`SpaceshipGameTests`**: Schiffserstellung über Kontrollblöcke.
 3. **GitHub Actions CI/CD Pipeline (`.github/workflows/ci.yml`)**:
    * Vollautomatischer Workflow für `push` und `pull_request` auf `main`.
-   * Sequenzielle Pipeline: `compileJava` $\rightarrow$ `test` $\rightarrow$ `runGameTestServer` $\rightarrow$ `build` $\rightarrow$ Artefakt-Upload (`peaceman_alpha-*.jar`).
+   * Sequenzielle Pipeline: `compileJava` $\rightarrow$ `test` $\rightarrow$ `runGameTestServer` $\rightarrow$ `build` $\rightarrow$ Artefakt-Upload (`lit_spaceships-*.jar`).

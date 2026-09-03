@@ -1,7 +1,7 @@
-package com.peaceman.alpha.ship;
+package com.lit.spaceships.ship;
 
-import com.peaceman.alpha.ship.domain.ShipState;
-import com.peaceman.alpha.ship.service.ServerShipManager;
+import com.lit.spaceships.ship.domain.ShipState;
+import com.lit.spaceships.ship.service.ServerShipManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
@@ -71,7 +71,7 @@ public class ShipSavedData extends SavedData {
 
             // Lokalisierte Schildzonen
             ListTag zoneList = new ListTag();
-            for (com.peaceman.alpha.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
+            for (com.lit.spaceships.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
                 CompoundTag zTag = new CompoundTag();
                 zTag.putByte("ZoneId", zone.id());
                 BlockPos gp = zone.generatorPos();
@@ -170,7 +170,7 @@ public class ShipSavedData extends SavedData {
             // Lokalisierte Schildzonen laden
             if (shipTag.contains("ShieldZones")) {
                 ListTag zList = shipTag.getList("ShieldZones", Tag.TAG_COMPOUND);
-                Map<Byte, com.peaceman.alpha.ship.domain.ShieldZone> loadedZones = new HashMap<>();
+                Map<Byte, com.lit.spaceships.ship.domain.ShieldZone> loadedZones = new HashMap<>();
                 for (int j = 0; j < zList.size(); j++) {
                     CompoundTag zTag = zList.getCompound(j);
                     byte zId = zTag.getByte("ZoneId");
@@ -183,7 +183,7 @@ public class ShipSavedData extends SavedData {
                     int maxEnergy = zTag.getInt("MaxEnergy");
                     long cooldown = zTag.getLong("Cooldown");
                     boolean isEnabled = !zTag.contains("IsEnabled") || zTag.getBoolean("IsEnabled");
-                    loadedZones.put(zId, new com.peaceman.alpha.ship.domain.ShieldZone(zId, gp, energy, maxEnergy, cooldown, isEnabled));
+                    loadedZones.put(zId, new com.lit.spaceships.ship.domain.ShieldZone(zId, gp, energy, maxEnergy, cooldown, isEnabled));
                 }
                 loadedShip.setShieldZones(loadedZones);
             }
@@ -191,9 +191,9 @@ public class ShipSavedData extends SavedData {
             // Power-Priorität wiederherstellen
             if (shipTag.contains("PowerPriority")) {
                 try {
-                    loadedShip.setPowerPriority(com.peaceman.alpha.ship.domain.PowerPriority.valueOf(shipTag.getString("PowerPriority")));
+                    loadedShip.setPowerPriority(com.lit.spaceships.ship.domain.PowerPriority.valueOf(shipTag.getString("PowerPriority")));
                 } catch (IllegalArgumentException ignored) {
-                    loadedShip.setPowerPriority(com.peaceman.alpha.ship.domain.PowerPriority.BALANCED);
+                    loadedShip.setPowerPriority(com.lit.spaceships.ship.domain.PowerPriority.BALANCED);
                 }
             }
 
@@ -207,7 +207,7 @@ public class ShipSavedData extends SavedData {
 
             // Voronoi-Zonen auf Hülle berechnen
             if (!loadedShip.getShields().isEmpty() && loadedShip.getHullVoxelCache() != null && !loadedShip.getHullVoxelCache().isEmpty()) {
-                var coverages = com.peaceman.alpha.ship.service.ShipScannerService.calculateVoronoiZones(
+                var coverages = com.lit.spaceships.ship.service.ShipScannerService.calculateVoronoiZones(
                         loadedShip.getHullVoxelCache(), loadedShip.getShields(), loadedShip.getControllerPos()
                 );
                 loadedShip.setSectorCoverages(coverages);

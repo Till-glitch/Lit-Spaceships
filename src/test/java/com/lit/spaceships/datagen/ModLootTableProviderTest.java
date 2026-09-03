@@ -1,8 +1,8 @@
-package com.peaceman.alpha.datagen;
+package com.lit.spaceships.datagen;
 
-import com.peaceman.alpha.datagen.provider.ModBlockLootTableProvider;
-import com.peaceman.alpha.datagen.provider.ModLootTableProvider;
-import com.peaceman.alpha.registry.ModBlocks;
+import com.lit.spaceships.datagen.provider.ModBlockLootTableProvider;
+import com.lit.spaceships.datagen.provider.ModLootTableProvider;
+import com.lit.spaceships.registry.ModBlocks;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;

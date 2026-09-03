@@ -1,10 +1,10 @@
-package com.peaceman.alpha.block.entity;
+package com.lit.spaceships.block.entity;
 
-import com.peaceman.alpha.ship.combat.LaserWeaponTier;
-import com.peaceman.alpha.ship.combat.aim.AimAngles;
-import com.peaceman.alpha.ship.combat.aim.FreelookAimStrategy;
-import com.peaceman.alpha.ship.combat.aim.GimbalLimits;
-import com.peaceman.alpha.ship.combat.aim.IAimStrategy;
+import com.lit.spaceships.ship.combat.LaserWeaponTier;
+import com.lit.spaceships.ship.combat.aim.AimAngles;
+import com.lit.spaceships.ship.combat.aim.FreelookAimStrategy;
+import com.lit.spaceships.ship.combat.aim.GimbalLimits;
+import com.lit.spaceships.ship.combat.aim.IAimStrategy;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -62,7 +62,7 @@ public abstract class AbstractLaserNodeBlockEntity extends AbstractSpaceshipNode
 
     public abstract void serverTick(Level level, BlockPos pos, BlockState state);
 
-    public abstract boolean handleFire(Level level, com.peaceman.alpha.ship.domain.ShipState shooterShip, BlockPos weaponPos);
+    public abstract boolean handleFire(Level level, com.lit.spaceships.ship.domain.ShipState shooterShip, BlockPos weaponPos);
 
     // --- Zielsystem & Ausrichtung ---
 
@@ -110,8 +110,8 @@ public abstract class AbstractLaserNodeBlockEntity extends AbstractSpaceshipNode
      */
     public void rotateTurret(net.minecraft.world.level.block.Rotation rotation) {
         if (rotation == null || rotation == net.minecraft.world.level.block.Rotation.NONE) return;
-        this.prevTargetYaw = com.peaceman.alpha.ship.service.ShipRotationMath.rotateYaw(this.prevTargetYaw, rotation);
-        this.targetYaw = com.peaceman.alpha.ship.service.ShipRotationMath.rotateYaw(this.targetYaw, rotation);
+        this.prevTargetYaw = com.lit.spaceships.ship.service.ShipRotationMath.rotateYaw(this.prevTargetYaw, rotation);
+        this.targetYaw = com.lit.spaceships.ship.service.ShipRotationMath.rotateYaw(this.targetYaw, rotation);
         setChanged();
         if (this.level != null && !this.level.isClientSide()) {
             this.level.sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), 3);

@@ -1,8 +1,8 @@
-package com.peaceman.alpha.client;
+package com.lit.spaceships.client;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.client.state.ClientShipManager;
-import com.peaceman.alpha.client.state.ClientShipState;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.client.state.ClientShipManager;
+import com.lit.spaceships.client.state.ClientShipState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Items;
@@ -12,7 +12,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
-@EventBusSubscriber(modid = Alpha.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+@EventBusSubscriber(modid = LitSpaceships.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public class ShieldVisualActivator {
 
     @SubscribeEvent
@@ -31,7 +31,7 @@ public class ShieldVisualActivator {
                     ship.addImpact(localHit, event.getLevel().getGameTime());
                     event.getEntity().displayClientMessage(
                             Component.translatable(
-                                    com.peaceman.alpha.registry.ModI18n.Message.SHADER_TEST_HIT,
+                                    com.lit.spaceships.registry.ModI18n.Message.SHADER_TEST_HIT,
                                     (int) localHit.x, (int) localHit.y, (int) localHit.z
                             ).withStyle(net.minecraft.ChatFormatting.RED),
                             true
@@ -44,7 +44,7 @@ public class ShieldVisualActivator {
             if (!hitFound) {
                 event.getEntity().displayClientMessage(
                         Component.translatable(
-                                com.peaceman.alpha.registry.ModI18n.Message.SHADER_TEST_NO_SHIP
+                                com.lit.spaceships.registry.ModI18n.Message.SHADER_TEST_NO_SHIP
                         ).withStyle(net.minecraft.ChatFormatting.YELLOW),
                         true
                 );

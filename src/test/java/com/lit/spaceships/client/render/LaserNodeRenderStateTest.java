@@ -1,7 +1,7 @@
-package com.peaceman.alpha.client.render;
+package com.lit.spaceships.client.render;
 
-import com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity;
-import com.peaceman.alpha.ship.combat.LaserWeaponTier;
+import com.lit.spaceships.block.entity.AbstractLaserNodeBlockEntity;
+import com.lit.spaceships.ship.combat.LaserWeaponTier;
 import net.minecraft.core.Direction;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

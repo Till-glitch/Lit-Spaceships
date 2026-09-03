@@ -1,7 +1,7 @@
-package com.peaceman.alpha.client.input;
+package com.lit.spaceships.client.input;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.network.ShipMovementRequestPayload;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.network.ShipMovementRequestPayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.neoforged.api.distmarker.Dist;
@@ -10,7 +10,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-@EventBusSubscriber(modid = Alpha.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+@EventBusSubscriber(modid = LitSpaceships.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public class SpaceshipHelmInputInterceptor {
 
     private static long lastPayloadTime = 0;
@@ -38,33 +38,33 @@ public class SpaceshipHelmInputInterceptor {
         event.getInput().jumping = false;
         event.getInput().shiftKeyDown = false;
         
-        if (com.peaceman.alpha.client.ClientModEvents.KEY_EXIT_HELM.consumeClick()) {
+        if (com.lit.spaceships.client.ClientModEvents.KEY_EXIT_HELM.consumeClick()) {
             SpaceshipClientInputHandler.activeHelmShipId = null;
             if (player != null) {
-                player.displayClientMessage(net.minecraft.network.chat.Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.HELM_CONTROL_LEAVE).withStyle(net.minecraft.ChatFormatting.YELLOW), true);
+                player.displayClientMessage(net.minecraft.network.chat.Component.translatable(com.lit.spaceships.registry.ModI18n.Message.HELM_CONTROL_LEAVE).withStyle(net.minecraft.ChatFormatting.YELLOW), true);
             }
             return;
         }
 
-        if (com.peaceman.alpha.client.ClientModEvents.KEY_OPEN_HELM_CONFIG.consumeClick()) {
-            PacketDistributor.sendToServer(new com.peaceman.alpha.network.OpenHelmConfigPayload(java.util.Optional.ofNullable(SpaceshipClientInputHandler.activeHelmShipId)));
+        if (com.lit.spaceships.client.ClientModEvents.KEY_OPEN_HELM_CONFIG.consumeClick()) {
+            PacketDistributor.sendToServer(new com.lit.spaceships.network.OpenHelmConfigPayload(java.util.Optional.ofNullable(SpaceshipClientInputHandler.activeHelmShipId)));
         }
 
-        if (com.peaceman.alpha.client.ClientModEvents.KEY_ROTATE_LEFT.consumeClick()) {
-            PacketDistributor.sendToServer(new com.peaceman.alpha.network.ShipActionPayload(
+        if (com.lit.spaceships.client.ClientModEvents.KEY_ROTATE_LEFT.consumeClick()) {
+            PacketDistributor.sendToServer(new com.lit.spaceships.network.ShipActionPayload(
                     java.util.Optional.ofNullable(SpaceshipClientInputHandler.activeHelmShipId),
                     net.minecraft.core.BlockPos.ZERO,
-                    com.peaceman.alpha.network.ShipActionPayload.ActionType.ROTATE_CCW,
+                    com.lit.spaceships.network.ShipActionPayload.ActionType.ROTATE_CCW,
                     90,
                     ""
             ));
         }
 
-        if (com.peaceman.alpha.client.ClientModEvents.KEY_ROTATE_RIGHT.consumeClick()) {
-            PacketDistributor.sendToServer(new com.peaceman.alpha.network.ShipActionPayload(
+        if (com.lit.spaceships.client.ClientModEvents.KEY_ROTATE_RIGHT.consumeClick()) {
+            PacketDistributor.sendToServer(new com.lit.spaceships.network.ShipActionPayload(
                     java.util.Optional.ofNullable(SpaceshipClientInputHandler.activeHelmShipId),
                     net.minecraft.core.BlockPos.ZERO,
-                    com.peaceman.alpha.network.ShipActionPayload.ActionType.ROTATE_CW,
+                    com.lit.spaceships.network.ShipActionPayload.ActionType.ROTATE_CW,
                     90,
                     ""
             ));

@@ -1,4 +1,4 @@
-package com.peaceman.alpha.datagen;
+package com.lit.spaceships.datagen;
 
 import net.minecraft.SharedConstants;
 import net.minecraft.core.HolderLookup;

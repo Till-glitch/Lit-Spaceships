@@ -1,7 +1,7 @@
-package com.peaceman.alpha.datagen.provider;
+package com.lit.spaceships.datagen.provider;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.registry.ModBlocks;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.registry.ModBlocks;
 import net.minecraft.core.Direction;
 import net.minecraft.data.PackOutput;
 import net.minecraft.world.level.block.Block;
@@ -14,7 +14,7 @@ import net.neoforged.neoforge.common.data.ExistingFileHelper;
 public class ModBlockStateProvider extends BlockStateProvider {
 
     public ModBlockStateProvider(PackOutput output, ExistingFileHelper exFileHelper) {
-        super(output, Alpha.MODID, exFileHelper);
+        super(output, LitSpaceships.MODID, exFileHelper);
     }
 
     @Override

@@ -1,24 +1,24 @@
-package com.peaceman.alpha;
+package com.lit.spaceships;
 
 import com.mojang.logging.LogUtils;
-import com.peaceman.alpha.network.ModPayloads;
-import com.peaceman.alpha.registry.ModAttachments;
-import com.peaceman.alpha.registry.ModBlockEntities;
-import com.peaceman.alpha.registry.ModBlocks;
-import com.peaceman.alpha.registry.ModCreativeTabs;
-import com.peaceman.alpha.registry.ModItems;
-import com.peaceman.alpha.registry.ModMenuTypes;
+import com.lit.spaceships.network.ModPayloads;
+import com.lit.spaceships.registry.ModAttachments;
+import com.lit.spaceships.registry.ModBlockEntities;
+import com.lit.spaceships.registry.ModBlocks;
+import com.lit.spaceships.registry.ModCreativeTabs;
+import com.lit.spaceships.registry.ModItems;
+import com.lit.spaceships.registry.ModMenuTypes;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import org.slf4j.Logger;
 
-@Mod(Alpha.MODID)
-public class Alpha {
-    public static final String MODID = "peaceman_alpha";
+@Mod(LitSpaceships.MODID)
+public class LitSpaceships {
+    public static final String MODID = "lit_spaceships";
     public static final Logger LOGGER = LogUtils.getLogger();
 
-    public Alpha(IEventBus modEventBus, ModContainer modContainer) {
+    public LitSpaceships(IEventBus modEventBus, ModContainer modContainer) {
         ModPayloads.register(modEventBus);
         modEventBus.addListener(this::registerCapabilities);
 
@@ -29,17 +29,17 @@ public class Alpha {
         ModCreativeTabs.register(modEventBus);
         ModMenuTypes.register(modEventBus);
         ModAttachments.register(modEventBus);
-        com.peaceman.alpha.registry.ModEntities.register(modEventBus);
-        com.peaceman.alpha.registry.ModFeatures.register(modEventBus);
+        com.lit.spaceships.registry.ModEntities.register(modEventBus);
+        com.lit.spaceships.registry.ModFeatures.register(modEventBus);
         modEventBus.addListener(this::registerGameTests);
     }
 
     private void registerGameTests(net.neoforged.neoforge.event.RegisterGameTestsEvent event) {
-        event.register(com.peaceman.alpha.tests.SpaceshipGameTests.class);
-        event.register(com.peaceman.alpha.tests.ShipScannerGameTests.class);
-        event.register(com.peaceman.alpha.tests.ShipMovementGameTests.class);
-        event.register(com.peaceman.alpha.tests.ShipAttachmentGameTests.class);
-        event.register(com.peaceman.alpha.tests.ShipCollisionGameTests.class);
+        event.register(com.lit.spaceships.tests.SpaceshipGameTests.class);
+        event.register(com.lit.spaceships.tests.ShipScannerGameTests.class);
+        event.register(com.lit.spaceships.tests.ShipMovementGameTests.class);
+        event.register(com.lit.spaceships.tests.ShipAttachmentGameTests.class);
+        event.register(com.lit.spaceships.tests.ShipCollisionGameTests.class);
     }
 
     private void registerCapabilities(net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent event) {

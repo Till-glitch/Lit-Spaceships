@@ -1,6 +1,6 @@
-package com.peaceman.alpha.datagen;
+package com.lit.spaceships.datagen;
 
-import com.peaceman.alpha.datagen.provider.ModBlockStateProvider;
+import com.lit.spaceships.datagen.provider.ModBlockStateProvider;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.Direction;
 import net.minecraft.data.PackOutput;
@@ -38,7 +38,7 @@ class ModBlockStateProviderTest {
         PackOutput packOutput = new PackOutput(Path.of("test_output"));
         ModBlockStateProvider provider = new ModBlockStateProvider(packOutput, existingFileHelper);
         assertNotNull(provider);
-        assertEquals("peaceman_alpha", provider.getName().toLowerCase().contains("peaceman_alpha") ? "peaceman_alpha" : "peaceman_alpha");
+        assertEquals("lit_spaceships", provider.getName().toLowerCase().contains("lit_spaceships") ? "lit_spaceships" : "lit_spaceships");
     }
 
     @ParameterizedTest(name = "Direction {0} -> rotX={1}, rotY={2}")

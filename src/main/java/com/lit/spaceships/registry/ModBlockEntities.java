@@ -1,10 +1,10 @@
-package com.peaceman.alpha.registry;
+package com.lit.spaceships.registry;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.block.entity.SpaceshipControlBlockEntity;
-import com.peaceman.alpha.block.entity.SpaceshipHelmBlockEntity;
-import com.peaceman.alpha.block.entity.SpaceshipReactorBlockEntity;
-import com.peaceman.alpha.block.entity.SpaceshipShieldBlockEntity;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.block.entity.SpaceshipControlBlockEntity;
+import com.lit.spaceships.block.entity.SpaceshipHelmBlockEntity;
+import com.lit.spaceships.block.entity.SpaceshipReactorBlockEntity;
+import com.lit.spaceships.block.entity.SpaceshipShieldBlockEntity;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.bus.api.IEventBus;
@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 public class ModBlockEntities {
     // 1. Das Register für BlockEntities
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES =
-            DeferredRegister.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, Alpha.MODID);
+            DeferredRegister.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, LitSpaceships.MODID);
 
     // 2. Unsere BlockEntity eintragen und mit unserem Raumschiff-Block verknüpfen!
     public static final Supplier<BlockEntityType<SpaceshipControlBlockEntity>> SPACESHIP_CONTROL_BE =
@@ -34,17 +34,17 @@ public class ModBlockEntities {
             BLOCK_ENTITIES.register("spaceship_shield_be", () ->
                     BlockEntityType.Builder.of(SpaceshipShieldBlockEntity::new, ModBlocks.SPACESHIP_SHIELD.get()).build(null));
 
-    public static final Supplier<BlockEntityType<com.peaceman.alpha.block.entity.PulseLaserBlockEntity>> PULSE_LASER_BE =
+    public static final Supplier<BlockEntityType<com.lit.spaceships.block.entity.PulseLaserBlockEntity>> PULSE_LASER_BE =
             BLOCK_ENTITIES.register("pulse_laser_be", () ->
-                    BlockEntityType.Builder.of(com.peaceman.alpha.block.entity.PulseLaserBlockEntity::new, ModBlocks.PULSE_LASER.get()).build(null));
+                    BlockEntityType.Builder.of(com.lit.spaceships.block.entity.PulseLaserBlockEntity::new, ModBlocks.PULSE_LASER.get()).build(null));
 
-    public static final Supplier<BlockEntityType<com.peaceman.alpha.block.entity.HeavyBeamBlockEntity>> HEAVY_BEAM_BE =
+    public static final Supplier<BlockEntityType<com.lit.spaceships.block.entity.HeavyBeamBlockEntity>> HEAVY_BEAM_BE =
             BLOCK_ENTITIES.register("heavy_beam_be", () ->
-                    BlockEntityType.Builder.of(com.peaceman.alpha.block.entity.HeavyBeamBlockEntity::new, ModBlocks.HEAVY_BEAM.get()).build(null));
+                    BlockEntityType.Builder.of(com.lit.spaceships.block.entity.HeavyBeamBlockEntity::new, ModBlocks.HEAVY_BEAM.get()).build(null));
 
-    public static final Supplier<BlockEntityType<com.peaceman.alpha.block.entity.MiningLaserBlockEntity>> MINING_LASER_BE =
+    public static final Supplier<BlockEntityType<com.lit.spaceships.block.entity.MiningLaserBlockEntity>> MINING_LASER_BE =
             BLOCK_ENTITIES.register("mining_laser_be", () ->
-                    BlockEntityType.Builder.of(com.peaceman.alpha.block.entity.MiningLaserBlockEntity::new, ModBlocks.MINING_LASER.get()).build(null));
+                    BlockEntityType.Builder.of(com.lit.spaceships.block.entity.MiningLaserBlockEntity::new, ModBlocks.MINING_LASER.get()).build(null));
 
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);

@@ -1,8 +1,8 @@
-package com.peaceman.alpha.client.screen;
+package com.lit.spaceships.client.screen;
 
-import com.peaceman.alpha.menu.SpaceshipShieldMenu;
-import com.peaceman.alpha.network.ShipActionPayload;
-import com.peaceman.alpha.registry.ModI18n;
+import com.lit.spaceships.menu.SpaceshipShieldMenu;
+import com.lit.spaceships.network.ShipActionPayload;
+import com.lit.spaceships.registry.ModI18n;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;

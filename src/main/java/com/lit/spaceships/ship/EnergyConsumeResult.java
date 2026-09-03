@@ -1,4 +1,4 @@
-package com.peaceman.alpha.ship;
+package com.lit.spaceships.ship;
 
 public enum EnergyConsumeResult {
     SUCCESS,

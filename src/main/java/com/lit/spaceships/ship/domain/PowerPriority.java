@@ -1,4 +1,4 @@
-package com.peaceman.alpha.ship.domain;
+package com.lit.spaceships.ship.domain;
 
 /**
  * Taktische Priorisierungs-Modi für die Reaktor-Energieverteilung an Bord des Raumschiffs.

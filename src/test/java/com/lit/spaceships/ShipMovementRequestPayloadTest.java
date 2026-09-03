@@ -1,6 +1,6 @@
-package com.peaceman.alpha;
+package com.lit.spaceships;
 
-import com.peaceman.alpha.network.ShipMovementRequestPayload;
+import com.lit.spaceships.network.ShipMovementRequestPayload;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
 import org.junit.jupiter.api.Test;

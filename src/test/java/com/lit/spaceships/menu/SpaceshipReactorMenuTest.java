@@ -1,6 +1,6 @@
-package com.peaceman.alpha.menu;
+package com.lit.spaceships.menu;
 
-import com.peaceman.alpha.ship.domain.PowerPriority;
+import com.lit.spaceships.ship.domain.PowerPriority;
 import net.minecraft.world.inventory.SimpleContainerData;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

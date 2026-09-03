@@ -1,4 +1,4 @@
-package com.peaceman.alpha.effect;
+package com.lit.spaceships.effect;
 
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.SubscribeEvent;

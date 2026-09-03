@@ -1,4 +1,4 @@
-package com.peaceman.alpha.ship.domain;
+package com.lit.spaceships.ship.domain;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
@@ -288,7 +288,7 @@ public class ShipState {
         } else {
             this.isShieldActive = !this.isShieldActive;
         }
-        com.peaceman.alpha.helper.ShieldLifecycleLogger.logShieldToggled(this.id, this.isShieldActive);
+        com.lit.spaceships.helper.ShieldLifecycleLogger.logShieldToggled(this.id, this.isShieldActive);
     }
 
     public void toggleShieldZoneActive(byte id) {

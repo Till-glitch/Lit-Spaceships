@@ -1,8 +1,8 @@
-package com.peaceman.alpha.block;
+package com.lit.spaceships.block;
 
 import com.mojang.serialization.MapCodec;
-import com.peaceman.alpha.block.entity.PulseLaserBlockEntity;
-import com.peaceman.alpha.registry.ModBlockEntities;
+import com.lit.spaceships.block.entity.PulseLaserBlockEntity;
+import com.lit.spaceships.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -87,12 +87,12 @@ public class PulseLaserBlock extends BaseEntityBlock {
             if (level.getBlockEntity(pos) instanceof PulseLaserBlockEntity laserBE) {
                 if (laserBE.isOccupied()) {
                     player.displayClientMessage(
-                            net.minecraft.network.chat.Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.TURRET_OCCUPIED),
+                            net.minecraft.network.chat.Component.translatable(com.lit.spaceships.registry.ModI18n.Message.TURRET_OCCUPIED),
                             true);
                     return net.minecraft.world.InteractionResult.CONSUME;
                 }
 
-                com.peaceman.alpha.entity.TurretSeatEntity seat = new com.peaceman.alpha.entity.TurretSeatEntity(level,
+                com.lit.spaceships.entity.TurretSeatEntity seat = new com.lit.spaceships.entity.TurretSeatEntity(level,
                         pos, laserBE.getShipId());
                 level.addFreshEntity(seat);
                 player.startRiding(seat, true);

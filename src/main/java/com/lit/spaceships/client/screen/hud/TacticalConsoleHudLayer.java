@@ -1,7 +1,7 @@
-package com.peaceman.alpha.client.screen.hud;
+package com.lit.spaceships.client.screen.hud;
 
-import com.peaceman.alpha.client.state.ClientShipState;
-import com.peaceman.alpha.client.state.ClientShipStateProvider;
+import com.lit.spaceships.client.state.ClientShipState;
+import com.lit.spaceships.client.state.ClientShipStateProvider;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -32,31 +32,31 @@ public class TacticalConsoleHudLayer implements LayeredDraw.Layer {
         int startY = height - 90;
 
         guiGraphics.fill(startX, startY, startX + 110, startY + 80, 0x55000000);
-        guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_TACTICAL_HEADER).withStyle(net.minecraft.ChatFormatting.AQUA), startX + 5, startY + 5, 0xFFFFFF);
+        guiGraphics.drawString(font, Component.translatable(com.lit.spaceships.registry.ModI18n.Screen.HUD_TACTICAL_HEADER).withStyle(net.minecraft.ChatFormatting.AQUA), startX + 5, startY + 5, 0xFFFFFF);
 
         long currentTick = mc.level != null ? mc.level.getGameTime() : 0;
         
         // Schild Status
         if (shipState.isShieldActive()) {
             if (shipState.getShieldEnergyPercentage() < 0.2f) {
-                guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_TACTICAL_SHIELD_CRITICAL).withStyle(net.minecraft.ChatFormatting.RED), startX + 5, startY + 20, 0xFFFFFF);
+                guiGraphics.drawString(font, Component.translatable(com.lit.spaceships.registry.ModI18n.Screen.HUD_TACTICAL_SHIELD_CRITICAL).withStyle(net.minecraft.ChatFormatting.RED), startX + 5, startY + 20, 0xFFFFFF);
             } else {
-                guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_TACTICAL_SHIELD_ACTIVE).withStyle(net.minecraft.ChatFormatting.DARK_AQUA), startX + 5, startY + 20, 0xFFFFFF);
+                guiGraphics.drawString(font, Component.translatable(com.lit.spaceships.registry.ModI18n.Screen.HUD_TACTICAL_SHIELD_ACTIVE).withStyle(net.minecraft.ChatFormatting.DARK_AQUA), startX + 5, startY + 20, 0xFFFFFF);
             }
         } else {
             if (shipState.isShieldOnCooldown(currentTick)) {
                 long cd = shipState.getShieldCooldownDisplay(currentTick);
                 String cdStr = String.format(java.util.Locale.ROOT, "%.1f", (cd / 20.0f));
-                guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_TACTICAL_SHIELD_OFFLINE).withStyle(net.minecraft.ChatFormatting.RED), startX + 5, startY + 20, 0xFFFFFF);
-                guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_TACTICAL_REBOOT, cdStr).withStyle(net.minecraft.ChatFormatting.RED), startX + 5, startY + 35, 0xFFFFFF);
+                guiGraphics.drawString(font, Component.translatable(com.lit.spaceships.registry.ModI18n.Screen.HUD_TACTICAL_SHIELD_OFFLINE).withStyle(net.minecraft.ChatFormatting.RED), startX + 5, startY + 20, 0xFFFFFF);
+                guiGraphics.drawString(font, Component.translatable(com.lit.spaceships.registry.ModI18n.Screen.HUD_TACTICAL_REBOOT, cdStr).withStyle(net.minecraft.ChatFormatting.RED), startX + 5, startY + 35, 0xFFFFFF);
             } else {
-                guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_TACTICAL_SHIELD_DISABLED).withStyle(net.minecraft.ChatFormatting.DARK_RED), startX + 5, startY + 20, 0xFFFFFF);
+                guiGraphics.drawString(font, Component.translatable(com.lit.spaceships.registry.ModI18n.Screen.HUD_TACTICAL_SHIELD_DISABLED).withStyle(net.minecraft.ChatFormatting.DARK_RED), startX + 5, startY + 20, 0xFFFFFF);
             }
         }
 
-        guiGraphics.drawString(font, Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HUD_TACTICAL_ENERGY, (int)(shipState.getShieldEnergyPercentage() * 100)), startX + 5, startY + 50, 0xFFFFFF);
+        guiGraphics.drawString(font, Component.translatable(com.lit.spaceships.registry.ModI18n.Screen.HUD_TACTICAL_ENERGY, (int)(shipState.getShieldEnergyPercentage() * 100)), startX + 5, startY + 50, 0xFFFFFF);
         
         // Fadenkreuz wird durch TurretCrosshairRenderer gezeichnet
-        com.peaceman.alpha.client.render.TurretCrosshairRenderer.render(guiGraphics, deltaTracker);
+        com.lit.spaceships.client.render.TurretCrosshairRenderer.render(guiGraphics, deltaTracker);
     }
 }

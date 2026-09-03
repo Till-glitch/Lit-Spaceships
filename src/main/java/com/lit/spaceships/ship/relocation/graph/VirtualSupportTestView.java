@@ -1,4 +1,4 @@
-package com.peaceman.alpha.ship.relocation.graph;
+package com.lit.spaceships.ship.relocation.graph;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

@@ -1,9 +1,9 @@
-package com.peaceman.alpha.integration.jei;
+package com.lit.spaceships.integration.jei;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.client.screen.SpaceshipReactorScreen;
-import com.peaceman.alpha.client.screen.SpaceshipShieldScreen;
-import com.peaceman.alpha.registry.ModBlocks;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.client.screen.SpaceshipReactorScreen;
+import com.lit.spaceships.client.screen.SpaceshipShieldScreen;
+import com.lit.spaceships.registry.ModBlocks;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.constants.RecipeTypes;
@@ -24,7 +24,7 @@ import java.util.List;
 @JeiPlugin
 public class ModJeiPlugin implements IModPlugin {
 
-    public static final ResourceLocation PLUGIN_ID = ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "jei_plugin");
+    public static final ResourceLocation PLUGIN_ID = ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "jei_plugin");
 
     @Override
     public ResourceLocation getPluginUid() {

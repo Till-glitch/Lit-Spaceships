@@ -1,8 +1,8 @@
-package com.peaceman.alpha.registry;
+package com.lit.spaceships.registry;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.world.feature.AsteroidFeature;
-import com.peaceman.alpha.world.feature.SpaceWreckFeature;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.world.feature.AsteroidFeature;
+import com.lit.spaceships.world.feature.SpaceWreckFeature;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
@@ -13,7 +13,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public class ModFeatures {
 
     public static final DeferredRegister<Feature<?>> FEATURES =
-            DeferredRegister.create(Registries.FEATURE, Alpha.MODID);
+            DeferredRegister.create(Registries.FEATURE, LitSpaceships.MODID);
 
     public static final DeferredHolder<Feature<?>, AsteroidFeature> ASTEROID =
             FEATURES.register("asteroid", () -> new AsteroidFeature(NoneFeatureConfiguration.CODEC));

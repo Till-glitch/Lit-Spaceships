@@ -1,7 +1,7 @@
-package com.peaceman.alpha.block.entity;
+package com.lit.spaceships.block.entity;
 
-import com.peaceman.alpha.registry.ModBlockEntities;
-import com.peaceman.alpha.ship.combat.LaserWeaponTier;
+import com.lit.spaceships.registry.ModBlockEntities;
+import com.lit.spaceships.ship.combat.LaserWeaponTier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -63,26 +63,26 @@ public class PulseLaserBlockEntity extends AbstractLaserNodeBlockEntity {
     }
 
     @Override
-    public boolean handleFire(Level level, com.peaceman.alpha.ship.domain.ShipState shooterShip, BlockPos weaponPos) {
+    public boolean handleFire(Level level, com.lit.spaceships.ship.domain.ShipState shooterShip, BlockPos weaponPos) {
         if (!canFire()) return false;
-        if (!com.peaceman.alpha.ship.SpaceshipEnergyManager.tryConsumeEnergyAmount(level, shooterShip, getEnergyCost())) {
+        if (!com.lit.spaceships.ship.SpaceshipEnergyManager.tryConsumeEnergyAmount(level, shooterShip, getEnergyCost())) {
             return false;
         }
         triggerCooldown();
         
         LaserWeaponTier tier = getTier();
-        net.minecraft.world.phys.Vec3 dir = com.peaceman.alpha.ship.combat.LaserCombatService.calculateAimDirection(this, shooterShip);
+        net.minecraft.world.phys.Vec3 dir = com.lit.spaceships.ship.combat.LaserCombatService.calculateAimDirection(this, shooterShip);
         net.minecraft.world.phys.Vec3 origin = net.minecraft.world.phys.Vec3.atCenterOf(weaponPos).add(dir.scale(0.55));
         
-        com.peaceman.alpha.ship.combat.RaycastHitResult hit = com.peaceman.alpha.ship.combat.LaserRaycastUtil.raycast(level, shooterShip.getId(), origin, dir, getMaxRange(), true);
-        com.peaceman.alpha.ship.combat.LaserCombatService.processPulseHit(level, shooterShip, tier, hit);
+        com.lit.spaceships.ship.combat.RaycastHitResult hit = com.lit.spaceships.ship.combat.LaserRaycastUtil.raycast(level, shooterShip.getId(), origin, dir, getMaxRange(), true);
+        com.lit.spaceships.ship.combat.LaserCombatService.processPulseHit(level, shooterShip, tier, hit);
         
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingChunk((net.minecraft.server.level.ServerLevel) level, new net.minecraft.world.level.ChunkPos(weaponPos),
-                new com.peaceman.alpha.network.LaserFirePayload(shooterShip.getId(), origin, hit.worldHitPos(), tier));
+                new com.lit.spaceships.network.LaserFirePayload(shooterShip.getId(), origin, hit.worldHitPos(), tier));
                 
-        net.neoforged.neoforge.network.PacketDistributor.sendToAllPlayers(new com.peaceman.alpha.network.ShipStateSyncPayload(
+        net.neoforged.neoforge.network.PacketDistributor.sendToAllPlayers(new com.lit.spaceships.network.ShipStateSyncPayload(
                 shooterShip.getId(),
-                com.peaceman.alpha.ship.SpaceshipEnergyManager.getTotalAvailableEnergy(level, shooterShip),
+                com.lit.spaceships.ship.SpaceshipEnergyManager.getTotalAvailableEnergy(level, shooterShip),
                 shooterShip.isShieldActive(),
                 shooterShip.getShieldCooldownRemaining(level.getGameTime()),
                 shooterShip.getMovementCooldownRemaining(level.getGameTime())));

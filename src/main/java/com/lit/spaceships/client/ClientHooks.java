@@ -1,6 +1,6 @@
-package com.peaceman.alpha.client;
+package com.lit.spaceships.client;
 
-import com.peaceman.alpha.client.screen.SpaceshipControlScreen;
+import com.lit.spaceships.client.screen.SpaceshipControlScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 

@@ -1,6 +1,6 @@
-package com.peaceman.alpha.network;
+package com.lit.spaceships.network;
 
-import com.peaceman.alpha.Alpha;
+import com.lit.spaceships.LitSpaceships;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -12,7 +12,7 @@ import java.util.UUID;
 
 public record ShipMovementRequestPayload(UUID shipId, float impulseForward, float impulseLeft, float impulseUp) implements CustomPacketPayload {
 
-    public static final Type<ShipMovementRequestPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "ship_movement_request"));
+    public static final Type<ShipMovementRequestPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "ship_movement_request"));
 
     public static final StreamCodec<ByteBuf, ShipMovementRequestPayload> STREAM_CODEC = StreamCodec.composite(
             UUIDUtil.STREAM_CODEC, ShipMovementRequestPayload::shipId,

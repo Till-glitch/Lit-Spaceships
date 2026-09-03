@@ -1,8 +1,8 @@
-package com.peaceman.alpha.client.state;
+package com.lit.spaceships.client.state;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.helper.ShieldLifecycleLogger;
-import com.peaceman.alpha.network.ShieldBubbleSyncPacket;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.helper.ShieldLifecycleLogger;
+import com.lit.spaceships.network.ShieldBubbleSyncPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
@@ -24,7 +24,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Verwaltet den clientseitigen Lebenszyklus aller sichtbaren Schiffe.
  * Dient als View-Cache für Rendering-Systeme und verhindert VRAM-Leaks.
  */
-@EventBusSubscriber(modid = Alpha.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+@EventBusSubscriber(modid = LitSpaceships.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public class ClientShipManager {
 
     private static final Map<UUID, ClientShipState> ACTIVE_CLIENT_SHIPS = new ConcurrentHashMap<>();

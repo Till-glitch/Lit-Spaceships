@@ -1,8 +1,8 @@
-package com.peaceman.alpha.block;
+package com.lit.spaceships.block;
 
 import com.mojang.serialization.MapCodec;
-import com.peaceman.alpha.block.entity.MiningLaserBlockEntity;
-import com.peaceman.alpha.registry.ModBlockEntities;
+import com.lit.spaceships.block.entity.MiningLaserBlockEntity;
+import com.lit.spaceships.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -86,12 +86,12 @@ public class MiningLaserBlock extends BaseEntityBlock {
             if (level.getBlockEntity(pos) instanceof MiningLaserBlockEntity laserBE) {
                 if (laserBE.isOccupied()) {
                     player.displayClientMessage(
-                            net.minecraft.network.chat.Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.TURRET_OCCUPIED),
+                            net.minecraft.network.chat.Component.translatable(com.lit.spaceships.registry.ModI18n.Message.TURRET_OCCUPIED),
                             true);
                     return net.minecraft.world.InteractionResult.CONSUME;
                 }
 
-                com.peaceman.alpha.entity.TurretSeatEntity seat = new com.peaceman.alpha.entity.TurretSeatEntity(level,
+                com.lit.spaceships.entity.TurretSeatEntity seat = new com.lit.spaceships.entity.TurretSeatEntity(level,
                         pos, laserBE.getShipId());
                 level.addFreshEntity(seat);
                 player.startRiding(seat, true);
@@ -122,8 +122,8 @@ public class MiningLaserBlock extends BaseEntityBlock {
                         if (be.getShipId() != null) {
                             net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingChunk(
                                     serverLevel, new net.minecraft.world.level.ChunkPos(pos),
-                                    new com.peaceman.alpha.network.LaserStateSyncPayload(be.getShipId(), pos, false,
-                                            com.peaceman.alpha.ship.combat.LaserWeaponTier.MINING_LASER));
+                                    new com.lit.spaceships.network.LaserStateSyncPayload(be.getShipId(), pos, false,
+                                            com.lit.spaceships.ship.combat.LaserWeaponTier.MINING_LASER));
                         }
                     }
                 }

@@ -1,6 +1,6 @@
-package com.peaceman.alpha.block.entity;
+package com.lit.spaceships.block.entity;
 
-import com.peaceman.alpha.registry.ModBlockEntities;
+import com.lit.spaceships.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
 

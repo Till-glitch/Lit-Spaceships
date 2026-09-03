@@ -15,8 +15,8 @@
   "carvers": {},
   "features": [
     [
-      "peaceman_alpha:asteroid_placed",
-      "peaceman_alpha:space_wreck_placed"
+      "lit_spaceships:asteroid_placed",
+      "lit_spaceships:space_wreck_placed"
     ]
   ]
 }

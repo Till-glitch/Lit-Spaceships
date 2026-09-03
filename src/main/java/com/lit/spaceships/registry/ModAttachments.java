@@ -1,6 +1,6 @@
-package com.peaceman.alpha.registry;
+package com.lit.spaceships.registry;
 
-import com.peaceman.alpha.Alpha;
+import com.lit.spaceships.LitSpaceships;
 import net.minecraft.core.UUIDUtil;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 public class ModAttachments {
 
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
-            DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, Alpha.MODID);
+            DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, LitSpaceships.MODID);
 
     public static final Supplier<AttachmentType<UUID>> SHIP_ID = ATTACHMENT_TYPES.register(
             "ship_id",

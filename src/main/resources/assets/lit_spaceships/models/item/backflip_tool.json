@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/handheld",
   "textures": {
-    "layer0": "peaceman_alpha:item/backflip_tool"
+    "layer0": "lit_spaceships:item/backflip_tool"
   }
 }

@@ -1,7 +1,7 @@
-package com.peaceman.alpha.ship;
+package com.lit.spaceships.ship;
 
-import com.peaceman.alpha.block.entity.SpaceshipReactorBlockEntity;
-import com.peaceman.alpha.ship.domain.ShipState;
+import com.lit.spaceships.block.entity.SpaceshipReactorBlockEntity;
+import com.lit.spaceships.ship.domain.ShipState;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.Bootstrap;

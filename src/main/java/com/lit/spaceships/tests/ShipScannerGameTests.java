@@ -1,8 +1,8 @@
-package com.peaceman.alpha.tests;
+package com.lit.spaceships.tests;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.registry.ModBlocks;
-import com.peaceman.alpha.ship.service.ShipScannerService;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.registry.ModBlocks;
+import com.lit.spaceships.ship.service.ShipScannerService;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -16,7 +16,7 @@ import java.util.Set;
 /**
  * GameTests für den Breitensuche-Scanner (BFS) zur Struktur- und Multiblock-Erkennung.
  */
-@GameTestHolder(Alpha.MODID)
+@GameTestHolder(LitSpaceships.MODID)
 public class ShipScannerGameTests {
 
     @GameTest(template = "empty")

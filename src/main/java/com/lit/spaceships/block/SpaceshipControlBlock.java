@@ -1,7 +1,7 @@
-package com.peaceman.alpha.block;
+package com.lit.spaceships.block;
 
-import com.peaceman.alpha.block.entity.SpaceshipControlBlockEntity;
-import com.peaceman.alpha.ship.service.ServerShipManager;
+import com.lit.spaceships.block.entity.SpaceshipControlBlockEntity;
+import com.lit.spaceships.ship.service.ServerShipManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;

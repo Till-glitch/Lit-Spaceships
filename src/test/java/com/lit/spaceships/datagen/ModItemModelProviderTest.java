@@ -1,9 +1,9 @@
-package com.peaceman.alpha.datagen;
+package com.lit.spaceships.datagen;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.datagen.provider.ModItemModelProvider;
-import com.peaceman.alpha.registry.ModBlocks;
-import com.peaceman.alpha.registry.ModItems;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.datagen.provider.ModItemModelProvider;
+import com.lit.spaceships.registry.ModBlocks;
+import com.lit.spaceships.registry.ModItems;
 import net.minecraft.SharedConstants;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
@@ -38,14 +38,14 @@ class ModItemModelProviderTest {
         PackOutput packOutput = new PackOutput(Path.of("test_output"));
         ModItemModelProvider provider = new ModItemModelProvider(packOutput, existingFileHelper);
         assertNotNull(provider);
-        assertEquals("peaceman_alpha", provider.getName().toLowerCase().contains("peaceman_alpha") ? "peaceman_alpha" : "peaceman_alpha");
+        assertEquals("lit_spaceships", provider.getName().toLowerCase().contains("lit_spaceships") ? "lit_spaceships" : "lit_spaceships");
     }
 
     @Test
     @DisplayName("Laser items are correctly referenced to laser_base block parent model")
     void testLaserItemModelPaths() {
-        ResourceLocation laserBase = ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "block/laser_base");
-        assertEquals("peaceman_alpha:block/laser_base", laserBase.toString());
+        ResourceLocation laserBase = ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "block/laser_base");
+        assertEquals("lit_spaceships:block/laser_base", laserBase.toString());
 
         assertEquals("pulse_laser", ModBlocks.PULSE_LASER.getId().getPath());
         assertEquals("heavy_beam", ModBlocks.HEAVY_BEAM.getId().getPath());

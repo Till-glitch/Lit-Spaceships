@@ -1,8 +1,8 @@
-package com.peaceman.alpha.registry;
+package com.lit.spaceships.registry;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.datagen.provider.ModEnglishLanguageProvider;
-import com.peaceman.alpha.datagen.provider.ModGermanLanguageProvider;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.datagen.provider.ModEnglishLanguageProvider;
+import com.lit.spaceships.datagen.provider.ModGermanLanguageProvider;
 import net.minecraft.SharedConstants;
 import net.minecraft.data.PackOutput;
 import net.minecraft.server.Bootstrap;
@@ -22,14 +22,14 @@ class ModI18nTest {
 
     private static final Pattern TAXONOMY_PATTERN = Pattern.compile("^(itemGroup\\.[a-z0-9_.]+|[a-z0-9_.]+)$");
     private static final List<String> VALID_PREFIXES = List.of(
-            "itemGroup." + Alpha.MODID,
-            "screen." + Alpha.MODID,
-            "message." + Alpha.MODID,
-            "key.categories." + Alpha.MODID,
-            "key." + Alpha.MODID,
-            "tooltip." + Alpha.MODID,
-            "structure." + Alpha.MODID,
-            "biome." + Alpha.MODID
+            "itemGroup." + LitSpaceships.MODID,
+            "screen." + LitSpaceships.MODID,
+            "message." + LitSpaceships.MODID,
+            "key.categories." + LitSpaceships.MODID,
+            "key." + LitSpaceships.MODID,
+            "tooltip." + LitSpaceships.MODID,
+            "structure." + LitSpaceships.MODID,
+            "biome." + LitSpaceships.MODID
     );
 
     @BeforeAll

@@ -1,13 +1,13 @@
-package com.peaceman.alpha.ship.service;
+package com.lit.spaceships.ship.service;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.network.ShieldBubbleSyncPacket;
-import com.peaceman.alpha.network.ShipImpactEventPayload;
-import com.peaceman.alpha.network.ShipStateSyncPayload;
-import com.peaceman.alpha.network.ShipStructureDeltaPayload;
-import com.peaceman.alpha.ship.SpaceshipEnergyManager;
-import com.peaceman.alpha.ship.SpaceshipShieldHandler;
-import com.peaceman.alpha.ship.domain.ShipState;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.network.ShieldBubbleSyncPacket;
+import com.lit.spaceships.network.ShipImpactEventPayload;
+import com.lit.spaceships.network.ShipStateSyncPayload;
+import com.lit.spaceships.network.ShipStructureDeltaPayload;
+import com.lit.spaceships.ship.SpaceshipEnergyManager;
+import com.lit.spaceships.ship.SpaceshipShieldHandler;
+import com.lit.spaceships.ship.domain.ShipState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
@@ -56,7 +56,7 @@ public class CollisionResolver {
         boolean shieldA = collision.isShieldA();
         boolean shieldB = collision.isShieldB();
 
-        Alpha.LOGGER.info("[CollisionResolver] Resolving collision between Ship {} (Shield: {}) and Ship {} (Shield: {}) with {} voxels",
+        LitSpaceships.LOGGER.info("[CollisionResolver] Resolving collision between Ship {} (Shield: {}) and Ship {} (Shield: {}) with {} voxels",
                 shipA.getId(), shieldA, shipB.getId(), shieldB, voxelCount);
 
         // Fall 1: OFF vs. OFF (Hülle vs. Hülle)
@@ -115,7 +115,7 @@ public class CollisionResolver {
             }
 
             Vec3 clampedVector = calculateClampedMovement(shipA, shipB, movementVector);
-            com.peaceman.alpha.helper.ShieldLifecycleLogger.logCollisionResolved("OFF_vs_OFF", shipA.getId(), shipB.getId(),
+            com.lit.spaceships.helper.ShieldLifecycleLogger.logCollisionResolved("OFF_vs_OFF", shipA.getId(), shipB.getId(),
                     voxelCount, true, "Gegenseitige Zerstoerung (" + destroyedA.size() + " Bloecke von A, " + destroyedB.size() + " von B) + Cluster-Explosion");
 
             return new CollisionResolution(true, clampedVector, destroyedA, destroyedB, "OFF_vs_OFF");
@@ -135,7 +135,7 @@ public class CollisionResolver {
 
             if (!absorbed) {
                 collapseShieldAndSync(level, shipB);
-                com.peaceman.alpha.helper.ShieldLifecycleLogger.logCollisionResolved("OFF_vs_ON", shipA.getId(), shipB.getId(),
+                com.lit.spaceships.helper.ShieldLifecycleLogger.logCollisionResolved("OFF_vs_ON", shipA.getId(), shipB.getId(),
                         voxelCount, true, "Schild B zusammengebrochen! Energiemangel bei Absorption von " + drain + " FE");
             } else {
                 if (!collidingVoxels.isEmpty()) {
@@ -145,11 +145,11 @@ public class CollisionResolver {
                 int remainingB = SpaceshipEnergyManager.getTotalAvailableEnergy(level, shipB);
                 if (remainingB <= 0) {
                     collapseShieldAndSync(level, shipB);
-                    com.peaceman.alpha.helper.ShieldLifecycleLogger.logCollisionResolved("OFF_vs_ON", shipA.getId(), shipB.getId(),
+                    com.lit.spaceships.helper.ShieldLifecycleLogger.logCollisionResolved("OFF_vs_ON", shipA.getId(), shipB.getId(),
                         voxelCount, true, "Schild B hat Aufprall absorbiert, ist aber durch vollstaendigen FE-Verbrauch (0 FE) zusammengebrochen.");
                 } else {
                     syncIntactShieldState(level, shipB, remainingB);
-                    com.peaceman.alpha.helper.ShieldLifecycleLogger.logCollisionResolved("OFF_vs_ON", shipA.getId(), shipB.getId(),
+                    com.lit.spaceships.helper.ShieldLifecycleLogger.logCollisionResolved("OFF_vs_ON", shipA.getId(), shipB.getId(),
                             voxelCount, true, "Schild B hat Aufprall absorbiert (-" + drain + " FE). Translation von Schiff A gestoppt.");
                 }
             }
@@ -196,14 +196,14 @@ public class CollisionResolver {
                     syncIntactShieldState(level, shipA, remainingA);
                 }
 
-                com.peaceman.alpha.helper.ShieldLifecycleLogger.logCollisionResolved("ON_vs_OFF_DRILL", shipA.getId(), shipB.getId(),
+                com.lit.spaceships.helper.ShieldLifecycleLogger.logCollisionResolved("ON_vs_OFF_DRILL", shipA.getId(), shipB.getId(),
                         voxelCount, false, "Bohrer aktiv: " + destroyedB.size() + " Bloecke gefräst (-" + drillCost + " FE). Momentum erhalten.");
 
                 return new CollisionResolution(false, movementVector, Collections.emptyList(), destroyedB, "ON_vs_OFF_DRILL");
             } else {
                 collapseShieldAndSync(level, shipA);
                 Vec3 clampedVector = calculateClampedMovement(shipA, shipB, movementVector);
-                com.peaceman.alpha.helper.ShieldLifecycleLogger.logCollisionResolved("ON_vs_OFF_COLLAPSED", shipA.getId(), shipB.getId(),
+                com.lit.spaceships.helper.ShieldLifecycleLogger.logCollisionResolved("ON_vs_OFF_COLLAPSED", shipA.getId(), shipB.getId(),
                         voxelCount, true, "Schild A beim Bohren zusammengebrochen! Energiemangel bei " + drillCost + " FE. Kinetischer Stopp.");
                 return new CollisionResolution(true, clampedVector, Collections.emptyList(), Collections.emptyList(), "ON_vs_OFF_COLLAPSED");
             }
@@ -253,7 +253,7 @@ public class CollisionResolver {
                 syncIntactShieldState(level, shipB, remB);
             }
 
-            com.peaceman.alpha.helper.ShieldLifecycleLogger.logCollisionResolved("ON_vs_ON", shipA.getId(), shipB.getId(),
+            com.lit.spaceships.helper.ShieldLifecycleLogger.logCollisionResolved("ON_vs_ON", shipA.getId(), shipB.getId(),
                     voxelCount, true, "Schild-Zusammenstoss! Drain je " + clashCost + " FE. Schild A intakt: " + (absorbedA && remA > 0) + ", Schild B intakt: " + (absorbedB && remB > 0));
 
             return new CollisionResolution(true, clampedVector, Collections.emptyList(), Collections.emptyList(), "ON_vs_ON");
@@ -382,7 +382,7 @@ public class CollisionResolver {
         byte fallbackShieldId = 0;
         double minSq = Double.MAX_VALUE;
         long gameTime = level.getGameTime();
-        for (com.peaceman.alpha.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
+        for (com.lit.spaceships.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
             if (!zone.isCollapsed(gameTime) && zone.generatorPos() != null) {
                 double dist = zone.generatorPos().distSqr(center);
                 if (dist < minSq) {

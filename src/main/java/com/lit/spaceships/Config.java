@@ -1,4 +1,4 @@
-package com.peaceman.alpha;
+package com.lit.spaceships;
 
 import java.util.List;
 

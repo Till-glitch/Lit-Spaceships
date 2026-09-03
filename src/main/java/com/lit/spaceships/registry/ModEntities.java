@@ -1,7 +1,7 @@
-package com.peaceman.alpha.registry;
+package com.lit.spaceships.registry;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.entity.TurretSeatEntity;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.entity.TurretSeatEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -12,7 +12,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public class ModEntities {
 
     public static final DeferredRegister<EntityType<?>> ENTITIES =
-            DeferredRegister.create(Registries.ENTITY_TYPE, Alpha.MODID);
+            DeferredRegister.create(Registries.ENTITY_TYPE, LitSpaceships.MODID);
 
     public static final DeferredHolder<EntityType<?>, EntityType<TurretSeatEntity>> TURRET_SEAT =
             ENTITIES.register("turret_seat", () -> EntityType.Builder.<TurretSeatEntity>of(TurretSeatEntity::new, MobCategory.MISC)

@@ -1,6 +1,6 @@
-package com.peaceman.alpha.network;
+package com.lit.spaceships.network;
 
-import com.peaceman.alpha.Alpha;
+import com.lit.spaceships.LitSpaceships;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -21,7 +21,7 @@ public record ShieldZoneStatePayload(
 ) implements CustomPacketPayload {
 
     public static final CustomPacketPayload.Type<ShieldZoneStatePayload> TYPE =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "shield_zone_state"));
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "shield_zone_state"));
 
     public static final StreamCodec<FriendlyByteBuf, ShieldZoneStatePayload> STREAM_CODEC = StreamCodec.composite(
             UUIDUtil.STREAM_CODEC,

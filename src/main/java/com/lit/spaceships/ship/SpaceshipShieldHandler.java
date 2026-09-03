@@ -1,13 +1,13 @@
-package com.peaceman.alpha.ship;
+package com.lit.spaceships.ship;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.block.entity.SpaceshipShieldBlockEntity;
-import com.peaceman.alpha.helper.ShieldLifecycleLogger;
-import com.peaceman.alpha.network.ShieldBubbleSyncPacket;
-import com.peaceman.alpha.network.ShipImpactEventPayload;
-import com.peaceman.alpha.network.ShipStateSyncPayload;
-import com.peaceman.alpha.ship.domain.ShipState;
-import com.peaceman.alpha.ship.service.ServerShipManager;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.block.entity.SpaceshipShieldBlockEntity;
+import com.lit.spaceships.helper.ShieldLifecycleLogger;
+import com.lit.spaceships.network.ShieldBubbleSyncPacket;
+import com.lit.spaceships.network.ShipImpactEventPayload;
+import com.lit.spaceships.network.ShipStateSyncPayload;
+import com.lit.spaceships.ship.domain.ShipState;
+import com.lit.spaceships.ship.service.ServerShipManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
@@ -34,7 +34,7 @@ import java.util.UUID;
  * - Schadensabfang bei Explosionen & Energieverbrauch
  * - Erweiterbar für variable Schildradien, Farbwerte und Generatortypen
  */
-@EventBusSubscriber(modid = Alpha.MODID, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = LitSpaceships.MODID, bus = EventBusSubscriber.Bus.GAME)
 public class SpaceshipShieldHandler {
 
     public static final int ENERGY_COST_PER_BLOCK = 50;
@@ -84,7 +84,7 @@ public class SpaceshipShieldHandler {
             long gameTime = level.getGameTime();
             if (ship.isShieldOnCooldown(gameTime)) {
                 long remaining = ship.getShieldCooldownRemaining(gameTime);
-                Alpha.LOGGER.info("[SpaceshipShieldHandler] Schild-Aktivierung fuer Schiff '{}' blockiert! Cooldown laeuft noch {} Ticks ({} Sek.)",
+                LitSpaceships.LOGGER.info("[SpaceshipShieldHandler] Schild-Aktivierung fuer Schiff '{}' blockiert! Cooldown laeuft noch {} Ticks ({} Sek.)",
                         ship.getId(), remaining, remaining / 20);
                 return false;
             }
@@ -100,7 +100,7 @@ public class SpaceshipShieldHandler {
             if (!newState) {
                 long cooldownEnd = level.getGameTime() + ShipState.SHIELD_COOLDOWN_TICKS;
                 ship.setShieldCooldownUntil(cooldownEnd);
-                Alpha.LOGGER.info("[SpaceshipShieldHandler] Schild-Cooldown fuer Schiff '{}' gesetzt bis Tick {} ({} Sek.)",
+                LitSpaceships.LOGGER.info("[SpaceshipShieldHandler] Schild-Cooldown fuer Schiff '{}' gesetzt bis Tick {} ({} Sek.)",
                         ship.getId(), cooldownEnd, ShipState.SHIELD_COOLDOWN_TICKS / 20);
             }
             PacketDistributor.sendToAllPlayers(new ShipStateSyncPayload(ship.getId(), 0, newState,
@@ -116,7 +116,7 @@ public class SpaceshipShieldHandler {
 
         // Find the shield zone ID matching the block pos
         byte targetZoneId = 0;
-        for (com.peaceman.alpha.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
+        for (com.lit.spaceships.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
             if (zone.generatorPos() != null && zone.generatorPos().equals(generatorPos)) {
                 targetZoneId = zone.id();
                 break;
@@ -127,7 +127,7 @@ public class SpaceshipShieldHandler {
             ship.toggleShieldZoneActive(targetZoneId);
             ServerShipManager.syncShieldZoneStates(level, ship);
             ServerShipManager.saveData(level);
-            Alpha.LOGGER.info("[SpaceshipShieldHandler] Schild-Zone {} (Pos: {}) fuer Schiff '{}' umgeschaltet.",
+            LitSpaceships.LOGGER.info("[SpaceshipShieldHandler] Schild-Zone {} (Pos: {}) fuer Schiff '{}' umgeschaltet.",
                     targetZoneId, generatorPos, ship.getId());
         }
     }
@@ -148,10 +148,10 @@ public class SpaceshipShieldHandler {
         ship.getBlocks().remove(pos);
 
         // Finde und deaktiviere die zugehörige ShieldZone (Generator zerstört)
-        for (java.util.Map.Entry<Byte, com.peaceman.alpha.ship.domain.ShieldZone> entry : ship.getShieldZones().entrySet()) {
-            com.peaceman.alpha.ship.domain.ShieldZone z = entry.getValue();
+        for (java.util.Map.Entry<Byte, com.lit.spaceships.ship.domain.ShieldZone> entry : ship.getShieldZones().entrySet()) {
+            com.lit.spaceships.ship.domain.ShieldZone z = entry.getValue();
             if (z.generatorPos() != null && z.generatorPos().equals(pos)) {
-                ship.setShieldZone(new com.peaceman.alpha.ship.domain.ShieldZone(z.id(), null, 0, z.maxEnergy(), Long.MAX_VALUE, false));
+                ship.setShieldZone(new com.lit.spaceships.ship.domain.ShieldZone(z.id(), null, 0, z.maxEnergy(), Long.MAX_VALUE, false));
                 break;
             }
         }
@@ -214,7 +214,7 @@ public class SpaceshipShieldHandler {
 
         // 3. Energie abziehen, falls moeglich
         if (shieldId > 0) {
-            com.peaceman.alpha.ship.domain.ShieldZone zone = ship.getShieldZone(shieldId);
+            com.lit.spaceships.ship.domain.ShieldZone zone = ship.getShieldZone(shieldId);
             long gameTime = level.getGameTime();
             if (zone != null && !zone.isCollapsed(gameTime) && zone.currentEnergy() >= energyCost) {
                 int newEnergy = zone.currentEnergy() - energyCost;
@@ -256,7 +256,7 @@ public class SpaceshipShieldHandler {
             BlockPos explosionCenter = BlockPos.containing(event.getExplosion().center());
             double minSq = Double.MAX_VALUE;
             long gameTime = level.getGameTime();
-            for (com.peaceman.alpha.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
+            for (com.lit.spaceships.ship.domain.ShieldZone zone : ship.getShieldZones().values()) {
                 if (!zone.isCollapsed(gameTime) && zone.generatorPos() != null) {
                     double dist = zone.generatorPos().distSqr(explosionCenter);
                     if (dist < minSq) {
@@ -326,7 +326,7 @@ public class SpaceshipShieldHandler {
                 // Merke alte Maske
                 long oldMask = ServerShipManager.calculateShieldActiveMask(ship, gameTime);
                 
-                int distributed = com.peaceman.alpha.ship.SpaceshipEnergyManager.distributeEnergyToShields(serverLevel, ship);
+                int distributed = com.lit.spaceships.ship.SpaceshipEnergyManager.distributeEnergyToShields(serverLevel, ship);
                 
                 long newMask = ServerShipManager.calculateShieldActiveMask(ship, gameTime);
                 

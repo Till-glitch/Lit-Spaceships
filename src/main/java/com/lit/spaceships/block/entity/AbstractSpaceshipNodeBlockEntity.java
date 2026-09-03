@@ -1,7 +1,7 @@
-package com.peaceman.alpha.block.entity;
+package com.lit.spaceships.block.entity;
 
-import com.peaceman.alpha.block.ISpaceshipNode;
-import com.peaceman.alpha.registry.ModAttachments;
+import com.lit.spaceships.block.ISpaceshipNode;
+import com.lit.spaceships.registry.ModAttachments;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;

@@ -1,11 +1,11 @@
-package com.peaceman.alpha.client.render;
+package com.lit.spaceships.client.render;
 
 import org.joml.Quaternionf;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.client.state.ClientShipManager;
-import com.peaceman.alpha.client.state.ClientShipState;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.client.state.ClientShipManager;
+import com.lit.spaceships.client.state.ClientShipState;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
@@ -32,18 +32,18 @@ public class ShieldRenderer {
 
     private static ShaderInstance hexShieldShader;
 
-    @EventBusSubscriber(modid = Alpha.MODID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+    @EventBusSubscriber(modid = LitSpaceships.MODID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class ModClientEvents {
         @SubscribeEvent
         public static void onRegisterShaders(RegisterShadersEvent event) throws IOException {
             event.registerShader(
-                    new ShaderInstance(event.getResourceProvider(), ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "hex_shield"), DefaultVertexFormat.POSITION_TEX_COLOR),
+                    new ShaderInstance(event.getResourceProvider(), ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "hex_shield"), DefaultVertexFormat.POSITION_TEX_COLOR),
                     shaderInstance -> hexShieldShader = shaderInstance
             );
         }
     }
 
-    @EventBusSubscriber(modid = Alpha.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+    @EventBusSubscriber(modid = LitSpaceships.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
     public static class ForgeClientEvents {
 
         @SubscribeEvent

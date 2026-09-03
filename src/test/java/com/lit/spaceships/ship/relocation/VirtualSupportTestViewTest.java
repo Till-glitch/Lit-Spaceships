@@ -1,8 +1,8 @@
-package com.peaceman.alpha.ship.relocation;
+package com.lit.spaceships.ship.relocation;
 
-import com.peaceman.alpha.ship.relocation.graph.BlockDependencyGraph;
-import com.peaceman.alpha.ship.relocation.graph.RelocationNode;
-import com.peaceman.alpha.ship.relocation.graph.VirtualSupportTestView;
+import com.lit.spaceships.ship.relocation.graph.BlockDependencyGraph;
+import com.lit.spaceships.ship.relocation.graph.RelocationNode;
+import com.lit.spaceships.ship.relocation.graph.VirtualSupportTestView;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Blocks;

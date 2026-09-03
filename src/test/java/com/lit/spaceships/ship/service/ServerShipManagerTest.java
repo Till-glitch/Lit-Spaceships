@@ -1,10 +1,10 @@
-package com.peaceman.alpha.ship.service;
+package com.lit.spaceships.ship.service;
 
-import com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity;
-import com.peaceman.alpha.block.entity.PulseLaserBlockEntity;
-import com.peaceman.alpha.block.entity.SpaceshipReactorBlockEntity;
-import com.peaceman.alpha.block.entity.SpaceshipShieldBlockEntity;
-import com.peaceman.alpha.ship.domain.ShipState;
+import com.lit.spaceships.block.entity.AbstractLaserNodeBlockEntity;
+import com.lit.spaceships.block.entity.PulseLaserBlockEntity;
+import com.lit.spaceships.block.entity.SpaceshipReactorBlockEntity;
+import com.lit.spaceships.block.entity.SpaceshipShieldBlockEntity;
+import com.lit.spaceships.ship.domain.ShipState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;

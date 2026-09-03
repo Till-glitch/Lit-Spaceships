@@ -32,7 +32,7 @@
       ],
       "vmArgs": [
         "@C:\\Users\\Till\\IdeaProjects\\NeoForge-Alpha\\build\\moddev\\clientRunVmArgs.txt",
-        "-Dfml.modFolders\u003dpeaceman_alpha%%C:\\Users\\Till\\IdeaProjects\\NeoForge-Alpha\\bin\\main"
+        "-Dfml.modFolders\u003dlit_spaceships%%C:\\Users\\Till\\IdeaProjects\\NeoForge-Alpha\\bin\\main"
       ],
       "cwd": "${workspaceFolder}\\run",
       "env": {},
@@ -54,7 +54,7 @@
       ],
       "vmArgs": [
         "@C:\\Users\\Till\\IdeaProjects\\NeoForge-Alpha\\build\\moddev\\dataRunVmArgs.txt",
-        "-Dfml.modFolders\u003dpeaceman_alpha%%C:\\Users\\Till\\IdeaProjects\\NeoForge-Alpha\\bin\\main"
+        "-Dfml.modFolders\u003dlit_spaceships%%C:\\Users\\Till\\IdeaProjects\\NeoForge-Alpha\\bin\\main"
       ],
       "cwd": "${workspaceFolder}\\run",
       "env": {},
@@ -76,7 +76,7 @@
       ],
       "vmArgs": [
         "@C:\\Users\\Till\\IdeaProjects\\NeoForge-Alpha\\build\\moddev\\gameTestServerRunVmArgs.txt",
-        "-Dfml.modFolders\u003dpeaceman_alpha%%C:\\Users\\Till\\IdeaProjects\\NeoForge-Alpha\\bin\\main"
+        "-Dfml.modFolders\u003dlit_spaceships%%C:\\Users\\Till\\IdeaProjects\\NeoForge-Alpha\\bin\\main"
       ],
       "cwd": "${workspaceFolder}\\run",
       "env": {},
@@ -98,7 +98,7 @@
       ],
       "vmArgs": [
         "@C:\\Users\\Till\\IdeaProjects\\NeoForge-Alpha\\build\\moddev\\serverRunVmArgs.txt",
-        "-Dfml.modFolders\u003dpeaceman_alpha%%C:\\Users\\Till\\IdeaProjects\\NeoForge-Alpha\\bin\\main"
+        "-Dfml.modFolders\u003dlit_spaceships%%C:\\Users\\Till\\IdeaProjects\\NeoForge-Alpha\\bin\\main"
       ],
       "cwd": "${workspaceFolder}\\run",
       "env": {},

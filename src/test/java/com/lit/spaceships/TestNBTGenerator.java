@@ -1,4 +1,4 @@
-package com.peaceman.alpha;
+package com.lit.spaceships;
 
 import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
@@ -47,7 +47,7 @@ public class TestNBTGenerator {
 
         tag.putInt("DataVersion", SharedConstants.getCurrentVersion().getDataVersion().getVersion());
 
-        File dir = new File("src/main/resources/data/peaceman_alpha/structures");
+        File dir = new File("src/main/resources/data/lit_spaceships/structures");
         dir.mkdirs();
         File file = new File(dir, "empty.nbt");
         try (FileOutputStream out = new FileOutputStream(file)) {

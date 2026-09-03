@@ -1,6 +1,6 @@
-package com.peaceman.alpha.ship.relocation.api;
+package com.lit.spaceships.ship.relocation.api;
 
-import com.peaceman.alpha.ship.domain.ShipState;
+import com.lit.spaceships.ship.domain.ShipState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;

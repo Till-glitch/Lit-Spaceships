@@ -1,7 +1,7 @@
-package com.peaceman.alpha.entity;
+package com.lit.spaceships.entity;
 
-import com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity;
-import com.peaceman.alpha.registry.ModEntities;
+import com.lit.spaceships.block.entity.AbstractLaserNodeBlockEntity;
+import com.lit.spaceships.registry.ModEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
@@ -96,14 +96,14 @@ public class TurretSeatEntity extends Entity {
     protected void addPassenger(Entity passenger) {
         super.addPassenger(passenger);
         if (passenger instanceof Player player) {
-            com.peaceman.alpha.helper.TurretDebugLogger.logMount(player.getName().getString(), getWeaponPos(), getShipId(), level().isClientSide());
+            com.lit.spaceships.helper.TurretDebugLogger.logMount(player.getName().getString(), getWeaponPos(), getShipId(), level().isClientSide());
         }
     }
 
     @Override
     protected void removePassenger(Entity passenger) {
         if (passenger instanceof Player player) {
-            com.peaceman.alpha.helper.TurretDebugLogger.logDismount(player.getName().getString(), getWeaponPos(), level().isClientSide());
+            com.lit.spaceships.helper.TurretDebugLogger.logDismount(player.getName().getString(), getWeaponPos(), level().isClientSide());
         }
         super.removePassenger(passenger);
         if (!level().isClientSide()) {
@@ -169,7 +169,7 @@ public class TurretSeatEntity extends Entity {
         }
         // Fallback: If we have weaponPos and block entity on client
         BlockPos weaponPos = getWeaponPos();
-        if (weaponPos != null && level().getBlockEntity(weaponPos) instanceof com.peaceman.alpha.block.ISpaceshipNode node) {
+        if (weaponPos != null && level().getBlockEntity(weaponPos) instanceof com.lit.spaceships.block.ISpaceshipNode node) {
             return node.getShipId();
         }
         return null;

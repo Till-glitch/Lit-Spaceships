@@ -1,6 +1,6 @@
-package com.peaceman.alpha.network;
+package com.lit.spaceships.network;
 
-import com.peaceman.alpha.Alpha;
+import com.lit.spaceships.LitSpaceships;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
@@ -20,7 +20,7 @@ public record ShipActionPayload(
         String targetName
 ) implements CustomPacketPayload {
 
-    public static final Type<ShipActionPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "ship_action"));
+    public static final Type<ShipActionPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "ship_action"));
 
     public enum ActionType {
         CREATE(0),

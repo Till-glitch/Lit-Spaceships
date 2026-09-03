@@ -1,6 +1,6 @@
-package com.peaceman.alpha.network;
+package com.lit.spaceships.network;
 
-import com.peaceman.alpha.Alpha;
+import com.lit.spaceships.LitSpaceships;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -13,7 +13,7 @@ import java.util.UUID;
 
 public record OpenHelmConfigPayload(Optional<UUID> shipId) implements CustomPacketPayload {
 
-    public static final Type<OpenHelmConfigPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "open_helm_config"));
+    public static final Type<OpenHelmConfigPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "open_helm_config"));
 
     public static final StreamCodec<ByteBuf, OpenHelmConfigPayload> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.optional(UUIDUtil.STREAM_CODEC), OpenHelmConfigPayload::shipId,

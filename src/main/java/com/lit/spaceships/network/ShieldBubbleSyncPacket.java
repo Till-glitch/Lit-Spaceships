@@ -1,6 +1,6 @@
-package com.peaceman.alpha.network;
+package com.lit.spaceships.network;
 
-import com.peaceman.alpha.Alpha;
+import com.lit.spaceships.LitSpaceships;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -13,7 +13,7 @@ import java.util.UUID;
 public record ShieldBubbleSyncPacket(UUID shipId, BlockPos anchorPos, java.util.Map<BlockPos, Byte> relativeBubbleBlocks) implements CustomPacketPayload {
 
     public static final CustomPacketPayload.Type<ShieldBubbleSyncPacket> TYPE =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "shield_bubble_sync"));
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "shield_bubble_sync"));
 
     @Override
     public CustomPacketPayload.Type<ShieldBubbleSyncPacket> type() { return TYPE; }

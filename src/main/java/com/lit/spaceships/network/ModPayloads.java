@@ -1,4 +1,4 @@
-package com.peaceman.alpha.network;
+package com.lit.spaceships.network;
 
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.loading.FMLEnvironment;
@@ -47,7 +47,7 @@ public class ModPayloads {
 
         // 2. Clientbound / Bidirektionale Payloads (Sided getrennt)
         if (FMLEnvironment.dist.isClient()) {
-            com.peaceman.alpha.client.network.ClientPayloadRegistrar.registerClientPayloads(registrar);
+            com.lit.spaceships.client.network.ClientPayloadRegistrar.registerClientPayloads(registrar);
         } else {
             registerServerDummyPayloads(registrar);
         }

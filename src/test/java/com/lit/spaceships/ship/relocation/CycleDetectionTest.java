@@ -1,7 +1,7 @@
-package com.peaceman.alpha.ship.relocation;
+package com.lit.spaceships.ship.relocation;
 
-import com.peaceman.alpha.ship.relocation.graph.BlockDependencyGraph;
-import com.peaceman.alpha.ship.relocation.graph.RelocationNode;
+import com.lit.spaceships.ship.relocation.graph.BlockDependencyGraph;
+import com.lit.spaceships.ship.relocation.graph.RelocationNode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;

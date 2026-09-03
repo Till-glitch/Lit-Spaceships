@@ -1,7 +1,7 @@
-package com.peaceman.alpha.client.screen; // Passe das Package an deine Struktur an
+package com.lit.spaceships.client.screen; // Passe das Package an deine Struktur an
 
-import com.peaceman.alpha.network.ShipActionPayload;
-import com.peaceman.alpha.network.ShipActionPayload.ActionType;
+import com.lit.spaceships.network.ShipActionPayload;
+import com.lit.spaceships.network.ShipActionPayload.ActionType;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -31,7 +31,7 @@ public abstract class AbstractSpaceshipScreen extends Screen {
     protected void updateShipIdFromBlock() {
         if (this.minecraft != null && this.minecraft.level != null) {
             // Prüfung auf ISpaceshipNode
-            if (this.minecraft.level.getBlockEntity(this.blockPos) instanceof com.peaceman.alpha.block.ISpaceshipNode node) {
+            if (this.minecraft.level.getBlockEntity(this.blockPos) instanceof com.lit.spaceships.block.ISpaceshipNode node) {
                 this.shipId = node.getShipId();
             } else {
                 this.shipId = null;
@@ -52,16 +52,16 @@ public abstract class AbstractSpaceshipScreen extends Screen {
         sendShipAction(actionType, 0, "");
     }
 
-    protected void sendCombatAction(com.peaceman.alpha.network.ShipCombatActionPayload.CombatAction combatAction) {
+    protected void sendCombatAction(com.lit.spaceships.network.ShipCombatActionPayload.CombatAction combatAction) {
         updateShipIdFromBlock();
         if (this.shipId != null) {
-            PacketDistributor.sendToServer(new com.peaceman.alpha.network.ShipCombatActionPayload(java.util.Optional.of(this.shipId), combatAction, java.util.Optional.empty()));
+            PacketDistributor.sendToServer(new com.lit.spaceships.network.ShipCombatActionPayload(java.util.Optional.of(this.shipId), combatAction, java.util.Optional.empty()));
         }
     }
 
-    protected com.peaceman.alpha.client.state.ClientShipState getClientShipState() {
+    protected com.lit.spaceships.client.state.ClientShipState getClientShipState() {
         updateShipIdFromBlock();
-        return this.shipId != null ? com.peaceman.alpha.client.state.ClientShipManager.getShip(this.shipId) : null;
+        return this.shipId != null ? com.lit.spaceships.client.state.ClientShipManager.getShip(this.shipId) : null;
     }
 
     protected long getClientGameTime() {

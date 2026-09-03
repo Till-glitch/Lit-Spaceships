@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=down": {
+      "model": "lit_spaceships:block/laser_base",
+      "x": 180
+    },
+    "facing=east": {
+      "model": "lit_spaceships:block/laser_base",
+      "x": 90,
+      "y": 90
+    },
+    "facing=north": {
+      "model": "lit_spaceships:block/laser_base",
+      "x": 90
+    },
+    "facing=south": {
+      "model": "lit_spaceships:block/laser_base",
+      "x": 90,
+      "y": 180
+    },
+    "facing=up": {
+      "model": "lit_spaceships:block/laser_base"
+    },
+    "facing=west": {
+      "model": "lit_spaceships:block/laser_base",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

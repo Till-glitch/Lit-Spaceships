@@ -1,4 +1,4 @@
-package com.peaceman.alpha.ship.domain;
+package com.lit.spaceships.ship.domain;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

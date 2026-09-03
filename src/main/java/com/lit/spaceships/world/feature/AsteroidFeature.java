@@ -1,4 +1,4 @@
-package com.peaceman.alpha.world.feature;
+package com.lit.spaceships.world.feature;
 
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;

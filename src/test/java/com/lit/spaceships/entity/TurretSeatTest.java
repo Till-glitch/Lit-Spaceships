@@ -1,8 +1,8 @@
-package com.peaceman.alpha.entity;
+package com.lit.spaceships.entity;
 
-import com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity;
-import com.peaceman.alpha.registry.ModEntities;
-import com.peaceman.alpha.ship.combat.LaserWeaponTier;
+import com.lit.spaceships.block.entity.AbstractLaserNodeBlockEntity;
+import com.lit.spaceships.registry.ModEntities;
+import com.lit.spaceships.ship.combat.LaserWeaponTier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
 import org.junit.jupiter.api.DisplayName;
@@ -72,7 +72,7 @@ public class TurretSeatTest {
         public void serverTick(net.minecraft.world.level.Level level, BlockPos pos, net.minecraft.world.level.block.state.BlockState state) {}
 
         @Override
-        public boolean handleFire(net.minecraft.world.level.Level level, com.peaceman.alpha.ship.domain.ShipState shooterShip, BlockPos weaponPos) {
+        public boolean handleFire(net.minecraft.world.level.Level level, com.lit.spaceships.ship.domain.ShipState shooterShip, BlockPos weaponPos) {
             return true;
         }
 
@@ -93,7 +93,7 @@ public class TurretSeatTest {
                 net.minecraft.world.level.block.Blocks.CHEST.defaultBlockState()
         );
 
-        dummyBe.setAimAngles(new com.peaceman.alpha.ship.combat.aim.AimAngles(45.5f, -15.0f));
+        dummyBe.setAimAngles(new com.lit.spaceships.ship.combat.aim.AimAngles(45.5f, -15.0f));
         dummyBe.setAimLocked(true);
         dummyBe.setOccupied(false);
 

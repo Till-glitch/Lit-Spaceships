@@ -1,6 +1,6 @@
-package com.peaceman.alpha.tests;
+package com.lit.spaceships.tests;
 
-import com.peaceman.alpha.Alpha;
+import com.lit.spaceships.LitSpaceships;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Items;
@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 // Diese Annotation meldet die Klasse automatisch am globalen Spiel-EventBus an
-@EventBusSubscriber(modid = Alpha.MODID, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = LitSpaceships.MODID, bus = EventBusSubscriber.Bus.GAME)
 public class ShieldTestHandler {
 
     // Hier merken wir uns temporär das Zentrum unseres Schildes
@@ -52,7 +52,7 @@ public class ShieldTestHandler {
         // die echte Distanz!
         if (event.getPos().distSqr(shieldCenter) <= (SHIELD_RADIUS * SHIELD_RADIUS)) {
             event.setCanceled(true); // Abbauen abbrechen!
-            event.getPlayer().displayClientMessage(Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.SHIELD_PROTECTED_BLOCK).withStyle(net.minecraft.ChatFormatting.RED),
+            event.getPlayer().displayClientMessage(Component.translatable(com.lit.spaceships.registry.ModI18n.Message.SHIELD_PROTECTED_BLOCK).withStyle(net.minecraft.ChatFormatting.RED),
                     true);
         }
     }

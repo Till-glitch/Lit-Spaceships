@@ -1,6 +1,6 @@
-package com.peaceman.alpha.block.entity;
+package com.lit.spaceships.block.entity;
 
-import com.peaceman.alpha.menu.SpaceshipReactorMenu;
+import com.lit.spaceships.menu.SpaceshipReactorMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -44,10 +44,10 @@ public class SpaceshipReactorBlockEntity extends AbstractSpaceshipNodeBlockEntit
         if (level != null && !level.isClientSide()) {
             boolean shouldBeLit = energyStorage.getEnergyStored() > 0;
             BlockState currentState = getBlockState();
-            if (currentState.hasProperty(com.peaceman.alpha.block.SpaceshipReactorBlock.LIT)) {
-                boolean isLit = currentState.getValue(com.peaceman.alpha.block.SpaceshipReactorBlock.LIT);
+            if (currentState.hasProperty(com.lit.spaceships.block.SpaceshipReactorBlock.LIT)) {
+                boolean isLit = currentState.getValue(com.lit.spaceships.block.SpaceshipReactorBlock.LIT);
                 if (isLit != shouldBeLit) {
-                    level.setBlock(getBlockPos(), currentState.setValue(com.peaceman.alpha.block.SpaceshipReactorBlock.LIT, shouldBeLit), 3);
+                    level.setBlock(getBlockPos(), currentState.setValue(com.lit.spaceships.block.SpaceshipReactorBlock.LIT, shouldBeLit), 3);
                 }
             }
         }
@@ -57,7 +57,7 @@ public class SpaceshipReactorBlockEntity extends AbstractSpaceshipNodeBlockEntit
     protected final ContainerData data = new ContainerData() {
         @Override
         public int get(int index) {
-            com.peaceman.alpha.ship.domain.ShipState ship = (getShipId() != null) ? com.peaceman.alpha.ship.service.ServerShipManager.getShip(getShipId()) : null;
+            com.lit.spaceships.ship.domain.ShipState ship = (getShipId() != null) ? com.lit.spaceships.ship.service.ServerShipManager.getShip(getShipId()) : null;
             int localEnergy = energyStorage.getEnergyStored();
             int localMax = energyStorage.getMaxEnergyStored();
 
@@ -67,7 +67,7 @@ public class SpaceshipReactorBlockEntity extends AbstractSpaceshipNodeBlockEntit
                 case 1:
                     return localMax;
                 case 2:
-                    return (ship != null && level != null) ? com.peaceman.alpha.ship.SpaceshipEnergyManager.getTotalAvailableEnergy(level, ship) : localEnergy;
+                    return (ship != null && level != null) ? com.lit.spaceships.ship.SpaceshipEnergyManager.getTotalAvailableEnergy(level, ship) : localEnergy;
                 case 3:
                     return (ship != null) ? Math.max(localMax, ship.getReactors().size() * 1000000) : localMax;
                 case 4:
@@ -77,7 +77,7 @@ public class SpaceshipReactorBlockEntity extends AbstractSpaceshipNodeBlockEntit
                 case 6:
                     return (ship != null) ? ship.getNetEnergyThroughput() : 0;
                 case 7:
-                    return (ship != null) ? ship.getPowerPriority().getId() : com.peaceman.alpha.ship.domain.PowerPriority.BALANCED.getId();
+                    return (ship != null) ? ship.getPowerPriority().getId() : com.lit.spaceships.ship.domain.PowerPriority.BALANCED.getId();
                 case 8: {
                     // Core Stability: 100% normal, sinkt leicht bei anhaltender Überlast
                     if (localEnergy <= 0) return 0;
@@ -119,13 +119,13 @@ public class SpaceshipReactorBlockEntity extends AbstractSpaceshipNodeBlockEntit
 
     public SpaceshipReactorBlockEntity(BlockPos pos, BlockState state) {
         // 2. NEU: Ruft den Konstruktor der abstrakten Elternklasse auf
-        super(com.peaceman.alpha.registry.ModBlockEntities.SPACESHIP_REACTOR_BE.get(), pos, state);
+        super(com.lit.spaceships.registry.ModBlockEntities.SPACESHIP_REACTOR_BE.get(), pos, state);
     }
 
     // --- MenuProvider Methoden ---
     @Override
     public Component getDisplayName() {
-        return Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.REACTOR_TITLE);
+        return Component.translatable(com.lit.spaceships.registry.ModI18n.Screen.REACTOR_TITLE);
     }
 
     @Nullable

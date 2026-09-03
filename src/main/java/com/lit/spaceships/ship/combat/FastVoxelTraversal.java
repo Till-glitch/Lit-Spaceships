@@ -1,6 +1,6 @@
-package com.peaceman.alpha.ship.combat;
+package com.lit.spaceships.ship.combat;
 
-import com.peaceman.alpha.ship.domain.VoxelGridCache;
+import com.lit.spaceships.ship.domain.VoxelGridCache;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.AABB;

@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "E": {
+      "item": "minecraft:end_crystal"
+    },
+    "L": {
+      "item": "minecraft:lodestone"
+    },
+    "N": {
+      "item": "minecraft:diamond_block"
+    },
+    "S": {
+      "item": "minecraft:nether_star"
+    },
+    "Y": {
+      "item": "minecraft:ender_eye"
+    }
+  },
+  "pattern": [
+    "NEN",
+    "YSY",
+    "LNL"
+  ],
+  "result": {
+    "count": 1,
+    "id": "lit_spaceships:spaceship_control"
+  }
+}

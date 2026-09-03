@@ -1,8 +1,8 @@
-package com.peaceman.alpha.ship.relocation.registry;
+package com.lit.spaceships.ship.relocation.registry;
 
-import com.peaceman.alpha.registry.ModTags;
-import com.peaceman.alpha.ship.relocation.api.IBlockRelocationHandler;
-import com.peaceman.alpha.ship.relocation.api.RelocationContext;
+import com.lit.spaceships.registry.ModTags;
+import com.lit.spaceships.ship.relocation.api.IBlockRelocationHandler;
+import com.lit.spaceships.ship.relocation.api.RelocationContext;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.Blocks;

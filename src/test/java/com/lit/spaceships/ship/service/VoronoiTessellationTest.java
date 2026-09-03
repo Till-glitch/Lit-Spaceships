@@ -1,6 +1,6 @@
-package com.peaceman.alpha.ship.service;
+package com.lit.spaceships.ship.service;
 
-import com.peaceman.alpha.ship.domain.VoxelGridCache;
+import com.lit.spaceships.ship.domain.VoxelGridCache;
 import net.minecraft.core.BlockPos;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,14 +34,14 @@ class VoronoiTessellationTest {
         );
 
         // Voronoi-Zuweisung ausführen
-        java.util.Map<Byte, com.peaceman.alpha.ship.domain.SectorCoverage> coverages =
+        java.util.Map<Byte, com.lit.spaceships.ship.domain.SectorCoverage> coverages =
                 ShipScannerService.calculateVoronoiZones(cache, generators, null);
 
         assertNotNull(coverages);
         assertEquals(2, coverages.size());
 
-        com.peaceman.alpha.ship.domain.SectorCoverage cov1 = coverages.get((byte) 1);
-        com.peaceman.alpha.ship.domain.SectorCoverage cov2 = coverages.get((byte) 2);
+        com.lit.spaceships.ship.domain.SectorCoverage cov1 = coverages.get((byte) 1);
+        com.lit.spaceships.ship.domain.SectorCoverage cov2 = coverages.get((byte) 2);
 
         assertNotNull(cov1);
         assertNotNull(cov2);

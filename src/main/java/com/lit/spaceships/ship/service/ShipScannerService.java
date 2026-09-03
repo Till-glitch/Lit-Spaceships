@@ -1,6 +1,6 @@
-package com.peaceman.alpha.ship.service;
+package com.lit.spaceships.ship.service;
 
-import com.peaceman.alpha.ship.domain.VoxelGridCache;
+import com.lit.spaceships.ship.domain.VoxelGridCache;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -121,10 +121,10 @@ public class ShipScannerService {
             }
 
             // 6. Cluster-Tag (#c:relocates_as_cluster)
-            if (state.is(com.peaceman.alpha.registry.ModTags.Blocks.RELOCATES_AS_CLUSTER)) {
+            if (state.is(com.lit.spaceships.registry.ModTags.Blocks.RELOCATES_AS_CLUSTER)) {
                 for (Direction dir : Direction.values()) {
                     BlockPos neighbor = pos.relative(dir);
-                    if (level.getBlockState(neighbor).is(com.peaceman.alpha.registry.ModTags.Blocks.RELOCATES_AS_CLUSTER)) {
+                    if (level.getBlockState(neighbor).is(com.lit.spaceships.registry.ModTags.Blocks.RELOCATES_AS_CLUSTER)) {
                         toAdd.add(neighbor);
                     }
                 }
@@ -182,7 +182,7 @@ public class ShipScannerService {
      * @param controllerPos Position des Controllers (wenn null, werden generators als relativ interpretiert)
      * @return Map aller berechneten SectorCoverages für jede Zonen-ID (1-basiert)
      */
-    public static java.util.Map<Byte, com.peaceman.alpha.ship.domain.SectorCoverage> calculateVoronoiZones(
+    public static java.util.Map<Byte, com.lit.spaceships.ship.domain.SectorCoverage> calculateVoronoiZones(
             VoxelGridCache cache, List<BlockPos> generators, BlockPos controllerPos) {
         if (cache == null || cache.isEmpty() || generators == null || generators.isEmpty()) {
             return java.util.Collections.emptyMap();
@@ -190,7 +190,7 @@ public class ShipScannerService {
 
         int count = generators.size();
         if (count > MAX_SHIELD_GENERATORS) {
-            com.peaceman.alpha.Alpha.LOGGER.warn("Ship has {} shield generators, exceeding max limit of {}. Truncating to {}.",
+            com.lit.spaceships.LitSpaceships.LOGGER.warn("Ship has {} shield generators, exceeding max limit of {}. Truncating to {}.",
                     count, MAX_SHIELD_GENERATORS, MAX_SHIELD_GENERATORS);
             count = MAX_SHIELD_GENERATORS;
         }
@@ -268,13 +268,13 @@ public class ShipScannerService {
             }
         }
 
-        java.util.Map<Byte, com.peaceman.alpha.ship.domain.SectorCoverage> coverages = new java.util.HashMap<>();
+        java.util.Map<Byte, com.lit.spaceships.ship.domain.SectorCoverage> coverages = new java.util.HashMap<>();
         for (int i = 0; i < count; i++) {
             byte zId = (byte) (i + 1);
             BlockPos genPos = generators.get(i);
             BlockPos minB = assignedVoxels[i] > 0 ? new BlockPos(minRelX[i], minRelY[i], minRelZ[i]) : BlockPos.ZERO;
             BlockPos maxB = assignedVoxels[i] > 0 ? new BlockPos(maxRelX[i], maxRelY[i], maxRelZ[i]) : BlockPos.ZERO;
-            coverages.put(zId, new com.peaceman.alpha.ship.domain.SectorCoverage(zId, genPos, assignedVoxels[i], totalVoxels, minB, maxB));
+            coverages.put(zId, new com.lit.spaceships.ship.domain.SectorCoverage(zId, genPos, assignedVoxels[i], totalVoxels, minB, maxB));
         }
 
         return coverages;

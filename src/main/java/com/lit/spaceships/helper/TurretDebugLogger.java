@@ -1,4 +1,4 @@
-package com.peaceman.alpha.helper;
+package com.lit.spaceships.helper;
 
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.BlockPos;

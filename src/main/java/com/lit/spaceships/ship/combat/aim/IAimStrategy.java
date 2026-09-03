@@ -1,6 +1,6 @@
-package com.peaceman.alpha.ship.combat.aim;
+package com.lit.spaceships.ship.combat.aim;
 
-import com.peaceman.alpha.ship.domain.ShipState;
+import com.lit.spaceships.ship.domain.ShipState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 

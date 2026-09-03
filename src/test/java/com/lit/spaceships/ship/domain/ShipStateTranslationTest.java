@@ -1,4 +1,4 @@
-package com.peaceman.alpha.ship.domain;
+package com.lit.spaceships.ship.domain;
 
 import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;

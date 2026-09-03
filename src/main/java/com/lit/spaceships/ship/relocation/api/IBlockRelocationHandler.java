@@ -1,4 +1,4 @@
-package com.peaceman.alpha.ship.relocation.api;
+package com.lit.spaceships.ship.relocation.api;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;

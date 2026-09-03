@@ -1,4 +1,4 @@
-package com.peaceman.alpha.ship.domain;
+package com.lit.spaceships.ship.domain;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
@@ -158,15 +158,15 @@ public class ShipStateTest {
         ShipState overworldShip = new ShipState(BlockPos.ZERO, Set.of(BlockPos.ZERO), net.minecraft.world.level.Level.OVERWORLD);
         ShipState endShip = new ShipState(new BlockPos(100, 50, 100), Set.of(new BlockPos(100, 50, 100)), net.minecraft.world.level.Level.END);
 
-        com.peaceman.alpha.ship.service.ServerShipManager.registerShip(overworldShip);
-        com.peaceman.alpha.ship.service.ServerShipManager.registerShip(endShip);
+        com.lit.spaceships.ship.service.ServerShipManager.registerShip(overworldShip);
+        com.lit.spaceships.ship.service.ServerShipManager.registerShip(endShip);
 
-        assertTrue(com.peaceman.alpha.ship.service.ServerShipManager.hasShip(overworldShip.getId()));
-        assertTrue(com.peaceman.alpha.ship.service.ServerShipManager.hasShip(endShip.getId()));
+        assertTrue(com.lit.spaceships.ship.service.ServerShipManager.hasShip(overworldShip.getId()));
+        assertTrue(com.lit.spaceships.ship.service.ServerShipManager.hasShip(endShip.getId()));
 
-        var overworldShips = com.peaceman.alpha.ship.service.ServerShipManager.getShipsInDimension(net.minecraft.world.level.Level.OVERWORLD);
-        var endShips = com.peaceman.alpha.ship.service.ServerShipManager.getShipsInDimension(net.minecraft.world.level.Level.END);
-        var netherShips = com.peaceman.alpha.ship.service.ServerShipManager.getShipsInDimension(net.minecraft.world.level.Level.NETHER);
+        var overworldShips = com.lit.spaceships.ship.service.ServerShipManager.getShipsInDimension(net.minecraft.world.level.Level.OVERWORLD);
+        var endShips = com.lit.spaceships.ship.service.ServerShipManager.getShipsInDimension(net.minecraft.world.level.Level.END);
+        var netherShips = com.lit.spaceships.ship.service.ServerShipManager.getShipsInDimension(net.minecraft.world.level.Level.NETHER);
 
         assertTrue(overworldShips.containsKey(overworldShip.getId()));
         assertFalse(overworldShips.containsKey(endShip.getId()));
@@ -177,10 +177,10 @@ public class ShipStateTest {
         assertTrue(netherShips.isEmpty());
 
         // Cleanup
-        com.peaceman.alpha.ship.service.ServerShipManager.unregisterShip(overworldShip);
-        com.peaceman.alpha.ship.service.ServerShipManager.unregisterShip(endShip);
-        assertFalse(com.peaceman.alpha.ship.service.ServerShipManager.hasShip(overworldShip.getId()));
-        assertFalse(com.peaceman.alpha.ship.service.ServerShipManager.hasShip(endShip.getId()));
+        com.lit.spaceships.ship.service.ServerShipManager.unregisterShip(overworldShip);
+        com.lit.spaceships.ship.service.ServerShipManager.unregisterShip(endShip);
+        assertFalse(com.lit.spaceships.ship.service.ServerShipManager.hasShip(overworldShip.getId()));
+        assertFalse(com.lit.spaceships.ship.service.ServerShipManager.hasShip(endShip.getId()));
     }
 
     @Test

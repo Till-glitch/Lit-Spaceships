@@ -1,9 +1,9 @@
-package com.peaceman.alpha.client.screen;
+package com.lit.spaceships.client.screen;
 
-import com.peaceman.alpha.client.render.ShipHighlightRenderer;
-import com.peaceman.alpha.client.state.ClientShipState;
-import com.peaceman.alpha.network.ShipActionPayload.ActionType;
-import com.peaceman.alpha.registry.ModI18n;
+import com.lit.spaceships.client.render.ShipHighlightRenderer;
+import com.lit.spaceships.client.state.ClientShipState;
+import com.lit.spaceships.network.ShipActionPayload.ActionType;
+import com.lit.spaceships.registry.ModI18n;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -188,7 +188,7 @@ public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
         } else if (this.minecraft != null && this.minecraft.level != null) {
             long now = this.minecraft.level.getGameTime();
             if (this.cachedUnboundBlocks == null || (now - this.lastScanTime >= 20)) {
-                this.cachedUnboundBlocks = com.peaceman.alpha.ship.service.ShipScannerService.scan(this.minecraft.level, this.blockPos);
+                this.cachedUnboundBlocks = com.lit.spaceships.ship.service.ShipScannerService.scan(this.minecraft.level, this.blockPos);
                 this.lastScanTime = now;
             }
             if (this.cachedUnboundBlocks != null && !this.cachedUnboundBlocks.isEmpty()) {
@@ -247,17 +247,17 @@ public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
             for (BlockPos rel : relativeBlocks) {
                 BlockPos worldPos = anchor.offset(rel);
                 var block = this.minecraft.level.getBlockState(worldPos).getBlock();
-                if (block instanceof com.peaceman.alpha.block.SpaceshipReactorBlock) {
+                if (block instanceof com.lit.spaceships.block.SpaceshipReactorBlock) {
                     reactorCount++;
-                } else if (block instanceof com.peaceman.alpha.block.SpaceshipShieldBlock) {
+                } else if (block instanceof com.lit.spaceships.block.SpaceshipShieldBlock) {
                     shieldCount++;
-                } else if (block instanceof com.peaceman.alpha.block.HeavyBeamBlock) {
+                } else if (block instanceof com.lit.spaceships.block.HeavyBeamBlock) {
                     heavyTurretCount++;
-                } else if (block instanceof com.peaceman.alpha.block.PulseLaserBlock) {
+                } else if (block instanceof com.lit.spaceships.block.PulseLaserBlock) {
                     pulseTurretCount++;
-                } else if (block instanceof com.peaceman.alpha.block.MiningLaserBlock) {
+                } else if (block instanceof com.lit.spaceships.block.MiningLaserBlock) {
                     miningLaserCount++;
-                } else if (block instanceof com.peaceman.alpha.block.SpaceshipHelmBlock) {
+                } else if (block instanceof com.lit.spaceships.block.SpaceshipHelmBlock) {
                     helmCount++;
                 }
             }

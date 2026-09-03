@@ -1,8 +1,8 @@
 {
   "credit": "Made for Mod Alpha Split-Model Laser Node (Pulse Laser)",
   "textures": {
-    "particle": "peaceman_alpha:block/laser_metal",
-    "metal": "peaceman_alpha:block/laser_metal"
+    "particle": "lit_spaceships:block/laser_metal",
+    "metal": "lit_spaceships:block/laser_metal"
   },
   "elements": [
     {

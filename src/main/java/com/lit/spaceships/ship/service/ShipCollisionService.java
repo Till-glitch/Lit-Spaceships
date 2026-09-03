@@ -1,7 +1,7 @@
-package com.peaceman.alpha.ship.service;
+package com.lit.spaceships.ship.service;
 
-import com.peaceman.alpha.ship.domain.ShipState;
-import com.peaceman.alpha.ship.domain.VoxelGridCache;
+import com.lit.spaceships.ship.domain.ShipState;
+import com.lit.spaceships.ship.domain.VoxelGridCache;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -159,7 +159,7 @@ public class ShipCollisionService {
 
             if (intersection.isPresent()) {
                 AABB intBox = intersection.get();
-                com.peaceman.alpha.helper.ShieldLifecycleLogger.logBroadPhaseOverlap(movingShip.getId(), other.getId(), intBox);
+                com.lit.spaceships.helper.ShieldLifecycleLogger.logBroadPhaseOverlap(movingShip.getId(), other.getId(), intBox);
                 candidates.add(new BroadPhaseCandidate(
                         movingShip,
                         other,
@@ -217,7 +217,7 @@ public class ShipCollisionService {
 
         // Hardwarebeschleunigte BitSet-Schnittprüfung
         if (!bitSetA.intersects(bitSetB)) {
-            com.peaceman.alpha.helper.ShieldLifecycleLogger.logNarrowPhaseResult(shipA.getId(), shipB.getId(), false, isShieldA, isShieldB, 0);
+            com.lit.spaceships.helper.ShieldLifecycleLogger.logNarrowPhaseResult(shipA.getId(), shipB.getId(), false, isShieldA, isShieldB, 0);
             return VoxelCollisionResult.NO_COLLISION;
         }
 
@@ -234,7 +234,7 @@ public class ShipCollisionService {
             collidingWorldVoxels.add(new BlockPos(minX + x, minY + y, minZ + z));
         }
 
-        com.peaceman.alpha.helper.ShieldLifecycleLogger.logNarrowPhaseResult(shipA.getId(), shipB.getId(), true, isShieldA, isShieldB, collidingWorldVoxels.size());
+        com.lit.spaceships.helper.ShieldLifecycleLogger.logNarrowPhaseResult(shipA.getId(), shipB.getId(), true, isShieldA, isShieldB, collidingWorldVoxels.size());
 
         return new VoxelCollisionResult(
                 shipA,

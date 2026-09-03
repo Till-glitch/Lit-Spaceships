@@ -1,8 +1,8 @@
-package com.peaceman.alpha.block;
+package com.lit.spaceships.block;
 
 import com.mojang.serialization.MapCodec;
-import com.peaceman.alpha.block.entity.HeavyBeamBlockEntity;
-import com.peaceman.alpha.registry.ModBlockEntities;
+import com.lit.spaceships.block.entity.HeavyBeamBlockEntity;
+import com.lit.spaceships.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -100,8 +100,8 @@ public class HeavyBeamBlock extends BaseEntityBlock {
                         if (be.getShipId() != null) {
                             net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingChunk(
                                     serverLevel, new net.minecraft.world.level.ChunkPos(pos),
-                                    new com.peaceman.alpha.network.LaserStateSyncPayload(be.getShipId(), pos, false,
-                                            com.peaceman.alpha.ship.combat.LaserWeaponTier.HEAVY_BEAM));
+                                    new com.lit.spaceships.network.LaserStateSyncPayload(be.getShipId(), pos, false,
+                                            com.lit.spaceships.ship.combat.LaserWeaponTier.HEAVY_BEAM));
                         }
                     }
                 }

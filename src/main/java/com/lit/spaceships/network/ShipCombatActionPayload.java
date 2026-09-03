@@ -1,6 +1,6 @@
-package com.peaceman.alpha.network;
+package com.lit.spaceships.network;
 
-import com.peaceman.alpha.Alpha;
+import com.lit.spaceships.LitSpaceships;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
@@ -47,7 +47,7 @@ public record ShipCombatActionPayload(
     }
 
     public static final Type<ShipCombatActionPayload> TYPE =
-            new Type<>(ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "ship_combat_action"));
+            new Type<>(ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "ship_combat_action"));
 
     public static final StreamCodec<ByteBuf, CombatAction> COMBAT_ACTION_STREAM_CODEC =
             ByteBufCodecs.VAR_INT.map(CombatAction::fromId, CombatAction::getId);

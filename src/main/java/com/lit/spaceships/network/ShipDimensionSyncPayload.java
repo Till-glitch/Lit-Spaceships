@@ -1,6 +1,6 @@
-package com.peaceman.alpha.network;
+package com.lit.spaceships.network;
 
-import com.peaceman.alpha.Alpha;
+import com.lit.spaceships.LitSpaceships;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -18,7 +18,7 @@ import java.util.UUID;
 public record ShipDimensionSyncPayload(UUID shipId, ResourceKey<Level> dimension) implements CustomPacketPayload {
 
     public static final Type<ShipDimensionSyncPayload> TYPE =
-            new Type<>(ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "ship_dimension_sync"));
+            new Type<>(ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "ship_dimension_sync"));
 
     public static final StreamCodec<FriendlyByteBuf, ShipDimensionSyncPayload> STREAM_CODEC =
             StreamCodec.ofMember(ShipDimensionSyncPayload::write, ShipDimensionSyncPayload::read);

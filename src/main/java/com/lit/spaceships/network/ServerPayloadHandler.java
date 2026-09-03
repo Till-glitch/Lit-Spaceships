@@ -1,10 +1,10 @@
-package com.peaceman.alpha.network;
+package com.lit.spaceships.network;
 
-import com.peaceman.alpha.block.entity.SpaceshipControlBlockEntity;
-import com.peaceman.alpha.ship.SpaceshipNavigationManager;
-import com.peaceman.alpha.ship.domain.ShipState;
-import com.peaceman.alpha.ship.service.ServerShipManager;
-import com.peaceman.alpha.ship.service.ShipMovementService;
+import com.lit.spaceships.block.entity.SpaceshipControlBlockEntity;
+import com.lit.spaceships.ship.SpaceshipNavigationManager;
+import com.lit.spaceships.ship.domain.ShipState;
+import com.lit.spaceships.ship.service.ServerShipManager;
+import com.lit.spaceships.ship.service.ShipMovementService;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
@@ -82,14 +82,14 @@ public class ServerPayloadHandler {
                     }
                     ShipMovementService.moveShip(level, ship, dx, 0, dz, player);
                 }
-                case TOGGLE_SHIELD -> com.peaceman.alpha.ship.SpaceshipShieldHandler.toggleShield(level, ship);
-                case TOGGLE_SHIELD_ZONE -> com.peaceman.alpha.ship.SpaceshipShieldHandler.toggleShieldZone(level, ship, payload.pos());
+                case TOGGLE_SHIELD -> com.lit.spaceships.ship.SpaceshipShieldHandler.toggleShield(level, ship);
+                case TOGGLE_SHIELD_ZONE -> com.lit.spaceships.ship.SpaceshipShieldHandler.toggleShieldZone(level, ship, payload.pos());
                 case CYCLE_POWER_PRIORITY -> {
                     ship.setPowerPriority(ship.getPowerPriority().next());
                     ServerShipManager.saveData(level);
                 }
                 case SET_POWER_PRIORITY -> {
-                    ship.setPowerPriority(com.peaceman.alpha.ship.domain.PowerPriority.fromId(payload.value()));
+                    ship.setPowerPriority(com.lit.spaceships.ship.domain.PowerPriority.fromId(payload.value()));
                     ServerShipManager.saveData(level);
                 }
                 case ROTATE_CW -> ShipMovementService.rotateShip(level, ship, net.minecraft.world.level.block.Rotation.CLOCKWISE_90, player);
@@ -130,7 +130,7 @@ public class ServerPayloadHandler {
             Level level = player.level();
 
             UUID targetShipId = payload.shipId().orElse(null);
-            if (targetShipId == null && player.getVehicle() instanceof com.peaceman.alpha.entity.TurretSeatEntity seat) {
+            if (targetShipId == null && player.getVehicle() instanceof com.lit.spaceships.entity.TurretSeatEntity seat) {
                 targetShipId = seat.getShipId();
             }
             if (targetShipId == null) return;
@@ -144,32 +144,32 @@ public class ServerPayloadHandler {
             if (payload.action() == ShipCombatActionPayload.CombatAction.FIRE_SPECIFIC && payload.weaponPos().isPresent()) {
                 BlockPos targetPos = payload.weaponPos().get();
                 if (weapons.contains(targetPos)) {
-                    com.peaceman.alpha.ship.combat.LaserCombatService.fireWeapon(level, ship, targetPos);
+                    com.lit.spaceships.ship.combat.LaserCombatService.fireWeapon(level, ship, targetPos);
                 }
                 return;
             }
 
             for (BlockPos weaponPos : weapons) {
                 var be = level.getBlockEntity(weaponPos);
-                if (be instanceof com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity laserBe) {
+                if (be instanceof com.lit.spaceships.block.entity.AbstractLaserNodeBlockEntity laserBe) {
                     switch (payload.action()) {
                         case FIRE_PULSE -> {
-                            if (laserBe instanceof com.peaceman.alpha.block.entity.PulseLaserBlockEntity) {
-                                com.peaceman.alpha.ship.combat.LaserCombatService.fireWeapon(level, ship, weaponPos);
+                            if (laserBe instanceof com.lit.spaceships.block.entity.PulseLaserBlockEntity) {
+                                com.lit.spaceships.ship.combat.LaserCombatService.fireWeapon(level, ship, weaponPos);
                             }
                         }
                         case TOGGLE_HEAVY_BEAM -> {
-                            if (laserBe instanceof com.peaceman.alpha.block.entity.HeavyBeamBlockEntity) {
-                                com.peaceman.alpha.ship.combat.LaserCombatService.fireWeapon(level, ship, weaponPos);
+                            if (laserBe instanceof com.lit.spaceships.block.entity.HeavyBeamBlockEntity) {
+                                com.lit.spaceships.ship.combat.LaserCombatService.fireWeapon(level, ship, weaponPos);
                             }
                         }
                         case TOGGLE_MINING_LASER -> {
-                            if (laserBe instanceof com.peaceman.alpha.block.entity.MiningLaserBlockEntity) {
-                                com.peaceman.alpha.ship.combat.LaserCombatService.fireWeapon(level, ship, weaponPos);
+                            if (laserBe instanceof com.lit.spaceships.block.entity.MiningLaserBlockEntity) {
+                                com.lit.spaceships.ship.combat.LaserCombatService.fireWeapon(level, ship, weaponPos);
                             }
                         }
                         case FIRE_ALL -> {
-                            com.peaceman.alpha.ship.combat.LaserCombatService.fireWeapon(level, ship, weaponPos);
+                            com.lit.spaceships.ship.combat.LaserCombatService.fireWeapon(level, ship, weaponPos);
                         }
                         default -> {}
                     }
@@ -186,12 +186,12 @@ public class ServerPayloadHandler {
             var pos = payload.weaponPos();
             if (pos == null) return;
 
-            if (serverLevel.getBlockEntity(pos) instanceof com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity laserBE) {
-                if (player.getVehicle() instanceof com.peaceman.alpha.entity.TurretSeatEntity seat && pos.equals(seat.getWeaponPos())) {
-                    float yaw = com.peaceman.alpha.ship.combat.aim.AimTransformMath.decompressAngle(payload.compressedYaw());
-                    float pitch = com.peaceman.alpha.ship.combat.aim.AimTransformMath.decompressAngle(payload.compressedPitch());
+            if (serverLevel.getBlockEntity(pos) instanceof com.lit.spaceships.block.entity.AbstractLaserNodeBlockEntity laserBE) {
+                if (player.getVehicle() instanceof com.lit.spaceships.entity.TurretSeatEntity seat && pos.equals(seat.getWeaponPos())) {
+                    float yaw = com.lit.spaceships.ship.combat.aim.AimTransformMath.decompressAngle(payload.compressedYaw());
+                    float pitch = com.lit.spaceships.ship.combat.aim.AimTransformMath.decompressAngle(payload.compressedPitch());
 
-                    laserBE.setAimAngles(new com.peaceman.alpha.ship.combat.aim.AimAngles(yaw, pitch));
+                    laserBE.setAimAngles(new com.lit.spaceships.ship.combat.aim.AimAngles(yaw, pitch));
 
                     net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingChunk(
                             serverLevel, new net.minecraft.world.level.ChunkPos(pos), payload
@@ -209,11 +209,11 @@ public class ServerPayloadHandler {
             var pos = payload.weaponPos();
             if (pos == null) return;
 
-            if (serverLevel.getBlockEntity(pos) instanceof com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity laserBE) {
-                if (player.getVehicle() instanceof com.peaceman.alpha.entity.TurretSeatEntity seat && pos.equals(seat.getWeaponPos())) {
-                    com.peaceman.alpha.helper.TurretDebugLogger.logServerAimReceived(player.getName().getString(), pos, payload.yaw(), payload.pitch(), laserBE.isAimLocked());
+            if (serverLevel.getBlockEntity(pos) instanceof com.lit.spaceships.block.entity.AbstractLaserNodeBlockEntity laserBE) {
+                if (player.getVehicle() instanceof com.lit.spaceships.entity.TurretSeatEntity seat && pos.equals(seat.getWeaponPos())) {
+                    com.lit.spaceships.helper.TurretDebugLogger.logServerAimReceived(player.getName().getString(), pos, payload.yaw(), payload.pitch(), laserBE.isAimLocked());
                     if (!laserBE.isAimLocked()) {
-                        laserBE.setAimAngles(new com.peaceman.alpha.ship.combat.aim.AimAngles(payload.yaw(), payload.pitch()));
+                        laserBE.setAimAngles(new com.lit.spaceships.ship.combat.aim.AimAngles(payload.yaw(), payload.pitch()));
 
                         net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingChunk(
                                 serverLevel, new net.minecraft.world.level.ChunkPos(pos), payload
@@ -232,11 +232,11 @@ public class ServerPayloadHandler {
             var pos = payload.weaponPos();
             if (pos == null) return;
 
-            if (serverLevel.getBlockEntity(pos) instanceof com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity laserBE) {
-                if (player.getVehicle() instanceof com.peaceman.alpha.entity.TurretSeatEntity seat && pos.equals(seat.getWeaponPos())) {
+            if (serverLevel.getBlockEntity(pos) instanceof com.lit.spaceships.block.entity.AbstractLaserNodeBlockEntity laserBE) {
+                if (player.getVehicle() instanceof com.lit.spaceships.entity.TurretSeatEntity seat && pos.equals(seat.getWeaponPos())) {
                     boolean newLock = !laserBE.isAimLocked();
                     laserBE.setAimLocked(newLock);
-                    com.peaceman.alpha.helper.TurretDebugLogger.logServerLockToggled(player.getName().getString(), pos, newLock);
+                    com.lit.spaceships.helper.TurretDebugLogger.logServerLockToggled(player.getName().getString(), pos, newLock);
 
                     // 1. Akustisches Feedback über Server an alle nahegelegenen Spieler
                     net.minecraft.sounds.SoundEvent sound = newLock ? net.minecraft.sounds.SoundEvents.IRON_TRAPDOOR_CLOSE : net.minecraft.sounds.SoundEvents.IRON_TRAPDOOR_OPEN;
@@ -247,11 +247,11 @@ public class ServerPayloadHandler {
                         String yawStr = String.format(java.util.Locale.ROOT, "%.1f", laserBE.getTargetYaw());
                         String pitchStr = String.format(java.util.Locale.ROOT, "%.1f", laserBE.getTargetPitch());
                         player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
-                                com.peaceman.alpha.registry.ModI18n.Message.TURRET_AIM_LOCKED,
+                                com.lit.spaceships.registry.ModI18n.Message.TURRET_AIM_LOCKED,
                                 yawStr, pitchStr), true);
                     } else {
                         player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
-                                com.peaceman.alpha.registry.ModI18n.Message.TURRET_AIM_RELEASED), true);
+                                com.lit.spaceships.registry.ModI18n.Message.TURRET_AIM_RELEASED), true);
                     }
 
                     // 3. Synchronisiere aktuellen BE-Zustand an alle Clients
@@ -266,11 +266,11 @@ public class ServerPayloadHandler {
             Player player = context.player();
             if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
                 java.util.UUID shipId = payload.shipId().orElse(null);
-                if (shipId != null && com.peaceman.alpha.ship.service.ServerShipManager.ACTIVE_SHIPS.containsKey(shipId)) {
-                    com.peaceman.alpha.ship.domain.ShipState ship = com.peaceman.alpha.ship.service.ServerShipManager.getShip(shipId);
+                if (shipId != null && com.lit.spaceships.ship.service.ServerShipManager.ACTIVE_SHIPS.containsKey(shipId)) {
+                    com.lit.spaceships.ship.domain.ShipState ship = com.lit.spaceships.ship.service.ServerShipManager.getShip(shipId);
                     if (ship != null) {
                         net.minecraft.core.BlockPos controllerPos = ship.getControllerPos();
-                        int energy = com.peaceman.alpha.ship.SpaceshipEnergyManager.getTotalAvailableEnergy(serverPlayer.serverLevel(), ship);
+                        int energy = com.lit.spaceships.ship.SpaceshipEnergyManager.getTotalAvailableEnergy(serverPlayer.serverLevel(), ship);
                         net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(serverPlayer,
                                 new ShipStateSyncPayload(shipId, energy, ship.isShieldActive(),
                                         ship.getShieldCooldownRemaining(serverPlayer.serverLevel().getGameTime()),
@@ -278,13 +278,13 @@ public class ServerPayloadHandler {
                         serverPlayer.openMenu(new net.minecraft.world.MenuProvider() {
                             @Override
                             public net.minecraft.network.chat.Component getDisplayName() {
-                                return net.minecraft.network.chat.Component.translatable(com.peaceman.alpha.registry.ModI18n.Screen.HELM_NAV_TITLE);
+                                return net.minecraft.network.chat.Component.translatable(com.lit.spaceships.registry.ModI18n.Screen.HELM_NAV_TITLE);
                             }
 
                             @org.jetbrains.annotations.Nullable
                             @Override
                             public net.minecraft.world.inventory.AbstractContainerMenu createMenu(int id, net.minecraft.world.entity.player.Inventory inv, Player player) {
-                                return new com.peaceman.alpha.menu.SpaceshipHelmMenu(id, inv, controllerPos);
+                                return new com.lit.spaceships.menu.SpaceshipHelmMenu(id, inv, controllerPos);
                             }
                         }, buf -> buf.writeBlockPos(controllerPos));
                     }

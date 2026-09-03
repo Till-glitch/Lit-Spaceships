@@ -1,6 +1,6 @@
-package com.peaceman.alpha.network;
+package com.lit.spaceships.network;
 
-import com.peaceman.alpha.Alpha;
+import com.lit.spaceships.LitSpaceships;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.codec.StreamCodec;
@@ -13,7 +13,7 @@ import net.minecraft.resources.ResourceLocation;
 public record TurretLockTogglePayload(BlockPos weaponPos) implements CustomPacketPayload {
 
     public static final Type<TurretLockTogglePayload> TYPE =
-            new Type<>(ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "turret_lock_toggle"));
+            new Type<>(ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "turret_lock_toggle"));
 
     public static final StreamCodec<ByteBuf, TurretLockTogglePayload> STREAM_CODEC = StreamCodec.composite(
             BlockPos.STREAM_CODEC,

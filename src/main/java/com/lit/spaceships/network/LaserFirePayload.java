@@ -1,7 +1,7 @@
-package com.peaceman.alpha.network;
+package com.lit.spaceships.network;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.ship.combat.LaserWeaponTier;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.ship.combat.LaserWeaponTier;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -21,7 +21,7 @@ public record LaserFirePayload(
 ) implements CustomPacketPayload {
 
     public static final Type<LaserFirePayload> TYPE =
-            new Type<>(ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "laser_fire"));
+            new Type<>(ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "laser_fire"));
 
     public static final StreamCodec<FriendlyByteBuf, LaserFirePayload> STREAM_CODEC = StreamCodec.of(
             (buf, payload) -> {

@@ -1,10 +1,10 @@
-package com.peaceman.alpha.ship.service;
+package com.lit.spaceships.ship.service;
 
-import com.peaceman.alpha.helper.ShieldLifecycleLogger;
-import com.peaceman.alpha.network.ShieldBubbleSyncPacket;
-import com.peaceman.alpha.ship.ShieldMorphology;
-import com.peaceman.alpha.ship.domain.ShipState;
-import com.peaceman.alpha.ship.domain.VoxelGridCache;
+import com.lit.spaceships.helper.ShieldLifecycleLogger;
+import com.lit.spaceships.network.ShieldBubbleSyncPacket;
+import com.lit.spaceships.ship.ShieldMorphology;
+import com.lit.spaceships.ship.domain.ShipState;
+import com.lit.spaceships.ship.domain.VoxelGridCache;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.neoforged.neoforge.network.PacketDistributor;

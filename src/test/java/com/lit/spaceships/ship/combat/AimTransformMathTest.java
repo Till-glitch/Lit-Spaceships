@@ -1,10 +1,10 @@
-package com.peaceman.alpha.ship.combat;
+package com.lit.spaceships.ship.combat;
 
-import com.peaceman.alpha.ship.combat.aim.AimAngles;
-import com.peaceman.alpha.ship.combat.aim.AimTransformMath;
-import com.peaceman.alpha.ship.combat.aim.FreelookAimStrategy;
-import com.peaceman.alpha.ship.combat.aim.GimbalLimits;
-import com.peaceman.alpha.ship.domain.ShipState;
+import com.lit.spaceships.ship.combat.aim.AimAngles;
+import com.lit.spaceships.ship.combat.aim.AimTransformMath;
+import com.lit.spaceships.ship.combat.aim.FreelookAimStrategy;
+import com.lit.spaceships.ship.combat.aim.GimbalLimits;
+import com.lit.spaceships.ship.domain.ShipState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 import org.joml.AxisAngle4f;

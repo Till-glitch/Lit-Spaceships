@@ -1,7 +1,7 @@
-package com.peaceman.alpha.ship.combat;
+package com.lit.spaceships.ship.combat;
 
-import com.peaceman.alpha.ship.domain.ShipState;
-import com.peaceman.alpha.ship.service.ServerShipManager;
+import com.lit.spaceships.ship.domain.ShipState;
+import com.lit.spaceships.ship.service.ServerShipManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
@@ -79,7 +79,7 @@ public class LaserRaycastUtil {
                 Optional<FastVoxelTraversal.VoxelHit> shieldHit = FastVoxelTraversal.traverse(
                         ship.getShieldVoxelCache(), localOrigin, dir, effectiveRange,
                         (id, x, y, z) -> {
-                            com.peaceman.alpha.ship.domain.ShieldZone zone = ship.getShieldZone(id);
+                            com.lit.spaceships.ship.domain.ShieldZone zone = ship.getShieldZone(id);
                             if (zone == null || zone.isCollapsed(gameTime) || zone.generatorPos() == null) return false;
 
                             BlockPos genPos = zone.generatorPos();

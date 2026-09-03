@@ -1,8 +1,8 @@
-package com.peaceman.alpha.ship;
+package com.lit.spaceships.ship;
 
-import com.peaceman.alpha.ship.domain.ShipState;
-import com.peaceman.alpha.ship.service.ServerShipManager;
-import com.peaceman.alpha.ship.service.ShipMovementService;
+import com.lit.spaceships.ship.domain.ShipState;
+import com.lit.spaceships.ship.service.ServerShipManager;
+import com.lit.spaceships.ship.service.ShipMovementService;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -31,13 +31,13 @@ public class SpaceshipNavigationManager {
             ShipMovementService.moveShip(level, ship, dx, dy, dz, player);
         } else {
             if (player != null) {
-                player.displayClientMessage(Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.WAYPOINT_NOT_FOUND, homeName), true);
+                player.displayClientMessage(Component.translatable(com.lit.spaceships.registry.ModI18n.Message.WAYPOINT_NOT_FOUND, homeName), true);
             }
         }
     }
 
     // 3. Führt einen dimensionalen Sprung durch
     public static boolean jumpToDimension(net.minecraft.server.level.ServerLevel originLevel, net.minecraft.server.level.ServerLevel targetLevel, ShipState ship, BlockPos targetPos, Player player) {
-        return com.peaceman.alpha.ship.service.ShipTeleportationService.teleportShip(originLevel, targetLevel, ship, targetPos, player);
+        return com.lit.spaceships.ship.service.ShipTeleportationService.teleportShip(originLevel, targetLevel, ship, targetPos, player);
     }
 }

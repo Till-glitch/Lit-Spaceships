@@ -1,7 +1,7 @@
-package com.peaceman.alpha.client.render;
+package com.lit.spaceships.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.peaceman.alpha.block.entity.SpaceshipReactorBlockEntity;
+import com.lit.spaceships.block.entity.SpaceshipReactorBlockEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;

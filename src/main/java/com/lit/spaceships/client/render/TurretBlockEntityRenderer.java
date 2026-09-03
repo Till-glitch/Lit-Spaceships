@@ -1,10 +1,10 @@
-package com.peaceman.alpha.client.render;
+package com.lit.spaceships.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity;
-import com.peaceman.alpha.ship.combat.LaserWeaponTier;
+import com.lit.spaceships.block.entity.AbstractLaserNodeBlockEntity;
+import com.lit.spaceships.ship.combat.LaserWeaponTier;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -51,7 +51,7 @@ public class TurretBlockEntityRenderer<T extends AbstractLaserNodeBlockEntity> i
 
         // 2. Das gesamte Koordinatensystem an die Wand rotieren, an der der Block klebt
         if (renderState.facing() != null) {
-            poseStack.mulPose(com.peaceman.alpha.ship.combat.aim.AimTransformMath.getRotationForFacing(renderState.facing()));
+            poseStack.mulPose(com.lit.spaceships.ship.combat.aim.AimTransformMath.getRotationForFacing(renderState.facing()));
         }
 
         // 3. Zurück an den lokalen Nullpunkt des nun rotierten Blocks verschieben
@@ -76,11 +76,11 @@ public class TurretBlockEntityRenderer<T extends AbstractLaserNodeBlockEntity> i
         // 7. Rendern des JSON-Modells
         ResourceLocation modelLoc;
         if (renderState.getTier() == LaserWeaponTier.HEAVY_BEAM) {
-            modelLoc = ResourceLocation.fromNamespaceAndPath("peaceman_alpha", "block/laser_turret_heavy");
+            modelLoc = ResourceLocation.fromNamespaceAndPath("lit_spaceships", "block/laser_turret_heavy");
         } else if (renderState.getTier() == LaserWeaponTier.MINING_LASER) {
-            modelLoc = ResourceLocation.fromNamespaceAndPath("peaceman_alpha", "block/laser_turret_mining");
+            modelLoc = ResourceLocation.fromNamespaceAndPath("lit_spaceships", "block/laser_turret_mining");
         } else {
-            modelLoc = ResourceLocation.fromNamespaceAndPath("peaceman_alpha", "block/laser_turret_pulse");
+            modelLoc = ResourceLocation.fromNamespaceAndPath("lit_spaceships", "block/laser_turret_pulse");
         }
 
         ModelResourceLocation mrl = new ModelResourceLocation(modelLoc, "standalone");

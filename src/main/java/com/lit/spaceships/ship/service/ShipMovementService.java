@@ -1,18 +1,18 @@
-package com.peaceman.alpha.ship.service;
+package com.lit.spaceships.ship.service;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.block.ISpaceshipNode;
-import com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity;
-import com.peaceman.alpha.block.entity.SpaceshipControlBlockEntity;
-import com.peaceman.alpha.network.ShipPositionSyncPayload;
-import com.peaceman.alpha.network.ShipStateSyncPayload;
-import com.peaceman.alpha.registry.ModI18n;
-import com.peaceman.alpha.ship.SpaceshipEnergyManager;
-import com.peaceman.alpha.ship.domain.ShipState;
-import com.peaceman.alpha.ship.relocation.api.RelocationContext;
-import com.peaceman.alpha.ship.relocation.graph.BlockDependencyGraph;
-import com.peaceman.alpha.ship.relocation.graph.RelocationNode;
-import com.peaceman.alpha.ship.relocation.registry.BlockRelocationRegistry;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.block.ISpaceshipNode;
+import com.lit.spaceships.block.entity.AbstractLaserNodeBlockEntity;
+import com.lit.spaceships.block.entity.SpaceshipControlBlockEntity;
+import com.lit.spaceships.network.ShipPositionSyncPayload;
+import com.lit.spaceships.network.ShipStateSyncPayload;
+import com.lit.spaceships.registry.ModI18n;
+import com.lit.spaceships.ship.SpaceshipEnergyManager;
+import com.lit.spaceships.ship.domain.ShipState;
+import com.lit.spaceships.ship.relocation.api.RelocationContext;
+import com.lit.spaceships.ship.relocation.graph.BlockDependencyGraph;
+import com.lit.spaceships.ship.relocation.graph.RelocationNode;
+import com.lit.spaceships.ship.relocation.registry.BlockRelocationRegistry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -43,13 +43,13 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * Service für translatorische Schiffsbewegungen mit Time-Slicing Tick-Budget (max. 10ms pro Tick),
  * atomarem Pre-Collision-Check (Intent-Lock-Execute) und Ticket-Management (Schritt 5).
  */
-@EventBusSubscriber(modid = Alpha.MODID, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = LitSpaceships.MODID, bus = EventBusSubscriber.Bus.GAME)
 public class ShipMovementService {
 
     public static final long TICK_BUDGET_NANOS = 10_000_000L; // 10 Millisekunden Budget pro Server-Tick
 
     public static final TicketType<ChunkPos> SHIP_TICKET =
-            TicketType.create("peaceman_alpha:ship_movement", Comparator.comparing(ChunkPos::toLong));
+            TicketType.create("lit_spaceships:ship_movement", Comparator.comparing(ChunkPos::toLong));
 
     public interface IShipTask {
         boolean tick(long deadlineNanos);
@@ -105,8 +105,8 @@ public class ShipMovementService {
         }
         try {
             BlockPos targetPos = pos != null ? pos : BlockPos.ZERO;
-            com.peaceman.alpha.ship.relocation.graph.VirtualSupportTestView virtualView =
-                    new com.peaceman.alpha.ship.relocation.graph.VirtualSupportTestView(level, null, targetPos.below());
+            com.lit.spaceships.ship.relocation.graph.VirtualSupportTestView virtualView =
+                    new com.lit.spaceships.ship.relocation.graph.VirtualSupportTestView(level, null, targetPos.below());
             if (!state.canSurvive(virtualView, targetPos)) {
                 return PlacementPass.PASS_3_ATTACHABLES_AND_TOPS;
             }
@@ -192,17 +192,17 @@ public class ShipMovementService {
 
                 // 2. Energieprüfung
                 SpaceshipEnergyManager.FlightEnergyResult result = SpaceshipEnergyManager.tryConsumeFlightEnergy(level, ship, dx, dy, dz);
-                if (result.status() == com.peaceman.alpha.ship.EnergyConsumeResult.INSUFFICIENT_ENERGY) {
+                if (result.status() == com.lit.spaceships.ship.EnergyConsumeResult.INSUFFICIENT_ENERGY) {
                     if (player != null) {
                         player.displayClientMessage(
-                                Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.ENERGY_INSUFFICIENT,
+                                Component.translatable(com.lit.spaceships.registry.ModI18n.Message.ENERGY_INSUFFICIENT,
                                         String.format("%,d", result.cost()), String.format("%,d", result.available())), true);
                     }
                     return true; // Abbruch wegen Energiemangel
                 }
 
                 // 3. Aktive Dauerstrahlen bei Schub/Bewegung sauber abschalten
-                com.peaceman.alpha.ship.combat.LaserCombatService.stopAllContinuousLasers(level, ship);
+                com.lit.spaceships.ship.combat.LaserCombatService.stopAllContinuousLasers(level, ship);
                 // 3. Chunks im Zielgebiet vorbereiten und forceloaden
                 destinationChunks = prepareDestinationChunks(level, ship, new Vec3(dx, dy, dz));
 
@@ -245,7 +245,7 @@ public class ShipMovementService {
                     BlockEntity be = level.getBlockEntity(pos);
                     CompoundTag nbt = (be != null) ? be.saveWithFullMetadata(level.registryAccess()) : null;
                     if (nbt != null) {
-                        com.peaceman.alpha.ship.relocation.util.NbtCoordinateRemapper.remapCoordinates(
+                        com.lit.spaceships.ship.relocation.util.NbtCoordinateRemapper.remapCoordinates(
                                 nbt, shipBlocks, p -> p.offset(dx, dy, dz));
                     }
                     BlockRelocationRegistry.dispatchPreRelocation(pos, state, be, nbt, relocationContext);
@@ -516,7 +516,7 @@ public class ShipMovementService {
                     BlockEntity be = level.getBlockEntity(pos);
                     CompoundTag nbt = (be != null) ? be.saveWithFullMetadata(level.registryAccess()) : null;
                     if (nbt != null) {
-                        com.peaceman.alpha.ship.relocation.util.NbtCoordinateRemapper.remapCoordinates(
+                        com.lit.spaceships.ship.relocation.util.NbtCoordinateRemapper.remapCoordinates(
                                 nbt, shipBlocks, p -> ShipRotationMath.rotateAbsoluteBlockPos(p, startPos, rotation));
                     }
                     BlockRelocationRegistry.dispatchPreRelocation(pos, state, be, nbt, relocationContext);
@@ -678,11 +678,11 @@ public class ShipMovementService {
                 for (BlockPos p : newShipBlocks) {
                     relativeBlocks.add(p.subtract(startPos));
                 }
-                PacketDistributor.sendToAllPlayers(new com.peaceman.alpha.network.ShipStructureSyncPayload(ship.getId(), startPos, relativeBlocks));
+                PacketDistributor.sendToAllPlayers(new com.lit.spaceships.network.ShipStructureSyncPayload(ship.getId(), startPos, relativeBlocks));
                 PacketDistributor.sendToAllPlayers(new ShipPositionSyncPayload(ship.getId(), startPos));
 
                 if (ship.isShieldActive() && !ship.getShields().isEmpty()) {
-                    ShipMorphologyService.calculateAndSyncShieldAsync(ship, level, com.peaceman.alpha.ship.SpaceshipShieldHandler.getShieldRadius(ship));
+                    ShipMorphologyService.calculateAndSyncShieldAsync(ship, level, com.lit.spaceships.ship.SpaceshipShieldHandler.getShieldRadius(ship));
                 }
 
                 return true;
@@ -793,7 +793,7 @@ public class ShipMovementService {
             if (player != null) {
                 String remainingSec = (remaining / 20) + "." + (remaining % 20 * 5);
                 player.displayClientMessage(
-                        Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.MOVEMENT_COOLDOWN_ACTIVE, remainingSec),
+                        Component.translatable(com.lit.spaceships.registry.ModI18n.Message.MOVEMENT_COOLDOWN_ACTIVE, remainingSec),
                         true
                 );
             }
@@ -835,7 +835,7 @@ public class ShipMovementService {
                 finalMoveVec = resolution.clampedVector();
                 if (player != null) {
                     player.displayClientMessage(
-                            Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.COLLISION_WARNING, resolution.resolutionCase()),
+                            Component.translatable(com.lit.spaceships.registry.ModI18n.Message.COLLISION_WARNING, resolution.resolutionCase()),
                             true
                     );
                 }
@@ -892,7 +892,7 @@ public class ShipMovementService {
             if (player != null) {
                 String remainingSec = (remaining / 20) + "." + (remaining % 20 * 5);
                 player.displayClientMessage(
-                        Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.MOVEMENT_COOLDOWN_ACTIVE, remainingSec),
+                        Component.translatable(com.lit.spaceships.registry.ModI18n.Message.MOVEMENT_COOLDOWN_ACTIVE, remainingSec),
                         true
                 );
             }
@@ -904,7 +904,7 @@ public class ShipMovementService {
             serverLevel.playSound(null, ship.getControllerPos(), net.minecraft.sounds.SoundEvents.NOTE_BLOCK_BASS.value(), net.minecraft.sounds.SoundSource.BLOCKS, 1.0f, 0.5f);
             if (player != null) {
                 player.displayClientMessage(
-                        Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.ROTATION_BLOCKED_COLLISION),
+                        Component.translatable(com.lit.spaceships.registry.ModI18n.Message.ROTATION_BLOCKED_COLLISION),
                         true
                 );
             }

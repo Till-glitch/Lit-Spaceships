@@ -1,9 +1,9 @@
-package com.peaceman.alpha.tests;
+package com.lit.spaceships.tests;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.block.ISpaceshipNode;
-import com.peaceman.alpha.registry.ModAttachments;
-import com.peaceman.alpha.registry.ModBlocks;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.block.ISpaceshipNode;
+import com.lit.spaceships.registry.ModAttachments;
+import com.lit.spaceships.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -15,7 +15,7 @@ import java.util.UUID;
 /**
  * GameTests zur Validierung der NeoForge 1.21 Data Attachments (SHIP_ID) an BlockEntities.
  */
-@GameTestHolder(Alpha.MODID)
+@GameTestHolder(LitSpaceships.MODID)
 public class ShipAttachmentGameTests {
 
     @GameTest(template = "empty")

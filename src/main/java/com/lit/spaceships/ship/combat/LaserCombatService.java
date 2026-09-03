@@ -1,13 +1,13 @@
-package com.peaceman.alpha.ship.combat;
+package com.lit.spaceships.ship.combat;
 
-import com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity;
-import com.peaceman.alpha.block.entity.HeavyBeamBlockEntity;
-import com.peaceman.alpha.block.entity.MiningLaserBlockEntity;
-import com.peaceman.alpha.network.*;
-import com.peaceman.alpha.ship.SpaceshipEnergyManager;
-import com.peaceman.alpha.ship.SpaceshipShieldHandler;
-import com.peaceman.alpha.ship.domain.ShipState;
-import com.peaceman.alpha.ship.service.ServerShipManager;
+import com.lit.spaceships.block.entity.AbstractLaserNodeBlockEntity;
+import com.lit.spaceships.block.entity.HeavyBeamBlockEntity;
+import com.lit.spaceships.block.entity.MiningLaserBlockEntity;
+import com.lit.spaceships.network.*;
+import com.lit.spaceships.ship.SpaceshipEnergyManager;
+import com.lit.spaceships.ship.SpaceshipShieldHandler;
+import com.lit.spaceships.ship.domain.ShipState;
+import com.lit.spaceships.ship.service.ServerShipManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -110,12 +110,12 @@ public class LaserCombatService {
         }
         
         org.joml.Vector3f vec = localDir.toVector3f();
-        vec.rotate(com.peaceman.alpha.ship.combat.aim.AimTransformMath.getRotationForFacing(facing));
+        vec.rotate(com.lit.spaceships.ship.combat.aim.AimTransformMath.getRotationForFacing(facing));
         Vec3 blockOrientedDir = new Vec3(vec);
 
-        Vec3 worldDir = com.peaceman.alpha.ship.combat.aim.AimTransformMath.transformLocalToWorld(blockOrientedDir,
+        Vec3 worldDir = com.lit.spaceships.ship.combat.aim.AimTransformMath.transformLocalToWorld(blockOrientedDir,
                 shooterShip != null ? shooterShip.getRotation() : null);
-        com.peaceman.alpha.helper.TurretDebugLogger.logCombatAim(laserBe.getBlockPos(), laserBe.getTargetYaw(),
+        com.lit.spaceships.helper.TurretDebugLogger.logCombatAim(laserBe.getBlockPos(), laserBe.getTargetYaw(),
                 laserBe.getTargetPitch(), worldDir.x, worldDir.y, worldDir.z);
         return worldDir;
     }
@@ -134,7 +134,7 @@ public class LaserCombatService {
                 ShipState targetShip = ServerShipManager.getShip(hit.hitShipId());
                 if (targetShip != null) {
                     byte shieldId = hit.shieldId();
-                    com.peaceman.alpha.ship.domain.ShieldZone zone = (shieldId != 0) ? targetShip.getShieldZone(shieldId) : null;
+                    com.lit.spaceships.ship.domain.ShieldZone zone = (shieldId != 0) ? targetShip.getShieldZone(shieldId) : null;
                     long gameTime = level.getGameTime();
 
                     if (zone != null && !zone.isCollapsed(gameTime)) {
@@ -201,7 +201,7 @@ public class LaserCombatService {
                 ShipState targetShip = ServerShipManager.getShip(hit.hitShipId());
                 if (targetShip != null) {
                     byte shieldId = hit.shieldId();
-                    com.peaceman.alpha.ship.domain.ShieldZone zone = (shieldId != 0) ? targetShip.getShieldZone(shieldId) : null;
+                    com.lit.spaceships.ship.domain.ShieldZone zone = (shieldId != 0) ? targetShip.getShieldZone(shieldId) : null;
                     long gameTime = level.getGameTime();
 
                     if (zone != null && !zone.isCollapsed(gameTime)) {

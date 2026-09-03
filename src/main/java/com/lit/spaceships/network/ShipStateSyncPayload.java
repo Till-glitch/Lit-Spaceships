@@ -1,6 +1,6 @@
-package com.peaceman.alpha.network;
+package com.lit.spaceships.network;
 
-import com.peaceman.alpha.Alpha;
+import com.lit.spaceships.LitSpaceships;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -22,7 +22,7 @@ public record ShipStateSyncPayload(
 ) implements CustomPacketPayload {
 
     public static final Type<ShipStateSyncPayload> TYPE =
-            new Type<>(ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "ship_state_sync"));
+            new Type<>(ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "ship_state_sync"));
 
     public static final StreamCodec<ByteBuf, ShipStateSyncPayload> STREAM_CODEC = StreamCodec.composite(
             UUIDUtil.STREAM_CODEC, ShipStateSyncPayload::shipId,

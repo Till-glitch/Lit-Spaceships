@@ -1,6 +1,6 @@
-package com.peaceman.alpha.menu;
+package com.lit.spaceships.menu;
 
-import com.peaceman.alpha.registry.ModMenuTypes;
+import com.lit.spaceships.registry.ModMenuTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;

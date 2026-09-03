@@ -1,8 +1,8 @@
-package com.peaceman.alpha.datagen.provider;
+package com.lit.spaceships.datagen.provider;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.registry.ModBlocks;
-import com.peaceman.alpha.registry.ModItems;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.registry.ModBlocks;
+import com.lit.spaceships.registry.ModItems;
 import net.minecraft.data.PackOutput;
 import net.neoforged.neoforge.common.data.LanguageProvider;
 
@@ -11,7 +11,7 @@ public class ModLanguageProvider extends LanguageProvider {
     private final String locale;
 
     public ModLanguageProvider(PackOutput output, String locale) {
-        super(output, Alpha.MODID, locale);
+        super(output, LitSpaceships.MODID, locale);
         this.locale = locale;
     }
 
@@ -39,10 +39,10 @@ public class ModLanguageProvider extends LanguageProvider {
         addItem(ModItems.BACKFLIP_TOOL, "Klasingscher Degen");
 
         // Creative Tabs & UI
-        add(com.peaceman.alpha.registry.ModI18n.Tab.MAIN, "Mod Alpha - Spaceships");
-        add(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_TITLE, "Spaceship Control");
-        add(com.peaceman.alpha.registry.ModI18n.Screen.HELM_NAV_TITLE, "Nav-Computer & Waypoints");
-        add(com.peaceman.alpha.registry.ModI18n.Screen.REACTOR_TITLE, "Reactor Core Diagnostics");
+        add(com.lit.spaceships.registry.ModI18n.Tab.MAIN, "Mod Alpha - Spaceships");
+        add(com.lit.spaceships.registry.ModI18n.Screen.CONTROL_TITLE, "Spaceship Control");
+        add(com.lit.spaceships.registry.ModI18n.Screen.HELM_NAV_TITLE, "Nav-Computer & Waypoints");
+        add(com.lit.spaceships.registry.ModI18n.Screen.REACTOR_TITLE, "Reactor Core Diagnostics");
     }
 
     private void addGermanTranslations() {
@@ -60,9 +60,9 @@ public class ModLanguageProvider extends LanguageProvider {
         addItem(ModItems.BACKFLIP_TOOL, "Klasingscher Degen");
 
         // Creative Tabs & UI
-        add(com.peaceman.alpha.registry.ModI18n.Tab.MAIN, "Mod Alpha - Raumschiffe");
-        add(com.peaceman.alpha.registry.ModI18n.Screen.CONTROL_TITLE, "Raumschiff Steuerung");
-        add(com.peaceman.alpha.registry.ModI18n.Screen.HELM_NAV_TITLE, "Nav-Computer & Wegpunkte");
-        add(com.peaceman.alpha.registry.ModI18n.Screen.REACTOR_TITLE, "Reaktorkern-Diagnose");
+        add(com.lit.spaceships.registry.ModI18n.Tab.MAIN, "Mod Alpha - Raumschiffe");
+        add(com.lit.spaceships.registry.ModI18n.Screen.CONTROL_TITLE, "Raumschiff Steuerung");
+        add(com.lit.spaceships.registry.ModI18n.Screen.HELM_NAV_TITLE, "Nav-Computer & Wegpunkte");
+        add(com.lit.spaceships.registry.ModI18n.Screen.REACTOR_TITLE, "Reaktorkern-Diagnose");
     }
 }

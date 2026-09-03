@@ -1,7 +1,7 @@
-package com.peaceman.alpha.datagen.provider;
+package com.lit.spaceships.datagen.provider;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.registry.ModTags;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.registry.ModTags;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.world.level.block.Blocks;
@@ -16,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
 public class ModBlockTagsProvider extends BlockTagsProvider {
 
     public ModBlockTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider, ExistingFileHelper existingFileHelper) {
-        super(output, lookupProvider, Alpha.MODID, existingFileHelper);
+        super(output, lookupProvider, LitSpaceships.MODID, existingFileHelper);
     }
 
     @Override

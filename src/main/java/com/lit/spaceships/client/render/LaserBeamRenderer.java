@@ -1,13 +1,13 @@
-package com.peaceman.alpha.client.render;
+package com.lit.spaceships.client.render;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.client.state.ClientLaserState;
-import com.peaceman.alpha.client.state.ClientShipManager;
-import com.peaceman.alpha.client.state.ClientShipState;
-import com.peaceman.alpha.ship.combat.LaserWeaponTier;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.client.state.ClientLaserState;
+import com.lit.spaceships.client.state.ClientShipManager;
+import com.lit.spaceships.client.state.ClientShipState;
+import com.lit.spaceships.ship.combat.LaserWeaponTier;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
@@ -30,7 +30,7 @@ import java.util.UUID;
  * Rendert volumetrisch leuchtende Billboard-Strahlen mit additiver
  * Farbüberlagerung.
  */
-@EventBusSubscriber(modid = Alpha.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+@EventBusSubscriber(modid = LitSpaceships.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public class LaserBeamRenderer {
 
     public static void addPulseBeam(UUID shooterShipId, Vec3 startPos, Vec3 endPos, LaserWeaponTier tier) {
@@ -108,12 +108,12 @@ public class LaserBeamRenderer {
 
             Vec3 dir;
             if (level.getBlockEntity(
-                    weaponWorldPos) instanceof com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity laserBE) {
+                    weaponWorldPos) instanceof com.lit.spaceships.block.entity.AbstractLaserNodeBlockEntity laserBE) {
                 // 1. Lokalen Vektor aus Yaw und Pitch berechnen
-                Vec3 localDir = com.peaceman.alpha.ship.combat.aim.AimTransformMath.localEulerToVector(laserBE.getTargetYaw(), laserBE.getTargetPitch());
+                Vec3 localDir = com.lit.spaceships.ship.combat.aim.AimTransformMath.localEulerToVector(laserBE.getTargetYaw(), laserBE.getTargetPitch());
                 // 2. Mit der Wand-Ausrichtung in den Welt-Raum rotieren
                 org.joml.Vector3f dir3f = localDir.toVector3f();
-                dir3f.rotate(com.peaceman.alpha.ship.combat.aim.AimTransformMath.getRotationForFacing(facing));
+                dir3f.rotate(com.lit.spaceships.ship.combat.aim.AimTransformMath.getRotationForFacing(facing));
                 dir = new Vec3(dir3f);
             } else {
                 dir = Vec3.atLowerCornerOf(facing.getNormal()).normalize();

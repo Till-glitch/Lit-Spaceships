@@ -1,11 +1,11 @@
 {
-  "type": "peaceman_alpha:space_type",
+  "type": "lit_spaceships:space_type",
   "generator": {
     "type": "minecraft:noise",
-    "settings": "peaceman_alpha:space_noise",
+    "settings": "lit_spaceships:space_noise",
     "biome_source": {
       "type": "minecraft:fixed",
-      "biome": "peaceman_alpha:space_biome"
+      "biome": "lit_spaceships:space_biome"
     }
   }
 }

@@ -1,7 +1,7 @@
-package com.peaceman.alpha.block;
+package com.lit.spaceships.block;
 
-import com.peaceman.alpha.ship.domain.ShipState;
-import com.peaceman.alpha.ship.service.ServerShipManager;
+import com.lit.spaceships.ship.domain.ShipState;
+import com.lit.spaceships.ship.service.ServerShipManager;
 
 import java.util.UUID;
 

@@ -1,4 +1,4 @@
-package com.peaceman.alpha.registry;
+package com.lit.spaceships.registry;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;

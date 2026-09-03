@@ -1,9 +1,9 @@
-package com.peaceman.alpha.client.input;
+package com.lit.spaceships.client.input;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.block.SpaceshipControlBlock;
-import com.peaceman.alpha.block.SpaceshipHelmBlock;
-import com.peaceman.alpha.client.ClientHooks;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.block.SpaceshipControlBlock;
+import com.lit.spaceships.block.SpaceshipHelmBlock;
+import com.lit.spaceships.client.ClientHooks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -15,7 +15,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
 import java.util.UUID;
 
-@EventBusSubscriber(modid = Alpha.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+@EventBusSubscriber(modid = LitSpaceships.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public class SpaceshipClientInputHandler {
 
     public static UUID activeHelmShipId = null;
@@ -30,16 +30,16 @@ public class SpaceshipClientInputHandler {
 
         if (block instanceof SpaceshipHelmBlock) {
             BlockEntity be = event.getLevel().getBlockEntity(pos);
-            if (be instanceof com.peaceman.alpha.block.ISpaceshipNode node) {
+            if (be instanceof com.lit.spaceships.block.ISpaceshipNode node) {
                 // If not sneaking, set as active pilot (sneaking is handled by server opening the menu)
                 if (!event.getEntity().isShiftKeyDown()) {
                     activeHelmShipId = node.getShipId();
-                    event.getEntity().displayClientMessage(net.minecraft.network.chat.Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.HELM_CONTROL_ENTER).withStyle(net.minecraft.ChatFormatting.GREEN), true);
+                    event.getEntity().displayClientMessage(net.minecraft.network.chat.Component.translatable(com.lit.spaceships.registry.ModI18n.Message.HELM_CONTROL_ENTER).withStyle(net.minecraft.ChatFormatting.GREEN), true);
                 }
             }
         } else if (block instanceof SpaceshipControlBlock) {
             BlockEntity be = event.getLevel().getBlockEntity(pos);
-            if (be instanceof com.peaceman.alpha.block.ISpaceshipNode node) {
+            if (be instanceof com.lit.spaceships.block.ISpaceshipNode node) {
                 UUID shipId = node.getShipId();
                 ClientHooks.openControlScreen(shipId, pos);
             }
@@ -52,9 +52,9 @@ public class SpaceshipClientInputHandler {
             event.setCanceled(true);
             event.setSwingHand(false);
             net.neoforged.neoforge.network.PacketDistributor.sendToServer(
-                    new com.peaceman.alpha.network.ShipCombatActionPayload(
+                    new com.lit.spaceships.network.ShipCombatActionPayload(
                             java.util.Optional.ofNullable(activeHelmShipId),
-                            com.peaceman.alpha.network.ShipCombatActionPayload.CombatAction.FIRE_ALL,
+                            com.lit.spaceships.network.ShipCombatActionPayload.CombatAction.FIRE_ALL,
                             java.util.Optional.empty()
                     )
             );

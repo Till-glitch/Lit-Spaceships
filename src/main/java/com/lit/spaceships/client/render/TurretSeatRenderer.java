@@ -1,6 +1,6 @@
-package com.peaceman.alpha.client.render;
+package com.lit.spaceships.client.render;
 
-import com.peaceman.alpha.entity.TurretSeatEntity;
+import com.lit.spaceships.entity.TurretSeatEntity;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;

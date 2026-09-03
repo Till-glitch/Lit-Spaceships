@@ -4,8 +4,8 @@
     "srcrgb": "srcalpha",
     "dstrgb": "oneminusalpha"
   },
-  "vertex": "peaceman_alpha:hex_shield",
-  "fragment": "peaceman_alpha:hex_shield",
+  "vertex": "lit_spaceships:hex_shield",
+  "fragment": "lit_spaceships:hex_shield",
   "attributes": [
     "Position",
     "UV0",

@@ -1,8 +1,8 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
-    "particle": "peaceman_alpha:block/laser_metal",
-    "all": "peaceman_alpha:block/laser_metal"
+    "particle": "lit_spaceships:block/laser_metal",
+    "all": "lit_spaceships:block/laser_metal"
   },
   "elements": [
     {

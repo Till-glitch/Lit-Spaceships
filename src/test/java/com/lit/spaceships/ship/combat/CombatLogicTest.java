@@ -1,6 +1,6 @@
-package com.peaceman.alpha.ship.combat;
+package com.lit.spaceships.ship.combat;
 
-import com.peaceman.alpha.ship.domain.VoxelGridCache;
+import com.lit.spaceships.ship.domain.VoxelGridCache;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
@@ -149,7 +149,7 @@ public class CombatLogicTest {
     @DisplayName("calculateAimDirection nutzt lokale Euler-Winkel bei ausgerichteten Turrets")
     void testCalculateAimDirection_DynamicTurret() {
         // Mock oder Dummy für AbstractLaserNodeBlockEntity
-        var mockBe = org.mockito.Mockito.mock(com.peaceman.alpha.block.entity.PulseLaserBlockEntity.class);
+        var mockBe = org.mockito.Mockito.mock(com.lit.spaceships.block.entity.PulseLaserBlockEntity.class);
         org.mockito.Mockito.when(mockBe.isOccupied()).thenReturn(true);
         org.mockito.Mockito.when(mockBe.getTargetYaw()).thenReturn(90.0f); // West
         org.mockito.Mockito.when(mockBe.getTargetPitch()).thenReturn(0.0f); // Horizontal
@@ -164,12 +164,12 @@ public class CombatLogicTest {
     @DisplayName("stopAllContinuousLasers deaktiviert alle aktiven Dauerstrahlen und bereinigt Drill-Progress")
     void testStopAllContinuousLasers() {
         var mockLevel = org.mockito.Mockito.mock(net.minecraft.world.level.Level.class);
-        var mockShip = org.mockito.Mockito.mock(com.peaceman.alpha.ship.domain.ShipState.class);
+        var mockShip = org.mockito.Mockito.mock(com.lit.spaceships.ship.domain.ShipState.class);
 
         BlockPos weaponPos = new BlockPos(10, 64, 10);
         org.mockito.Mockito.when(mockShip.getWeapons()).thenReturn(java.util.List.of(weaponPos));
 
-        var mockHeavyBe = org.mockito.Mockito.mock(com.peaceman.alpha.block.entity.HeavyBeamBlockEntity.class);
+        var mockHeavyBe = org.mockito.Mockito.mock(com.lit.spaceships.block.entity.HeavyBeamBlockEntity.class);
         org.mockito.Mockito.when(mockHeavyBe.isFiring()).thenReturn(true);
         org.mockito.Mockito.when(mockLevel.getBlockEntity(weaponPos)).thenReturn(mockHeavyBe);
 

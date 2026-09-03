@@ -1,4 +1,4 @@
-package com.peaceman.alpha.ship.combat;
+package com.lit.spaceships.ship.combat;
 
 /**
  * Kategorisiert Raumschiff-Laserwaffen in Leistungsstufen.

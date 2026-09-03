@@ -1,13 +1,13 @@
-package com.peaceman.alpha.client.input;
+package com.lit.spaceships.client.input;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.block.entity.AbstractLaserNodeBlockEntity;
-import com.peaceman.alpha.entity.TurretSeatEntity;
-import com.peaceman.alpha.network.TurretAimSyncPayload;
-import com.peaceman.alpha.network.TurretLockTogglePayload;
-import com.peaceman.alpha.ship.combat.aim.AimAngles;
-import com.peaceman.alpha.ship.combat.aim.AimTransformMath;
-import com.peaceman.alpha.ship.combat.aim.GimbalLimits;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.block.entity.AbstractLaserNodeBlockEntity;
+import com.lit.spaceships.entity.TurretSeatEntity;
+import com.lit.spaceships.network.TurretAimSyncPayload;
+import com.lit.spaceships.network.TurretLockTogglePayload;
+import com.lit.spaceships.ship.combat.aim.AimAngles;
+import com.lit.spaceships.ship.combat.aim.AimTransformMath;
+import com.lit.spaceships.ship.combat.aim.GimbalLimits;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.neoforged.api.distmarker.Dist;
@@ -24,7 +24,7 @@ import org.lwjgl.glfw.GLFW;
  * - Kontinuierlicher Aim-Sync (Client -> Server) via TurretAimSyncPayload
  * - Klick-Interceptor (Linksklick -> Server) via TurretLockTogglePayload
  */
-@EventBusSubscriber(modid = Alpha.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+@EventBusSubscriber(modid = LitSpaceships.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public class TurretClientInputHandler {
 
     private static float lastSentYaw = 0.0f;
@@ -41,7 +41,7 @@ public class TurretClientInputHandler {
             return;
         }
         lastLockToggleTick = currentTick;
-        com.peaceman.alpha.helper.TurretDebugLogger.logClientLockTriggered(weaponPos, source);
+        com.lit.spaceships.helper.TurretDebugLogger.logClientLockTriggered(weaponPos, source);
         PacketDistributor.sendToServer(new TurretLockTogglePayload(weaponPos));
     }
 
@@ -65,9 +65,9 @@ public class TurretClientInputHandler {
                 } else if (event.isUseItem()) {
                     event.setCanceled(true);
                     event.setSwingHand(false);
-                    PacketDistributor.sendToServer(new com.peaceman.alpha.network.ShipCombatActionPayload(
+                    PacketDistributor.sendToServer(new com.lit.spaceships.network.ShipCombatActionPayload(
                             java.util.Optional.ofNullable(seat.getShipId()),
-                            com.peaceman.alpha.network.ShipCombatActionPayload.CombatAction.FIRE_SPECIFIC,
+                            com.lit.spaceships.network.ShipCombatActionPayload.CombatAction.FIRE_SPECIFIC,
                             java.util.Optional.of(weaponPos)
                     ));
                 }
@@ -120,14 +120,14 @@ public class TurretClientInputHandler {
     public static void onClientTick(ClientTickEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) {
-            com.peaceman.alpha.client.screen.hud.TacticalConsoleHudLayer.activeTacticalShipId = null;
+            com.lit.spaceships.client.screen.hud.TacticalConsoleHudLayer.activeTacticalShipId = null;
             wasRiding = false;
             tickCounter = 0;
             return;
         }
 
         if (mc.player.getVehicle() instanceof TurretSeatEntity seat) {
-            com.peaceman.alpha.client.screen.hud.TacticalConsoleHudLayer.activeTacticalShipId = seat.getShipId();
+            com.lit.spaceships.client.screen.hud.TacticalConsoleHudLayer.activeTacticalShipId = seat.getShipId();
             BlockPos weaponPos = seat.getWeaponPos();
             if (weaponPos == null) return;
 
@@ -153,7 +153,7 @@ public class TurretClientInputHandler {
                     facing = laserBE.getBlockState().getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING);
                 }
                 
-                org.joml.Quaternionf inverseWallRot = com.peaceman.alpha.ship.combat.aim.AimTransformMath.getRotationForFacing(facing).conjugate();
+                org.joml.Quaternionf inverseWallRot = com.lit.spaceships.ship.combat.aim.AimTransformMath.getRotationForFacing(facing).conjugate();
                 wallLocalVec.rotate(inverseWallRot);
                 
                 float wallYaw = (float) Math.toDegrees(Math.atan2(-wallLocalVec.x(), wallLocalVec.z()));
@@ -173,7 +173,7 @@ public class TurretClientInputHandler {
                 float deltaPitch = Math.abs(AimTransformMath.normalizeAngleDelta(angles.pitch(), lastSentPitch));
 
                 if (!wasRiding || deltaYaw >= DELTA_THRESHOLD_DEGREES || deltaPitch >= DELTA_THRESHOLD_DEGREES || tickCounter >= 2) {
-                    com.peaceman.alpha.helper.TurretDebugLogger.logClientAimSent(weaponPos, angles.yaw(), angles.pitch());
+                    com.lit.spaceships.helper.TurretDebugLogger.logClientAimSent(weaponPos, angles.yaw(), angles.pitch());
                     PacketDistributor.sendToServer(new TurretAimSyncPayload(weaponPos, angles.yaw(), angles.pitch()));
 
                     lastSentYaw = angles.yaw();
@@ -183,7 +183,7 @@ public class TurretClientInputHandler {
                 }
             }
         } else {
-            com.peaceman.alpha.client.screen.hud.TacticalConsoleHudLayer.activeTacticalShipId = null;
+            com.lit.spaceships.client.screen.hud.TacticalConsoleHudLayer.activeTacticalShipId = null;
             wasRiding = false;
             tickCounter = 0;
         }

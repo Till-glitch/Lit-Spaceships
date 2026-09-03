@@ -1,8 +1,8 @@
-package com.peaceman.alpha.datagen.provider;
+package com.lit.spaceships.datagen.provider;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.registry.ModBlocks;
-import com.peaceman.alpha.registry.ModItems;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.registry.ModBlocks;
+import com.lit.spaceships.registry.ModItems;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.RecipeCategory;
@@ -42,7 +42,7 @@ public class ModRecipeProvider extends RecipeProvider {
                 .define('S', Items.SMOOTH_STONE)
                 .unlockedBy("has_iron_ingot", has(Items.IRON_INGOT))
                 .unlockedBy("has_copper_ingot", has(Items.COPPER_INGOT))
-                .save(output, ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "example_block_crafting"));
+                .save(output, ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "example_block_crafting"));
 
         // 2. Spaceship Helm Console
         ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModBlocks.SPACESHIP_HELM.get())
@@ -55,7 +55,7 @@ public class ModRecipeProvider extends RecipeProvider {
                 .define('C', Items.COMPASS)
                 .define('S', Items.SMOOTH_STONE)
                 .unlockedBy("has_compass", has(Items.COMPASS))
-                .save(output, ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "spaceship_helm_crafting"));
+                .save(output, ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "spaceship_helm_crafting"));
 
         // 3. Backflip Tool (Kinetic Entity Launcher)
         ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.BACKFLIP_TOOL.get())
@@ -67,7 +67,7 @@ public class ModRecipeProvider extends RecipeProvider {
                 .define('P', Items.PISTON)
                 .define('R', Items.REDSTONE)
                 .unlockedBy("has_slime_ball", has(Items.SLIME_BALL))
-                .save(output, ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "backflip_tool_crafting"));
+                .save(output, ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "backflip_tool_crafting"));
 
         // =====================================================================
         // TIER 2: SUB-ORBITAL UTILITY & LOCAL DEFENSE (NETHER ENTRY)
@@ -84,7 +84,7 @@ public class ModRecipeProvider extends RecipeProvider {
                 .define('R', Items.REDSTONE_BLOCK)
                 .define('D', Items.DIAMOND)
                 .unlockedBy("has_blaze_rod", has(Items.BLAZE_ROD))
-                .save(output, ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "spaceship_reactor_crafting"));
+                .save(output, ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "spaceship_reactor_crafting"));
 
         // 5. Shield Generator (3D Voronoi Barrier Projection)
         ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModBlocks.SPACESHIP_SHIELD.get())
@@ -97,7 +97,7 @@ public class ModRecipeProvider extends RecipeProvider {
                 .define('D', Items.DIAMOND_BLOCK)
                 .unlockedBy("has_amethyst_shard", has(Items.AMETHYST_SHARD))
                 .unlockedBy("has_ender_eye", has(Items.ENDER_EYE))
-                .save(output, ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "spaceship_shield_crafting"));
+                .save(output, ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "spaceship_shield_crafting"));
 
         // 6. Mining Laser Turret (25 FE/t Industrial Drill)
         ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModBlocks.MINING_LASER.get())
@@ -111,7 +111,7 @@ public class ModRecipeProvider extends RecipeProvider {
                 .define('B', Items.DISPENSER)
                 .define('R', Items.REDSTONE_BLOCK)
                 .unlockedBy("has_diamond", has(Items.DIAMOND))
-                .save(output, ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "mining_laser_crafting"));
+                .save(output, ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "mining_laser_crafting"));
 
         // =====================================================================
         // TIER 3: NAVAL-GRADE OFFENSIVE WEAPONRY (SMITHING UPGRADES)
@@ -126,7 +126,7 @@ public class ModRecipeProvider extends RecipeProvider {
                 ModBlocks.HEAVY_BEAM.get().asItem()
         )
         .unlocks("has_netherite_ingot", has(Items.NETHERITE_INGOT))
-        .save(output, ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "heavy_beam_smithing"));
+        .save(output, ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "heavy_beam_smithing"));
 
         // 8. Pulse Laser Cannon (250 FE/shot Kinetic Burst Cannon)
         SmithingTransformRecipeBuilder.smithing(
@@ -137,7 +137,7 @@ public class ModRecipeProvider extends RecipeProvider {
                 ModBlocks.PULSE_LASER.get().asItem()
         )
         .unlocks("has_echo_shard", has(Items.ECHO_SHARD))
-        .save(output, ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "pulse_laser_smithing"));
+        .save(output, ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "pulse_laser_smithing"));
 
         // =====================================================================
         // TIER 4: CAPITAL ENTITY KERNEL & DIMENSIONAL WARP DRIVE (ENDGAME)
@@ -155,6 +155,6 @@ public class ModRecipeProvider extends RecipeProvider {
                 .define('L', Items.LODESTONE)
                 .unlockedBy("has_nether_star", has(Items.NETHER_STAR))
                 .unlockedBy("has_lodestone", has(Items.LODESTONE))
-                .save(output, ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "spaceship_control_crafting"));
+                .save(output, ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "spaceship_control_crafting"));
     }
 }

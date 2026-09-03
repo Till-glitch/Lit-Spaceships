@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "lit_spaceships:block/spaceship_control"
+    }
+  }
+}

@@ -1,4 +1,4 @@
-package com.peaceman.alpha.network;
+package com.lit.spaceships.network;
 
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;

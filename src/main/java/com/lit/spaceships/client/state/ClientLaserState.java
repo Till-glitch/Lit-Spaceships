@@ -1,6 +1,6 @@
-package com.peaceman.alpha.client.state;
+package com.lit.spaceships.client.state;
 
-import com.peaceman.alpha.ship.combat.LaserWeaponTier;
+import com.lit.spaceships.ship.combat.LaserWeaponTier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 

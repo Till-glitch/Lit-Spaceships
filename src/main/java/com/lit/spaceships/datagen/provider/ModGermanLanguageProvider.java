@@ -1,9 +1,9 @@
-package com.peaceman.alpha.datagen.provider;
+package com.lit.spaceships.datagen.provider;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.registry.ModBlocks;
-import com.peaceman.alpha.registry.ModI18n;
-import com.peaceman.alpha.registry.ModItems;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.registry.ModBlocks;
+import com.lit.spaceships.registry.ModI18n;
+import com.lit.spaceships.registry.ModItems;
 import net.minecraft.data.PackOutput;
 import net.neoforged.neoforge.common.data.LanguageProvider;
 
@@ -14,7 +14,7 @@ import net.neoforged.neoforge.common.data.LanguageProvider;
 public class ModGermanLanguageProvider extends LanguageProvider {
 
     public ModGermanLanguageProvider(PackOutput output) {
-        super(output, Alpha.MODID, "de_de");
+        super(output, LitSpaceships.MODID, "de_de");
     }
 
     @Override

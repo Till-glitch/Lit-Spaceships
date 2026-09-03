@@ -1,4 +1,4 @@
-package com.peaceman.alpha.ship;
+package com.lit.spaceships.ship;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

@@ -1,10 +1,10 @@
-package com.peaceman.alpha.block.entity;
+package com.lit.spaceships.block.entity;
 
-import com.peaceman.alpha.network.LaserStateSyncPayload;
-import com.peaceman.alpha.registry.ModBlockEntities;
-import com.peaceman.alpha.ship.SpaceshipEnergyManager;
-import com.peaceman.alpha.ship.combat.LaserWeaponTier;
-import com.peaceman.alpha.ship.domain.ShipState;
+import com.lit.spaceships.network.LaserStateSyncPayload;
+import com.lit.spaceships.registry.ModBlockEntities;
+import com.lit.spaceships.ship.SpaceshipEnergyManager;
+import com.lit.spaceships.ship.combat.LaserWeaponTier;
+import com.lit.spaceships.ship.domain.ShipState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -64,7 +64,7 @@ public class HeavyBeamBlockEntity extends AbstractLaserNodeBlockEntity {
                             new LaserStateSyncPayload(ship.getId(), pos, false, getTier()));
                 }
             } else {
-                com.peaceman.alpha.ship.combat.LaserCombatService.tickContinuousWeapon(level, ship, pos, this);
+                com.lit.spaceships.ship.combat.LaserCombatService.tickContinuousWeapon(level, ship, pos, this);
             }
         }
     }

@@ -1,6 +1,6 @@
-package com.peaceman.alpha.network;
+package com.lit.spaceships.network;
 
-import com.peaceman.alpha.Alpha;
+import com.lit.spaceships.LitSpaceships;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -15,7 +15,7 @@ import net.minecraft.resources.ResourceLocation;
 public record TurretAimPayload(BlockPos weaponPos, short compressedYaw, short compressedPitch) implements CustomPacketPayload {
 
     public static final CustomPacketPayload.Type<TurretAimPayload> TYPE =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "turret_aim"));
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "turret_aim"));
 
     public static final StreamCodec<ByteBuf, TurretAimPayload> STREAM_CODEC = StreamCodec.composite(
             BlockPos.STREAM_CODEC, TurretAimPayload::weaponPos,

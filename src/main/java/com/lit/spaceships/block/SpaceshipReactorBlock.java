@@ -1,6 +1,6 @@
-package com.peaceman.alpha.block;
+package com.lit.spaceships.block;
 
-import com.peaceman.alpha.block.entity.SpaceshipReactorBlockEntity;
+import com.lit.spaceships.block.entity.SpaceshipReactorBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -67,7 +67,7 @@ public class SpaceshipReactorBlock extends BaseEntityBlock  {
                     be.setChanged();
                     level.sendBlockUpdated(pos, state, state, 3);
                     player.sendSystemMessage(
-                            net.minecraft.network.chat.Component.translatable(com.peaceman.alpha.registry.ModI18n.Message.DEV_CHEAT_ENERGY, "500,000"));
+                            net.minecraft.network.chat.Component.translatable(com.lit.spaceships.registry.ModI18n.Message.DEV_CHEAT_ENERGY, "500,000"));
                 }
             }
             return net.minecraft.world.ItemInteractionResult.sidedSuccess(level.isClientSide);

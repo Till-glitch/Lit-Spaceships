@@ -1,6 +1,6 @@
-package com.peaceman.alpha.world;
+package com.lit.spaceships.world;
 
-import com.peaceman.alpha.Alpha;
+import com.lit.spaceships.LitSpaceships;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -16,17 +16,17 @@ import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 public class ModDimensions {
 
     public static final ResourceKey<Level> SPACE_LEVEL =
-            ResourceKey.create(Registries.DIMENSION, ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "space"));
+            ResourceKey.create(Registries.DIMENSION, ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "space"));
 
     public static final ResourceKey<DimensionType> SPACE_DIM_TYPE =
-            ResourceKey.create(Registries.DIMENSION_TYPE, ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "space_type"));
+            ResourceKey.create(Registries.DIMENSION_TYPE, ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "space_type"));
 
     public static final ResourceKey<Biome> SPACE_BIOME =
-            ResourceKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "space_biome"));
+            ResourceKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "space_biome"));
 
     public static final ResourceKey<NoiseGeneratorSettings> SPACE_NOISE_SETTINGS =
-            ResourceKey.create(Registries.NOISE_SETTINGS, ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "space_noise"));
+            ResourceKey.create(Registries.NOISE_SETTINGS, ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "space_noise"));
 
     public static final ResourceKey<LevelStem> SPACE_STEM =
-            ResourceKey.create(Registries.LEVEL_STEM, ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "space"));
+            ResourceKey.create(Registries.LEVEL_STEM, ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "space"));
 }

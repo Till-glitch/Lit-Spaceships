@@ -1,10 +1,10 @@
-package com.peaceman.alpha.helper;
+package com.lit.spaceships.helper;
 
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 
-@EventBusSubscriber(modid = "peaceman_alpha")
+@EventBusSubscriber(modid = "lit_spaceships")
 public class AutoOpEvent {
 
     @SubscribeEvent

@@ -1,7 +1,7 @@
-package com.peaceman.alpha.menu;
+package com.lit.spaceships.menu;
 
-import com.peaceman.alpha.block.entity.SpaceshipShieldBlockEntity;
-import com.peaceman.alpha.registry.ModMenuTypes;
+import com.lit.spaceships.block.entity.SpaceshipShieldBlockEntity;
+import com.lit.spaceships.registry.ModMenuTypes;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;

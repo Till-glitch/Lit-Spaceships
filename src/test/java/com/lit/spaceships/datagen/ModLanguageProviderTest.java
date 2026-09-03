@@ -1,8 +1,8 @@
-package com.peaceman.alpha.datagen;
+package com.lit.spaceships.datagen;
 
-import com.peaceman.alpha.datagen.provider.ModEnglishLanguageProvider;
-import com.peaceman.alpha.datagen.provider.ModGermanLanguageProvider;
-import com.peaceman.alpha.datagen.provider.ModLanguageProvider;
+import com.lit.spaceships.datagen.provider.ModEnglishLanguageProvider;
+import com.lit.spaceships.datagen.provider.ModGermanLanguageProvider;
+import com.lit.spaceships.datagen.provider.ModLanguageProvider;
 import net.minecraft.SharedConstants;
 import net.minecraft.data.PackOutput;
 import net.minecraft.server.Bootstrap;
@@ -36,8 +36,8 @@ class ModLanguageProviderTest {
         assertNotNull(enProvider);
         assertNotNull(deProvider);
 
-        assertEquals("Languages: en_us for mod: peaceman_alpha", enProvider.getName());
-        assertEquals("Languages: de_de for mod: peaceman_alpha", deProvider.getName());
+        assertEquals("Languages: en_us for mod: lit_spaceships", enProvider.getName());
+        assertEquals("Languages: de_de for mod: lit_spaceships", deProvider.getName());
     }
 
     @Test
@@ -50,7 +50,7 @@ class ModLanguageProviderTest {
         assertNotNull(enProvider);
         assertNotNull(deProvider);
 
-        assertEquals("Languages: en_us for mod: peaceman_alpha", enProvider.getName());
-        assertEquals("Languages: de_de for mod: peaceman_alpha", deProvider.getName());
+        assertEquals("Languages: en_us for mod: lit_spaceships", enProvider.getName());
+        assertEquals("Languages: de_de for mod: lit_spaceships", deProvider.getName());
     }
 }

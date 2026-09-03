@@ -1,6 +1,6 @@
-package com.peaceman.alpha.network;
+package com.lit.spaceships.network;
 
-import com.peaceman.alpha.Alpha;
+import com.lit.spaceships.LitSpaceships;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -21,7 +21,7 @@ public record ShipStructureDeltaPayload(
 ) implements CustomPacketPayload {
 
     public static final Type<ShipStructureDeltaPayload> TYPE =
-            new Type<>(ResourceLocation.fromNamespaceAndPath(Alpha.MODID, "ship_structure_delta"));
+            new Type<>(ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "ship_structure_delta"));
 
     public static final StreamCodec<FriendlyByteBuf, ShipStructureDeltaPayload> STREAM_CODEC = StreamCodec.of(
             (buf, payload) -> {

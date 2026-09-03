@@ -1,9 +1,9 @@
-package com.peaceman.alpha.datagen;
+package com.lit.spaceships.datagen;
 
-import com.peaceman.alpha.Alpha;
-import com.peaceman.alpha.datagen.provider.ModBlockStateProvider;
-import com.peaceman.alpha.datagen.provider.ModItemModelProvider;
-import com.peaceman.alpha.datagen.provider.ModLootTableProvider;
+import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.datagen.provider.ModBlockStateProvider;
+import com.lit.spaceships.datagen.provider.ModItemModelProvider;
+import com.lit.spaceships.datagen.provider.ModLootTableProvider;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
@@ -14,7 +14,7 @@ import net.neoforged.neoforge.data.event.GatherDataEvent;
 
 import java.util.concurrent.CompletableFuture;
 
-@EventBusSubscriber(modid = Alpha.MODID, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = LitSpaceships.MODID, bus = EventBusSubscriber.Bus.MOD)
 public class DataGenerators {
 
     @SubscribeEvent
@@ -27,12 +27,12 @@ public class DataGenerators {
         // Client / View-bezogene Provider
         generator.addProvider(event.includeClient(), new ModBlockStateProvider(packOutput, existingFileHelper));
         generator.addProvider(event.includeClient(), new ModItemModelProvider(packOutput, existingFileHelper));
-        generator.addProvider(event.includeClient(), new com.peaceman.alpha.datagen.provider.ModEnglishLanguageProvider(packOutput));
-        generator.addProvider(event.includeClient(), new com.peaceman.alpha.datagen.provider.ModGermanLanguageProvider(packOutput));
+        generator.addProvider(event.includeClient(), new com.lit.spaceships.datagen.provider.ModEnglishLanguageProvider(packOutput));
+        generator.addProvider(event.includeClient(), new com.lit.spaceships.datagen.provider.ModGermanLanguageProvider(packOutput));
 
         // Server / Domain-bezogene Provider
         generator.addProvider(event.includeServer(), ModLootTableProvider.create(packOutput, lookupProvider));
-        generator.addProvider(event.includeServer(), new com.peaceman.alpha.datagen.provider.ModBlockTagsProvider(packOutput, lookupProvider, existingFileHelper));
-        generator.addProvider(event.includeServer(), new com.peaceman.alpha.datagen.provider.ModRecipeProvider(packOutput, lookupProvider));
+        generator.addProvider(event.includeServer(), new com.lit.spaceships.datagen.provider.ModBlockTagsProvider(packOutput, lookupProvider, existingFileHelper));
+        generator.addProvider(event.includeServer(), new com.lit.spaceships.datagen.provider.ModRecipeProvider(packOutput, lookupProvider));
     }
 }

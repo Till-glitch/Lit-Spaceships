@@ -1,7 +1,7 @@
-package com.peaceman.alpha.block;
+package com.lit.spaceships.block;
 
-import com.peaceman.alpha.block.entity.SpaceshipShieldBlockEntity;
-import com.peaceman.alpha.ship.SpaceshipShieldHandler;
+import com.lit.spaceships.block.entity.SpaceshipShieldBlockEntity;
+import com.lit.spaceships.ship.SpaceshipShieldHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;

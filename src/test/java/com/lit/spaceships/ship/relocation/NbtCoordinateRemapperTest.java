@@ -1,6 +1,6 @@
-package com.peaceman.alpha.ship.relocation;
+package com.lit.spaceships.ship.relocation;
 
-import com.peaceman.alpha.ship.relocation.util.NbtCoordinateRemapper;
+import com.lit.spaceships.ship.relocation.util.NbtCoordinateRemapper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;

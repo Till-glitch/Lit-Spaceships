@@ -1,4 +1,4 @@
-# Mod Alpha (NeoForge Spaceship Mod)
+# Lit Spaceships (NeoForge Spaceship Mod)
 
 An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21.1** built on **NeoForge 21.1.x**. It allows players to construct modular, functional spaceships from arbitrary blocks, fly them across the world with continuous swept collision and passenger handling, defend them using procedurally generated hexagonal energy shields, and engage in tactical space combat with pulse lasers, heavy continuous beams, and mining lasers.
 

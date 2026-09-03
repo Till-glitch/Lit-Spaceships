@@ -1,6 +1,6 @@
-package com.peaceman.alpha.item;
+package com.lit.spaceships.item;
 
-import com.peaceman.alpha.effect.BackflipEffect;
+import com.lit.spaceships.effect.BackflipEffect;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.LivingEntity;

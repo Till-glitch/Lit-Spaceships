@@ -1,9 +1,9 @@
-package com.peaceman.alpha.client.screen;
+package com.lit.spaceships.client.screen;
 
-import com.peaceman.alpha.menu.SpaceshipReactorMenu;
-import com.peaceman.alpha.network.ShipActionPayload;
-import com.peaceman.alpha.registry.ModI18n;
-import com.peaceman.alpha.ship.domain.PowerPriority;
+import com.lit.spaceships.menu.SpaceshipReactorMenu;
+import com.lit.spaceships.network.ShipActionPayload;
+import com.lit.spaceships.registry.ModI18n;
+import com.lit.spaceships.ship.domain.PowerPriority;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;

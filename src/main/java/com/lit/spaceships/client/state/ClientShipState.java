@@ -1,9 +1,9 @@
-package com.peaceman.alpha.client.state;
+package com.lit.spaceships.client.state;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.VertexBuffer;
-import com.peaceman.alpha.client.render.ShieldRenderer;
+import com.lit.spaceships.client.render.ShieldRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;

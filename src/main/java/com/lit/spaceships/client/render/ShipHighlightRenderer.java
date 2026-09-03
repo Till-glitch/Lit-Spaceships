@@ -1,4 +1,4 @@
-package com.peaceman.alpha.client.render;
+package com.lit.spaceships.client.render;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -27,7 +27,7 @@ public class ShipHighlightRenderer {
             shipBlocks.clear();
         } else {
             // Einschalten
-            shipBlocks = com.peaceman.alpha.ship.service.ShipScannerService.scan(level, startPos);
+            shipBlocks = com.lit.spaceships.ship.service.ShipScannerService.scan(level, startPos);
             isHighlightActive = true;
         }
     }

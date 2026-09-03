@@ -1,4 +1,4 @@
-package com.peaceman.alpha.ship.combat.aim;
+package com.lit.spaceships.ship.combat.aim;
 
 import net.minecraft.util.Mth;
 
