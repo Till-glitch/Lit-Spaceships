@@ -197,7 +197,7 @@ public class PayloadSerializationTest {
     }
 
     @Test
-    @DisplayName("ShipActionPayload serialisiert und deserialisiert mit Optional UUID")
+    @DisplayName("ShipActionPayload serialisiert und deserialisiert mit Optional UUID und Rotations-Aktionen")
     void testShipActionPayload_Codec() {
         UUID shipId = UUID.randomUUID();
         BlockPos pos = new BlockPos(1, 2, 3);
@@ -214,6 +214,19 @@ public class PayloadSerializationTest {
         assertEquals(original.actionType(), decoded.actionType());
         assertEquals(original.value(), decoded.value());
         assertEquals(original.targetName(), decoded.targetName());
+
+        // Test ROTATE_CW & ROTATE_CCW
+        ShipActionPayload rotateCW = new ShipActionPayload(Optional.of(shipId), pos, ShipActionPayload.ActionType.ROTATE_CW, 90, "");
+        buf = new FriendlyByteBuf(Unpooled.buffer());
+        ShipActionPayload.STREAM_CODEC.encode(buf, rotateCW);
+        ShipActionPayload decodedCW = ShipActionPayload.STREAM_CODEC.decode(buf);
+        assertEquals(ShipActionPayload.ActionType.ROTATE_CW, decodedCW.actionType());
+
+        ShipActionPayload rotateCCW = new ShipActionPayload(Optional.of(shipId), pos, ShipActionPayload.ActionType.ROTATE_CCW, 90, "");
+        buf = new FriendlyByteBuf(Unpooled.buffer());
+        ShipActionPayload.STREAM_CODEC.encode(buf, rotateCCW);
+        ShipActionPayload decodedCCW = ShipActionPayload.STREAM_CODEC.decode(buf);
+        assertEquals(ShipActionPayload.ActionType.ROTATE_CCW, decodedCCW.actionType());
     }
 
     @Test

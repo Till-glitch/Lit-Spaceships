@@ -16,19 +16,21 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Modernes Sci-Fi Command- & Lebenszyklus-Terminal für das Raumschiff (240x220).
+ * Modernes Sci-Fi Command- & Lebenszyklus-Terminal für das Raumschiff (240x238).
  * Zeigt detaillierte BFS-Strukturdiagnostik, ein Subsystem-Register (Reaktoren, Schilde, Laser)
- * sowie sichere Lifecycle- und Hüllen-Hervorhebungs-Operationen.
+ * sowie sichere Lifecycle-, Rotations- und Hüllen-Hervorhebungs-Operationen.
  */
 public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
 
     private final int imageWidth = 240;
-    private final int imageHeight = 220;
+    private final int imageHeight = 238;
 
     private Button createButton;
     private Button updateButton;
-    private Button disassembleButton;
     private Button highlightButton;
+    private Button disassembleButton;
+    private Button rotateCcwButton;
+    private Button rotateCwButton;
 
     private Set<BlockPos> cachedUnboundBlocks = null;
     private long lastScanTime = -100L;
@@ -84,7 +86,7 @@ public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
                 }
                 button.setMessage(getHighlightButtonText());
             }
-        }).bounds(startX + 8, startY + 184, btnWidth, btnHeight).build();
+        }).bounds(startX + 8, startY + 182, btnWidth, btnHeight).build();
         this.addRenderableWidget(this.highlightButton);
 
         // 4. Schiff auflösen
@@ -92,8 +94,20 @@ public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
             sendShipAction(ActionType.DELETE_SHIP);
             this.cachedUnboundBlocks = null;
             this.shipId = null;
-        }).bounds(startX + 124, startY + 184, btnWidth, btnHeight).build();
+        }).bounds(startX + 124, startY + 182, btnWidth, btnHeight).build();
         this.addRenderableWidget(this.disassembleButton);
+
+        // 5. Rotation: 90° CCW (Links)
+        this.rotateCcwButton = Button.builder(Component.translatable(ModI18n.Screen.CONTROL_BTN_ROTATE_CCW), button -> {
+            sendShipAction(ActionType.ROTATE_CCW);
+        }).bounds(startX + 8, startY + 206, btnWidth, btnHeight).build();
+        this.addRenderableWidget(this.rotateCcwButton);
+
+        // 6. Rotation: 90° CW (Rechts)
+        this.rotateCwButton = Button.builder(Component.translatable(ModI18n.Screen.CONTROL_BTN_ROTATE_CW), button -> {
+            sendShipAction(ActionType.ROTATE_CW);
+        }).bounds(startX + 124, startY + 206, btnWidth, btnHeight).build();
+        this.addRenderableWidget(this.rotateCwButton);
     }
 
     private Component getHighlightButtonText() {
@@ -116,9 +130,11 @@ public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
         if (this.createButton != null) this.createButton.active = !isBound;
         if (this.updateButton != null) this.updateButton.active = isBound;
         if (this.disassembleButton != null) this.disassembleButton.active = isBound;
+        if (this.rotateCcwButton != null) this.rotateCcwButton.active = isBound;
+        if (this.rotateCwButton != null) this.rotateCwButton.active = isBound;
         if (this.highlightButton != null) this.highlightButton.setMessage(getHighlightButtonText());
 
-        // 2. Vollständig deckender Terminal-Hintergrund & Panels (Opaque, kein Durchscheinen des Blurs)
+        // 2. Vollständig deckender Terminal-Hintergrund & Panels
         renderTerminalBackground(guiGraphics, startX, startY);
 
         // 3. Widgets / Buttons rendern
@@ -252,4 +268,4 @@ public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
         guiGraphics.drawString(this.font, Component.translatable(ModI18n.Screen.CONTROL_SUBSYSTEM_WEAPONS, totalTurrets, heavyTurretCount, pulseTurretCount, miningLaserCount), startX + 10, startY + 117, 0xFFA726, false);
         guiGraphics.drawString(this.font, Component.translatable(ModI18n.Screen.CONTROL_SUBSYSTEM_NAV, helmCount), startX + 10, startY + 130, 0x66BB6A, false);
     }
-}
+}

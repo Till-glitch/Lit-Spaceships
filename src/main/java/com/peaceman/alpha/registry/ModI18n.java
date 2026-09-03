@@ -84,6 +84,8 @@ public final class ModI18n {
         public static final String CONTROL_SHIELD_COOLDOWN = "screen." + Alpha.MODID + ".control.shield_cooldown";
         public static final String CONTROL_SHIELD_ACTIVE = "screen." + Alpha.MODID + ".control.shield_active";
         public static final String CONTROL_SHIELD_INACTIVE = "screen." + Alpha.MODID + ".control.shield_inactive";
+        public static final String CONTROL_BTN_ROTATE_CW = "screen." + Alpha.MODID + ".control.btn.rotate_cw";
+        public static final String CONTROL_BTN_ROTATE_CCW = "screen." + Alpha.MODID + ".control.btn.rotate_ccw";
 
         // HUD Layers
         public static final String HUD_TACTICAL_HEADER = "screen." + Alpha.MODID + ".hud.tactical.header";
@@ -139,6 +141,8 @@ public final class ModI18n {
         public static final String WAYPOINT_NOT_FOUND = "message." + Alpha.MODID + ".waypoint.not_found";
         public static final String MOVEMENT_COOLDOWN_ACTIVE = "message." + Alpha.MODID + ".movement.cooldown_active";
         public static final String COLLISION_WARNING = "message." + Alpha.MODID + ".collision.warning";
+        public static final String ROTATION_BLOCKED_COLLISION = "message." + Alpha.MODID + ".rotation.blocked_collision";
+        public static final String MOVEMENT_BLOCKED_IMMUNE = "message." + Alpha.MODID + ".movement.blocked_immune";
         public static final String HELM_CONTROL_ENTER = "message." + Alpha.MODID + ".helm.control.enter";
         public static final String HELM_CONTROL_LEAVE = "message." + Alpha.MODID + ".helm.control.leave";
 
@@ -155,6 +159,8 @@ public final class ModI18n {
         public static final String EXIT_HELM = "key." + Alpha.MODID + ".exit_helm";
         public static final String OPEN_HELM_CONFIG = "key." + Alpha.MODID + ".open_helm_config";
         public static final String MOUNT_TURRET = "key." + Alpha.MODID + ".mount_turret";
+        public static final String ROTATE_LEFT = "key." + Alpha.MODID + ".rotate_left";
+        public static final String ROTATE_RIGHT = "key." + Alpha.MODID + ".rotate_right";
     }
 
     public static final class Tooltip {

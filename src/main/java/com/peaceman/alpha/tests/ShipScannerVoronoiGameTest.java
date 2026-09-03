@@ -29,10 +29,12 @@ public class ShipScannerVoronoiGameTest {
         helper.setBlock(s2Rel, ModBlocks.SPACESHIP_SHIELD.get());
         helper.setBlock(s3Rel, ModBlocks.SPACESHIP_SHIELD.get());
 
-        // Hüllenblöcke platzieren
-        for (int i = 0; i < 5; i++) {
-            helper.setBlock(new BlockPos(2, 3 + i, 2), Blocks.IRON_BLOCK);
-        }
+        // 5 Hüllenblöcke platzieren (vollständig innerhalb des 5x5x5 Test-Templates)
+        helper.setBlock(new BlockPos(2, 3, 2), Blocks.IRON_BLOCK);
+        helper.setBlock(new BlockPos(2, 4, 2), Blocks.IRON_BLOCK);
+        helper.setBlock(new BlockPos(1, 3, 2), Blocks.IRON_BLOCK);
+        helper.setBlock(new BlockPos(3, 3, 2), Blocks.IRON_BLOCK);
+        helper.setBlock(new BlockPos(2, 3, 3), Blocks.IRON_BLOCK);
 
         BlockPos ctrlAbs = helper.absolutePos(ctrlRel);
         ShipState ship = ServerShipManager.createShip(helper.getLevel(), ctrlAbs);

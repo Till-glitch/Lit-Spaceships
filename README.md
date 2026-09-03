@@ -6,6 +6,18 @@ An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21*
 
 ## Features
 
+<<<<<<< HEAD
+* **Spaceship Control Block:** The heart and core of every ship. Detects connected blocks via breadth-first search (BFS), binds them to a ship entity, and manages lifecycle operations (creation, structure update, deletion) with real-time hull highlighting and dedicated 90° CW/CCW rotation controls.
+* **Spaceship Helm (Navigation & Combat Console):** Full 6-axis flight controls (WASD for horizontal flight, Space to ascend, Left-Shift to descend), Arrow keys (Left/Right) for 90° orthogonal yaw rotations (CCW/CW), right-click to fire all shipboard weapons (`FIRE_ALL`), `M` key to open navigation/waypoint configuration while flying, and `H` key to exit helm control.
+* **Orthogonal 90° Ship Rotation (Yaw):**
+  * Instantaneous, energy-consuming 90° CW and CCW yaw rotations about the controller pivot point.
+  * Rigorous 2D rotation matrix transformations ($(rx, rz) \rightarrow (-rz, rx)$ for CW, $(rx, rz) \rightarrow (rz, -rx)$ for CCW) preserving directional blockstates (`BlockState.rotate`), stairs, doors, and laser mount orientations.
+  * Passenger & camera POV transformation: Automatically rotates all entities within the hull bounding box and rotates their camera yaw by $\pm 90^\circ$.
+  * Starr mounted laser turret synchronization: Preserves target angles in relative mode and rotates turret aiming yaw.
+  * Pre-rotation collision checks: Evaluates rotated voxels against terrain and foreign ship hulls; plays acoustic buzzer alerts upon blocked rotations without wasting reactor energy.
+* **Spaceship Reactor:** Energy storage supporting standard **Forge Energy (FE)** with up to 1,000,000 FE capacity. Powers flight maneuvers, shield absorption, and laser weapon systems. *(Dev-Tip: Right-click with Redstone to charge 50,000 FE!)*
+* **Shield Generator & Hex-Shader:** Protects ship blocks against explosive damage (TNT, Creepers) and unauthorized block manipulation. Shields consume reactor energy upon impact and are rendered as procedural hexagon bubble meshes via custom shaders with impact ripples and low-energy alerts.
+=======
 * **Spaceship Controller (Core Lifecycle & Structure Management Terminal):**
   * **Structural Diagnostics:** Displays total connected hull blocks, calculated ship mass in metric tons (`X.0 t`), 3D spatial extents ($\Delta X \times \Delta Y \times \Delta Z$), and origin anchor coordinates bound via Breadth-First Search (BFS). Supports real-time preview diagnostics for unbound standalone structures as well as bound active ships.
   * **Subsystem Registry Summary:** Real-time itemized overview of linked functional blocks (Reactors, Shield Generators, Heavy Beams, Pulse Lasers, Mining Lasers, and Navigation Helms) both for bound ships and unbound pre-flight scans.
@@ -29,6 +41,7 @@ An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21*
   * **Power Distribution Priority:** Interactive tactical priority cycling (`BALANCED`, `SHIELDS FIRST [70% Def]`, `WEAPONS FIRST [70% Atk]`, `ENGINES FIRST [70% Spd]`) persisted in NBT and synchronized via network packets.
   * **Reactor Status & Core Diagnostics:** Real-time multi-state status monitoring (`OPTIMAL`, `HIGH LOAD`, `CRITICAL DEPLETION`, `STANDBY`, `UNLINKED`) reflecting live energy throughput and grid saturation.
 * **Shield Generator & Hex-Shader:** Protects ship blocks against explosive damage (TNT, Creepers) and unauthorized block manipulation. Shields consume reactor energy upon impact and are rendered as procedural hexagon bubble meshes via custom shaders with impact ripples, dynamic culling, and low-energy alerts.
+>>>>>>> main
 * **Shipborne Laser Weapon System & Dynamic Turrets:**
   * **Pulse Laser:** High-energy burst cannon (250 FE/shot, 20 ticks cooldown). Instantly vaporizes 1 block on hit or inflicts massive shield drain with kinetic shockwaves.
   * **Heavy Beam:** High-intensity continuous combat beam (50 FE/tick). Progressively melts and burns through hull blocks and terrain with visual breaking animations. Automatically and safely powers down upon ship movement/thrusting to prevent desync.
@@ -74,6 +87,13 @@ An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21*
   * **Deterministic Asset Generation:** Full procedural asset generation via Blockbench Model Context Protocol (MCP) bridge.
   * **Standard Machine Blocks:** 16x16x16 Cube-Directional models (`spaceship_controller`, `spaceship_reactor`, `spaceship_shield`) with Sci-Fi Industrial palette and Ambient-Occlusion beveling.
   * **Split-Model Laser Kinematics:** Exact pivot-aligned (`[8, 0, 8]`) standalone turret models (`laser_turret_heavy`, `laser_turret_pulse`, `laser_turret_mining`) and 16x4x16 static baseplate (`laser_base`) eliminating orbital drift during real-time freelook aiming.
+* **Universal DAG Block Relocation & Mod Compatibility:**
+  * **Directed Acyclic Graph (DAG):** Replaces rigid hardcoded block lists with datadriven dependency graphs derived from `canSurvive` and `isFaceSturdy` heuristics.
+  * **Topological Kahn Sorting:** Computes causal placement order in $O(V + E)$ ensuring floors, walls, and lower door/bed halves are placed before fragile attachables (torches, redstone wire, repeaters, ladders, levers) and upper halves.
+  * **Tarjan SCC Cycle Resolution:** Detects mutually supporting cyclic dependencies and resolves them into atomic, simultaneously injected component batches.
+  * **Pluggable Architecture (SPI):** Extensible `IBlockRelocationHandler` service provider interface for seamless integration with complex modded machines, multiblock controllers, and networks (Mekanism, Create, Applied Energistics 2).
+  * **Community Block Tags & Immunity:** Automatic DataGen for `#c:relocation_immune`, `#forge:relocation_immune`, `#c:relocates_as_cluster`, and `#c:inventory_relocation_safe`. Prevents movement of bedrock, end portals, and command blocks with clear pilot feedback.
+  * **Zero Item Drops & Zero X-Ray Flickering:** Pre-emptively detaches BlockEntities (`removeBlockEntity`) to suppress `dropContents`. Clears only freewarded blocks ($P_{\text{alt}} \setminus P_{\text{neu}}$) with Flag 48 ($Y$ descending) and places DAG layers with Flag 52 before synchronizing via Flag 50.
 * **Backflip Tool (Klasingscher Degen):** Developer item demonstrating entity manipulation by launching targets into the air with forced backflips.
 
 ---
@@ -309,10 +329,18 @@ classDiagram
 
 The project enforces continuous testing according to the **70/20 Rule** (70% Unit / Math Tests, 20% Engine GameTests, 10% Manual QA).
 
-### Automated Test Matrix (52 Unit Tests & 5 GameTest Suites / 18 GameTests)
+### Automated Test Matrix (82 Unit Tests & 7 GameTest Suites / 26 GameTests)
 
 | Test-Suite | Typ | Abdeckung |
 | :--- | :--- | :--- |
+| **`VirtualSupportTestViewTest`** | JUnit 5 | Datengetriebenes Support-Probing über virtuelle Nachbar-Maskierung mit `state.canSurvive()` (löst alle hardcodierten `instanceof`-Ketten für Mod-Attachables ab). |
+| **`NbtCoordinateRemapperTest`** | JUnit 5 | Rekursives Umschreiben von internen `BlockPos`-Referenzen (`masterPos`, `controllerPos`, Int-Arrays, Longs) in BlockEntity-NBTs für Master-Slave-Multiblöcke. |
+| **`BlockDependencyGraphTest`** | JUnit 5 | Datengetriebene Abhängigkeits-Erkennung via `canSurvive` und `isFaceSturdy`, Multiblock-Verknüpfung (Türen, Betten, ausgefahrene Pistons) und topologische Schicht-Linearisierung. |
+| **`CycleDetectionTest`** | JUnit 5 | Tarjan SCC-Algorithmus: Erkennung und Bündelung zyklischer Abhängigkeiten ($A \leftrightarrow B$) in simultane Injektions-Cluster. |
+| **`BlockRelocationRegistryTest`** | JUnit 5 | Immunitätsprüfung für Weltblöcke (`BEDROCK`, `END_PORTAL`, `COMMAND_BLOCK`, `BARRIER`) und Handler-SPI Lifecycle (`onPreRelocation`, `onPostRelocation`). |
+| **`ShipMovement3PassTest`** | JUnit 5 | 3-Pass-Klassifizierung (`PASS_1_SOLIDS`, `PASS_2_ROOTS_AND_NORMALS`, `PASS_3_ATTACHABLES_AND_TOPS`) für Multiblöcke (Türen, Betten) und Fackeln/Redstone/PistonHeads. |
+| **`ShipMovementFragileSortingTest`** | JUnit 5 | Zerbrechliche Block-Erkennung (`isFragileBlock`) und aufsteigende/absteigende $Y$-Sortierung für Translation und Rotation. |
+| **`ShipRotationMathTest`** | JUnit 5 | Orthogonale 90° CW/CCW Transformation, Pivot-Translation, Fließkomma-Entitätsrotationen und Yaw-Normalisierung. |
 | **`VoxelGridCacheShieldTest`** | JUnit 5 | $O(1)$ Flach-Array `byte[] shieldMap` Adressierung, Rand- und Out-of-Bounds-Absicherung im `VoxelGridCache`. |
 | **`ShipStateShieldZoneTest`** | JUnit 5 | Thread-sichere CRUD-Operationen auf `shieldZones`, `isCollapsed`-Auswertung bei Cooldown und Energiemangel. |
 | **`VoronoiTessellationTest`** | JUnit 5 | 3D-Voronoi-Tesselierung über quadrierte euklidische Distanz, deterministischer ID-Tie-Break und 64-Generatoren-Cap. |
@@ -336,11 +364,11 @@ The project enforces continuous testing according to the **70/20 Rule** (70% Uni
 | **`TurretSeatTest`** | JUnit 5 | TurretSeat DTO Attribute, NBT-Persistenz und Aim-Lock-Status. |
 | **`ShipScannerVoronoiGameTest`** | GameTest | Voronoi-Zonierung und ShieldZone-Erfassung bei mehreren Schildgeneratoren im Schiff. |
 | **`LaserCombatPiercingGameTest`** | GameTest | Zonen-Kollaps und Durchschlag auf darunterliegende Schiffshülle bei inaktiver ShieldZone. |
-| **`ShipScannerGameTests`** | GameTest | Orthogonale BFS-Erkennung, Ausschluss diagonaler Blöcke, Multipart-Erfassung (Türen, Betten, Truhen). |
-| **`ShipMovementGameTests`** | GameTest | Physische Welt-Translation, `AIR`-Hinterlassung und Zielblock-Präsenzprüfung. |
+| **`ShipScannerGameTests` (4 Tests)** | GameTest | Orthogonale BFS-Erkennung, Ausschluss diagonaler Blöcke, Multipart-Erfassung (Türen, Betten, Truhen, ausgefahrene Pistons). |
+| **`ShipMovementGameTests` (6 Tests)** | GameTest | Physische Welt-Translation, Schildzonen-Energieerhaltung bei Bewegung, Abwärtsbewegung mit Redstone/Fackeln, Erhaltung zweiflügeliger Türen und Fackeln ohne Drops, Abbruch bei immunen Blöcken (`BEDROCK`) sowie Erhaltung ausgefahrener Pistons ohne Drops. |
 | **`ShipAttachmentGameTests`** | GameTest | Typsichere Persistenz von `ModAttachments.SHIP_ID` an BlockEntities. |
 | **`SpaceshipGameTests`** | GameTest | Schiffserstellung und UUID-Verknüpfung via Kontrollblock. |
-| **`ShipCollisionGameTests`** | GameTest | Vollständige Simulation aller 4 physikalischen Szenarien (`OFF_vs_OFF`, `OFF_vs_ON`, `ON_vs_OFF`, `ON_vs_ON`) inklusive Point-Zero Boundary Collapse, asynchronem Floating-Blocks Item-Drop (`Block.UPDATE_ALL`) und 3-Wege Multi-Kollisions-Schild-Priorisierung (`CollisionResolver.resolveMultiple`). |
+| **`ShipCollisionGameTests` (10 Tests)** | GameTest | Vollständige Simulation aller 4 physikalischen Szenarien (`OFF_vs_OFF`, `OFF_vs_ON`, `ON_vs_OFF`, `ON_vs_ON`) inklusive Point-Zero Boundary Collapse, asynchronem Floating-Blocks Item-Drop (`Block.UPDATE_ALL`) und 3-Wege Multi-Kollisions-Schild-Priorisierung (`CollisionResolver.resolveMultiple`). |
 
 ### CI/CD Pipeline (`.github/workflows/ci.yml`)
 

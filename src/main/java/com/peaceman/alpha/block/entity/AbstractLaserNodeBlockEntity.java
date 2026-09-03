@@ -105,6 +105,19 @@ public abstract class AbstractLaserNodeBlockEntity extends AbstractSpaceshipNode
         }
     }
 
+    /**
+     * Rotiert die Zielausrichtung des Geschützturms starr mit dem Schiff mit (Relativ-Modus).
+     */
+    public void rotateTurret(net.minecraft.world.level.block.Rotation rotation) {
+        if (rotation == null || rotation == net.minecraft.world.level.block.Rotation.NONE) return;
+        this.prevTargetYaw = com.peaceman.alpha.ship.service.ShipRotationMath.rotateYaw(this.prevTargetYaw, rotation);
+        this.targetYaw = com.peaceman.alpha.ship.service.ShipRotationMath.rotateYaw(this.targetYaw, rotation);
+        setChanged();
+        if (this.level != null && !this.level.isClientSide()) {
+            this.level.sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), 3);
+        }
+    }
+
     public boolean isOccupied() {
         return isOccupied;
     }

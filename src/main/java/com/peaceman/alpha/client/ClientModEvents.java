@@ -48,10 +48,26 @@ public class ClientModEvents {
             com.peaceman.alpha.registry.ModI18n.Keybind.CATEGORY
     );
 
+    public static final net.minecraft.client.KeyMapping KEY_ROTATE_LEFT = new net.minecraft.client.KeyMapping(
+            com.peaceman.alpha.registry.ModI18n.Keybind.ROTATE_LEFT,
+            com.mojang.blaze3d.platform.InputConstants.Type.KEYSYM,
+            org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT,
+            com.peaceman.alpha.registry.ModI18n.Keybind.CATEGORY
+    );
+
+    public static final net.minecraft.client.KeyMapping KEY_ROTATE_RIGHT = new net.minecraft.client.KeyMapping(
+            com.peaceman.alpha.registry.ModI18n.Keybind.ROTATE_RIGHT,
+            com.mojang.blaze3d.platform.InputConstants.Type.KEYSYM,
+            org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT,
+            com.peaceman.alpha.registry.ModI18n.Keybind.CATEGORY
+    );
+
     @SubscribeEvent
     public static void registerKeyMappings(net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent event) {
         event.register(KEY_EXIT_HELM);
         event.register(KEY_OPEN_HELM_CONFIG);
+        event.register(KEY_ROTATE_LEFT);
+        event.register(KEY_ROTATE_RIGHT);
     }
 
     @SubscribeEvent
