@@ -55,7 +55,7 @@ public class TurretSeatTest {
 
     static class TestLaserBlockEntity extends AbstractLaserNodeBlockEntity {
         public TestLaserBlockEntity(BlockPos pos, BlockState state) {
-            super(null, pos, state);
+            super(net.minecraft.world.level.block.entity.BlockEntityType.CHEST, pos, state);
         }
 
         @Override
@@ -90,7 +90,7 @@ public class TurretSeatTest {
     void testLaserNodeAimNbtPersistence() {
         var dummyBe = new TestLaserBlockEntity(
                 BlockPos.ZERO,
-                net.minecraft.world.level.block.Blocks.IRON_BLOCK.defaultBlockState()
+                net.minecraft.world.level.block.Blocks.CHEST.defaultBlockState()
         );
 
         dummyBe.setAimAngles(new com.peaceman.alpha.ship.combat.aim.AimAngles(45.5f, -15.0f));
@@ -109,7 +109,7 @@ public class TurretSeatTest {
         // Erstelle neue Instanz (simuliert Teleport / Chunk-Reload / Move)
         var restoredBe = new TestLaserBlockEntity(
                 new BlockPos(10, 20, 30),
-                net.minecraft.world.level.block.Blocks.IRON_BLOCK.defaultBlockState()
+                net.minecraft.world.level.block.Blocks.CHEST.defaultBlockState()
         );
         restoredBe.loadFromNbt(tag);
 

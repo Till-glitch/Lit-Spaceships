@@ -13,10 +13,10 @@ import java.io.FileOutputStream;
 import org.junit.jupiter.api.Test;
 
 public class TestNBTGenerator {
+    @org.junit.jupiter.api.Disabled("Utility generator for empty.nbt structure files")
     @Test
     public void generateEmptyNbt() throws Exception {
         SharedConstants.tryDetectVersion();
-        Bootstrap.bootStrap();
 
         CompoundTag tag = new CompoundTag();
         ListTag size = new ListTag();

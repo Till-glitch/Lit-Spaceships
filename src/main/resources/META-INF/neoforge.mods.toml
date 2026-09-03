@@ -1,0 +1,26 @@
+# NeoForge Mods configuration for Spaceship Peaceman
+modLoader="javafml"
+loaderVersion="[1,)"
+license="MIT"
+
+[[mods]]
+modId="peaceman_alpha"
+version="0.1.0-alpha.1"
+displayName="Spaceship Peaceman"
+description='''
+An advanced spaceship, energy shield, and naval combat mod for Minecraft 1.21.1 built on NeoForge 21.1.x.
+'''
+
+[[dependencies.peaceman_alpha]]
+    modId="neoforge"
+    type="required"
+    versionRange="[21.1.209,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.peaceman_alpha]]
+    modId="minecraft"
+    type="required"
+    versionRange="[1.21.1]"
+    ordering="NONE"
+    side="BOTH"

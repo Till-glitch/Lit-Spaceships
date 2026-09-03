@@ -1,6 +1,6 @@
 # NeoForge-Alpha: Mod-Architektur & Klassendesign
 
-Dieses Dokument beschreibt die Architektur, Datenflüsse, Klassenhierarchien und mathematischen Modelle des Spaceship-, Schutzschild- und Raumkampf-Systems für **Minecraft 1.21 (NeoForge)** inklusive aller Concurrency-, Lifecycle- und Edge-Case-Absicherungen.
+Dieses Dokument beschreibt die Architektur, Datenflüsse, Klassenhierarchien und mathematischen Modelle des Spaceship-, Schutzschild- und Raumkampf-Systems für **Minecraft 1.21.1 (NeoForge 21.1.x)** inklusive aller Concurrency-, Lifecycle- und Edge-Case-Absicherungen.
 
 ---
 

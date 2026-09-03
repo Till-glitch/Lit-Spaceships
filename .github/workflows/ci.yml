@@ -10,8 +10,12 @@ on:
 
 jobs:
   build-and-test:
-    name: Build, Test & Package
+    name: Build, Test & Package (Minecraft 1.21.1 / NeoForge 21.1)
     runs-on: ubuntu-latest
+
+    env:
+      MINECRAFT_VERSION: '1.21.1'
+      NEOFORGE_VERSION: '21.1.209'
 
     steps:
       - name: Checkout repository
@@ -32,7 +36,7 @@ jobs:
       - name: Grant execute permissions for gradlew
         run: chmod +x ./gradlew
 
-      - name: 1. Compile Java
+      - name: 1. Compile Java (1.21.1)
         run: ./gradlew compileJava
 
       - name: 2. Run Unit Tests (JUnit 5)
@@ -41,12 +45,12 @@ jobs:
       - name: 3. Run GameTests
         run: ./gradlew runGameTestServer
 
-      - name: 4. Build Mod Jar
+      - name: 4. Build Mod Jar (Minecraft 1.21.1)
         run: ./gradlew build
 
       - name: Upload Mod Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: peaceman_alpha-jar
+          name: peaceman_alpha-1.21.1-jar
           path: build/libs/*.jar
           if-no-files-found: error

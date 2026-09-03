@@ -1,30 +1,30 @@
 # Mod Alpha (NeoForge Spaceship Mod)
 
-An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21** built on **NeoForge**. It allows players to construct modular, functional spaceships from arbitrary blocks, fly them across the world with continuous swept collision and passenger handling, defend them using procedurally generated hexagonal energy shields, and engage in tactical space combat with pulse lasers, heavy continuous beams, and mining lasers.
+An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21.1** built on **NeoForge 21.1.x**. It allows players to construct modular, functional spaceships from arbitrary blocks, fly them across the world with continuous swept collision and passenger handling, defend them using procedurally generated hexagonal energy shields, and engage in tactical space combat with pulse lasers, heavy continuous beams, and mining lasers.
 
 ---
 
 ## Features
 
-<<<<<<< HEAD
-* **Spaceship Control Block:** The heart and core of every ship. Detects connected blocks via breadth-first search (BFS), binds them to a ship entity, and manages lifecycle operations (creation, structure update, deletion) with real-time hull highlighting and dedicated 90° CW/CCW rotation controls.
+* **Spaceship Controller (Core Lifecycle & Structure Management Terminal):**
+  * **Structural Diagnostics:** Displays total connected hull blocks, calculated ship mass in metric tons (`X.0 t`), 3D spatial extents ($\Delta X \times \Delta Y \times \Delta Z$), and origin anchor coordinates bound via Breadth-First Search (BFS). Supports real-time preview diagnostics for unbound standalone structures as well as bound active ships.
+  * **Subsystem Registry Summary:** Real-time itemized overview of linked functional blocks (Reactors, Shield Generators, Heavy Beams, Pulse Lasers, Mining Lasers, and Navigation Helms) both for bound ships and unbound pre-flight scans.
+  * **Hull Highlight Control:** Interactive toggle button triggering real-time in-world particle outline highlighting of outer hull boundaries for inspection.
+  * **Dedicated 90° CW/CCW Rotation Controls:** Direct yaw rotation controls from the controller terminal.
+  * **Ship Lifecycle Operations:** Safe interface controls to create/bind, update structure boundaries, or unbind/disassemble the ship entity. Disassembling immediately unbinds nodes, frees client VBOs/VRAM, and reactivates the create ship control.
 * **Spaceship Helm (Navigation & Combat Console):** Full 6-axis flight controls (WASD for horizontal flight, Space to ascend, Left-Shift to descend), Arrow keys (Left/Right) for 90° orthogonal yaw rotations (CCW/CW), right-click to fire all shipboard weapons (`FIRE_ALL`), `M` key to open navigation/waypoint configuration while flying, and `H` key to exit helm control.
 * **Orthogonal 90° Ship Rotation (Yaw):**
   * Instantaneous, energy-consuming 90° CW and CCW yaw rotations about the controller pivot point.
   * Rigorous 2D rotation matrix transformations ($(rx, rz) \rightarrow (-rz, rx)$ for CW, $(rx, rz) \rightarrow (rz, -rx)$ for CCW) preserving directional blockstates (`BlockState.rotate`), stairs, doors, and laser mount orientations.
   * Passenger & camera POV transformation: Automatically rotates all entities within the hull bounding box and rotates their camera yaw by $\pm 90^\circ$.
-  * Starr mounted laser turret synchronization: Preserves target angles in relative mode and rotates turret aiming yaw.
+  * Starboard/port mounted laser turret synchronization: Preserves target angles in relative mode and rotates turret aiming yaw.
   * Pre-rotation collision checks: Evaluates rotated voxels against terrain and foreign ship hulls; plays acoustic buzzer alerts upon blocked rotations without wasting reactor energy.
-* **Spaceship Reactor:** Energy storage supporting standard **Forge Energy (FE)** with up to 1,000,000 FE capacity. Powers flight maneuvers, shield absorption, and laser weapon systems. *(Dev-Tip: Right-click with Redstone to charge 50,000 FE!)*
-* **Shield Generator & Hex-Shader:** Protects ship blocks against explosive damage (TNT, Creepers) and unauthorized block manipulation. Shields consume reactor energy upon impact and are rendered as procedural hexagon bubble meshes via custom shaders with impact ripples and low-energy alerts.
-=======
-* **Spaceship Controller (Core Lifecycle & Structure Management Terminal):**
-  * **Structural Diagnostics:** Displays total connected hull blocks, calculated ship mass in metric tons (`X.0 t`), 3D spatial extents ($\Delta X \times \Delta Y \times \Delta Z$), and origin anchor coordinates bound via Breadth-First Search (BFS). Supports real-time preview diagnostics for unbound standalone structures as well as bound active ships.
-  * **Subsystem Registry Summary:** Real-time itemized overview of linked functional blocks (Reactors, Shield Generators, Heavy Beams, Pulse Lasers, Mining Lasers, and Navigation Helms) both for bound ships and unbound pre-flight scans.
-  * **Hull Highlight Control:** Interactive toggle button triggering real-time in-world particle outline highlighting of outer hull boundaries for inspection.
-  * **Ship Lifecycle Operations:** Safe interface controls to create/bind, update structure boundaries, or unbind/disassemble the ship entity. Disassembling immediately unbinds nodes, frees client VBOs/VRAM, and reactivates the create ship control.
-* **Spaceship Helm (Navigation & Combat Console):** Full 6-axis flight controls (WASD for horizontal flight, Space to ascend, Left-Shift to descend), right-click to fire all shipboard weapons (`FIRE_ALL`), `M` key to open navigation/waypoint configuration while flying, and `H` key to exit helm control.
-* **Spaceship Reactor:** Energy storage supporting standard **Forge Energy (FE)** with up to 1,000,000 FE capacity. Powers flight maneuvers, proportional localized shield recharge, and laser weapon systems. *(Dev-Tip: Right-click with Redstone to charge 50,000 FE!)*
+* **Spaceship Reactor Terminal & Power Management (Crimson UI):**
+  * Energy storage supporting standard **Forge Energy (FE)** with up to 1,000,000 FE capacity per core. Powers flight maneuvers, proportional localized shield recharge, and laser weapon systems. *(Dev-Tip: Right-click with Redstone to charge 50,000 FE!)*
+  * **Total Energy Storage Gauge:** Real-time FE gauge tracking massive capacity with animated gradient indicators and multi-reactor grid aggregation (`Ship Grid: X / Y FE`).
+  * **Energy Flow Metrics:** Live generation (`+FE/t`), total ship subsystem consumption (`-FE/t`), and net throughput ($\Delta\text{FE/t}$) with individual breakdown for Engines, Shields, and Weapons.
+  * **Power Distribution Priority:** Interactive tactical priority cycling (`BALANCED`, `SHIELDS FIRST [70% Def]`, `WEAPONS FIRST [70% Atk]`, `ENGINES FIRST [70% Spd]`) persisted in NBT and synchronized via network packets.
+  * **Reactor Status & Core Diagnostics:** Real-time multi-state status monitoring (`OPTIMAL`, `HIGH LOAD`, `CRITICAL DEPLETION`, `STANDBY`, `UNLINKED`) reflecting live energy throughput and grid saturation.
 * **Localized Shield Zones & 3D Voronoi Tessellation:**
   * **Modular Shield Generators:** Place up to 64 independent shield generator blocks across the hull. Each generator dynamically anchors its own localized shield partition with distinct energy capacity and cooldown timers.
   * **Deterministic 3D-Voronoi Partitioning:** `ShipScannerService` maps hull voxels and dilatated shield bubble volumes to the nearest generator via squared Euclidean distance with deterministic ID tie-breaking, storing assignments in an $O(1)$ flat `byte[] shieldMap` inside `VoxelGridCache`.
@@ -35,13 +35,7 @@ An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21*
     * **Reactor Power Routing Indicator:** Real-time energy transfer rate monitor (`+X FE/t`) streaming live proportional energy feed from central reactors directly to the local sector buffer.
     * **Sector Status & Health Badge:** Multi-state tactical status readout (`OPTIMAL [100%]`, `ACTIVE [CHARGING]`, `COLLAPSED [0 FE - BREACH]`, `REGENERATING IN X.Xs`, `OFFLINE`, `UNLINKED`) with countdown timer during collapse recovery.
     * **Sector Coverage & Voronoi Visualizer:** Real-time spatial telemetry displaying assigned hull block counts and coverage ratios (`142 / 450 Blocks (31.6%)`), sector partition indices (`Sector #1 / 4`), and 3D bounding dimensions (`ΔX: 15m × ΔY: 7m × ΔZ: 18m`).
-* **Spaceship Reactor Terminal & Power Management (Crimson UI):**
-  * **Total Energy Storage Gauge:** Real-time FE gauge tracking massive capacity (1,000,000 FE per core) with animated gradient indicators and multi-reactor grid aggregation (`Ship Grid: X / Y FE`).
-  * **Energy Flow Metrics:** Live generation (`+FE/t`), total ship subsystem consumption (`-FE/t`), and net throughput ($\Delta\text{FE/t}$) with individual breakdown for Engines, Shields, and Weapons.
-  * **Power Distribution Priority:** Interactive tactical priority cycling (`BALANCED`, `SHIELDS FIRST [70% Def]`, `WEAPONS FIRST [70% Atk]`, `ENGINES FIRST [70% Spd]`) persisted in NBT and synchronized via network packets.
-  * **Reactor Status & Core Diagnostics:** Real-time multi-state status monitoring (`OPTIMAL`, `HIGH LOAD`, `CRITICAL DEPLETION`, `STANDBY`, `UNLINKED`) reflecting live energy throughput and grid saturation.
 * **Shield Generator & Hex-Shader:** Protects ship blocks against explosive damage (TNT, Creepers) and unauthorized block manipulation. Shields consume reactor energy upon impact and are rendered as procedural hexagon bubble meshes via custom shaders with impact ripples, dynamic culling, and low-energy alerts.
->>>>>>> main
 * **Shipborne Laser Weapon System & Dynamic Turrets:**
   * **Pulse Laser:** High-energy burst cannon (250 FE/shot, 20 ticks cooldown). Instantly vaporizes 1 block on hit or inflicts massive shield drain with kinetic shockwaves.
   * **Heavy Beam:** High-intensity continuous combat beam (50 FE/tick). Progressively melts and burns through hull blocks and terrain with visual breaking animations. Automatically and safely powers down upon ship movement/thrusting to prevent desync.

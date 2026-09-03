@@ -118,9 +118,9 @@ configurations {
 }
 
 dependencies {
-    // JEI (Just Enough Items) API and runtime (Version for Minecraft 1.21 / NeoForge 21.0.x)
-    compileOnly "mezz.jei:jei-1.21-neoforge-api:19.8.2.99"
-    localRuntime "mezz.jei:jei-1.21-neoforge:19.8.2.99"
+    // JEI (Just Enough Items) API and runtime (Version for Minecraft 1.21.1 / NeoForge 21.1.x)
+    compileOnly "mezz.jei:jei-1.21.1-neoforge-api:19.21.0.247"
+    localRuntime "mezz.jei:jei-1.21.1-neoforge:19.21.0.247"
 
     // Example mod dependency using a mod jar from ./libs with a flat dir repository
     // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar
@@ -194,6 +194,7 @@ idea {
 
 test {
     useJUnitPlatform()
+    systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
     testLogging {
         events "passed", "skipped", "failed", "standardOut", "standardError"
         exceptionFormat "full"
