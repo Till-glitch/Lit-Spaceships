@@ -565,6 +565,7 @@ public class ShipMovementService {
                 BlockDependencyGraph graph = new BlockDependencyGraph();
                 for (Map.Entry<BlockPos, BlockData> entry : snapshot.entrySet()) {
                     BlockPos newPos = ShipRotationMath.rotateAbsoluteBlockPos(entry.getKey(), startPos, rotation);
+                    @SuppressWarnings("deprecation")
                     BlockState rotState = entry.getValue().state().rotate(rotation);
                     graph.addNode(entry.getKey(), newPos, rotState, entry.getValue().nbt());
                 }

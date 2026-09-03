@@ -34,6 +34,7 @@ import java.util.Map;
  * Erlaubt das virtuelle Maskieren einzelner Nachbarblöcke als AIR oder benutzerdefinierte Zustände,
  * um festzustellen, ob ein Block (auch aus Dritt-Mods) von einem Nachbarn abhängt.
  */
+@SuppressWarnings("deprecation")
 public class VirtualSupportTestView implements LevelReader {
 
     private final LevelReader delegate;
