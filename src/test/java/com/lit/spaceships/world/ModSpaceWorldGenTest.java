@@ -1,6 +1,7 @@
 package com.lit.spaceships.world;
 
 import com.lit.spaceships.world.feature.AsteroidFeature;
+import com.lit.spaceships.world.feature.IceCometFeature;
 import com.lit.spaceships.world.feature.SpaceWreckFeature;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.Holder;
@@ -115,16 +116,18 @@ class ModSpaceWorldGenTest {
     }
 
     @Test
-    @DisplayName("ConfiguredFeature-Bootstrap registriert Asteroid und Wrack mit NoneFeatureConfiguration")
+    @DisplayName("ConfiguredFeature-Bootstrap registriert Asteroid, Wrack und Eiskomet")
     void configuredFeatureBootstrapRegistersBothFeatures() {
         AsteroidFeature asteroid = new AsteroidFeature(NoneFeatureConfiguration.CODEC);
         SpaceWreckFeature wreck = new SpaceWreckFeature(NoneFeatureConfiguration.CODEC);
+        IceCometFeature iceComet = new IceCometFeature(NoneFeatureConfiguration.CODEC);
 
-        ModConfiguredFeatures.bootstrapWith(configuredContext, asteroid, wreck);
+        ModConfiguredFeatures.bootstrapWith(configuredContext, asteroid, wreck, iceComet);
 
         ArgumentCaptor<ConfiguredFeature<?, ?>> captor = ArgumentCaptor.forClass(ConfiguredFeature.class);
         verify(configuredContext).register(eq(ModConfiguredFeatures.ASTEROID), captor.capture());
         verify(configuredContext).register(eq(ModConfiguredFeatures.SPACE_WRECK), any());
+        verify(configuredContext).register(eq(ModConfiguredFeatures.ICE_COMET), any());
 
         ConfiguredFeature<?, ?> registered = captor.getValue();
         assertSame(asteroid, registered.feature());
@@ -206,6 +209,8 @@ class ModSpaceWorldGenTest {
         when(biomeContext.lookup(Registries.PLACED_FEATURE)).thenReturn(placedGetter);
         doReturn(asteroidPlaced).when(placedGetter).getOrThrow(ModPlacedFeatures.ASTEROID_PLACED);
         doReturn(wreckPlaced).when(placedGetter).getOrThrow(ModPlacedFeatures.SPACE_WRECK_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.ICE_COMET_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.ICE_COMET_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 
@@ -244,6 +249,8 @@ class ModSpaceWorldGenTest {
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.ASTEROID_PLACED);
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.SPACE_WRECK_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.SPACE_WRECK_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.ICE_COMET_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.ICE_COMET_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 
@@ -273,16 +280,20 @@ class ModSpaceWorldGenTest {
     }
 
     @Test
-    @DisplayName("Multi-Noise-Verteilung routet hohe Temperatur in den Plasma-Nebel, niedrige in den Void")
+    @DisplayName("Multi-Noise-Verteilung routet Temperatur 3-wege: kalt=Frozen, mittel=Void, heiß=Nebel")
     void spaceBiomeDistributionRoutesTemperature() {
         Climate.ParameterList<ResourceKey<Biome>> distribution = ModDimensions.spaceBiomeDistribution();
 
-        assertSame(ModBiomes.PLASMA_NEBULA,
-                distribution.findValue(new Climate.TargetPoint(8000L, 0L, 0L, 0L, 0L, 0L)));
-        assertSame(ModDimensions.SPACE_BIOME,
+        assertSame(ModBiomes.FROZEN_EXPANSE,
                 distribution.findValue(new Climate.TargetPoint(-8000L, 0L, 0L, 0L, 0L, 0L)));
         assertSame(ModDimensions.SPACE_BIOME,
                 distribution.findValue(new Climate.TargetPoint(0L, 0L, 0L, 0L, 0L, 0L)));
+        assertSame(ModBiomes.PLASMA_NEBULA,
+                distribution.findValue(new Climate.TargetPoint(8000L, 0L, 0L, 0L, 0L, 0L)));
+        assertSame(ModDimensions.SPACE_BIOME,
+                distribution.findValue(new Climate.TargetPoint(1000L, 0L, 0L, 0L, 0L, 0L)));
+        assertSame(ModBiomes.FROZEN_EXPANSE,
+                distribution.findValue(new Climate.TargetPoint(-5000L, 0L, 0L, 0L, 0L, 0L)));
     }
 
     @Test
@@ -348,6 +359,8 @@ class ModSpaceWorldGenTest {
                 .when(biomeGetter).getOrThrow(ModDimensions.SPACE_BIOME);
         doReturn(Holder.Reference.createStandAlone(biomeOwner, ModBiomes.PLASMA_NEBULA))
                 .when(biomeGetter).getOrThrow(ModBiomes.PLASMA_NEBULA);
+        doReturn(Holder.Reference.createStandAlone(biomeOwner, ModBiomes.FROZEN_EXPANSE))
+                .when(biomeGetter).getOrThrow(ModBiomes.FROZEN_EXPANSE);
 
         Holder<NoiseGeneratorSettings> settingsHolder =
                 Holder.direct(ModNoiseSettings.spaceNoiseSettings(Holder.direct(new NormalNoise.NoiseParameters(-9, 1.0))));
@@ -362,7 +375,87 @@ class ModSpaceWorldGenTest {
         Set<ResourceKey<Biome>> possibleBiomes = generator.getBiomeSource().possibleBiomes().stream()
                 .map(holder -> holder.unwrapKey().orElseThrow())
                 .collect(java.util.stream.Collectors.toSet());
-        assertEquals(Set.of(ModDimensions.SPACE_BIOME, ModBiomes.PLASMA_NEBULA), possibleBiomes);
+        assertEquals(Set.of(ModDimensions.SPACE_BIOME, ModBiomes.PLASMA_NEBULA, ModBiomes.FROZEN_EXPANSE), possibleBiomes);
+    }
+
+    @Test
+    @DisplayName("Frozen Expanse: cyanfarbene Atmosphäre, Schneeflocken-Partikel, Eis-Kometen-Felder")
+    void frozenExpanseIsIcyCyanZone() {
+        when(biomeContext.lookup(Registries.PLACED_FEATURE)).thenReturn(placedGetter);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.ASTEROID_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.ASTEROID_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.SPACE_WRECK_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.SPACE_WRECK_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.ICE_COMET_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.ICE_COMET_PLACED);
+
+        ModBiomes.bootstrap(biomeContext);
+
+        ArgumentCaptor<Biome> captor = ArgumentCaptor.forClass(Biome.class);
+        verify(biomeContext).register(eq(ModBiomes.FROZEN_EXPANSE), captor.capture());
+
+        Biome frozen = captor.getValue();
+        assertFalse(frozen.hasPrecipitation());
+        assertEquals(0x00FFFF, frozen.getFogColor());
+        assertEquals(0x003344, frozen.getSkyColor());
+        assertTrue(frozen.getAmbientParticle().isPresent());
+        assertInstanceOf(net.minecraft.core.particles.SimpleParticleType.class, frozen.getAmbientParticle().get().getOptions());
+        assertSame(net.minecraft.core.particles.ParticleTypes.SNOWFLAKE, frozen.getAmbientParticle().get().getOptions());
+        assertEquals(0.015F, (float) privateField(frozen.getAmbientParticle().get(), "probability", Float.class), 0.0F);
+
+        for (MobCategory category : MobCategory.values()) {
+            assertTrue(frozen.getMobSettings().getMobs(category).isEmpty(), category.getName());
+        }
+
+        // Hochdichte Eiskometen-Felder als einziges Feature in Deko-Stufe 0
+        List<HolderSet<PlacedFeature>> featureSteps = frozen.getGenerationSettings().features();
+        assertEquals(1, featureSteps.size());
+        List<Holder<PlacedFeature>> stepZero = featureSteps.get(0).stream().toList();
+        assertEquals(1, stepZero.size());
+        assertTrue(stepZero.stream().anyMatch(h -> h.unwrapKey().orElseThrow().equals(ModPlacedFeatures.ICE_COMET_PLACED)));
+    }
+
+    @Test
+    @DisplayName("Eiskomet-Platzierung: hohe Dichte Count 8, InSquare, Uniformhöhe -40..280, Biome-Filter")
+    void iceCometPlacementMathIsBounded() {
+        List<PlacementModifier> modifiers = ModPlacedFeatures.iceCometPlacement();
+
+        assertEquals(4, modifiers.size());
+        assertInstanceOf(CountPlacement.class, modifiers.get(0));
+        assertSame(InSquarePlacement.spread(), modifiers.get(1));
+        assertInstanceOf(HeightRangePlacement.class, modifiers.get(2));
+        assertSame(BiomeFilter.biome(), modifiers.get(3));
+
+        CountPlacement count = (CountPlacement) modifiers.get(0);
+        IntProvider provider = privateField(count, "count", IntProvider.class);
+        assertEquals(8, provider.getMinValue());
+        assertEquals(8, provider.getMaxValue());
+
+        HeightRangePlacement height = (HeightRangePlacement) modifiers.get(2);
+        UniformHeight uniform = privateField(height, "height", UniformHeight.class);
+        assertEquals(-40, absoluteAnchorY(privateField(uniform, "minInclusive", VerticalAnchor.class)));
+        assertEquals(280, absoluteAnchorY(privateField(uniform, "maxInclusive", VerticalAnchor.class)));
+    }
+
+    @Test
+    @DisplayName("PlacedFeature-Bootstrap verknüpft auch den Eiskometen mit der hohen Dichte")
+    void placedFeatureBootstrapResolvesIceComet() {
+        when(placedContext.lookup(Registries.CONFIGURED_FEATURE)).thenReturn(configuredGetter);
+        doReturn(Holder.Reference.createStandAlone(configuredOwner, ModConfiguredFeatures.ASTEROID))
+                .when(configuredGetter).getOrThrow(ModConfiguredFeatures.ASTEROID);
+        doReturn(Holder.Reference.createStandAlone(configuredOwner, ModConfiguredFeatures.SPACE_WRECK))
+                .when(configuredGetter).getOrThrow(ModConfiguredFeatures.SPACE_WRECK);
+        doReturn(Holder.Reference.createStandAlone(configuredOwner, ModConfiguredFeatures.ICE_COMET))
+                .when(configuredGetter).getOrThrow(ModConfiguredFeatures.ICE_COMET);
+
+        ModPlacedFeatures.bootstrap(placedContext);
+
+        ArgumentCaptor<PlacedFeature> captor = ArgumentCaptor.forClass(PlacedFeature.class);
+        verify(placedContext).register(eq(ModPlacedFeatures.ICE_COMET_PLACED), captor.capture());
+
+        PlacedFeature iceComet = captor.getValue();
+        assertEquals(ModConfiguredFeatures.ICE_COMET, iceComet.feature().unwrapKey().orElseThrow());
+        assertEquals(4, iceComet.placement().size());
     }
 
     private static <T> T privateField(Object owner, String name, Class<T> type) {

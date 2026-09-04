@@ -663,13 +663,16 @@ nach `src/generated/resources`. Manuelle JSON-Dateien unter `data/lit_spaceships
 | :--- | :--- | :--- | :--- |
 | `worldgen/biome` | `lit_spaceships:space_biome` | `ModBiomes` | → `asteroid_placed`, `space_wreck_placed` (Deko-Stufe 0); schwarzer Himmel/Nebel (0), `MobSpawnSettings.EMPTY` |
 | `worldgen/biome` | `lit_spaceships:plasma_nebula` | `ModBiomes` | Violetter Nebel `#7F00FF`, dunkelvioletter Himmel `#1A0033`, violette `minecraft:dust`-Glanzpartikel (p = 0.006), keine Spawns, leere Feature-Liste |
+| `worldgen/biome` | `lit_spaceships:frozen_expanse` | `ModBiomes` | Bleich-cyanfarbener Nebel `#00FFFF`, dunkler Cyan-Himmel `#003344`, `minecraft:snowflake`-Partikelströme (p = 0.015), keine Spawns → `ice_comet_placed` (Stufe 0) |
 | `worldgen/configured_feature` | `lit_spaceships:asteroid` | `ModConfiguredFeatures` | → Runtime-Feature `lit_spaceships:asteroid` (`ModFeatures`, `AsteroidFeature`) |
 | `worldgen/configured_feature` | `lit_spaceships:space_wreck` | `ModConfiguredFeatures` | → Runtime-Feature `lit_spaceships:space_wreck` (`ModFeatures`, `SpaceWreckFeature`) |
+| `worldgen/configured_feature` | `lit_spaceships:ice_comet` | `ModConfiguredFeatures` | → Runtime-Feature `lit_spaceships:ice_comet` (`ModFeatures`, `IceCometFeature`) |
 | `worldgen/placed_feature` | `lit_spaceships:asteroid_placed` | `ModPlacedFeatures` | → `lit_spaceships:asteroid`; Count 4, InSquare, Uniform $Y \in [-40, 280]$, Biome-Filter |
 | `worldgen/placed_feature` | `lit_spaceships:space_wreck_placed` | `ModPlacedFeatures` | → `lit_spaceships:space_wreck`; Rarity 1/32, InSquare, Uniform $Y \in [0, 200]$, Biome-Filter |
+| `worldgen/placed_feature` | `lit_spaceships:ice_comet_placed` | `ModPlacedFeatures` | → `lit_spaceships:ice_comet`; Count 8 (hohe Dichte), InSquare, Uniform $Y \in [-40, 280]$, Biome-Filter |
 | `worldgen/noise_settings` | `lit_spaceships:space_noise` | `ModNoiseSettings` | Konstante Dichte $-1$ (reiner Void, keine Terrain-Geometrie); Temperatur = echte `minecraft:temperature`-Noise (Multi-Noise-Routing), alle anderen Klimafunktionen 0 |
 | `dimension_type` | `lit_spaceships:space_type` | `ModDimensions::bootstrapDimensionType` | Kosmische Nacht (`fixed_time` 18000), kein Skylight/Ceiling, $Y \in [-64, 320]$, Betten verboten, Respawn-Anker erlaubt, `monster_spawn_light_level` 0 |
-| `dimension` (LEVEL_STEM) | `lit_spaceships:space` | `ModDimensions::bootstrapLevelStem` | `NoiseBasedChunkGenerator` + `minecraft:multi_noise` Biome-Quelle über `space_biome` (Temperatur $\in [-1.0, 0.3]$) und `plasma_nebula` ($\in [0.3, 1.0]$) → 3D-volumetrische Nebelzonen |
+| `dimension` (LEVEL_STEM) | `lit_spaceships:space` | `ModDimensions::bootstrapLevelStem` | `NoiseBasedChunkGenerator` + `minecraft:multi_noise` Biome-Quelle als lückenlose 3-Wege-Temperatur-Partition: `frozen_expanse` ($\in [-1.0, -0.3]$), `space_biome` ($\in [-0.3, 0.4]$), `plasma_nebula` ($\in [0.4, 1.0]$) → 3D-volumetrische Biome-Zonen |
 
 ---
 

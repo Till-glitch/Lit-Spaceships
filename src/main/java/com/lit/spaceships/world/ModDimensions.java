@@ -104,17 +104,21 @@ public class ModDimensions {
     }
 
     /**
-     * Klimatische Verteilung der Weltraum-Biome: Die Temperatur entscheidet.
-     * Unterhalb ~0.3 dominiert der Void, darüber öffnen sich Plasma-Nebelzonen.
-     * Alle anderen Klimaparameter decken die volle Spanne ab (Router-Konstanten 0).
+     * Klimatische Verteilung der Weltraum-Biome: Die Temperatur entscheidet als
+     * 3-Wege-Partition (lückenlos, Überlappungsfrei an den Grenzen): Frozen
+     * Expanse = kälteste Zone, Void = gemäßigte Zone, Plasma-Nebel = heißeste
+     * Zone. Alle anderen Klimaparameter decken die volle Spanne ab
+     * (Router-Konstanten 0 bzw. nicht-routing).
      */
     static Climate.ParameterList<ResourceKey<Biome>> spaceBiomeDistribution() {
         Climate.Parameter any = Climate.Parameter.span(-1.0F, 1.0F);
         return new Climate.ParameterList<>(List.of(
                 Pair.of(new Climate.ParameterPoint(
-                        Climate.Parameter.span(-1.0F, 0.3F), any, any, any, any, any, 0L), SPACE_BIOME),
+                        Climate.Parameter.span(-1.0F, -0.3F), any, any, any, any, any, 0L), ModBiomes.FROZEN_EXPANSE),
                 Pair.of(new Climate.ParameterPoint(
-                        Climate.Parameter.span(0.3F, 1.0F), any, any, any, any, any, 0L), ModBiomes.PLASMA_NEBULA)
+                        Climate.Parameter.span(-0.3F, 0.4F), any, any, any, any, any, 0L), SPACE_BIOME),
+                Pair.of(new Climate.ParameterPoint(
+                        Climate.Parameter.span(0.4F, 1.0F), any, any, any, any, any, 0L), ModBiomes.PLASMA_NEBULA)
         ));
     }
 }

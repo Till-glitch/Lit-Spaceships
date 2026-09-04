@@ -2,6 +2,7 @@ package com.lit.spaceships.world;
 
 import com.lit.spaceships.LitSpaceships;
 import net.minecraft.core.HolderGetter;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
@@ -38,6 +39,12 @@ public final class ModBiomes {
      */
     public static final ResourceKey<Biome> PLASMA_NEBULA = createKey("plasma_nebula");
 
+    /**
+     * Frozen Expanse: eisige Weltraumzone mit bleich-cyanfarbener Atmosphäre
+     * (#00FFFF) und hochdichten Eiskometen-Feldern.
+     */
+    public static final ResourceKey<Biome> FROZEN_EXPANSE = createKey("frozen_expanse");
+
     private ModBiomes() {
     }
 
@@ -45,11 +52,13 @@ public final class ModBiomes {
         HolderGetter<PlacedFeature> placedFeatures = context.lookup(Registries.PLACED_FEATURE);
         context.register(SPACE_BIOME, spaceBiome(placedFeatures));
         context.register(PLASMA_NEBULA, plasmaNebula());
+        context.register(FROZEN_EXPANSE, frozenExpanse(placedFeatures));
     }
 
     static void bootstrapWith(BootstrapContext<Biome> context, HolderGetter<PlacedFeature> placedFeatures) {
         context.register(SPACE_BIOME, spaceBiome(placedFeatures));
         context.register(PLASMA_NEBULA, plasmaNebula());
+        context.register(FROZEN_EXPANSE, frozenExpanse(placedFeatures));
     }
 
     /**
@@ -96,6 +105,32 @@ public final class ModBiomes {
                         .build())
                 .mobSpawnSettings(MobSpawnSettings.EMPTY)
                 .generationSettings(BiomeGenerationSettings.EMPTY)
+                .build();
+    }
+
+    /**
+     * Frozen Expanse: bleich-cyanfarbene Atmosphäre (#00FFFF) über dunklem
+     * Cyan-Himmel, fallende Schneeflocken-Partikelströme, keine Mob-Spawns.
+     * Generation: hochdichte Eiskometen-Felder (blaue Eis-Kerne, Packeis-Mäntel).
+     */
+    static Biome frozenExpanse(HolderGetter<PlacedFeature> placedFeatures) {
+        return new Biome.BiomeBuilder()
+                .hasPrecipitation(false)
+                .temperature(-0.5F)
+                .downfall(0.0F)
+                .temperatureAdjustment(Biome.TemperatureModifier.NONE)
+                .specialEffects(new BiomeSpecialEffects.Builder()
+                        .fogColor(0x00FFFF)
+                        .skyColor(0x003344)
+                        .waterColor(0x003344)
+                        .waterFogColor(0x003344)
+                        .ambientParticle(new AmbientParticleSettings(ParticleTypes.SNOWFLAKE, 0.015F))
+                        .build())
+                .mobSpawnSettings(MobSpawnSettings.EMPTY)
+                .generationSettings(new BiomeGenerationSettings.PlainBuilder()
+                        .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                                placedFeatures.getOrThrow(ModPlacedFeatures.ICE_COMET_PLACED))
+                        .build())
                 .build();
     }
 

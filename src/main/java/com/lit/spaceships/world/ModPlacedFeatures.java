@@ -26,6 +26,7 @@ public final class ModPlacedFeatures {
 
     public static final ResourceKey<PlacedFeature> ASTEROID_PLACED = createKey("asteroid_placed");
     public static final ResourceKey<PlacedFeature> SPACE_WRECK_PLACED = createKey("space_wreck_placed");
+    public static final ResourceKey<PlacedFeature> ICE_COMET_PLACED = createKey("ice_comet_placed");
 
     private ModPlacedFeatures() {
     }
@@ -36,6 +37,8 @@ public final class ModPlacedFeatures {
                 configuredFeatures.getOrThrow(ModConfiguredFeatures.ASTEROID), asteroidPlacement()));
         context.register(SPACE_WRECK_PLACED, new PlacedFeature(
                 configuredFeatures.getOrThrow(ModConfiguredFeatures.SPACE_WRECK), spaceWreckPlacement()));
+        context.register(ICE_COMET_PLACED, new PlacedFeature(
+                configuredFeatures.getOrThrow(ModConfiguredFeatures.ICE_COMET), iceCometPlacement()));
     }
 
     /**
@@ -58,6 +61,19 @@ public final class ModPlacedFeatures {
                 RarityFilter.onAverageOnceEvery(32),
                 InSquarePlacement.spread(),
                 HeightRangePlacement.uniform(VerticalAnchor.absolute(0), VerticalAnchor.absolute(200)),
+                BiomeFilter.biome()
+        );
+    }
+
+    /**
+     * Comet Fields der Frozen Expanse: hohe Dichte (8 Versuche pro Chunk),
+     * komplett von Y -40 bis +280 — schwebende Eiskometen und Packeis-Formationen.
+     */
+    static List<PlacementModifier> iceCometPlacement() {
+        return List.of(
+                CountPlacement.of(8),
+                InSquarePlacement.spread(),
+                HeightRangePlacement.uniform(VerticalAnchor.absolute(-40), VerticalAnchor.absolute(280)),
                 BiomeFilter.biome()
         );
     }

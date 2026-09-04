@@ -2,6 +2,7 @@ package com.lit.spaceships.registry;
 
 import com.lit.spaceships.LitSpaceships;
 import com.lit.spaceships.world.feature.AsteroidFeature;
+import com.lit.spaceships.world.feature.IceCometFeature;
 import com.lit.spaceships.world.feature.SpaceWreckFeature;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.levelgen.feature.Feature;
@@ -20,6 +21,9 @@ public class ModFeatures {
 
     public static final DeferredHolder<Feature<?>, SpaceWreckFeature> SPACE_WRECK =
             FEATURES.register("space_wreck", () -> new SpaceWreckFeature(NoneFeatureConfiguration.CODEC));
+
+    public static final DeferredHolder<Feature<?>, IceCometFeature> ICE_COMET =
+            FEATURES.register("ice_comet", () -> new IceCometFeature(NoneFeatureConfiguration.CODEC));
 
     public static void register(IEventBus eventBus) {
         FEATURES.register(eventBus);

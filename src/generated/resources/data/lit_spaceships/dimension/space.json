@@ -6,7 +6,7 @@
       "type": "minecraft:multi_noise",
       "biomes": [
         {
-          "biome": "lit_spaceships:space_biome",
+          "biome": "lit_spaceships:frozen_expanse",
           "parameters": {
             "continentalness": [
               -1.0,
@@ -27,7 +27,37 @@
             "offset": 0.0,
             "temperature": [
               -1.0,
-              0.3
+              -0.3
+            ],
+            "weirdness": [
+              -1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "biome": "lit_spaceships:space_biome",
+          "parameters": {
+            "continentalness": [
+              -1.0,
+              1.0
+            ],
+            "depth": [
+              -1.0,
+              1.0
+            ],
+            "erosion": [
+              -1.0,
+              1.0
+            ],
+            "humidity": [
+              -1.0,
+              1.0
+            ],
+            "offset": 0.0,
+            "temperature": [
+              -0.3,
+              0.4
             ],
             "weirdness": [
               -1.0,
@@ -56,7 +86,7 @@
             ],
             "offset": 0.0,
             "temperature": [
-              0.3,
+              0.4,
               1.0
             ],
             "weirdness": [
