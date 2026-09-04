@@ -31,6 +31,7 @@ public class ModEnglishLanguageProvider extends LanguageProvider {
         add(ModBlocks.PULSE_LASER.getId().toLanguageKey("block"), "Pulse Laser Cannon");
         add(ModBlocks.HEAVY_BEAM.getId().toLanguageKey("block"), "Heavy Laser Beam");
         add(ModBlocks.MINING_LASER.getId().toLanguageKey("block"), "Mining Laser");
+        add(ModBlocks.WARP_ENGINE.getId().toLanguageKey("block"), "Warp Engine");
 
         // 3. Items
         add(ModItems.BACKFLIP_TOOL.getId().toLanguageKey("item"), "Klasingscher Degen");
@@ -135,6 +136,20 @@ public class ModEnglishLanguageProvider extends LanguageProvider {
         add(ModI18n.Screen.HUD_HELM_READY, "Engines Ready");
         add(ModI18n.Screen.HUD_HELM_CONTROLS, "[H] Exit | [M] Nav | [Arrows] Rotate | [R-Click] Fire");
 
+        // Warp Engine Screen
+        add(ModI18n.Screen.WARP_TITLE, "Warp Engine Console");
+        add(ModI18n.Screen.WARP_ENGAGE, "Engage Warp Drive");
+        add(ModI18n.Screen.WARP_ABORT, "Abort Jump");
+        add(ModI18n.Screen.WARP_ENERGY, "Warp Buffer: %1$s / %2$s FE");
+        add(ModI18n.Screen.WARP_STATUS_READY, "ONLINE (WARP READY)");
+        add(ModI18n.Screen.WARP_STATUS_CHARGING, "CHARGING (INSUFFICIENT FE)");
+        add(ModI18n.Screen.WARP_STATUS_COUNTDOWN, "WARP COUNTDOWN ACTIVE: %1$ss");
+        add(ModI18n.Screen.WARP_STATUS_COOLDOWN, "DRIVE COOLDOWN: %1$ss");
+        add(ModI18n.Screen.WARP_STATUS_UNLINKED, "UNLINKED (NO SHIP)");
+        add(ModI18n.Screen.WARP_DESTINATION, "Destination: %1$s");
+        add(ModI18n.Screen.WARP_DEST_SPACE, "Deep Space Dimension");
+        add(ModI18n.Screen.WARP_DEST_OVERWORLD, "Overworld Dimension");
+
         // 5. Messages (Chat / Action-Bar)
         add(ModI18n.Message.TURRET_AIM_LOCKED, "[Turret] Aim locked (Yaw: %1$s°, Pitch: %2$s°)");
         add(ModI18n.Message.TURRET_AIM_RELEASED, "[Turret] Aim released (Freelook active)");
@@ -151,6 +166,12 @@ public class ModEnglishLanguageProvider extends LanguageProvider {
         add(ModI18n.Message.COLLISION_WARNING, "[Collision Warning] Collision detected (%1$s)! Movement stopped.");
         add(ModI18n.Message.ROTATION_BLOCKED_COLLISION, "[Rotation Blocked] Obstacle or terrain in rotation path!");
         add(ModI18n.Message.MOVEMENT_BLOCKED_IMMUNE, "[Movement Blocked] Ship contains an unmovable / immune block!");
+        add(ModI18n.Message.WARP_COUNTDOWN_ABORTED, "[Warp Drive] Warp sequence aborted!");
+        add(ModI18n.Message.WARP_COUNTDOWN_ABORTED_MOVEMENT, "[Warp Drive] Jump aborted: Ship translation or rotation detected!");
+        add(ModI18n.Message.WARP_COOLDOWN_ACTIVE, "[Warp Drive] Warp coils overheated! Cooldown: %1$s seconds remaining.");
+        add(ModI18n.Message.WARP_ENERGY_INSUFFICIENT, "[Warp Drive] Insufficient charge! 100,000 FE required.");
+        add(ModI18n.Message.WARP_OBSTRUCTED, "[Warp Drive] Target coordinates obstructed by structure or solid terrain!");
+        add(ModI18n.Message.WARP_COUNTDOWN_TICK, "[Warp Drive] Jump in %1$d...");
         add(ModI18n.Message.HELM_CONTROL_ENTER, "[Helm] You are piloting the ship. WASD to fly, LSHIFT to descend, SPACE to ascend. H/ESC to exit.");
         add(ModI18n.Message.HELM_CONTROL_LEAVE, "[Helm] You have left helm control.");
         add(ModI18n.Message.DEV_CHEAT_ENERGY, "DEV-CHEAT: %1$s FE loaded!");
@@ -172,6 +193,7 @@ public class ModEnglishLanguageProvider extends LanguageProvider {
         add(ModI18n.Tooltip.WEAPON_TIER, "Weapon Tier: %1$s");
         add(ModI18n.Tooltip.ENERGY_COST, "Energy Cost: %1$s FE/shot");
         add(ModI18n.Tooltip.SHIELD_STATUS, "Shield Matrix: %1$s");
+        add(ModI18n.Tooltip.WARP_ENGINE_CAPACITY, "Warp Core Capacity: 100,000 FE (Full Charge Required for Jump)");
         add(ModI18n.Structure.SHIPWRECK, "Derelict Spacecraft Wreck");
         add(ModI18n.Biome.DEEP_SPACE, "Deep Space Void");
     }

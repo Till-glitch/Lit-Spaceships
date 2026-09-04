@@ -292,4 +292,20 @@ public class ServerPayloadHandler {
             }
         });
     }
+
+    public static void handleWarpAction(final WarpActionPayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> {
+            Player player = context.player();
+            if (player == null) return;
+            Level level = player.level();
+            BlockPos pos = payload.pos();
+
+            if (level.getBlockEntity(pos) instanceof com.lit.spaceships.block.entity.WarpEngineBlockEntity engine) {
+                switch (payload.action()) {
+                    case START_COUNTDOWN -> engine.startCountdown(player);
+                    case ABORT_COUNTDOWN -> engine.abortCountdown(net.minecraft.network.chat.Component.translatable(com.lit.spaceships.registry.ModI18n.Message.WARP_COUNTDOWN_ABORTED));
+                }
+            }
+        });
+    }
 }

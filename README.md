@@ -48,6 +48,13 @@ An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21.
   * **Infinite Void Environment:** Custom procedural dimension from $Y = -64$ to $Y = 320$ with permanent cosmic night, zero natural monster spawns, and no vanilla bedrock floors.
   * **Asteroid Fields & Ice Comets:** 3D procedural asteroid generation with diverse crusts (Stone, Basalt, Tuff, Deepslate) containing rich ore cores (Iron, Gold, Redstone, Diamond, Netherite Debris) and frozen ice comets.
   * **Derelict Spacecraft Wrecks:** Rare abandoned shipwrecks featuring intact spaceship reactor cores and ancient treasure chests (`END_CITY_TREASURE`).
+* **Warp Engine & Interdimensional Transit (`lit_spaceships:warp_engine`):**
+  * **Interdimensional Travel:** Direct dimensional jump between the Overworld and Deep Space (`lit_spaceships:space`).
+  * **Internal Energy Storage (100,000 FE):** Autonomous power capacitor requiring 100% full charge (100,000 FE) before warp jump calculations can begin. Accepts standard Forge Energy (cables/batteries) and automatically trickle-charges at 500 FE/t from connected shipboard reactor cores.
+  * **Sci-Fi Terminal UI (`WarpEngineScreen`):** Light-blue and neon-cyan themed visual console with real-time FE gauge, dynamic status badge (`READY`, `CHARGING`, `COUNTDOWN`, `COOLDOWN`, `UNLINKED`), destination indicator, vessel telemetry, and interactive controls.
+  * **10-Second Interruptible Countdown:** 200-tick pre-jump sequence. Can be cancelled on-demand via the "ABORT JUMP" button or automatically aborted when physical vessel movement, yaw rotation, or hull destruction is detected.
+  * **60-Second Cooldown:** 1200-tick server-enforced cooldown timer preventing dimensional jump spam, fully persisted across server restarts.
+  * **Adaptive Spiral Collision & Structure Avoidance (`WarpService`):** Prior to ship materialization, calculates candidate arrival positions within a 256-block radius across 8 radial directions ($45^\circ$ angular resolution). Validates chunk structure starts against `StructureManager` and performs full 3D bounding-box voxel emptiness checks, guaranteeing ships never materialize inside procedural space stations, derelict wrecks, or solid asteroid terrain.
 * **Cross-Dimensional Ship Travel (Core Teleportation Service):**
   * Fully transactional 6-phase warp travel (Suspension, Forceloading, Clipboard Serialization, Excision, Materialization, Passenger Entity Transition) across any dimension with ticket locking and zero chunk-boundary ghosting.
 * **Internationalization (I18n) & Localization (L10n) System:**
@@ -72,6 +79,7 @@ An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21.
     * `lit_spaceships:pulse_laser` (250 FE/shot Kinetic Burst Cannon): Mining Laser + Echo Shard (Ancient City). Acoustic-kinetic plasma cannon.
   * **Tier 4 (Capital Entity Kernel & Dimensional Warp Core):**
     * `lit_spaceships:spaceship_control` (Ship Kernel): Survival-balanced endgame core crafted from Diamond Blocks, Lodestones (coordinate anchoring), End Crystal (dimensional warp), Nether Star (computational brain), and Eyes of Ender.
+    * `lit_spaceships:warp_engine` (Warp Engine Core): Endgame interdimensional transit drive crafted from Ender Crystals, Eyes of Ender, Diamonds, and Iron Blocks.
 * **Just Enough Items (JEI) & Recipe Viewer Integration (`com.lit.spaceships.integration.jei`):**
   * **Automatic Recipe Indexing:** Full automatic discovery for all shaped crafting and smithing transform recipes.
   * **Recipe Catalysts:** Spaceship Reactor and Spaceship Controller registered as official catalysts for Crafting and Smithing tabs.
@@ -166,16 +174,25 @@ classDiagram
             +traverse(VoxelGridCache cache, Vec3 origin, Vec3 dir, double maxDist)$ Optional~VoxelHit~
         }
 
-        class ShipMovementService {
-            +moveShip(Level level, ShipState ship, int dx, int dy, int dz, Player player)$ void
-            +isShipMoving(UUID shipId)$ boolean
-            +onServerTick(ServerTickEvent.Post event)$ void
         }
 
         class SpaceshipEnergyManager {
             +tryConsumeFlightEnergy(Level level, ShipState ship, int dx, int dy, int dz, Player player)$ boolean
             +tryConsumeEnergyAmount(Level level, ShipState ship, int amount)$ boolean
             +getTotalAvailableEnergy(Level level, ShipState ship)$ int
+        }
+
+        class WarpEngineBlockEntity {
+            +receiveEnergy(int maxReceive, boolean simulate) int
+            +getEnergyStored() int
+            +startCountdown(Player initiator) boolean
+            +abortCountdown(Component reason) void
+            +isCountingDown() boolean
+        }
+
+        class WarpService {
+            +findSafeTargetPos(ServerLevel origin, ServerLevel target, ShipState ship)$ Optional~BlockPos~
+            +executeWarp(ServerLevel origin, ServerLevel target, ShipState ship, BlockPos targetPos, Player initiator)$ boolean
         }
     }
 
@@ -187,41 +204,34 @@ classDiagram
             +register(IEventBus bus)$ void
         }
 
+        class WarpActionPayload {
+            <<record>>
+            +BlockPos pos
+            +Action action
+        }
+
+        class WarpStateSyncPayload {
+            <<record>>
+            +BlockPos pos
+            +int energy
+            +int maxEnergy
+            +int countdownTicks
+            +int cooldownRemainingTicks
+            +boolean isCountingDown
+            +boolean isLinked
+            +boolean targetIsSpace
+        }
+
         class ShipCombatActionPayload {
             <<record>>
             +UUID shipId
             +CombatAction action
         }
 
-        class LaserFirePayload {
-            <<record>>
-            +UUID shooterShipId
-            +Vec3 startPos
-            +Vec3 endPos
-            +LaserWeaponTier tier
-        }
-
-        class LaserStateSyncPayload {
-            <<record>>
-            +UUID shooterShipId
-            +BlockPos weaponPos
-            +boolean isFiring
-            +LaserWeaponTier tier
-        }
-
         class ShipStructureDeltaPayload {
             <<record>>
             +UUID shipId
-            +List~BlockPos~ removedBlocks
-        }
-
-        class ShipStateSyncPayload {
-            <<record>>
-            +UUID shipId
-            +int currentEnergy
-            +boolean isShieldActive
-            +long shieldCooldownRemainingTicks
-            +long movementCooldownRemainingTicks
+            +BlockPos destroyedPos
         }
     }
 
@@ -229,68 +239,34 @@ classDiagram
     %% CLIENT SIDE VIEW & RENDERING
     %% ==========================================
     namespace Client_Side {
+        class SpaceshipClientInputHandler {
+            +onPlayerInteract(PlayerInteractEvent.RightClickBlock event)$ void
+        }
+
         class ClientShipState {
             -UUID shipId
-            -BlockPos anchorPos
             -VertexBuffer shieldMesh
-            -boolean isShieldActive
             +updateMesh(Set~BlockPos~ relativeBlocks) void
-            +dispose() void
         }
 
-        class SpaceshipControlScreen {
-            -Button createButton
-            -Button updateButton
-            -Button disassembleButton
-            -Button highlightButton
-            +render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) void
-        }
-
-        class SpaceshipReactorScreen {
-            +render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) void
-        }
-
-        class SpaceshipShieldScreen {
+        class WarpEngineScreen {
+            +updateState(WarpStateSyncPayload payload) void
             +render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) void
         }
 
         class ShipHighlightRenderer {
             +boolean isHighlightActive$
-            +toggleHighlight(Level level, BlockPos startPos)$ void
-            +toggleHighlight(Set~BlockPos~ blocks)$ void
-            +isHighlightActive()$ boolean
-        }
-
-        class ClientLaserState {
-            +addPulse(UUID shooterId, Vec3 start, Vec3 end, LaserWeaponTier tier)$ void
-            +setContinuousBeam(UUID shooterId, BlockPos pos, boolean firing, LaserWeaponTier tier)$ void
-            +removeBeamsForShip(UUID shipId)$ void
-            +clearAll()$ void
-        }
-
-        class LaserBeamRenderer {
-            +onRenderLevelStage(RenderLevelStageEvent event)$ void
-        }
-
-        class ShieldRenderer {
-            +renderShields(PoseStack stack, MultiBufferSource buffer, Camera camera, float partialTicks)$ void
         }
     }
 
     %% Relationships
     AbstractSpaceshipNodeBlockEntity ..|> ISpaceshipNode : implements
     AbstractLaserNodeBlockEntity --|> AbstractSpaceshipNodeBlockEntity : extends
+    WarpEngineBlockEntity --|> AbstractSpaceshipNodeBlockEntity : extends
+    WarpEngineBlockEntity ..> WarpService : executes dimensional jump
+    WarpEngineBlockEntity ..> WarpStateSyncPayload : broadcasts
+    SpaceshipClientInputHandler ..> WarpEngineScreen : updates
     ServerShipManager o-- "0..*" ShipState : manages
-    ServerShipManager ..> LaserCombatService : combat coordination
-    LaserCombatService ..> LaserRaycastUtil : raycasts via
-    LaserRaycastUtil ..> FastVoxelTraversal : 3D-DDA Voxel Scan
-    LaserCombatService ..> LaserFirePayload : broadcasts pulse
-    LaserCombatService ..> LaserStateSyncPayload : broadcasts beam state
-    LaserCombatService ..> ShipStructureDeltaPayload : syncs block damage
-
-    LaserBeamRenderer ..> ClientLaserState : reads active beams
-    LaserBeamRenderer ..> ClientShipManager : anchors to ships
-    ClientLaserState ..> ClientShipManager : relative anchor offsets
 ```
 
 ---
@@ -303,15 +279,18 @@ classDiagram
 * **`LaserCombatService`**: Handles combat routing for pulse weapons and continuous beams, energy transactions, kinetic shield shockwaves, and progressive block destruction with `destroyBlockProgress` scaling by block hardness.
 * **`LaserRaycastUtil` & `FastVoxelTraversal`**: High-performance Amanatides & Woo 3D Digital Differential Analyzer (3D-DDA) traversing voxels in $O(\text{Ray Length})$ time, protected by broadphase AABB intersection filters and step bounds (1024 steps).
 * **`ShipMovementService`**: Translates blocks and passengers using an incremental **Time-Slicing Tick-Budget (10ms per tick)** executed during `ServerTickEvent.Post`, with chunk region tickets (`TicketType`) and translation-invariant weapon tracking.
+* **`WarpService` & `WarpEngineBlockEntity`**: Server-authoritative dimensional transit drive between Overworld and Space Dimension. Enforces a 100.000 FE full-charge requirement, a 10-second (200 ticks) countdown with automatic abort on vessel motion/damage, a 60-second (1200 ticks) cooldown, and adaptive spiral search collision avoidance ($R \le 256$) ensuring arrival clearance from generated structures and asteroid terrain.
 
 #### 2. Network Layer (`com.lit.spaceships.network.*`)
 * **`CustomPacketPayload` Records**: 100% typed payload definitions using Mojang/NeoForge `StreamCodec` composites.
+* **`WarpActionPayload` & `WarpStateSyncPayload`**: Bi-directional communication for pilot jump initiation/abortion and live client telemetry sync (energy, countdown, cooldown, destination).
 * **`ShipCombatActionPayload`**: Dispatches pilot weapon commands (`FIRE_PULSE`, `TOGGLE_HEAVY_BEAM`, `TOGGLE_MINING_LASER`, `FIRE_ALL`).
 * **`LaserFirePayload` & `LaserStateSyncPayload`**: Broadcasts visual laser events and continuous beam states to chunk-tracking clients.
 * **`ShipStructureDeltaPayload`**: Transmits destroyed voxel lists during combat to update client highlight meshes without re-sending the entire ship structure.
 
 #### 3. Client View Model & Rendering (`com.lit.spaceships.client.*`)
 * **`SpaceshipClientInputHandler`**: Event-Subscriber (`PlayerInteractEvent.RightClickBlock`) handling all client-side UI interactions (Screens). Completely decouples Client-GUI from Server-Blocks to guarantee strict Dedicated Server compatibility (Sidedness).
+* **`WarpEngineScreen`**: Sci-Fi terminal UI designed in light blue and neon cyan, presenting real-time energy buffering, animated countdowns, and collision-avoidance telemetry.
 * **`ClientLaserState`**: Thread-safe collection (`ConcurrentHashMap`, `CopyOnWriteArrayList`) managing pulse fadeouts and continuous beams keyed by invariant relative offsets (`shooterShipId + "_" + relativePos.asLong()`).
 * **`LaserBeamRenderer`**: Volumetric Blaze3D billboard beam rendering with additive blending (`GL_ONE`), core/glow dual-cylinder quads, oscillating pulses, and client-side block surface clipping (`level.clip`) preventing laser pass-through.
 * **`ShieldRenderer`**: Blaze3D rendering pipeline consuming compiled VBOs (`VertexBuffer`) from `ClientShipState`.
@@ -323,10 +302,12 @@ classDiagram
 
 The project enforces continuous testing according to the **70/20 Rule** (70% Unit / Math Tests, 20% Engine GameTests, 10% Manual QA).
 
-### Automated Test Matrix (82 Unit Tests & 7 GameTest Suites / 26 GameTests)
+### Automated Test Matrix (163 Unit Tests & 8 GameTest Suites / 29 GameTests)
 
 | Test-Suite | Typ | Abdeckung |
 | :--- | :--- | :--- |
+| **`WarpEngineMathTest`** | JUnit 5 | Energiespeicher-Kapazität (100.000 FE), 200 Ticks Countdown-Konvertierung (10.0s), 1200 Ticks Cooldown (60s), Trickle-Charge-Berechnung und 129-Punkte Spiral-Suchraum. |
+| **`WarpPayloadSerializationTest`** | JUnit 5 | Symmetrische Serialisierung und Dekodierung von `WarpActionPayload` und `WarpStateSyncPayload` (8 Felder). |
 | **`VirtualSupportTestViewTest`** | JUnit 5 | Datengetriebenes Support-Probing über virtuelle Nachbar-Maskierung mit `state.canSurvive()` (löst alle hardcodierten `instanceof`-Ketten für Mod-Attachables ab). |
 | **`NbtCoordinateRemapperTest`** | JUnit 5 | Rekursives Umschreiben von internen `BlockPos`-Referenzen (`masterPos`, `controllerPos`, Int-Arrays, Longs) in BlockEntity-NBTs für Master-Slave-Multiblöcke. |
 | **`BlockDependencyGraphTest`** | JUnit 5 | Datengetriebene Abhängigkeits-Erkennung via `canSurvive` und `isFaceSturdy`, Multiblock-Verknüpfung (Türen, Betten, ausgefahrene Pistons) und topologische Schicht-Linearisierung. |
@@ -352,10 +333,11 @@ The project enforces continuous testing according to the **70/20 Rule** (70% Uni
 | **`ShipCollisionMathTest`** | JUnit 5 | Continuous Swept-AABB Extrusion (positive/negative/zero), VoxelGridCache BitSet Indexing & Bounds. |
 | **`ShipStateTest`** | JUnit 5 | Domain-Zustand, AABB-Neuberechnung bei Blockmutation, Controller-Translation, Cooldown-Arithmetik. |
 | **`CombatLogicTest`** | JUnit 5 | FastVoxelTraversal 3D-DDA Treffererkennung, Normalenflächen (`WEST`, `DOWN`), Reichweiten- & Tier-Konstanten. |
-| **`PayloadSerializationTest`** | JUnit 5 | Symmetrische Serialisierung & Deserialisierung aller 12 CustomPacketPayload-Records via StreamCodecs. |
+| **`PayloadSerializationTest`** | JUnit 5 | Symmetrische Serialisierung & Deserialisierung aller CustomPacketPayload-Records via StreamCodecs. |
 | **`SpaceshipEnergyManagerTest`** | JUnit 5 (Mockito) | Reaktor-Bündelung, sequenzieller Energieabzug, Rollback bei Energiemangel, Flugkosten-Berechnung. |
 | **`AimTransformMathTest`** | JUnit 5 | Quaternion-Transformationen, Euler-Winkel-Konvertierung, 16-Bit Kompression und GimbalLimits. |
 | **`TurretSeatTest`** | JUnit 5 | TurretSeat DTO Attribute, NBT-Persistenz und Aim-Lock-Status. |
+| **`WarpEngineGameTests` (3 Tests)** | GameTest | BlockEntity-Platzierung & 100k FE Limit, Schiffsbindung & Subsystem-Tracking, 10s Countdown & Abort-Resets. |
 | **`ShipScannerVoronoiGameTest`** | GameTest | Voronoi-Zonierung und ShieldZone-Erfassung bei mehreren Schildgeneratoren im Schiff. |
 | **`LaserCombatPiercingGameTest`** | GameTest | Zonen-Kollaps und Durchschlag auf darunterliegende Schiffshülle bei inaktiver ShieldZone. |
 | **`ShipScannerGameTests` (4 Tests)** | GameTest | Orthogonale BFS-Erkennung, Ausschluss diagonaler Blöcke, Multipart-Erfassung (Türen, Betten, Truhen, ausgefahrene Pistons). |

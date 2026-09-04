@@ -46,6 +46,10 @@ public class ModBlockEntities {
             BLOCK_ENTITIES.register("mining_laser_be", () ->
                     BlockEntityType.Builder.of(com.lit.spaceships.block.entity.MiningLaserBlockEntity::new, ModBlocks.MINING_LASER.get()).build(null));
 
+    public static final Supplier<BlockEntityType<com.lit.spaceships.block.entity.WarpEngineBlockEntity>> WARP_ENGINE_BE =
+            BLOCK_ENTITIES.register("warp_engine_be", () ->
+                    BlockEntityType.Builder.of(com.lit.spaceships.block.entity.WarpEngineBlockEntity::new, ModBlocks.WARP_ENGINE.get()).build(null));
+
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);
     }

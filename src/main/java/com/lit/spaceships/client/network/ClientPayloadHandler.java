@@ -144,4 +144,17 @@ public class ClientPayloadHandler {
             });
         }
     }
+
+    public static void handleWarpStateSync(final com.lit.spaceships.network.WarpStateSyncPayload packet, final IPayloadContext context) {
+        if (context.flow().isClientbound()) {
+            context.enqueueWork(() -> {
+                net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+                if (mc.screen instanceof com.lit.spaceships.client.screen.WarpEngineScreen warpScreen) {
+                    if (warpScreen.getBlockPos().equals(packet.pos())) {
+                        warpScreen.updateState(packet);
+                    }
+                }
+            });
+        }
+    }
 }

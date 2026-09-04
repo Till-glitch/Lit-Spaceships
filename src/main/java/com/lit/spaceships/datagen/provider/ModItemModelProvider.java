@@ -25,6 +25,7 @@ public class ModItemModelProvider extends ItemModelProvider {
         withExistingParent(ModBlocks.SPACESHIP_HELM.getId().getPath(), modLoc("block/spaceship_helm"));
         withExistingParent(ModBlocks.SPACESHIP_REACTOR.getId().getPath(), modLoc("block/spaceship_reactor"));
         withExistingParent(ModBlocks.SPACESHIP_SHIELD.getId().getPath(), modLoc("block/spaceship_shield"));
+        withExistingParent(ModBlocks.WARP_ENGINE.getId().getPath(), modLoc("block/warp_engine"));
 
         // Eigenständige 2D-Items
         basicItem(ModItems.BACKFLIP_TOOL.get());

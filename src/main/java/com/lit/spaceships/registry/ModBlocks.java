@@ -37,6 +37,9 @@ public class ModBlocks {
     public static final DeferredBlock<Block> MINING_LASER = BLOCKS.register("mining_laser",
             () -> new com.lit.spaceships.block.MiningLaserBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_YELLOW).strength(3.0f).noOcclusion()));
 
+    public static final DeferredBlock<Block> WARP_ENGINE = BLOCKS.register("warp_engine",
+            () -> new com.lit.spaceships.block.WarpEngineBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_LIGHT_BLUE).strength(4.0f)));
+
     // 3. Diese Methode ruft unsere Hauptklasse später auf
     public static void register(IEventBus eventBus) {
         BLOCKS.register(eventBus);

@@ -21,6 +21,7 @@ public class ShipState {
     private List<BlockPos> reactors = new ArrayList<>();
     private List<BlockPos> shields = new ArrayList<>();
     private List<BlockPos> weapons = new ArrayList<>();
+    private List<BlockPos> warpEngines = new ArrayList<>();
     private final Map<Byte, ShieldZone> shieldZones = new java.util.concurrent.ConcurrentHashMap<>();
     private final Map<Byte, SectorCoverage> sectorCoverages = new java.util.concurrent.ConcurrentHashMap<>();
     private boolean isShieldActive = true;
@@ -153,6 +154,14 @@ public class ShipState {
         this.shields = shields != null ? shields : new ArrayList<>();
     }
 
+    public List<BlockPos> getWarpEngines() {
+        return warpEngines;
+    }
+
+    public void setWarpEngines(List<BlockPos> warpEngines) {
+        this.warpEngines = warpEngines != null ? warpEngines : new ArrayList<>();
+    }
+
     /**
      * Verschiebt alle positionsabhängigen Daten des Schiffs atomar um (dx, dy, dz).
      * Aktualisiert ControllerPos, Blocks, BoundingBoxen, Reaktoren, Schilde, Waffen und ShieldZones
@@ -202,6 +211,14 @@ public class ShipState {
                 newWeapons.add(pos.offset(dx, dy, dz));
             }
             this.weapons = newWeapons;
+        }
+
+        if (this.warpEngines != null && !this.warpEngines.isEmpty()) {
+            List<BlockPos> newWarp = new ArrayList<>(this.warpEngines.size());
+            for (BlockPos pos : this.warpEngines) {
+                newWarp.add(pos.offset(dx, dy, dz));
+            }
+            this.warpEngines = newWarp;
         }
 
         if (!this.shieldZones.isEmpty()) {

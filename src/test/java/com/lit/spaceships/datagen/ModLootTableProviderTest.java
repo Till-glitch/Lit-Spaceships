@@ -51,9 +51,9 @@ class ModLootTableProviderTest {
         Iterable<Block> knownBlocks = subProvider.getKnownBlocks();
         assertNotNull(knownBlocks);
 
-        // Verify that all 8 essential blocks are registered in ModBlocks
+        // Verify that all 9 essential blocks are registered in ModBlocks
         var entries = ModBlocks.BLOCKS.getEntries();
-        assertEquals(8, entries.size());
+        assertEquals(9, entries.size());
 
         var blockIds = entries.stream().map(e -> e.getId().getPath()).toList();
         assertTrue(blockIds.contains("example_block"));
@@ -64,5 +64,6 @@ class ModLootTableProviderTest {
         assertTrue(blockIds.contains("pulse_laser"));
         assertTrue(blockIds.contains("heavy_beam"));
         assertTrue(blockIds.contains("mining_laser"));
+        assertTrue(blockIds.contains("warp_engine"));
     }
 }

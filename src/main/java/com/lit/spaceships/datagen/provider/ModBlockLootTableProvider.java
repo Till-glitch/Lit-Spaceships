@@ -28,6 +28,7 @@ public class ModBlockLootTableProvider extends BlockLootSubProvider {
         this.dropSelf(ModBlocks.PULSE_LASER.get());
         this.dropSelf(ModBlocks.HEAVY_BEAM.get());
         this.dropSelf(ModBlocks.MINING_LASER.get());
+        this.dropSelf(ModBlocks.WARP_ENGINE.get());
     }
 
     @Override

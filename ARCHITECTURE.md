@@ -338,12 +338,33 @@ classDiagram
             +consumeEnergy(Level level, ShipState ship, int amount)$ void
             +tryConsumeEnergyAmount(Level level, ShipState ship, int amount)$ boolean
             +tryConsumeFlightEnergy(Level level, ShipState ship, int dx, int dy, int dz, Player player)$ boolean
-<<<<<<< HEAD:ARCHITECTURE.md
             +tryConsumeRotationEnergy(Level level, ShipState ship, Rotation rotation, Player player)$ boolean
-=======
             +distributeEnergyToShields(Level level, ShipState ship)$ int
             +distributeEnergyToShields(int availableEnergy, ShipState ship, long currentGameTime)$ int
->>>>>>> main:Outdate_ARCHITECTURE.md
+        }
+
+        class WarpEngineBlockEntity {
+            +int REQUIRED_ENERGY$
+            +int COUNTDOWN_TOTAL_TICKS$
+            +long COOLDOWN_TOTAL_TICKS$
+            +int TRICKLE_CHARGE_RATE$
+            +receiveEnergy(int maxReceive, boolean simulate) int
+            +extractEnergy(int maxExtract, boolean simulate) int
+            +getEnergyStored() int
+            +startCountdown(Player initiator) boolean
+            +abortCountdown(Component reason) void
+            +isCountingDown() boolean
+            +getCountdownTicks() int
+            +getCooldownRemaining(long gameTime) long
+        }
+
+        class WarpService {
+            +int MAX_SEARCH_RADIUS$
+            +int RADIUS_STEP$
+            +getTargetLevel(ServerLevel originLevel)$ ServerLevel
+            +findSafeTargetPos(ServerLevel origin, ServerLevel target, ShipState ship)$ Optional~BlockPos~
+            +isPositionSafe(ServerLevel level, ShipState ship, BlockPos candidate)$ boolean
+            +executeWarp(ServerLevel origin, ServerLevel target, ShipState ship, BlockPos targetPos, Player initiator)$ boolean
         }
     }
 
@@ -422,11 +443,30 @@ classDiagram
             +BlockPos weaponPos
         }
 
+        class WarpActionPayload {
+            <<record>>
+            +BlockPos pos
+            +Action action
+        }
+
+        class WarpStateSyncPayload {
+            <<record>>
+            +BlockPos pos
+            +int energy
+            +int maxEnergy
+            +int countdownTicks
+            +int cooldownRemainingTicks
+            +boolean isCountingDown
+            +boolean isLinked
+            +boolean targetIsSpace
+        }
+
         class ServerPayloadHandler {
             +handleAction(ShipActionPayload payload, IPayloadContext context)$ void
             +handleCombatAction(ShipCombatActionPayload payload, IPayloadContext context)$ void
             +handleTurretAimSync(TurretAimSyncPayload payload, IPayloadContext context)$ void
             +handleTurretLockToggle(TurretLockTogglePayload payload, IPayloadContext context)$ void
+            +handleWarpAction(WarpActionPayload payload, IPayloadContext context)$ void
         }
 
         class ClientPayloadRegistrar {
@@ -439,6 +479,7 @@ classDiagram
             +handleLaserFire(LaserFirePayload packet, IPayloadContext context)$ void
             +handleLaserStateSync(LaserStateSyncPayload packet, IPayloadContext context)$ void
             +handleTurretAimSync(TurretAimSyncPayload packet, IPayloadContext context)$ void
+            +handleWarpStateSync(WarpStateSyncPayload packet, IPayloadContext context)$ void
         }
     }
 
@@ -458,6 +499,18 @@ classDiagram
             +updateMesh(Map~BlockPos, Byte~ relativeBlocks) void
             +removeStructureBlocks(List~BlockPos~ removed) void
             +dispose() void
+        }
+
+        class WarpEngineScreen {
+            -int currentEnergy
+            -int maxEnergy
+            -int countdownTicks
+            -int cooldownRemainingTicks
+            -boolean isCountingDown
+            -boolean isLinked
+            -boolean targetIsSpace
+            +updateState(WarpStateSyncPayload payload) void
+            +render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) void
         }
 
         class ClientLaserState {
@@ -587,10 +640,19 @@ classDiagram
     DataGenerators ..> ModItemModelProvider : instantiates client
     DataGenerators ..> ModEnglishLanguageProvider : instantiates client
     DataGenerators ..> ModGermanLanguageProvider : instantiates client
-    DataGenerators ..> ModLootTableProvider : instantiates server
     ModEnglishLanguageProvider ..> ModI18n : references keys
     ModGermanLanguageProvider ..> ModI18n : references keys
+    DataGenerators ..> ModLootTableProvider : instantiates server
     ModLootTableProvider ..> ModBlockLootTableProvider : creates
+    DataGenerators ..> ModRecipeProvider : instantiates server
+
+    WarpEngineBlockEntity --|> AbstractSpaceshipNodeBlockEntity : extends
+    WarpEngineBlockEntity ..|> IEnergyStorage : implements
+    WarpEngineBlockEntity ..> WarpService : executes dimensional search & jump
+    WarpEngineBlockEntity ..> WarpStateSyncPayload : broadcasts
+    ServerPayloadHandler ..> WarpEngineBlockEntity : dispatches WarpActionPayload
+    ClientPayloadHandler ..> WarpEngineScreen : updates state
+    WarpService ..> ShipTeleportationService : delegates transaction jump
 ```
 
 ---
@@ -654,32 +716,66 @@ Für 90°-Drehungen um den Spaceship-Controller als Pivot $(px, pz)$ wird eine d
 | **Laser-Rendering (Client)** | Render-Frame (`AFTER_TRANSLUCENT_BLOCKS`) | `LaserBeamRenderer.onRenderLevelStage()` | Berechnet Strahlenursprung aus Schiffsanker + relativem Offset. Führt `level.clip()` aus $\rightarrow$ Strahl stoppt exakt auf der Blockoberfläche. Rendert Quads additiv (`GL_ONE`). |
 | **VRAM & Laser-Freigabe** | Chunk entlädt / Schiff gelöscht / Logout | `ClientShipManager` & `ClientLaserState` | `ClientLaserState.removeBeamsForShip(shipId)` räumt Laser auf; `ClientShipState.dispose()` schließt VBOs im GL-Thread. |
 
+| **Warp-Sprung einleiten** | Pilot drückt `ENGAGE_WARP` in GUI | `ServerPayloadHandler` $\rightarrow$ `WarpEngineBlockEntity.startCountdown()` | Prüft 100.000 FE Puffer, verankertes Schiff und Cooldown $\le 0$. Startet 200-Tick (10s) Countdown. Synchronisiert via `WarpStateSyncPayload`. |
+| **Warp-Sprung abbrechen** | Pilot drückt `ABORT_JUMP` / Schiff bewegt / rotiert | `WarpEngineBlockEntity.abortCountdown()` | Setzt Countdown auf 0, informiert Pilot via Action-Bar und sendet `WarpStateSyncPayload(isCountingDown = false)`. |
+| **Warp-Sprung ausführen** | Countdown erreicht 0 Ticks | `WarpEngineBlockEntity.serverTick()` $\rightarrow$ `WarpService.executeWarp()` | Zieht 100.000 FE ab, setzt 1200 Ticks (60s) Cooldown. Führt adaptive Spiralsuche ($R \le 256$) nach kollisions- und strukturfreien Koordinaten aus. Teleportiert Schiff transaktional via `ShipTeleportationService`. |
+
 ---
 
-## 5. Testing-Architektur & CI/CD Pipeline
+## 5. Warp-Engine & Adaptive Spiral-Suche (`com.lit.spaceships.ship.service.WarpService`)
+
+### 5.1 Funktionaler Umfang & State Machine
+1. **Energie-Puffer:** Autonome 100.000 FE Pufferkapazität (`REQUIRED_ENERGY = 100000`) pro BlockEntity mit automatischer 500 FE/t Trickle-Charge aus dem Schiffsgitter.
+2. **10-Sekunden Countdown (200 Ticks):** Unterbrechbar über die Benutzeroberfläche sowie bei jeglicher physischer Bewegung, Rotation oder Hüllenbeschädigung des Schiffs.
+3. **60-Sekunden Cooldown (1200 Ticks):** Server-autoritative Cooldown-Sperre gegen Dimensions-Spamming, persistent im NBT (`cooldownUntil`).
+4. **Adaptive Spiral-Suche zur Kollisions- und Strukturvermeidung:**
+   * Vor Materialisierung am Zielort wird in $R \le 256$ Blöcken in Schritten von 16 Blöcken über 8 Radialwinkel ($45^\circ$-Schritte) ein sicherer Ankerpunkt gesucht.
+   * **Struktur-Prüfung:** `Level.structureManager().startsForStructure(...)` filtert prozedurale Raumstationen, Asteroiden-Outposts und Welt-Strukturen über BoundingBox-Schnittmengen aus.
+   * **Voxel-Prüfung:** Alle Voxel des Schiffs müssen am Zielort in `Air` materialisieren.
+
+---
+
+## 6. Testing-Architektur & CI/CD Pipeline
 
 Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
 
-<<<<<<< HEAD:ARCHITECTURE.md
-1. **JUnit 5 & Mockito Suite (75 Tests, 100% Erfolgsquote)**:
-   * **`VirtualSupportTestViewTest`**: Datengetriebenes Support-Probing über virtuelle Nachbar-Maskierung mit `state.canSurvive()` (löst alle hardcodierten `instanceof`-Ketten für Mod-Attachables ab).
-   * **`NbtCoordinateRemapperTest`**: Rekursives Umschreiben von internen `BlockPos`-Referenzen (`masterPos`, `controllerPos`, Int-Arrays, Longs) in BlockEntity-NBTs für Master-Slave-Multiblöcke.
-   * **`BlockDependencyGraphTest`**: Validierung der gerichteten Kantenbildung via `canSurvive` und `isFaceSturdy` für Multiblöcke (Türen, Betten, ausgefahrene Pistons Base $\rightarrow$ Head) und Wand-Attachables (Wandfackeln); Prüfung der Schicht-Linearisierung.
-   * **`CycleDetectionTest`**: Validierung von Tarjan's SCC-Algorithmus zur Erkennung und Bündelung von Zyklen ($A \leftrightarrow B$) in simultane Injektions-Cluster.
-   * **`BlockRelocationRegistryTest`**: Immunitäts-Validierung für Vanilla-Weltblöcke (`BEDROCK`, `END_PORTAL`, `COMMAND_BLOCK`, `BARRIER`) sowie Registrierung, Prioritäts-Sortierung und Lifecycle-Dispatching (`onPreRelocation`, `onPostRelocation`) für `IBlockRelocationHandler`.
-   * **`ShipMovement3PassTest`**: Validierung der 3-Pass-Klassifizierung (`PASS_1_SOLIDS`, `PASS_2_ROOTS_AND_NORMALS`, `PASS_3_ATTACHABLES_AND_TOPS`) für Vollblöcke, untere/obere Türhälften, Betten, Treppen, Fackeln, Redstone, Piston-Köpfe und $Y$-Sortierung.
-   * **`ShipMovementFragileSortingTest`**: Validierung von `isFragileBlock` für Redstone Wire, Fackeln, Repeater, Hebel vs. Vollblöcke & Luft; Überprüfung der absteigenden Y-Entfernungs- und aufsteigenden Y-Platzierungs-Sortierung.
-   * **`ShipRotationMathTest`**: Orthogonale 90° CW / CCW Transformation für alle 4 Quadranten, Pivot-Verschiebungen, Fließkomma-Entitätsrotationen um das Pivot-Zentrum, Yaw-Normalisierung über $[-180^\circ, 180^\circ]$, 4x 90° Identitätsinvarianz und `BlockState.rotate` für Directional Facing.
-=======
-1. **JUnit 5 & Mockito Suite (58 Tests, 100% Erfolgsquote)**:
-   * **`VoxelGridCacheShieldTest`**: $O(1)$ Flach-Array `byte[] shieldMap` Adressierung, Rand- und Out-of-Bounds-Absicherung im `VoxelGridCache`.
-   * **`ShipStateShieldZoneTest`**: Thread-sichere CRUD-Operationen auf `shieldZones`, `isCollapsed`-Auswertung bei Cooldown und Energiemangel.
-   * **`VoronoiTessellationTest`**: 3D-Voronoi-Tesselierung über quadrierte euklidische Distanz, deterministischer ID-Tie-Break und 64-Generatoren-Cap.
-   * **`ProportionalEnergyRoutingTest`**: Proportionale FE-Verteilung im Verhältnis der Zonendefizite ($D_i / D_{total}$) und Ausschluss kollabierter Zonen.
-   * **`EnergyRoutingRemainderTest`**: Exakter Rest-Tröpfchen-Loop (+1 FE) für verlustfreie Energieerhaltung bei krummen Primzahl-Werten (3333 FE auf 7 Generatoren).
-   * **`FastVoxelTraversalShieldTest`**: 3D-DDA-Traversierung mit extrahierter `shieldId` im `VoxelHit` bei Treffern auf Hülle und Schild.
-   * **`ShieldZonePayloadSerializationTest`**: Bit-genaue 64-Bit Bitmasken-Serialisierung und -Dekodierung in $< 32$ Bytes via `ShieldZoneStatePayload`.
->>>>>>> main:Outdate_ARCHITECTURE.md
+1. **JUnit 5 & Mockito Suite (163 Tests, 100% Erfolgsquote)**:
+   * **`WarpEngineMathTest`**: Energie-Schwellwerte (100.000 FE Limit), Ticks-zu-Sekunden-Arithmetik (200 Ticks = 10.0s, 1200 Ticks = 60s), Trickle-Charge Raten und Spiral-Suchpunkt-Generierung (129 Punkte bei $R \le 256$).
+   * **`WarpPayloadSerializationTest`**: Symmetrische Serialisierung und verlustfreie Dekodierung für `WarpActionPayload` und `WarpStateSyncPayload` mit allen 8 Feldern.
+   * **`VirtualSupportTestViewTest`**: Datengetriebenes Support-Probing über virtuelle Nachbar-Maskierung mit `state.canSurvive()`.
+   * **`NbtCoordinateRemapperTest`**: Rekursives Umschreiben von internen `BlockPos`-Referenzen (`masterPos`, `controllerPos`) in BlockEntity-NBTs.
+   * **`BlockDependencyGraphTest`**: Validierung der gerichteten Kantenbildung via `canSurvive` und `isFaceSturdy` für Multiblöcke und Wand-Attachables.
+   * **`CycleDetectionTest`**: Validierung von Tarjan's SCC-Algorithmus zur Bündelung zyklischer Abhängigkeiten.
+   * **`BlockRelocationRegistryTest`**: Immunitäts-Validierung (`BEDROCK`, `END_PORTAL`, `BARRIER`) und Lifecycle-Dispatching.
+   * **`ShipMovement3PassTest`**: Validierung der 3-Pass-Klassifizierung und $Y$-Sortierung.
+   * **`ShipMovementFragileSortingTest`**: Validierung von `isFragileBlock` und Sortierkriterien.
+   * **`ShipRotationMathTest`**: Orthogonale 90° CW / CCW Transformation für alle 4 Quadranten, Pivot-Verschiebungen und Yaw-Normalisierung.
+   * **`VoxelGridCacheShieldTest`**: $O(1)$ Flach-Array Adressierung im `VoxelGridCache`.
+   * **`ShipStateShieldZoneTest`**: Thread-sichere CRUD-Operationen auf `shieldZones`.
+   * **`VoronoiTessellationTest`**: 3D-Voronoi-Tesselierung über quadrierte euklidische Distanz und Tie-Break.
+   * **`ProportionalEnergyRoutingTest`**: Proportionale FE-Verteilung nach Zonendefiziten.
+   * **`EnergyRoutingRemainderTest`**: Exakter Rest-Tröpfchen-Loop (+1 FE) für verlustfreie Energieerhaltung.
+   * **`FastVoxelTraversalShieldTest`**: 3D-DDA-Traversierung bei Treffern auf Hülle und Schild.
+   * **`ShieldZonePayloadSerializationTest`**: Bit-genaue 64-Bit Bitmasken-Serialisierung via `ShieldZoneStatePayload`.
+   * **`LaserNodeRenderStateTest`**: Thread-sichere Render-State Extraktion und Kinematik.
+   * **`DataGeneratorsTest`**: Event-Handling für `GatherDataEvent`.
+   * **`ModBlockStateProviderTest`**: Euler-Winkel-Transformation und `cubeAll` Generierung.
+   * **`ModItemModelProviderTest`**: Parent-Referenzen und Item-Modelle.
+   * **`ModLanguageProviderTest`**: Symmetrische I18n/L10n-Übersetzungen (`en_us`, `de_de`).
+   * **`ModI18nTest`**: Strict Lowercase-Taxonomie-Validierung und Symmetrie-Coverage.
+   * **`ModLootTableProviderTest`**: Self-Drop-Logik und Vollständigkeitsprüfung aller 9 Blöcke.
+   * **`ShipCollisionMathTest`**: Continuous Swept-AABB Extrusion & BitSet-Linearisierung.
+   * **`ShipStateTest`**: Domain-Zustand, AABB-Neuberechnung, Controller-Translation.
+   * **`CombatLogicTest`**: 3D-DDA Ray-Traversal, Normalenflächen, Tier-Konfigurationen.
+   * **`PayloadSerializationTest`**: Symmetrische Serialisierung aller Custom-Payloads.
+   * **`SpaceshipEnergyManagerTest`**: Multi-Reaktor-Bündelung, sequenzieller FE-Drain, Transaktionssicherheit.
+   * **`AimTransformMathTest`**: Quaternion-Transformationen, Euler-Winkel-Konvertierung, 16-Bit Kompression.
+   * **`TurretSeatTest`**: TurretSeat DTO Attribute, NBT-Persistenz und Aim-Lock-Status.
+2. **NeoForge GameTests (`@GameTestHolder`, 29 Tests auf Dedicated GameTest-Server, 100% Erfolgsquote)**:
+   * **`WarpEngineGameTests` (3 Tests)**:
+     - `testWarpEnginePlacementAndEnergyStorage`: BlockEntity-Erstellung und 100.000 FE Kapazitätsgrenzen-Validierung.
+     - `testWarpEngineShipLinkage`: Schiffsbindung und automatische Subsystem-Registrierung in `ShipState.getWarpEngines()`.
+     - `testWarpEngineCountdownAndAbort`: Countdown-Initiierung nur bei 100% Ladung und sauberer Status-Reset bei Abbruch.
    * **`LaserNodeRenderStateTest`**: Thread-sichere Render-State Extraktion, interpolierte Kinematik (Yaw/Pitch), 180°-Winkel-Wrap und alle 6 `FACING`-Ausrichtungen (`UP`, `DOWN`, `NORTH`, `SOUTH`, `WEST`, `EAST`).
    * **`DataGeneratorsTest`**: Event-Handling für `GatherDataEvent`, Client/Server-Provider-Registrierung und HolderLookup-Lifecycle.
    * **`ModBlockStateProviderTest`**: 6-Achsen Euler-Winkel-Transformation (`rotX`, `rotY`) für `FACING` Split-Modell Basisplatten und `cubeAll` Generierung.

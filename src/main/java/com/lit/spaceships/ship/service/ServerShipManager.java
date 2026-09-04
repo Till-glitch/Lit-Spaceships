@@ -283,6 +283,7 @@ public class ServerShipManager {
         ship.getReactors().clear();
         ship.getShields().clear();
         ship.getWeapons().clear();
+        ship.getWarpEngines().clear();
 
         for (BlockPos pos : ship.getBlocks()) {
             BlockEntity be = level.getBlockEntity(pos);
@@ -292,6 +293,8 @@ public class ServerShipManager {
                 ship.getShields().add(pos);
             } else if (be instanceof com.lit.spaceships.block.entity.AbstractLaserNodeBlockEntity) {
                 ship.getWeapons().add(pos);
+            } else if (be instanceof com.lit.spaceships.block.entity.WarpEngineBlockEntity) {
+                ship.getWarpEngines().add(pos);
             }
         }
 

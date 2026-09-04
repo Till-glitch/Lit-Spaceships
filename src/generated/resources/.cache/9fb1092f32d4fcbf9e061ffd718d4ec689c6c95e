@@ -1,4 +1,4 @@
-// 1.21.1	2026-09-03T19:48:53.6734253	Recipes
+// 1.21.1	2026-09-04T21:53:03.6598822	Recipes
 dbb89f8343629a235e5d40d2866788d0ad6a6cac data/lit_spaceships/advancement/recipes/building_blocks/example_block_crafting.json
 d57c244401d3a228e10511a9f8863219ab6b3964 data/lit_spaceships/advancement/recipes/combat/backflip_tool_crafting.json
 b3d057111ad978668e933f690ed01a8af2eefa32 data/lit_spaceships/advancement/recipes/combat/heavy_beam_smithing.json
@@ -8,6 +8,7 @@ b3d057111ad978668e933f690ed01a8af2eefa32 data/lit_spaceships/advancement/recipes
 213e6cdc9ab2b0f9f4a18f98656e3fc5a4836272 data/lit_spaceships/advancement/recipes/misc/spaceship_helm_crafting.json
 986e88b4b8c4195163db2d3363fe0e58bdd9c3ea data/lit_spaceships/advancement/recipes/misc/spaceship_reactor_crafting.json
 a4c25909a85929474b19c26718f103b31c02bad1 data/lit_spaceships/advancement/recipes/misc/spaceship_shield_crafting.json
+5a45295caee222025eba23984e910ea0ac56ad44 data/lit_spaceships/advancement/recipes/misc/warp_engine_crafting.json
 33928f4ccb98402ea2c5414dca61b1ee6eb67cf3 data/lit_spaceships/recipe/backflip_tool_crafting.json
 9f6e6883467613f33abe62813077adb3fa78b580 data/lit_spaceships/recipe/example_block_crafting.json
 1dad2c1ea7e79465de5bb024b9303930fede3a00 data/lit_spaceships/recipe/heavy_beam_smithing.json
@@ -17,3 +18,4 @@ cd6011eccd5d64ad4501a872b446d5401b8a7c74 data/lit_spaceships/recipe/pulse_laser_
 fd546fcd51e3bb85cfe39ebdce89c7acd83eb9d8 data/lit_spaceships/recipe/spaceship_helm_crafting.json
 7ee4c2b826ce870740da5e5fc3bc1f9c5e625e4b data/lit_spaceships/recipe/spaceship_reactor_crafting.json
 d29e9ed6a52aee749c4f66a600ede2e99a222eaa data/lit_spaceships/recipe/spaceship_shield_crafting.json
+5ce1927365ec25fd511cd02410401b9c92cdc947 data/lit_spaceships/recipe/warp_engine_crafting.json

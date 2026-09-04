@@ -156,5 +156,18 @@ public class ModRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_nether_star", has(Items.NETHER_STAR))
                 .unlockedBy("has_lodestone", has(Items.LODESTONE))
                 .save(output, ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "spaceship_control_crafting"));
+
+        // 10. Warp Engine (Tier 4 Endgame Dimensional Drive)
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModBlocks.WARP_ENGINE.get())
+                .pattern("IEI")
+                .pattern("YDY")
+                .pattern("IEI")
+                .define('I', Items.IRON_BLOCK)
+                .define('E', Items.END_CRYSTAL)
+                .define('Y', Items.ENDER_EYE)
+                .define('D', Items.DIAMOND_BLOCK)
+                .unlockedBy("has_end_crystal", has(Items.END_CRYSTAL))
+                .unlockedBy("has_ender_eye", has(Items.ENDER_EYE))
+                .save(output, ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "warp_engine_crafting"));
     }
 }

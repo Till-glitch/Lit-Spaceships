@@ -120,6 +120,20 @@ public final class ModI18n {
         public static final String HUD_HELM_WARP_COOLDOWN = "screen." + LitSpaceships.MODID + ".hud.helm.warp_cooldown";
         public static final String HUD_HELM_READY = "screen." + LitSpaceships.MODID + ".hud.helm.ready";
         public static final String HUD_HELM_CONTROLS = "screen." + LitSpaceships.MODID + ".hud.helm.controls";
+
+        // Warp Engine Screen
+        public static final String WARP_TITLE = "screen." + LitSpaceships.MODID + ".warp.title";
+        public static final String WARP_ENGAGE = "screen." + LitSpaceships.MODID + ".warp.engage";
+        public static final String WARP_ABORT = "screen." + LitSpaceships.MODID + ".warp.abort";
+        public static final String WARP_ENERGY = "screen." + LitSpaceships.MODID + ".warp.energy";
+        public static final String WARP_STATUS_READY = "screen." + LitSpaceships.MODID + ".warp.status_ready";
+        public static final String WARP_STATUS_CHARGING = "screen." + LitSpaceships.MODID + ".warp.status_charging";
+        public static final String WARP_STATUS_COUNTDOWN = "screen." + LitSpaceships.MODID + ".warp.status_countdown";
+        public static final String WARP_STATUS_COOLDOWN = "screen." + LitSpaceships.MODID + ".warp.status_cooldown";
+        public static final String WARP_STATUS_UNLINKED = "screen." + LitSpaceships.MODID + ".warp.status_unlinked";
+        public static final String WARP_DESTINATION = "screen." + LitSpaceships.MODID + ".warp.destination";
+        public static final String WARP_DEST_SPACE = "screen." + LitSpaceships.MODID + ".warp.dest_space";
+        public static final String WARP_DEST_OVERWORLD = "screen." + LitSpaceships.MODID + ".warp.dest_overworld";
     }
 
     public static final class Message {
@@ -143,6 +157,12 @@ public final class ModI18n {
         public static final String COLLISION_WARNING = "message." + LitSpaceships.MODID + ".collision.warning";
         public static final String ROTATION_BLOCKED_COLLISION = "message." + LitSpaceships.MODID + ".rotation.blocked_collision";
         public static final String MOVEMENT_BLOCKED_IMMUNE = "message." + LitSpaceships.MODID + ".movement.blocked_immune";
+        public static final String WARP_COUNTDOWN_ABORTED = "message." + LitSpaceships.MODID + ".warp.countdown_aborted";
+        public static final String WARP_COUNTDOWN_ABORTED_MOVEMENT = "message." + LitSpaceships.MODID + ".warp.countdown_aborted_movement";
+        public static final String WARP_COOLDOWN_ACTIVE = "message." + LitSpaceships.MODID + ".warp.cooldown_active";
+        public static final String WARP_ENERGY_INSUFFICIENT = "message." + LitSpaceships.MODID + ".warp.energy_insufficient";
+        public static final String WARP_OBSTRUCTED = "message." + LitSpaceships.MODID + ".warp.obstructed";
+        public static final String WARP_COUNTDOWN_TICK = "message." + LitSpaceships.MODID + ".warp.countdown_tick";
         public static final String HELM_CONTROL_ENTER = "message." + LitSpaceships.MODID + ".helm.control.enter";
         public static final String HELM_CONTROL_LEAVE = "message." + LitSpaceships.MODID + ".helm.control.leave";
 
@@ -168,6 +188,7 @@ public final class ModI18n {
         public static final String WEAPON_TIER = "tooltip." + LitSpaceships.MODID + ".weapon.tier";
         public static final String ENERGY_COST = "tooltip." + LitSpaceships.MODID + ".weapon.energy_cost";
         public static final String SHIELD_STATUS = "tooltip." + LitSpaceships.MODID + ".shield.status";
+        public static final String WARP_ENGINE_CAPACITY = "tooltip." + LitSpaceships.MODID + ".warp.capacity";
     }
 
     public static final class Structure {

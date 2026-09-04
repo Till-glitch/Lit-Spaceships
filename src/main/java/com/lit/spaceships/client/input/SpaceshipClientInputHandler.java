@@ -43,6 +43,12 @@ public class SpaceshipClientInputHandler {
                 UUID shipId = node.getShipId();
                 ClientHooks.openControlScreen(shipId, pos);
             }
+        } else if (block instanceof com.lit.spaceships.block.WarpEngineBlock) {
+            BlockEntity be = event.getLevel().getBlockEntity(pos);
+            if (be instanceof com.lit.spaceships.block.ISpaceshipNode node) {
+                UUID shipId = node.getShipId();
+                ClientHooks.openWarpEngineScreen(shipId, pos);
+            }
         }
     }
 

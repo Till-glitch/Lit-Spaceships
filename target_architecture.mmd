@@ -356,6 +356,30 @@ classDiagram
             +distributeEnergyToShields(Level level, ShipState ship)$ int
             +distributeEnergyToShields(int availableEnergy, ShipState ship, long currentGameTime)$ int
         }
+
+        class WarpEngineBlockEntity {
+            +int REQUIRED_ENERGY$
+            +int COUNTDOWN_TOTAL_TICKS$
+            +long COOLDOWN_TOTAL_TICKS$
+            +int TRICKLE_CHARGE_RATE$
+            +receiveEnergy(int maxReceive, boolean simulate) int
+            +extractEnergy(int maxExtract, boolean simulate) int
+            +getEnergyStored() int
+            +startCountdown(Player initiator) boolean
+            +abortCountdown(Component reason) void
+            +isCountingDown() boolean
+            +getCountdownTicks() int
+            +getCooldownRemaining(long gameTime) long
+        }
+
+        class WarpService {
+            +int MAX_SEARCH_RADIUS$
+            +int RADIUS_STEP$
+            +getTargetLevel(ServerLevel originLevel)$ ServerLevel
+            +findSafeTargetPos(ServerLevel origin, ServerLevel target, ShipState ship)$ Optional~BlockPos~
+            +isPositionSafe(ServerLevel level, ShipState ship, BlockPos candidate)$ boolean
+            +executeWarp(ServerLevel origin, ServerLevel target, ShipState ship, BlockPos targetPos, Player initiator)$ boolean
+        }
     }
 
     %% ==========================================
@@ -440,11 +464,30 @@ classDiagram
             +BlockPos weaponPos
         }
 
+        class WarpActionPayload {
+            <<record>>
+            +BlockPos pos
+            +Action action
+        }
+
+        class WarpStateSyncPayload {
+            <<record>>
+            +BlockPos pos
+            +int energy
+            +int maxEnergy
+            +int countdownTicks
+            +int cooldownRemainingTicks
+            +boolean isCountingDown
+            +boolean isLinked
+            +boolean targetIsSpace
+        }
+
         class ServerPayloadHandler {
             +handleAction(ShipActionPayload payload, IPayloadContext context)$ void
             +handleCombatAction(ShipCombatActionPayload payload, IPayloadContext context)$ void
             +handleTurretAimSync(TurretAimSyncPayload payload, IPayloadContext context)$ void
             +handleTurretLockToggle(TurretLockTogglePayload payload, IPayloadContext context)$ void
+            +handleWarpAction(WarpActionPayload payload, IPayloadContext context)$ void
         }
 
         class ClientPayloadHandler {
@@ -454,6 +497,7 @@ classDiagram
             +handleLaserFire(LaserFirePayload packet, IPayloadContext context)$ void
             +handleLaserStateSync(LaserStateSyncPayload packet, IPayloadContext context)$ void
             +handleTurretAimSync(TurretAimSyncPayload packet, IPayloadContext context)$ void
+            +handleWarpStateSync(WarpStateSyncPayload packet, IPayloadContext context)$ void
         }
     }
 
@@ -488,6 +532,18 @@ classDiagram
         }
 
         class SpaceshipHelmConfigScreen {
+            +render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) void
+        }
+
+        class WarpEngineScreen {
+            -int currentEnergy
+            -int maxEnergy
+            -int countdownTicks
+            -int cooldownRemainingTicks
+            -boolean isCountingDown
+            -boolean isLinked
+            -boolean targetIsSpace
+            +updateState(WarpStateSyncPayload payload) void
             +render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) void
         }
 
@@ -661,3 +717,11 @@ classDiagram
     DataGenerators ..> ModRecipeProvider : instantiates server
     ModJeiPlugin ..> SpaceshipReactorScreen : exclusion & click area
     ModJeiPlugin ..> SpaceshipShieldScreen : exclusion area
+
+    WarpEngineBlockEntity --|> AbstractSpaceshipNodeBlockEntity : extends
+    WarpEngineBlockEntity ..|> IEnergyStorage : implements
+    WarpEngineBlockEntity ..> WarpService : executes dimensional search & jump
+    WarpEngineBlockEntity ..> WarpStateSyncPayload : broadcasts
+    ServerPayloadHandler ..> WarpEngineBlockEntity : dispatches WarpActionPayload
+    ClientPayloadHandler ..> WarpEngineScreen : updates state
+    WarpService ..> ShipTeleportationService : delegates transaction jump

@@ -45,6 +45,12 @@ public class ModPayloads {
                 ServerPayloadHandler::handleTurretLockToggle
         );
 
+        registrar.playToServer(
+                WarpActionPayload.TYPE,
+                WarpActionPayload.STREAM_CODEC,
+                ServerPayloadHandler::handleWarpAction
+        );
+
         // 2. Clientbound / Bidirektionale Payloads (Sided getrennt)
         if (FMLEnvironment.dist.isClient()) {
             com.lit.spaceships.client.network.ClientPayloadRegistrar.registerClientPayloads(registrar);
@@ -64,6 +70,7 @@ public class ModPayloads {
         registrar.playToClient(LaserStateSyncPayload.TYPE, LaserStateSyncPayload.STREAM_CODEC, (p, c) -> {});
         registrar.playToClient(ShipDimensionSyncPayload.TYPE, ShipDimensionSyncPayload.STREAM_CODEC, (p, c) -> {});
         registrar.playToClient(ShieldZoneStatePayload.TYPE, ShieldZoneStatePayload.STREAM_CODEC, (p, c) -> {});
+        registrar.playToClient(WarpStateSyncPayload.TYPE, WarpStateSyncPayload.STREAM_CODEC, (p, c) -> {});
         registrar.playBidirectional(TurretAimPayload.TYPE, TurretAimPayload.STREAM_CODEC, (p, c) -> {
             if (c.flow().isServerbound()) {
                 ServerPayloadHandler.handleTurretAim(p, c);

@@ -28,6 +28,8 @@ public class ModItems {
             ModBlocks.HEAVY_BEAM);
     public static final DeferredItem<BlockItem> MINING_LASER_ITEM = ITEMS.registerSimpleBlockItem("mining_laser",
             ModBlocks.MINING_LASER);
+    public static final DeferredItem<BlockItem> WARP_ENGINE_ITEM = ITEMS.registerSimpleBlockItem("warp_engine",
+            ModBlocks.WARP_ENGINE);
 
     // Items
     public static final DeferredItem<Item> BACKFLIP_TOOL = ITEMS.register("backflip_tool",

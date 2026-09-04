@@ -1,4 +1,4 @@
-// 1.21.1	2026-09-03T19:48:53.6734253	Loot Tables
+// 1.21.1	2026-09-04T21:53:03.6598822	Loot Tables
 c686c702816b7ce3a51573b04d9c31a7c294fde0 data/lit_spaceships/loot_table/blocks/example_block.json
 4652d0d85eebdf140eea1bc96156348470c64200 data/lit_spaceships/loot_table/blocks/heavy_beam.json
 82b3e7a03f2d0ed9f706d2eb95496a8e8787725c data/lit_spaceships/loot_table/blocks/mining_laser.json
@@ -7,3 +7,4 @@ f55d85221ba5f6e2f8f45a037f9237bef291299c data/lit_spaceships/loot_table/blocks/s
 ce627dc9cfe8113343de901148b176b576813af5 data/lit_spaceships/loot_table/blocks/spaceship_helm.json
 bde3253b3649480a467b34249fb263b05c030dfc data/lit_spaceships/loot_table/blocks/spaceship_reactor.json
 f3362b8bc4e3a775d441121a8f1a89df443dd0f2 data/lit_spaceships/loot_table/blocks/spaceship_shield.json
+62d1745969e9ee64adff6a2177c9f48bd645647e data/lit_spaceships/loot_table/blocks/warp_engine.json

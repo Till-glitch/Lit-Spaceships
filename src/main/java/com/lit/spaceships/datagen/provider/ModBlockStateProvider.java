@@ -35,6 +35,9 @@ public class ModBlockStateProvider extends BlockStateProvider {
         ModelFile shieldModel = models().getExistingFile(modLoc("block/spaceship_shield"));
         simpleBlock(ModBlocks.SPACESHIP_SHIELD.get(), shieldModel);
 
+        ModelFile warpModel = models().getExistingFile(modLoc("block/warp_engine"));
+        simpleBlock(ModBlocks.WARP_ENGINE.get(), warpModel);
+
         // Laser Split-Model Extrahierung (Nur die statische Voxel-Basisplatte)
         ModelFile laserBaseModel = models().getExistingFile(modLoc("block/laser_base"));
         registerLaserBase(ModBlocks.PULSE_LASER.get(), laserBaseModel);

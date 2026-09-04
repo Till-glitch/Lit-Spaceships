@@ -1,4 +1,4 @@
-// 1.21.1	2026-09-03T19:48:53.6687611	Item Models: lit_spaceships
+// 1.21.1	2026-09-04T21:53:03.6598822	Item Models: lit_spaceships
 c1257a7aa762c12b688714cf0c4b7dfa52e91e5f assets/lit_spaceships/models/item/backflip_tool.json
 bd3e9ac6059bc9b68cc18825f46890fd75edb565 assets/lit_spaceships/models/item/heavy_beam.json
 bd3e9ac6059bc9b68cc18825f46890fd75edb565 assets/lit_spaceships/models/item/mining_laser.json
@@ -7,3 +7,4 @@ bd3e9ac6059bc9b68cc18825f46890fd75edb565 assets/lit_spaceships/models/item/pulse
 fd7d69f8d8fcc75bf6a565d7a7a9ebce48485325 assets/lit_spaceships/models/item/spaceship_helm.json
 f3890c39d1ec39b116e8b463adad52d3a80c0c5b assets/lit_spaceships/models/item/spaceship_reactor.json
 d1d81ca6a1c1b34fb0c3e6f86fc6ea666d070029 assets/lit_spaceships/models/item/spaceship_shield.json
+1b607710aaaeae22846695ed5c54d5f0f037fe65 assets/lit_spaceships/models/item/warp_engine.json
