@@ -45,6 +45,12 @@ public final class ModBiomes {
      */
     public static final ResourceKey<Biome> FROZEN_EXPANSE = createKey("frozen_expanse");
 
+    /**
+     * Void Wastes: totale sensorische Deprivation — vollkommene Schwärze ohne
+     * Partikel oder Klänge — und ein Friedhof verlassener Wracks.
+     */
+    public static final ResourceKey<Biome> VOID_WASTES = createKey("void_wastes");
+
     private ModBiomes() {
     }
 
@@ -53,12 +59,14 @@ public final class ModBiomes {
         context.register(SPACE_BIOME, spaceBiome(placedFeatures));
         context.register(PLASMA_NEBULA, plasmaNebula());
         context.register(FROZEN_EXPANSE, frozenExpanse(placedFeatures));
+        context.register(VOID_WASTES, voidWastes(placedFeatures));
     }
 
     static void bootstrapWith(BootstrapContext<Biome> context, HolderGetter<PlacedFeature> placedFeatures) {
         context.register(SPACE_BIOME, spaceBiome(placedFeatures));
         context.register(PLASMA_NEBULA, plasmaNebula());
         context.register(FROZEN_EXPANSE, frozenExpanse(placedFeatures));
+        context.register(VOID_WASTES, voidWastes(placedFeatures));
     }
 
     /**
@@ -130,6 +138,35 @@ public final class ModBiomes {
                 .generationSettings(new BiomeGenerationSettings.PlainBuilder()
                         .addFeature(GenerationStep.Decoration.RAW_GENERATION,
                                 placedFeatures.getOrThrow(ModPlacedFeatures.ICE_COMET_PLACED))
+                        .build())
+                .build();
+    }
+
+    /**
+     * Void Wastes: vollkommene Schwärze (Farbe 0) ohne jegliche Partikel oder
+     * Ambient-Klänge — sensorische Deprivation. Generation: normale Asteroiden
+     * plus ein dichtes Wrack-Feld (Friedhof verlassener Schiffe).
+     */
+    static Biome voidWastes(HolderGetter<PlacedFeature> placedFeatures) {
+        return new Biome.BiomeBuilder()
+                .hasPrecipitation(false)
+                .temperature(0.0F)
+                .downfall(0.0F)
+                .temperatureAdjustment(Biome.TemperatureModifier.NONE)
+                .specialEffects(new BiomeSpecialEffects.Builder()
+                        .fogColor(0)
+                        .skyColor(0)
+                        .waterColor(328981)
+                        .waterFogColor(328981)
+                        .grassColorOverride(0)
+                        .foliageColorOverride(0)
+                        .build())
+                .mobSpawnSettings(MobSpawnSettings.EMPTY)
+                .generationSettings(new BiomeGenerationSettings.PlainBuilder()
+                        .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                                placedFeatures.getOrThrow(ModPlacedFeatures.ASTEROID_PLACED))
+                        .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                                placedFeatures.getOrThrow(ModPlacedFeatures.WRECK_FIELD_PLACED))
                         .build())
                 .build();
     }

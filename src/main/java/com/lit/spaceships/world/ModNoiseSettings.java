@@ -33,19 +33,20 @@ public final class ModNoiseSettings {
     }
 
     public static void bootstrap(BootstrapContext<NoiseGeneratorSettings> context) {
-        Holder<NormalNoise.NoiseParameters> temperatureNoise =
-                context.lookup(Registries.NOISE).getOrThrow(Noises.TEMPERATURE);
-        context.register(ModDimensions.SPACE_NOISE_SETTINGS, spaceNoiseSettings(temperatureNoise));
+        HolderGetter<NormalNoise.NoiseParameters> noises = context.lookup(Registries.NOISE);
+        context.register(ModDimensions.SPACE_NOISE_SETTINGS, spaceNoiseSettings(
+                noises.getOrThrow(Noises.TEMPERATURE), noises.getOrThrow(Noises.VEGETATION)));
     }
 
-    static NoiseGeneratorSettings spaceNoiseSettings(Holder<NormalNoise.NoiseParameters> temperatureNoise) {
+    static NoiseGeneratorSettings spaceNoiseSettings(Holder<NormalNoise.NoiseParameters> temperatureNoise,
+                                                     Holder<NormalNoise.NoiseParameters> vegetationNoise) {
         NoiseRouter router = new NoiseRouter(
                 DensityFunctions.zero(),        // barrier
                 DensityFunctions.zero(),        // fluid_level_floodedness
                 DensityFunctions.zero(),        // fluid_level_spread
                 DensityFunctions.zero(),        // lava
                 DensityFunctions.noise(temperatureNoise), // temperature (steuert Multi-Noise-Biome)
-                DensityFunctions.zero(),        // vegetation
+                DensityFunctions.noise(vegetationNoise),  // vegetation = Feuchteachse (Multi-Noise-Biome)
                 DensityFunctions.zero(),        // continents
                 DensityFunctions.zero(),        // erosion
                 DensityFunctions.zero(),        // depth

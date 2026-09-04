@@ -106,8 +106,11 @@ class ModSpaceWorldGenTest {
 
         assertKey(ModConfiguredFeatures.ASTEROID, Registries.CONFIGURED_FEATURE, "asteroid");
         assertKey(ModConfiguredFeatures.SPACE_WRECK, Registries.CONFIGURED_FEATURE, "space_wreck");
+        assertKey(ModConfiguredFeatures.ICE_COMET, Registries.CONFIGURED_FEATURE, "ice_comet");
         assertKey(ModPlacedFeatures.ASTEROID_PLACED, Registries.PLACED_FEATURE, "asteroid_placed");
         assertKey(ModPlacedFeatures.SPACE_WRECK_PLACED, Registries.PLACED_FEATURE, "space_wreck_placed");
+        assertKey(ModPlacedFeatures.ICE_COMET_PLACED, Registries.PLACED_FEATURE, "ice_comet_placed");
+        assertKey(ModPlacedFeatures.WRECK_FIELD_PLACED, Registries.PLACED_FEATURE, "wreck_field_placed");
     }
 
     private void assertKey(ResourceKey<?> key, ResourceKey<? extends net.minecraft.core.Registry<?>> registry, String path) {
@@ -211,6 +214,8 @@ class ModSpaceWorldGenTest {
         doReturn(wreckPlaced).when(placedGetter).getOrThrow(ModPlacedFeatures.SPACE_WRECK_PLACED);
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.ICE_COMET_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.ICE_COMET_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.WRECK_FIELD_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.WRECK_FIELD_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 
@@ -242,6 +247,65 @@ class ModSpaceWorldGenTest {
     }
 
     @Test
+    @DisplayName("Void Wastes: vollkommene Schwärze ohne Partikel, mit Asteroiden und dichtem Wrack-Feld")
+    void voidWastesIsDeprivedDerelictZone() {
+        when(biomeContext.lookup(Registries.PLACED_FEATURE)).thenReturn(placedGetter);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.ASTEROID_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.ASTEROID_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.SPACE_WRECK_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.SPACE_WRECK_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.ICE_COMET_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.ICE_COMET_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.WRECK_FIELD_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.WRECK_FIELD_PLACED);
+
+        ModBiomes.bootstrap(biomeContext);
+
+        ArgumentCaptor<Biome> captor = ArgumentCaptor.forClass(Biome.class);
+        verify(biomeContext).register(eq(ModBiomes.VOID_WASTES), captor.capture());
+
+        Biome wastes = captor.getValue();
+        assertFalse(wastes.hasPrecipitation());
+        // Vollkommene Schwärze + sensorische Deprivation: kein Partikel, kein Mood-Sound
+        assertEquals(0, wastes.getFogColor());
+        assertEquals(0, wastes.getSkyColor());
+        assertTrue(wastes.getAmbientParticle().isEmpty());
+        assertTrue(wastes.getAmbientMood().isEmpty());
+
+        for (MobCategory category : MobCategory.values()) {
+            assertTrue(wastes.getMobSettings().getMobs(category).isEmpty(), category.getName());
+        }
+
+        // Derelict Spawn Area: normale Asteroiden + dichtes Wrack-Feld in Stufe 0
+        List<HolderSet<PlacedFeature>> featureSteps = wastes.getGenerationSettings().features();
+        assertEquals(1, featureSteps.size());
+        List<ResourceKey<PlacedFeature>> stepZeroKeys = featureSteps.get(0).stream()
+                .map(holder -> holder.unwrapKey().orElseThrow())
+                .toList();
+        assertEquals(List.of(ModPlacedFeatures.ASTEROID_PLACED, ModPlacedFeatures.WRECK_FIELD_PLACED), stepZeroKeys);
+    }
+
+    @Test
+    @DisplayName("Wrack-Feld-Platzierung: 8x dichtere Rarity 1/4, InSquare, Uniformhöhe 0..200, Biome-Filter")
+    void wreckFieldPlacementMathIsBounded() {
+        List<PlacementModifier> modifiers = ModPlacedFeatures.wreckFieldPlacement();
+
+        assertEquals(4, modifiers.size());
+        assertInstanceOf(RarityFilter.class, modifiers.get(0));
+        assertSame(InSquarePlacement.spread(), modifiers.get(1));
+        assertInstanceOf(HeightRangePlacement.class, modifiers.get(2));
+        assertSame(BiomeFilter.biome(), modifiers.get(3));
+
+        RarityFilter rarity = (RarityFilter) modifiers.get(0);
+        assertEquals(4, (int) privateField(rarity, "chance", Integer.class));
+
+        HeightRangePlacement height = (HeightRangePlacement) modifiers.get(2);
+        UniformHeight uniform = privateField(height, "height", UniformHeight.class);
+        assertEquals(0, absoluteAnchorY(privateField(uniform, "minInclusive", VerticalAnchor.class)));
+        assertEquals(200, absoluteAnchorY(privateField(uniform, "maxInclusive", VerticalAnchor.class)));
+    }
+
+    @Test
     @DisplayName("Plasma-Nebel: violetter Nebel #7F00FF, glühende Partikel, keine Spawns, keine Features")
     void plasmaNebulaIsGlowingVioletZone() {
         when(biomeContext.lookup(Registries.PLACED_FEATURE)).thenReturn(placedGetter);
@@ -251,6 +315,8 @@ class ModSpaceWorldGenTest {
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.SPACE_WRECK_PLACED);
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.ICE_COMET_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.ICE_COMET_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.WRECK_FIELD_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.WRECK_FIELD_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 
@@ -280,29 +346,33 @@ class ModSpaceWorldGenTest {
     }
 
     @Test
-    @DisplayName("Multi-Noise-Verteilung routet Temperatur 3-wege: kalt=Frozen, mittel=Void, heiß=Nebel")
+    @DisplayName("Multi-Noise-Verteilung: 4 Rechtecke über Temperatur und Feuchte, lückenlos geroutet")
     void spaceBiomeDistributionRoutesTemperature() {
         Climate.ParameterList<ResourceKey<Biome>> distribution = ModDimensions.spaceBiomeDistribution();
 
         assertSame(ModBiomes.FROZEN_EXPANSE,
                 distribution.findValue(new Climate.TargetPoint(-8000L, 0L, 0L, 0L, 0L, 0L)));
+        assertSame(ModBiomes.VOID_WASTES,
+                distribution.findValue(new Climate.TargetPoint(0L, -8000L, 0L, 0L, 0L, 0L)));
         assertSame(ModDimensions.SPACE_BIOME,
-                distribution.findValue(new Climate.TargetPoint(0L, 0L, 0L, 0L, 0L, 0L)));
+                distribution.findValue(new Climate.TargetPoint(0L, 8000L, 0L, 0L, 0L, 0L)));
         assertSame(ModBiomes.PLASMA_NEBULA,
                 distribution.findValue(new Climate.TargetPoint(8000L, 0L, 0L, 0L, 0L, 0L)));
-        assertSame(ModDimensions.SPACE_BIOME,
-                distribution.findValue(new Climate.TargetPoint(1000L, 0L, 0L, 0L, 0L, 0L)));
+        assertSame(ModBiomes.VOID_WASTES,
+                distribution.findValue(new Climate.TargetPoint(1000L, -5000L, 0L, 0L, 0L, 0L)));
         assertSame(ModBiomes.FROZEN_EXPANSE,
-                distribution.findValue(new Climate.TargetPoint(-5000L, 0L, 0L, 0L, 0L, 0L)));
+                distribution.findValue(new Climate.TargetPoint(-5000L, 9000L, 0L, 0L, 0L, 0L)));
     }
 
     @Test
-    @DisplayName("Space-Noise-Settings: reiner Void mit negativer Dichte und Temperatur-Noise für Biome")
+    @DisplayName("Space-Noise-Settings: reiner Void mit negativer Dichte, Temperatur- und Feuchte-Noise")
     void spaceNoiseSettingsAreVoidWithTemperatureNoise() {
         Holder<NormalNoise.NoiseParameters> temperatureNoise =
                 Holder.direct(new NormalNoise.NoiseParameters(-9, 1.0));
+        Holder<NormalNoise.NoiseParameters> vegetationNoise =
+                Holder.direct(new NormalNoise.NoiseParameters(-9, 1.0));
 
-        NoiseGeneratorSettings settings = ModNoiseSettings.spaceNoiseSettings(temperatureNoise);
+        NoiseGeneratorSettings settings = ModNoiseSettings.spaceNoiseSettings(temperatureNoise, vegetationNoise);
 
         assertEquals(-64, settings.seaLevel());
         assertTrue(settings.disableMobGeneration());
@@ -321,6 +391,8 @@ class ModSpaceWorldGenTest {
         NoiseRouter router = settings.noiseRouter();
         assertTrue(router.temperature().minValue() < 0.0 && router.temperature().maxValue() > 0.0,
                 "Temperatur muss echte Noise-Struktur besitzen (Multi-Noise-Routing)");
+        assertTrue(router.vegetation().minValue() < 0.0 && router.vegetation().maxValue() > 0.0,
+                "Feuchteachse (vegetation) muss echte Noise-Struktur besitzen");
         assertEquals(-1.0D, router.finalDensity().minValue(), 0.0D);
         assertEquals(-1.0D, router.finalDensity().maxValue(), 0.0D);
     }
@@ -361,9 +433,13 @@ class ModSpaceWorldGenTest {
                 .when(biomeGetter).getOrThrow(ModBiomes.PLASMA_NEBULA);
         doReturn(Holder.Reference.createStandAlone(biomeOwner, ModBiomes.FROZEN_EXPANSE))
                 .when(biomeGetter).getOrThrow(ModBiomes.FROZEN_EXPANSE);
+        doReturn(Holder.Reference.createStandAlone(biomeOwner, ModBiomes.VOID_WASTES))
+                .when(biomeGetter).getOrThrow(ModBiomes.VOID_WASTES);
 
         Holder<NoiseGeneratorSettings> settingsHolder =
-                Holder.direct(ModNoiseSettings.spaceNoiseSettings(Holder.direct(new NormalNoise.NoiseParameters(-9, 1.0))));
+                Holder.direct(ModNoiseSettings.spaceNoiseSettings(
+                        Holder.direct(new NormalNoise.NoiseParameters(-9, 1.0)),
+                        Holder.direct(new NormalNoise.NoiseParameters(-9, 1.0))));
         Holder<DimensionType> typeHolder = Holder.direct(ModDimensions.spaceDimensionType());
 
         LevelStem stem = ModDimensions.spaceLevelStem(biomeGetter, settingsHolder, typeHolder);
@@ -375,7 +451,8 @@ class ModSpaceWorldGenTest {
         Set<ResourceKey<Biome>> possibleBiomes = generator.getBiomeSource().possibleBiomes().stream()
                 .map(holder -> holder.unwrapKey().orElseThrow())
                 .collect(java.util.stream.Collectors.toSet());
-        assertEquals(Set.of(ModDimensions.SPACE_BIOME, ModBiomes.PLASMA_NEBULA, ModBiomes.FROZEN_EXPANSE), possibleBiomes);
+        assertEquals(Set.of(ModDimensions.SPACE_BIOME, ModBiomes.PLASMA_NEBULA, ModBiomes.FROZEN_EXPANSE,
+                ModBiomes.VOID_WASTES), possibleBiomes);
     }
 
     @Test
@@ -388,6 +465,8 @@ class ModSpaceWorldGenTest {
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.SPACE_WRECK_PLACED);
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.ICE_COMET_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.ICE_COMET_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.WRECK_FIELD_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.WRECK_FIELD_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 

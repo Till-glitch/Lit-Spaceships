@@ -104,11 +104,12 @@ public class ModDimensions {
     }
 
     /**
-     * Klimatische Verteilung der Weltraum-Biome: Die Temperatur entscheidet als
-     * 3-Wege-Partition (lückenlos, Überlappungsfrei an den Grenzen): Frozen
-     * Expanse = kälteste Zone, Void = gemäßigte Zone, Plasma-Nebel = heißeste
-     * Zone. Alle anderen Klimaparameter decken die volle Spanne ab
-     * (Router-Konstanten 0 bzw. nicht-routing).
+     * Klimatische Verteilung der Weltraum-Biome: Zwei-achsen-lückenlose
+     * Rechteck-Partition über Temperatur (Router-Noise) und Feuchte
+     * (Router-vegetation): Frozen Expanse = kältester Streifen, Void Wastes =
+     * trockene Hälfte des gemäßigten Bandes, Void (Basis) = feuchte Hälfte,
+     * Plasma-Nebel = heißester Streifen. An den Plattengrenzen ist jeder Punkt
+     * strikt dem nächstgelegenen Rechteck zugeordnet.
      */
     static Climate.ParameterList<ResourceKey<Biome>> spaceBiomeDistribution() {
         Climate.Parameter any = Climate.Parameter.span(-1.0F, 1.0F);
@@ -116,7 +117,11 @@ public class ModDimensions {
                 Pair.of(new Climate.ParameterPoint(
                         Climate.Parameter.span(-1.0F, -0.3F), any, any, any, any, any, 0L), ModBiomes.FROZEN_EXPANSE),
                 Pair.of(new Climate.ParameterPoint(
-                        Climate.Parameter.span(-0.3F, 0.4F), any, any, any, any, any, 0L), SPACE_BIOME),
+                        Climate.Parameter.span(-0.3F, 0.4F), Climate.Parameter.span(-1.0F, 0.0F),
+                        any, any, any, any, 0L), ModBiomes.VOID_WASTES),
+                Pair.of(new Climate.ParameterPoint(
+                        Climate.Parameter.span(-0.3F, 0.4F), Climate.Parameter.span(0.0F, 1.0F),
+                        any, any, any, any, 0L), SPACE_BIOME),
                 Pair.of(new Climate.ParameterPoint(
                         Climate.Parameter.span(0.4F, 1.0F), any, any, any, any, any, 0L), ModBiomes.PLASMA_NEBULA)
         ));

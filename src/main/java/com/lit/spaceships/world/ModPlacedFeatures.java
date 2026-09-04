@@ -27,6 +27,7 @@ public final class ModPlacedFeatures {
     public static final ResourceKey<PlacedFeature> ASTEROID_PLACED = createKey("asteroid_placed");
     public static final ResourceKey<PlacedFeature> SPACE_WRECK_PLACED = createKey("space_wreck_placed");
     public static final ResourceKey<PlacedFeature> ICE_COMET_PLACED = createKey("ice_comet_placed");
+    public static final ResourceKey<PlacedFeature> WRECK_FIELD_PLACED = createKey("wreck_field_placed");
 
     private ModPlacedFeatures() {
     }
@@ -39,6 +40,8 @@ public final class ModPlacedFeatures {
                 configuredFeatures.getOrThrow(ModConfiguredFeatures.SPACE_WRECK), spaceWreckPlacement()));
         context.register(ICE_COMET_PLACED, new PlacedFeature(
                 configuredFeatures.getOrThrow(ModConfiguredFeatures.ICE_COMET), iceCometPlacement()));
+        context.register(WRECK_FIELD_PLACED, new PlacedFeature(
+                configuredFeatures.getOrThrow(ModConfiguredFeatures.SPACE_WRECK), wreckFieldPlacement()));
     }
 
     /**
@@ -59,6 +62,20 @@ public final class ModPlacedFeatures {
     static List<PlacementModifier> spaceWreckPlacement() {
         return List.of(
                 RarityFilter.onAverageOnceEvery(32),
+                InSquarePlacement.spread(),
+                HeightRangePlacement.uniform(VerticalAnchor.absolute(0), VerticalAnchor.absolute(200)),
+                BiomeFilter.biome()
+        );
+    }
+
+    /**
+     * Wrack-Feld der Void Wastes: im Schnitt 1 Wrack pro 4 Chunks (8x dichter
+     * als der Basis-Weltraum) zwischen Y 0 und +200 — Friedhof verlassener
+     * Schiffe, wiederverwendet das konfigurierte space_wreck-Feature.
+     */
+    static List<PlacementModifier> wreckFieldPlacement() {
+        return List.of(
+                RarityFilter.onAverageOnceEvery(4),
                 InSquarePlacement.spread(),
                 HeightRangePlacement.uniform(VerticalAnchor.absolute(0), VerticalAnchor.absolute(200)),
                 BiomeFilter.biome()
