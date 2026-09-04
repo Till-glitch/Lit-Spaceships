@@ -29,6 +29,7 @@ public final class ModPlacedFeatures {
     public static final ResourceKey<PlacedFeature> ICE_COMET_PLACED = createKey("ice_comet_placed");
     public static final ResourceKey<PlacedFeature> WRECK_FIELD_PLACED = createKey("wreck_field_placed");
     public static final ResourceKey<PlacedFeature> MEGA_ASTEROID_PLACED = createKey("mega_asteroid_placed");
+    public static final ResourceKey<PlacedFeature> PLANETARY_RING_PLACED = createKey("planetary_ring_placed");
 
     private ModPlacedFeatures() {
     }
@@ -45,6 +46,8 @@ public final class ModPlacedFeatures {
                 configuredFeatures.getOrThrow(ModConfiguredFeatures.SPACE_WRECK), wreckFieldPlacement()));
         context.register(MEGA_ASTEROID_PLACED, new PlacedFeature(
                 configuredFeatures.getOrThrow(ModConfiguredFeatures.MEGA_ASTEROID), megaAsteroidPlacement()));
+        context.register(PLANETARY_RING_PLACED, new PlacedFeature(
+                configuredFeatures.getOrThrow(ModConfiguredFeatures.PLANETARY_RING), planetaryRingPlacement()));
     }
 
     /**
@@ -94,6 +97,18 @@ public final class ModPlacedFeatures {
                 RarityFilter.onAverageOnceEvery(96),
                 InSquarePlacement.spread(),
                 HeightRangePlacement.uniform(VerticalAnchor.absolute(-40), VerticalAnchor.absolute(280)),
+                BiomeFilter.biome()
+        );
+    }
+
+    /**
+     * Planetarische Ringe: 1 Versuch pro Chunk (die Annulus-Geometrie regelt
+     * die Dichte selbst — der Chunk schreibt nur seine 16x16-Spalten).
+     */
+    static List<PlacementModifier> planetaryRingPlacement() {
+        return List.of(
+                CountPlacement.of(1),
+                InSquarePlacement.spread(),
                 BiomeFilter.biome()
         );
     }

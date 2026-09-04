@@ -140,6 +140,8 @@ public final class ModBiomes {
                                 placedFeatures.getOrThrow(ModPlacedFeatures.ICE_COMET_PLACED))
                         .addFeature(GenerationStep.Decoration.RAW_GENERATION,
                                 placedFeatures.getOrThrow(ModPlacedFeatures.MEGA_ASTEROID_PLACED))
+                        .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                                placedFeatures.getOrThrow(ModPlacedFeatures.PLANETARY_RING_PLACED))
                         .build())
                 .build();
     }
@@ -171,6 +173,8 @@ public final class ModBiomes {
                                 placedFeatures.getOrThrow(ModPlacedFeatures.WRECK_FIELD_PLACED))
                         .addFeature(GenerationStep.Decoration.RAW_GENERATION,
                                 placedFeatures.getOrThrow(ModPlacedFeatures.MEGA_ASTEROID_PLACED))
+                        .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                                placedFeatures.getOrThrow(ModPlacedFeatures.PLANETARY_RING_PLACED))
                         .build())
                 .build();
     }
@@ -183,6 +187,8 @@ public final class ModBiomes {
                         placedFeatures.getOrThrow(ModPlacedFeatures.SPACE_WRECK_PLACED))
                 .addFeature(GenerationStep.Decoration.RAW_GENERATION,
                         placedFeatures.getOrThrow(ModPlacedFeatures.MEGA_ASTEROID_PLACED))
+                .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                        placedFeatures.getOrThrow(ModPlacedFeatures.PLANETARY_RING_PLACED))
                 .build();
     }
 

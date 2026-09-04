@@ -13,7 +13,8 @@
     [
       "lit_spaceships:asteroid_placed",
       "lit_spaceships:wreck_field_placed",
-      "lit_spaceships:mega_asteroid_placed"
+      "lit_spaceships:mega_asteroid_placed",
+      "lit_spaceships:planetary_ring_placed"
     ]
   ],
   "has_precipitation": false,

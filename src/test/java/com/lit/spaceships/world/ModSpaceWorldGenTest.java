@@ -3,6 +3,7 @@ package com.lit.spaceships.world;
 import com.lit.spaceships.world.feature.AsteroidFeature;
 import com.lit.spaceships.world.feature.IceCometFeature;
 import com.lit.spaceships.world.feature.MegaAsteroidFeature;
+import com.lit.spaceships.world.feature.PlanetaryRingFeature;
 import com.lit.spaceships.world.feature.SpaceWreckFeature;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.Holder;
@@ -20,6 +21,8 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeGenerationSettings;
@@ -56,6 +59,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -116,7 +120,9 @@ class ModSpaceWorldGenTest {
         assertKey(ModPlacedFeatures.SPACE_WRECK_PLACED, Registries.PLACED_FEATURE, "space_wreck_placed");
         assertKey(ModPlacedFeatures.ICE_COMET_PLACED, Registries.PLACED_FEATURE, "ice_comet_placed");
         assertKey(ModConfiguredFeatures.MEGA_ASTEROID, Registries.CONFIGURED_FEATURE, "mega_asteroid");
+        assertKey(ModConfiguredFeatures.PLANETARY_RING, Registries.CONFIGURED_FEATURE, "planetary_ring");
         assertKey(ModPlacedFeatures.MEGA_ASTEROID_PLACED, Registries.PLACED_FEATURE, "mega_asteroid_placed");
+        assertKey(ModPlacedFeatures.PLANETARY_RING_PLACED, Registries.PLACED_FEATURE, "planetary_ring_placed");
         assertKey(ModPlacedFeatures.WRECK_FIELD_PLACED, Registries.PLACED_FEATURE, "wreck_field_placed");
     }
 
@@ -132,14 +138,16 @@ class ModSpaceWorldGenTest {
         SpaceWreckFeature wreck = new SpaceWreckFeature(NoneFeatureConfiguration.CODEC);
         IceCometFeature iceComet = new IceCometFeature(NoneFeatureConfiguration.CODEC);
         MegaAsteroidFeature megaAsteroid = new MegaAsteroidFeature(NoneFeatureConfiguration.CODEC);
+        PlanetaryRingFeature planetaryRing = new PlanetaryRingFeature(NoneFeatureConfiguration.CODEC);
 
-        ModConfiguredFeatures.bootstrapWith(configuredContext, asteroid, wreck, iceComet, megaAsteroid);
+        ModConfiguredFeatures.bootstrapWith(configuredContext, asteroid, wreck, iceComet, megaAsteroid, planetaryRing);
 
         ArgumentCaptor<ConfiguredFeature<?, ?>> captor = ArgumentCaptor.forClass(ConfiguredFeature.class);
         verify(configuredContext).register(eq(ModConfiguredFeatures.ASTEROID), captor.capture());
         verify(configuredContext).register(eq(ModConfiguredFeatures.SPACE_WRECK), any());
         verify(configuredContext).register(eq(ModConfiguredFeatures.ICE_COMET), any());
         verify(configuredContext).register(eq(ModConfiguredFeatures.MEGA_ASTEROID), any());
+        verify(configuredContext).register(eq(ModConfiguredFeatures.PLANETARY_RING), any());
 
         ConfiguredFeature<?, ?> registered = captor.getValue();
         assertSame(asteroid, registered.feature());
@@ -227,6 +235,8 @@ class ModSpaceWorldGenTest {
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.WRECK_FIELD_PLACED);
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.MEGA_ASTEROID_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.MEGA_ASTEROID_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.PLANETARY_RING_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.PLANETARY_RING_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 
@@ -271,6 +281,8 @@ class ModSpaceWorldGenTest {
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.WRECK_FIELD_PLACED);
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.MEGA_ASTEROID_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.MEGA_ASTEROID_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.PLANETARY_RING_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.PLANETARY_RING_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 
@@ -296,7 +308,7 @@ class ModSpaceWorldGenTest {
                 .map(holder -> holder.unwrapKey().orElseThrow())
                 .toList();
         assertEquals(List.of(ModPlacedFeatures.ASTEROID_PLACED, ModPlacedFeatures.WRECK_FIELD_PLACED,
-                ModPlacedFeatures.MEGA_ASTEROID_PLACED), stepZeroKeys);
+                ModPlacedFeatures.MEGA_ASTEROID_PLACED, ModPlacedFeatures.PLANETARY_RING_PLACED), stepZeroKeys);
     }
 
     @Test
@@ -393,6 +405,8 @@ class ModSpaceWorldGenTest {
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.WRECK_FIELD_PLACED);
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.MEGA_ASTEROID_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.MEGA_ASTEROID_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.PLANETARY_RING_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.PLANETARY_RING_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 
@@ -545,6 +559,8 @@ class ModSpaceWorldGenTest {
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.WRECK_FIELD_PLACED);
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.MEGA_ASTEROID_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.MEGA_ASTEROID_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.PLANETARY_RING_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.PLANETARY_RING_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 
@@ -570,7 +586,8 @@ class ModSpaceWorldGenTest {
         List<ResourceKey<PlacedFeature>> stepZeroKeys = featureSteps.get(0).stream()
                 .map(holder -> holder.unwrapKey().orElseThrow())
                 .toList();
-        assertEquals(List.of(ModPlacedFeatures.ICE_COMET_PLACED, ModPlacedFeatures.MEGA_ASTEROID_PLACED), stepZeroKeys);
+        assertEquals(List.of(ModPlacedFeatures.ICE_COMET_PLACED, ModPlacedFeatures.MEGA_ASTEROID_PLACED,
+                ModPlacedFeatures.PLANETARY_RING_PLACED), stepZeroKeys);
     }
 
     @Test
@@ -614,6 +631,43 @@ class ModSpaceWorldGenTest {
         PlacedFeature iceComet = captor.getValue();
         assertEquals(ModConfiguredFeatures.ICE_COMET, iceComet.feature().unwrapKey().orElseThrow());
         assertEquals(4, iceComet.placement().size());
+    }
+
+    @Test
+    @DisplayName("Ringspec pro Zelle: deterministisch, Radius 100-300, Y 64-192, Dicke 1-3, Ring in Zelle geklemmt")
+    void planetaryRingSpecIsDeterministicAndBounded() {
+        PlanetaryRingFeature.RingSpec spec = PlanetaryRingFeature.specForCell(3, -7);
+        PlanetaryRingFeature.RingSpec again = PlanetaryRingFeature.specForCell(3, -7);
+        assertEquals(spec, again, "Gleiche Zelle muss identischen Ring liefern");
+
+        assertTrue(spec.radius() >= 100.0D && spec.radius() <= 300.0D, "Radius 100-300");
+        assertTrue(spec.ringY() >= 64 && spec.ringY() <= 192, "Ring-Y 64-192");
+        assertTrue(spec.thickness() >= 1 && spec.thickness() <= 3, "Dicke 1-3");
+
+        // Nahtlosigkeit: Zentrum so geklemmt, dass der Ring komplett in der Zelle bleibt
+        double cellOriginX = 3 * PlanetaryRingFeature.CELL_SIZE;
+        double cellOriginZ = -7 * PlanetaryRingFeature.CELL_SIZE;
+        assertTrue(spec.centerX() - spec.radius() >= cellOriginX, "Ring links in der Zelle");
+        assertTrue(spec.centerX() + spec.radius() <= cellOriginX + PlanetaryRingFeature.CELL_SIZE, "Ring rechts in der Zelle");
+        assertTrue(spec.centerZ() - spec.radius() >= cellOriginZ, "Ring vorne in der Zelle");
+        assertTrue(spec.centerZ() + spec.radius() <= cellOriginZ + PlanetaryRingFeature.CELL_SIZE, "Ring hinten in der Zelle");
+
+        // Unterschiedliche Zellen liefern unterschiedliche Ringe
+        PlanetaryRingFeature.RingSpec other = PlanetaryRingFeature.specForCell(3, -6);
+        assertNotEquals(spec, other);
+    }
+
+    @Test
+    @DisplayName("Ringpalette: ausschließlich Eis, gefärbtes Glas und Staub/Sediment")
+    void planetaryRingPaletteIsIceGlassDust() {
+        RandomSource random = RandomSource.create(5L);
+        Set<Block> allowed = Set.of(Blocks.BLUE_ICE, Blocks.PACKED_ICE, Blocks.ICE,
+                Blocks.LIGHT_BLUE_STAINED_GLASS, Blocks.CYAN_STAINED_GLASS, Blocks.WHITE_STAINED_GLASS,
+                Blocks.SAND, Blocks.RED_SAND, Blocks.GRAVEL);
+        for (int i = 0; i < 200; i++) {
+            Block block = PlanetaryRingFeature.ringBlock(random).getBlock();
+            assertTrue(allowed.contains(block), "Unerwarteter Ringblock: " + block);
+        }
     }
 
     private static <T> T privateField(Object owner, String name, Class<T> type) {
