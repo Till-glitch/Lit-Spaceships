@@ -7,6 +7,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.HolderOwner;
 import net.minecraft.core.HolderSet;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
@@ -17,7 +18,13 @@ import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeGenerationSettings;
+import net.minecraft.world.level.biome.Climate;
+import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.levelgen.GenerationStep;
+import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
+import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
+import net.minecraft.world.level.levelgen.NoiseRouter;
 import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
@@ -30,6 +37,7 @@ import net.minecraft.world.level.levelgen.placement.InSquarePlacement;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.minecraft.world.level.levelgen.placement.PlacementModifier;
 import net.minecraft.world.level.levelgen.placement.RarityFilter;
+import net.minecraft.world.level.levelgen.synth.NormalNoise;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,6 +47,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -82,6 +91,11 @@ class ModSpaceWorldGenTest {
     };
     private final HolderOwner<PlacedFeature> placedOwner = new HolderOwner<>() {
     };
+    private final HolderOwner<Biome> biomeOwner = new HolderOwner<>() {
+    };
+
+    @Mock
+    private HolderGetter<Biome> biomeGetter;
 
     @Test
     @DisplayName("Alle Weltraum-Registry-Schlüssel liegen in der Mod-Namespace mit erwarteten Pfaden")
@@ -222,6 +236,135 @@ class ModSpaceWorldGenTest {
         assertTrue(stepZero.contains(wreckPlaced));
     }
 
+    @Test
+    @DisplayName("Plasma-Nebel: violetter Nebel #7F00FF, glühende Partikel, keine Spawns, keine Features")
+    void plasmaNebulaIsGlowingVioletZone() {
+        when(biomeContext.lookup(Registries.PLACED_FEATURE)).thenReturn(placedGetter);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.ASTEROID_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.ASTEROID_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.SPACE_WRECK_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.SPACE_WRECK_PLACED);
+
+        ModBiomes.bootstrap(biomeContext);
+
+        ArgumentCaptor<Biome> captor = ArgumentCaptor.forClass(Biome.class);
+        verify(biomeContext).register(eq(ModBiomes.PLASMA_NEBULA), captor.capture());
+        verify(biomeContext).register(eq(ModDimensions.SPACE_BIOME), any());
+
+        Biome nebula = captor.getValue();
+        assertFalse(nebula.hasPrecipitation());
+        assertEquals(0x7F00FF, nebula.getFogColor());
+        assertEquals(0x1A0033, nebula.getSkyColor());
+        assertEquals(0x1A0033, nebula.getWaterColor());
+        assertEquals(0x1A0033, nebula.getWaterFogColor());
+
+        java.util.Optional<net.minecraft.world.level.biome.AmbientParticleSettings> particle = nebula.getAmbientParticle();
+        assertTrue(particle.isPresent());
+        DustParticleOptions dust = assertType(DustParticleOptions.class, particle.get().getOptions());
+        assertEquals(0.498F, dust.getColor().x(), 0.0001F);
+        assertEquals(0.0F, dust.getColor().y(), 0.0001F);
+        assertEquals(1.0F, dust.getColor().z(), 0.0001F);
+        assertEquals(0.006F, (float) privateField(particle.get(), "probability", Float.class), 0.0F);
+
+        for (MobCategory category : MobCategory.values()) {
+            assertTrue(nebula.getMobSettings().getMobs(category).isEmpty(), category.getName());
+        }
+        assertTrue(nebula.getGenerationSettings().features().isEmpty());
+    }
+
+    @Test
+    @DisplayName("Multi-Noise-Verteilung routet hohe Temperatur in den Plasma-Nebel, niedrige in den Void")
+    void spaceBiomeDistributionRoutesTemperature() {
+        Climate.ParameterList<ResourceKey<Biome>> distribution = ModDimensions.spaceBiomeDistribution();
+
+        assertSame(ModBiomes.PLASMA_NEBULA,
+                distribution.findValue(new Climate.TargetPoint(8000L, 0L, 0L, 0L, 0L, 0L)));
+        assertSame(ModDimensions.SPACE_BIOME,
+                distribution.findValue(new Climate.TargetPoint(-8000L, 0L, 0L, 0L, 0L, 0L)));
+        assertSame(ModDimensions.SPACE_BIOME,
+                distribution.findValue(new Climate.TargetPoint(0L, 0L, 0L, 0L, 0L, 0L)));
+    }
+
+    @Test
+    @DisplayName("Space-Noise-Settings: reiner Void mit negativer Dichte und Temperatur-Noise für Biome")
+    void spaceNoiseSettingsAreVoidWithTemperatureNoise() {
+        Holder<NormalNoise.NoiseParameters> temperatureNoise =
+                Holder.direct(new NormalNoise.NoiseParameters(-9, 1.0));
+
+        NoiseGeneratorSettings settings = ModNoiseSettings.spaceNoiseSettings(temperatureNoise);
+
+        assertEquals(-64, settings.seaLevel());
+        assertTrue(settings.disableMobGeneration());
+        assertFalse(settings.aquifersEnabled());
+        assertFalse(settings.oreVeinsEnabled());
+        assertFalse(settings.useLegacyRandomSource());
+        assertTrue(settings.defaultBlock().isAir());
+        assertTrue(settings.defaultFluid().isAir());
+
+        net.minecraft.world.level.levelgen.NoiseSettings shape = settings.noiseSettings();
+        assertEquals(-64, shape.minY());
+        assertEquals(384, shape.height());
+        assertEquals(1, shape.noiseSizeHorizontal());
+        assertEquals(2, shape.noiseSizeVertical());
+
+        NoiseRouter router = settings.noiseRouter();
+        assertTrue(router.temperature().minValue() < 0.0 && router.temperature().maxValue() > 0.0,
+                "Temperatur muss echte Noise-Struktur besitzen (Multi-Noise-Routing)");
+        assertEquals(-1.0D, router.finalDensity().minValue(), 0.0D);
+        assertEquals(-1.0D, router.finalDensity().maxValue(), 0.0D);
+    }
+
+    @Test
+    @DisplayName("Space-Dimension-Typ: kosmische Nacht, kein Skylight, Ankern erlaubt, Null-Spawn-Licht")
+    void spaceDimensionTypeMatchesCosmicNight() {
+        DimensionType type = ModDimensions.spaceDimensionType();
+
+        assertEquals(18000L, type.fixedTime().getAsLong());
+        assertFalse(type.hasSkyLight());
+        assertFalse(type.hasCeiling());
+        assertFalse(type.ultraWarm());
+        assertFalse(type.natural());
+        assertEquals(1.0D, type.coordinateScale());
+        assertFalse(type.bedWorks());
+        assertTrue(type.respawnAnchorWorks());
+        assertEquals(-64, type.minY());
+        assertEquals(384, type.height());
+        assertEquals(384, type.logicalHeight());
+        assertEquals(0.0F, type.ambientLight());
+        assertEquals(ResourceLocation.withDefaultNamespace("overworld"), type.effectsLocation());
+
+        DimensionType.MonsterSettings monsterSettings = type.monsterSettings();
+        assertEquals(0, monsterSettings.monsterSpawnLightTest().getMinValue());
+        assertEquals(0, monsterSettings.monsterSpawnLightTest().getMaxValue());
+        assertEquals(0, monsterSettings.monsterSpawnBlockLightLimit());
+        assertFalse(monsterSettings.piglinSafe());
+        assertFalse(monsterSettings.hasRaids());
+    }
+
+    @Test
+    @DisplayName("LevelStem verdrahtet Noise-Generator mit Multi-Noise-Quelle über beide Weltraum-Biome")
+    void levelStemWiresMultiNoiseGenerator() {
+        doReturn(Holder.Reference.createStandAlone(biomeOwner, ModDimensions.SPACE_BIOME))
+                .when(biomeGetter).getOrThrow(ModDimensions.SPACE_BIOME);
+        doReturn(Holder.Reference.createStandAlone(biomeOwner, ModBiomes.PLASMA_NEBULA))
+                .when(biomeGetter).getOrThrow(ModBiomes.PLASMA_NEBULA);
+
+        Holder<NoiseGeneratorSettings> settingsHolder =
+                Holder.direct(ModNoiseSettings.spaceNoiseSettings(Holder.direct(new NormalNoise.NoiseParameters(-9, 1.0))));
+        Holder<DimensionType> typeHolder = Holder.direct(ModDimensions.spaceDimensionType());
+
+        LevelStem stem = ModDimensions.spaceLevelStem(biomeGetter, settingsHolder, typeHolder);
+
+        assertSame(typeHolder, stem.type());
+        NoiseBasedChunkGenerator generator = assertType(NoiseBasedChunkGenerator.class, stem.generator());
+        assertSame(settingsHolder, generator.generatorSettings());
+
+        Set<ResourceKey<Biome>> possibleBiomes = generator.getBiomeSource().possibleBiomes().stream()
+                .map(holder -> holder.unwrapKey().orElseThrow())
+                .collect(java.util.stream.Collectors.toSet());
+        assertEquals(Set.of(ModDimensions.SPACE_BIOME, ModBiomes.PLASMA_NEBULA), possibleBiomes);
+    }
+
     private static <T> T privateField(Object owner, String name, Class<T> type) {
         try {
             var field = owner.getClass().getDeclaredField(name);
@@ -239,5 +382,10 @@ class ModSpaceWorldGenTest {
 
     private static void assertInstanceOf(Class<?> expected, Object actual) {
         assertTrue(expected.isInstance(actual), "Erwartet " + expected.getSimpleName() + ", war " + actual.getClass().getSimpleName());
+    }
+
+    private static <T> T assertType(Class<T> expected, Object actual) {
+        assertInstanceOf(expected, actual);
+        return expected.cast(actual);
     }
 }

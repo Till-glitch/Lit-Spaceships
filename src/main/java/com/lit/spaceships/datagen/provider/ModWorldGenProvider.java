@@ -3,6 +3,8 @@ package com.lit.spaceships.datagen.provider;
 import com.lit.spaceships.LitSpaceships;
 import com.lit.spaceships.world.ModBiomes;
 import com.lit.spaceships.world.ModConfiguredFeatures;
+import com.lit.spaceships.world.ModDimensions;
+import com.lit.spaceships.world.ModNoiseSettings;
 import com.lit.spaceships.world.ModPlacedFeatures;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistrySetBuilder;
@@ -23,7 +25,10 @@ public final class ModWorldGenProvider extends DatapackBuiltinEntriesProvider {
     public static final RegistrySetBuilder BUILDER = new RegistrySetBuilder()
             .add(Registries.BIOME, ModBiomes::bootstrap)
             .add(Registries.CONFIGURED_FEATURE, ModConfiguredFeatures::bootstrap)
-            .add(Registries.PLACED_FEATURE, ModPlacedFeatures::bootstrap);
+            .add(Registries.PLACED_FEATURE, ModPlacedFeatures::bootstrap)
+            .add(Registries.DIMENSION_TYPE, ModDimensions::bootstrapDimensionType)
+            .add(Registries.NOISE_SETTINGS, ModNoiseSettings::bootstrap)
+            .add(Registries.LEVEL_STEM, ModDimensions::bootstrapLevelStem);
 
     public ModWorldGenProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider) {
         super(output, lookupProvider, BUILDER, Set.of(LitSpaceships.MODID));

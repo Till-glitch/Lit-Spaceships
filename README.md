@@ -46,6 +46,7 @@ An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21.
   * **Delta-Tick Network Throttling:** 16-bit short compression and 20 Hz delta-throttling ($\Delta \ge 0.5^\circ$) eliminate network spam and deliver 0 ms client-predicted aiming response.
 * **Deep Space Dimension (`lit_spaceships:space`):**
   * **Infinite Void Environment:** Custom procedural dimension from $Y = -64$ to $Y = 320$ with permanent cosmic night, zero natural monster spawns, and no vanilla bedrock floors.
+  * **Plasma Nebula Zones (Volumetric 3D Biome):** Organic violet nebula regions carved by 3D temperature noise (`minecraft:multi_noise` biome source): dense cosmic fog (`#7F00FF`), dark-violet sky, and slowly drifting glowing plasma-dust motes. A pure atmospheric zone — zero mob spawns, no terrain, no features.
   * **Asteroid Fields & Ice Comets:** 3D procedural asteroid generation with diverse crusts (Stone, Basalt, Tuff, Deepslate) containing rich ore cores (Iron, Gold, Redstone, Diamond, Netherite Debris) and frozen ice comets.
   * **Derelict Spacecraft Wrecks:** Rare abandoned shipwrecks featuring intact spaceship reactor cores and ancient treasure chests (`END_CITY_TREASURE`).
 * **Cross-Dimensional Ship Travel (Core Teleportation Service):**

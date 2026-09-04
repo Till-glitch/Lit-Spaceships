@@ -1,6 +1,10 @@
-// 1.21.1	2026-09-04T20:51:09.6437553	Registries
+// 1.21.1	2026-09-04T21:16:55.3997403	Registries
+c8d823bcf0262cad8197cc8471edef3bdeaade5e data/lit_spaceships/dimension/space.json
+ae85b548080cb8751c4e27601d4ff5cc12ba2609 data/lit_spaceships/dimension_type/space_type.json
+5a63949882dd813127c45ae075da9adab4e85a2f data/lit_spaceships/worldgen/biome/plasma_nebula.json
 1c407c1978200ba946a72b862135a24069aa7e37 data/lit_spaceships/worldgen/biome/space_biome.json
 b3d5c9936c8b7b7f06d25bd050c02e5e7f94b3ae data/lit_spaceships/worldgen/configured_feature/asteroid.json
 794d83f35d958d4ba510993956653374cacc0035 data/lit_spaceships/worldgen/configured_feature/space_wreck.json
+9dfd94448937b3d37fe08440d9c2f56c299d8876 data/lit_spaceships/worldgen/noise_settings/space_noise.json
 47ad042b95c4f23107fc5f5bf19d959ba64f3b7c data/lit_spaceships/worldgen/placed_feature/asteroid_placed.json
 ddcc5fa4bb4f07379adb5c052807f294eb3fd621 data/lit_spaceships/worldgen/placed_feature/space_wreck_placed.json
