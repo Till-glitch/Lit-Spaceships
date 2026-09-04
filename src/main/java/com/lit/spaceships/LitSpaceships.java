@@ -40,6 +40,7 @@ public class LitSpaceships {
         event.register(com.lit.spaceships.tests.ShipMovementGameTests.class);
         event.register(com.lit.spaceships.tests.ShipAttachmentGameTests.class);
         event.register(com.lit.spaceships.tests.ShipCollisionGameTests.class);
+        event.register(com.lit.spaceships.tests.WorldGenGameTests.class);
     }
 
     private void registerCapabilities(net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent event) {

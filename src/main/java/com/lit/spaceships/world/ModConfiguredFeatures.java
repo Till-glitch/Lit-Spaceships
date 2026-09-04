@@ -19,21 +19,25 @@ public final class ModConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> ASTEROID = createKey("asteroid");
     public static final ResourceKey<ConfiguredFeature<?, ?>> SPACE_WRECK = createKey("space_wreck");
     public static final ResourceKey<ConfiguredFeature<?, ?>> ICE_COMET = createKey("ice_comet");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> MEGA_ASTEROID = createKey("mega_asteroid");
 
     private ModConfiguredFeatures() {
     }
 
     public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> context) {
-        bootstrapWith(context, ModFeatures.ASTEROID.get(), ModFeatures.SPACE_WRECK.get(), ModFeatures.ICE_COMET.get());
+        bootstrapWith(context, ModFeatures.ASTEROID.get(), ModFeatures.SPACE_WRECK.get(),
+                ModFeatures.ICE_COMET.get(), ModFeatures.MEGA_ASTEROID.get());
     }
 
     static void bootstrapWith(BootstrapContext<ConfiguredFeature<?, ?>> context,
                               Feature<NoneFeatureConfiguration> asteroid,
                               Feature<NoneFeatureConfiguration> spaceWreck,
-                              Feature<NoneFeatureConfiguration> iceComet) {
+                              Feature<NoneFeatureConfiguration> iceComet,
+                              Feature<NoneFeatureConfiguration> megaAsteroid) {
         context.register(ASTEROID, new ConfiguredFeature<>(asteroid, NoneFeatureConfiguration.INSTANCE));
         context.register(SPACE_WRECK, new ConfiguredFeature<>(spaceWreck, NoneFeatureConfiguration.INSTANCE));
         context.register(ICE_COMET, new ConfiguredFeature<>(iceComet, NoneFeatureConfiguration.INSTANCE));
+        context.register(MEGA_ASTEROID, new ConfiguredFeature<>(megaAsteroid, NoneFeatureConfiguration.INSTANCE));
     }
 
     private static ResourceKey<ConfiguredFeature<?, ?>> createKey(String name) {

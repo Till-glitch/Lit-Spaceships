@@ -12,7 +12,8 @@
   "features": [
     [
       "lit_spaceships:asteroid_placed",
-      "lit_spaceships:space_wreck_placed"
+      "lit_spaceships:space_wreck_placed",
+      "lit_spaceships:mega_asteroid_placed"
     ]
   ],
   "has_precipitation": false,

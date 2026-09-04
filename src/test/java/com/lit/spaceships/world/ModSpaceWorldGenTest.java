@@ -2,9 +2,11 @@ package com.lit.spaceships.world;
 
 import com.lit.spaceships.world.feature.AsteroidFeature;
 import com.lit.spaceships.world.feature.IceCometFeature;
+import com.lit.spaceships.world.feature.MegaAsteroidFeature;
 import com.lit.spaceships.world.feature.SpaceWreckFeature;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.Holder;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.HolderOwner;
 import net.minecraft.core.HolderSet;
@@ -14,9 +16,11 @@ import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.Bootstrap;
+import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeGenerationSettings;
 import net.minecraft.world.level.biome.Climate;
@@ -52,6 +56,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -110,6 +115,8 @@ class ModSpaceWorldGenTest {
         assertKey(ModPlacedFeatures.ASTEROID_PLACED, Registries.PLACED_FEATURE, "asteroid_placed");
         assertKey(ModPlacedFeatures.SPACE_WRECK_PLACED, Registries.PLACED_FEATURE, "space_wreck_placed");
         assertKey(ModPlacedFeatures.ICE_COMET_PLACED, Registries.PLACED_FEATURE, "ice_comet_placed");
+        assertKey(ModConfiguredFeatures.MEGA_ASTEROID, Registries.CONFIGURED_FEATURE, "mega_asteroid");
+        assertKey(ModPlacedFeatures.MEGA_ASTEROID_PLACED, Registries.PLACED_FEATURE, "mega_asteroid_placed");
         assertKey(ModPlacedFeatures.WRECK_FIELD_PLACED, Registries.PLACED_FEATURE, "wreck_field_placed");
     }
 
@@ -124,13 +131,15 @@ class ModSpaceWorldGenTest {
         AsteroidFeature asteroid = new AsteroidFeature(NoneFeatureConfiguration.CODEC);
         SpaceWreckFeature wreck = new SpaceWreckFeature(NoneFeatureConfiguration.CODEC);
         IceCometFeature iceComet = new IceCometFeature(NoneFeatureConfiguration.CODEC);
+        MegaAsteroidFeature megaAsteroid = new MegaAsteroidFeature(NoneFeatureConfiguration.CODEC);
 
-        ModConfiguredFeatures.bootstrapWith(configuredContext, asteroid, wreck, iceComet);
+        ModConfiguredFeatures.bootstrapWith(configuredContext, asteroid, wreck, iceComet, megaAsteroid);
 
         ArgumentCaptor<ConfiguredFeature<?, ?>> captor = ArgumentCaptor.forClass(ConfiguredFeature.class);
         verify(configuredContext).register(eq(ModConfiguredFeatures.ASTEROID), captor.capture());
         verify(configuredContext).register(eq(ModConfiguredFeatures.SPACE_WRECK), any());
         verify(configuredContext).register(eq(ModConfiguredFeatures.ICE_COMET), any());
+        verify(configuredContext).register(eq(ModConfiguredFeatures.MEGA_ASTEROID), any());
 
         ConfiguredFeature<?, ?> registered = captor.getValue();
         assertSame(asteroid, registered.feature());
@@ -216,6 +225,8 @@ class ModSpaceWorldGenTest {
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.ICE_COMET_PLACED);
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.WRECK_FIELD_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.WRECK_FIELD_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.MEGA_ASTEROID_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.MEGA_ASTEROID_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 
@@ -258,6 +269,8 @@ class ModSpaceWorldGenTest {
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.ICE_COMET_PLACED);
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.WRECK_FIELD_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.WRECK_FIELD_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.MEGA_ASTEROID_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.MEGA_ASTEROID_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 
@@ -276,13 +289,74 @@ class ModSpaceWorldGenTest {
             assertTrue(wastes.getMobSettings().getMobs(category).isEmpty(), category.getName());
         }
 
-        // Derelict Spawn Area: normale Asteroiden + dichtes Wrack-Feld in Stufe 0
+        // Derelict Spawn Area: normale Asteroiden + dichtes Wrack-Feld + seltene Mega-Asteroiden in Stufe 0
         List<HolderSet<PlacedFeature>> featureSteps = wastes.getGenerationSettings().features();
         assertEquals(1, featureSteps.size());
         List<ResourceKey<PlacedFeature>> stepZeroKeys = featureSteps.get(0).stream()
                 .map(holder -> holder.unwrapKey().orElseThrow())
                 .toList();
-        assertEquals(List.of(ModPlacedFeatures.ASTEROID_PLACED, ModPlacedFeatures.WRECK_FIELD_PLACED), stepZeroKeys);
+        assertEquals(List.of(ModPlacedFeatures.ASTEROID_PLACED, ModPlacedFeatures.WRECK_FIELD_PLACED,
+                ModPlacedFeatures.MEGA_ASTEROID_PLACED), stepZeroKeys);
+    }
+
+    @Test
+    @DisplayName("Mega-Asteroid-Platzierung: Rarity 1/96 (Chunk-Budget), Uniformhöhe -40..280, Biome-Filter")
+    void megaAsteroidPlacementMathIsBounded() {
+        List<PlacementModifier> modifiers = ModPlacedFeatures.megaAsteroidPlacement();
+
+        assertEquals(4, modifiers.size());
+        assertInstanceOf(RarityFilter.class, modifiers.get(0));
+        assertSame(InSquarePlacement.spread(), modifiers.get(1));
+        assertInstanceOf(HeightRangePlacement.class, modifiers.get(2));
+        assertSame(BiomeFilter.biome(), modifiers.get(3));
+
+        RarityFilter rarity = (RarityFilter) modifiers.get(0);
+        assertEquals(96, (int) privateField(rarity, "chance", Integer.class));
+
+        HeightRangePlacement height = (HeightRangePlacement) modifiers.get(2);
+        UniformHeight uniform = privateField(height, "height", UniformHeight.class);
+        assertEquals(-40, absoluteAnchorY(privateField(uniform, "minInclusive", VerticalAnchor.class)));
+        assertEquals(280, absoluteAnchorY(privateField(uniform, "maxInclusive", VerticalAnchor.class)));
+    }
+
+    @Test
+    @DisplayName("Mega-Asteroid radial: Geode (Kalzit/Amethyst/Luft), Kaverne, Mantel, Kruste, außen null")
+    void megaAsteroidRadialLayersAreDeterministic() {
+        RandomSource random = RandomSource.create(7L);
+
+        // Außerhalb des Ellipsoids: nichts setzen
+        assertNull(MegaAsteroidFeature.radialLayer(1.05D, 100.0D, random, 3));
+
+        // Kruste (norm 0.9): fest, Steinarten
+        BlockState crust = MegaAsteroidFeature.radialLayer(0.9D, 100.0D, random, 3);
+        assertFalse(crust.isAir());
+        assertTrue(crust.is(Blocks.ANDESITE) || crust.is(Blocks.BASALT)
+                || crust.is(Blocks.COBBLESTONE) || crust.is(Blocks.STONE));
+
+        // Mantel (norm 0.7): fest, Erz-Deepslate-Mischung
+        BlockState mantle = MegaAsteroidFeature.radialLayer(0.7D, 100.0D, random, 3);
+        assertFalse(mantle.isAir());
+
+        // Hohler Kavernenraum (norm 0.5 <= 0.55, außerhalb der Geode dist 4 > 3): Luft
+        assertEquals(Blocks.AIR, MegaAsteroidFeature.radialLayer(0.5D, 4.0D, random, 3).getBlock());
+
+        // Kalzit-Geodenhülle (dist 3 == geodeOuter)
+        assertEquals(Blocks.CALCITE, MegaAsteroidFeature.radialLayer(0.3D, 3.0D, random, 3).getBlock());
+
+        // Amethyst-Mantel (dist 2 == geodeOuter - 1)
+        BlockState amethyst = MegaAsteroidFeature.radialLayer(0.2D, 2.0D, random, 3);
+        assertTrue(amethyst.is(Blocks.AMETHYST_BLOCK) || amethyst.is(Blocks.BUDDING_AMETHYST));
+
+        // Geodenkammer (dist 1 <= geodeOuter - 2): Luft
+        assertEquals(Blocks.AIR, MegaAsteroidFeature.radialLayer(0.1D, 1.0D, random, 3).getBlock());
+
+        // Determinismus: identischer Seed liefert identische Schichtfolge
+        RandomSource a = RandomSource.create(99L);
+        RandomSource b = RandomSource.create(99L);
+        for (int i = 0; i < 20; i++) {
+            assertEquals(MegaAsteroidFeature.radialLayer(0.7D, 100.0D, a, 3).getBlock(),
+                    MegaAsteroidFeature.radialLayer(0.7D, 100.0D, b, 3).getBlock());
+        }
     }
 
     @Test
@@ -317,6 +391,8 @@ class ModSpaceWorldGenTest {
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.ICE_COMET_PLACED);
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.WRECK_FIELD_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.WRECK_FIELD_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.MEGA_ASTEROID_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.MEGA_ASTEROID_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 
@@ -467,6 +543,8 @@ class ModSpaceWorldGenTest {
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.ICE_COMET_PLACED);
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.WRECK_FIELD_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.WRECK_FIELD_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.MEGA_ASTEROID_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.MEGA_ASTEROID_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 
@@ -486,12 +564,13 @@ class ModSpaceWorldGenTest {
             assertTrue(frozen.getMobSettings().getMobs(category).isEmpty(), category.getName());
         }
 
-        // Hochdichte Eiskometen-Felder als einziges Feature in Deko-Stufe 0
+        // Hochdichte Eiskometen-Felder + seltene Mega-Asteroiden in Deko-Stufe 0
         List<HolderSet<PlacedFeature>> featureSteps = frozen.getGenerationSettings().features();
         assertEquals(1, featureSteps.size());
-        List<Holder<PlacedFeature>> stepZero = featureSteps.get(0).stream().toList();
-        assertEquals(1, stepZero.size());
-        assertTrue(stepZero.stream().anyMatch(h -> h.unwrapKey().orElseThrow().equals(ModPlacedFeatures.ICE_COMET_PLACED)));
+        List<ResourceKey<PlacedFeature>> stepZeroKeys = featureSteps.get(0).stream()
+                .map(holder -> holder.unwrapKey().orElseThrow())
+                .toList();
+        assertEquals(List.of(ModPlacedFeatures.ICE_COMET_PLACED, ModPlacedFeatures.MEGA_ASTEROID_PLACED), stepZeroKeys);
     }
 
     @Test

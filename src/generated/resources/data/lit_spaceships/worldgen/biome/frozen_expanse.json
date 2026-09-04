@@ -15,7 +15,8 @@
   },
   "features": [
     [
-      "lit_spaceships:ice_comet_placed"
+      "lit_spaceships:ice_comet_placed",
+      "lit_spaceships:mega_asteroid_placed"
     ]
   ],
   "has_precipitation": false,

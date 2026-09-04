@@ -28,6 +28,7 @@ public final class ModPlacedFeatures {
     public static final ResourceKey<PlacedFeature> SPACE_WRECK_PLACED = createKey("space_wreck_placed");
     public static final ResourceKey<PlacedFeature> ICE_COMET_PLACED = createKey("ice_comet_placed");
     public static final ResourceKey<PlacedFeature> WRECK_FIELD_PLACED = createKey("wreck_field_placed");
+    public static final ResourceKey<PlacedFeature> MEGA_ASTEROID_PLACED = createKey("mega_asteroid_placed");
 
     private ModPlacedFeatures() {
     }
@@ -42,6 +43,8 @@ public final class ModPlacedFeatures {
                 configuredFeatures.getOrThrow(ModConfiguredFeatures.ICE_COMET), iceCometPlacement()));
         context.register(WRECK_FIELD_PLACED, new PlacedFeature(
                 configuredFeatures.getOrThrow(ModConfiguredFeatures.SPACE_WRECK), wreckFieldPlacement()));
+        context.register(MEGA_ASTEROID_PLACED, new PlacedFeature(
+                configuredFeatures.getOrThrow(ModConfiguredFeatures.MEGA_ASTEROID), megaAsteroidPlacement()));
     }
 
     /**
@@ -78,6 +81,19 @@ public final class ModPlacedFeatures {
                 RarityFilter.onAverageOnceEvery(4),
                 InSquarePlacement.spread(),
                 HeightRangePlacement.uniform(VerticalAnchor.absolute(0), VerticalAnchor.absolute(200)),
+                BiomeFilter.biome()
+        );
+    }
+
+    /**
+     * Mega-Asteroiden: extrem selten (im Schnitt 1 pro 96 Chunks, Chunk-Budget
+     * wegen 40-70 Block Durchmesser), komplett von Y -40 bis +280.
+     */
+    static List<PlacementModifier> megaAsteroidPlacement() {
+        return List.of(
+                RarityFilter.onAverageOnceEvery(96),
+                InSquarePlacement.spread(),
+                HeightRangePlacement.uniform(VerticalAnchor.absolute(-40), VerticalAnchor.absolute(280)),
                 BiomeFilter.biome()
         );
     }
