@@ -1,6 +1,7 @@
 package com.lit.spaceships.tests;
 
 import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.world.feature.AsteroidBeltFeature;
 import com.lit.spaceships.world.feature.MegaAsteroidFeature;
 import com.lit.spaceships.world.feature.PlanetaryRingFeature;
 import net.minecraft.core.BlockPos;
@@ -102,6 +103,33 @@ public class WorldGenGameTests {
 
         // Vertikale Dicke 1: oberhalb des Rings keine Blöcke
         helper.assertBlock(new BlockPos(12, 8, 7), Blocks.AIR::equals, "Ringdicke 1: keine zweite Ebene");
+
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void asteroidBeltFragmentIsSolidOreBlob(GameTestHelper helper) {
+        // Verkleinertes Fragment (Radius 3) im 15x15x15-Template
+        RandomSource random = RandomSource.create(23L);
+        AsteroidBeltFeature.placeFragment(helper.getLevel(),
+                helper.absolutePos(new BlockPos(7, 7, 7)).getX(),
+                helper.absolutePos(new BlockPos(7, 7, 7)).getY(),
+                helper.absolutePos(new BlockPos(7, 7, 7)).getZ(), random, 3);
+
+        // Kern (norm 0): fest, nie Luft
+        helper.assertBlockState(new BlockPos(7, 7, 7),
+                state -> !state.isAir(), () -> "Fragment-Kern darf nicht Luft sein");
+
+        // Kruste (dist 3 am Achsenrand, norm 1.0 - Perturbation): Punkt im Rudel muss fest sein
+        helper.assertBlockState(new BlockPos(9, 7, 7),
+                state -> !state.isAir(), () -> "Fragment-Rand (dist 3 auf der Achse) muss fest sein");
+
+        // Crust-/Ore-Palette (dist 2 vertikal, norm 0.444 +- 0.1 < 1): garantiert fest
+        helper.assertBlockState(new BlockPos(7, 9, 7),
+                state -> !state.isAir(), () -> "Fragment-Oberteil (dist 2) muss fest sein");
+
+        // Außerhalb des Fragments (dist 5 > Radius 3 + Perturbation): Luft
+        helper.assertBlock(new BlockPos(12, 7, 7), Blocks.AIR::equals, "Außerhalb des Fragments muss Luft bleiben");
 
         helper.succeed();
     }

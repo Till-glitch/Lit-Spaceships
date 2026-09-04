@@ -17,7 +17,8 @@
     [
       "lit_spaceships:ice_comet_placed",
       "lit_spaceships:mega_asteroid_placed",
-      "lit_spaceships:planetary_ring_placed"
+      "lit_spaceships:planetary_ring_placed",
+      "lit_spaceships:asteroid_belt_placed"
     ]
   ],
   "has_precipitation": false,

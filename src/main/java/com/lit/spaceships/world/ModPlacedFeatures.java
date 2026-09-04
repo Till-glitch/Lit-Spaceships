@@ -30,6 +30,7 @@ public final class ModPlacedFeatures {
     public static final ResourceKey<PlacedFeature> WRECK_FIELD_PLACED = createKey("wreck_field_placed");
     public static final ResourceKey<PlacedFeature> MEGA_ASTEROID_PLACED = createKey("mega_asteroid_placed");
     public static final ResourceKey<PlacedFeature> PLANETARY_RING_PLACED = createKey("planetary_ring_placed");
+    public static final ResourceKey<PlacedFeature> ASTEROID_BELT_PLACED = createKey("asteroid_belt_placed");
 
     private ModPlacedFeatures() {
     }
@@ -48,6 +49,8 @@ public final class ModPlacedFeatures {
                 configuredFeatures.getOrThrow(ModConfiguredFeatures.MEGA_ASTEROID), megaAsteroidPlacement()));
         context.register(PLANETARY_RING_PLACED, new PlacedFeature(
                 configuredFeatures.getOrThrow(ModConfiguredFeatures.PLANETARY_RING), planetaryRingPlacement()));
+        context.register(ASTEROID_BELT_PLACED, new PlacedFeature(
+                configuredFeatures.getOrThrow(ModConfiguredFeatures.ASTEROID_BELT), asteroidBeltPlacement()));
     }
 
     /**
@@ -106,6 +109,18 @@ public final class ModPlacedFeatures {
      * die Dichte selbst — der Chunk schreibt nur seine 16x16-Spalten).
      */
     static List<PlacementModifier> planetaryRingPlacement() {
+        return List.of(
+                CountPlacement.of(1),
+                InSquarePlacement.spread(),
+                BiomeFilter.biome()
+        );
+    }
+
+    /**
+     * Asteroidengürtel: 1 Versuch pro Chunk (die Korridor-Geometrie + Cluster-
+     * Noise regeln die Dichte; intern 6 Fragment-Versuche).
+     */
+    static List<PlacementModifier> asteroidBeltPlacement() {
         return List.of(
                 CountPlacement.of(1),
                 InSquarePlacement.spread(),

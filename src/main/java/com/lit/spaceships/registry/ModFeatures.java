@@ -1,6 +1,7 @@
 package com.lit.spaceships.registry;
 
 import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.world.feature.AsteroidBeltFeature;
 import com.lit.spaceships.world.feature.AsteroidFeature;
 import com.lit.spaceships.world.feature.IceCometFeature;
 import com.lit.spaceships.world.feature.MegaAsteroidFeature;
@@ -32,6 +33,9 @@ public class ModFeatures {
 
     public static final DeferredHolder<Feature<?>, PlanetaryRingFeature> PLANETARY_RING =
             FEATURES.register("planetary_ring", () -> new PlanetaryRingFeature(NoneFeatureConfiguration.CODEC));
+
+    public static final DeferredHolder<Feature<?>, AsteroidBeltFeature> ASTEROID_BELT =
+            FEATURES.register("asteroid_belt", () -> new AsteroidBeltFeature(NoneFeatureConfiguration.CODEC));
 
     public static void register(IEventBus eventBus) {
         FEATURES.register(eventBus);

@@ -1,5 +1,6 @@
 package com.lit.spaceships.world;
 
+import com.lit.spaceships.world.feature.AsteroidBeltFeature;
 import com.lit.spaceships.world.feature.AsteroidFeature;
 import com.lit.spaceships.world.feature.IceCometFeature;
 import com.lit.spaceships.world.feature.MegaAsteroidFeature;
@@ -121,8 +122,10 @@ class ModSpaceWorldGenTest {
         assertKey(ModPlacedFeatures.ICE_COMET_PLACED, Registries.PLACED_FEATURE, "ice_comet_placed");
         assertKey(ModConfiguredFeatures.MEGA_ASTEROID, Registries.CONFIGURED_FEATURE, "mega_asteroid");
         assertKey(ModConfiguredFeatures.PLANETARY_RING, Registries.CONFIGURED_FEATURE, "planetary_ring");
+        assertKey(ModConfiguredFeatures.ASTEROID_BELT, Registries.CONFIGURED_FEATURE, "asteroid_belt");
         assertKey(ModPlacedFeatures.MEGA_ASTEROID_PLACED, Registries.PLACED_FEATURE, "mega_asteroid_placed");
         assertKey(ModPlacedFeatures.PLANETARY_RING_PLACED, Registries.PLACED_FEATURE, "planetary_ring_placed");
+        assertKey(ModPlacedFeatures.ASTEROID_BELT_PLACED, Registries.PLACED_FEATURE, "asteroid_belt_placed");
         assertKey(ModPlacedFeatures.WRECK_FIELD_PLACED, Registries.PLACED_FEATURE, "wreck_field_placed");
     }
 
@@ -139,8 +142,9 @@ class ModSpaceWorldGenTest {
         IceCometFeature iceComet = new IceCometFeature(NoneFeatureConfiguration.CODEC);
         MegaAsteroidFeature megaAsteroid = new MegaAsteroidFeature(NoneFeatureConfiguration.CODEC);
         PlanetaryRingFeature planetaryRing = new PlanetaryRingFeature(NoneFeatureConfiguration.CODEC);
+        AsteroidBeltFeature asteroidBelt = new AsteroidBeltFeature(NoneFeatureConfiguration.CODEC);
 
-        ModConfiguredFeatures.bootstrapWith(configuredContext, asteroid, wreck, iceComet, megaAsteroid, planetaryRing);
+        ModConfiguredFeatures.bootstrapWith(configuredContext, asteroid, wreck, iceComet, megaAsteroid, planetaryRing, asteroidBelt);
 
         ArgumentCaptor<ConfiguredFeature<?, ?>> captor = ArgumentCaptor.forClass(ConfiguredFeature.class);
         verify(configuredContext).register(eq(ModConfiguredFeatures.ASTEROID), captor.capture());
@@ -148,6 +152,7 @@ class ModSpaceWorldGenTest {
         verify(configuredContext).register(eq(ModConfiguredFeatures.ICE_COMET), any());
         verify(configuredContext).register(eq(ModConfiguredFeatures.MEGA_ASTEROID), any());
         verify(configuredContext).register(eq(ModConfiguredFeatures.PLANETARY_RING), any());
+        verify(configuredContext).register(eq(ModConfiguredFeatures.ASTEROID_BELT), any());
 
         ConfiguredFeature<?, ?> registered = captor.getValue();
         assertSame(asteroid, registered.feature());
@@ -237,6 +242,8 @@ class ModSpaceWorldGenTest {
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.MEGA_ASTEROID_PLACED);
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.PLANETARY_RING_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.PLANETARY_RING_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.ASTEROID_BELT_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.ASTEROID_BELT_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 
@@ -283,6 +290,8 @@ class ModSpaceWorldGenTest {
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.MEGA_ASTEROID_PLACED);
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.PLANETARY_RING_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.PLANETARY_RING_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.ASTEROID_BELT_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.ASTEROID_BELT_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 
@@ -308,7 +317,8 @@ class ModSpaceWorldGenTest {
                 .map(holder -> holder.unwrapKey().orElseThrow())
                 .toList();
         assertEquals(List.of(ModPlacedFeatures.ASTEROID_PLACED, ModPlacedFeatures.WRECK_FIELD_PLACED,
-                ModPlacedFeatures.MEGA_ASTEROID_PLACED, ModPlacedFeatures.PLANETARY_RING_PLACED), stepZeroKeys);
+                ModPlacedFeatures.MEGA_ASTEROID_PLACED, ModPlacedFeatures.PLANETARY_RING_PLACED,
+                ModPlacedFeatures.ASTEROID_BELT_PLACED), stepZeroKeys);
     }
 
     @Test
@@ -407,6 +417,8 @@ class ModSpaceWorldGenTest {
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.MEGA_ASTEROID_PLACED);
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.PLANETARY_RING_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.PLANETARY_RING_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.ASTEROID_BELT_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.ASTEROID_BELT_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 
@@ -561,6 +573,8 @@ class ModSpaceWorldGenTest {
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.MEGA_ASTEROID_PLACED);
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.PLANETARY_RING_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.PLANETARY_RING_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.ASTEROID_BELT_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.ASTEROID_BELT_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 
@@ -587,7 +601,7 @@ class ModSpaceWorldGenTest {
                 .map(holder -> holder.unwrapKey().orElseThrow())
                 .toList();
         assertEquals(List.of(ModPlacedFeatures.ICE_COMET_PLACED, ModPlacedFeatures.MEGA_ASTEROID_PLACED,
-                ModPlacedFeatures.PLANETARY_RING_PLACED), stepZeroKeys);
+                ModPlacedFeatures.PLANETARY_RING_PLACED, ModPlacedFeatures.ASTEROID_BELT_PLACED), stepZeroKeys);
     }
 
     @Test
@@ -668,6 +682,39 @@ class ModSpaceWorldGenTest {
             Block block = PlanetaryRingFeature.ringBlock(random).getBlock();
             assertTrue(allowed.contains(block), "Unerwarteter Ringblock: " + block);
         }
+    }
+
+    @Test
+    @DisplayName("Gürtel-Spec pro Zelle: deterministisch, korridor-geometrie und cluster-noise korrekt")
+    void asteroidBeltSpecAndCorridorMath() {
+        AsteroidBeltFeature.BeltSpec spec = AsteroidBeltFeature.specForCell(-2, 5);
+        assertEquals(spec, AsteroidBeltFeature.specForCell(-2, 5), "Gleiche Zelle muss identischen Gürtel liefern");
+
+        assertTrue(spec.halfLength() >= 160.0D && spec.halfLength() <= 320.0D, "Halbe Länge 160-320");
+        assertTrue(spec.halfWidth() >= 8.0D && spec.halfWidth() <= 16.0D, "Halbe Breite 8-16");
+        assertTrue(spec.yMin() >= -32 && spec.yMax() <= 256, "Y-Band innerhalb -32..256");
+
+        // Nahtlosigkeit: Gürtel inklusive Endpunkte vollständig in der Zelle
+        double originX = -2 * AsteroidBeltFeature.CELL_SIZE;
+        double originZ = 5 * AsteroidBeltFeature.CELL_SIZE;
+        assertTrue(spec.centerX() - spec.halfLength() >= originX
+                && spec.centerX() + spec.halfLength() <= originX + AsteroidBeltFeature.CELL_SIZE);
+        assertTrue(spec.centerZ() - spec.halfLength() >= originZ
+                && spec.centerZ() + spec.halfLength() <= originZ + AsteroidBeltFeature.CELL_SIZE);
+
+        // Korridor-Geometrie: Punkt auf der Achse -> Abstand 0; seitlich -> perpendikularer Abstand
+        AsteroidBeltFeature.BeltSpec axis = new AsteroidBeltFeature.BeltSpec(0, 0, 1, 0, 100, 10, 0, 64, 0);
+        assertEquals(0.0D, AsteroidBeltFeature.distanceToBelt(50, 0, axis), 0.0001D);
+        assertEquals(7.0D, AsteroidBeltFeature.distanceToBelt(50, 7, axis), 0.0001D);
+        // Jenseits des Endpunkts (proj 150 > halfLength 100): Abstand zum Endpunkt (100, 0)
+        assertEquals(Math.hypot(150.0D - 100.0D, 3.0D), AsteroidBeltFeature.distanceToBelt(150, 3, axis), 0.0001D);
+
+        // Cluster-Noise: glatte Sinus-Dichte in [0,1], deterministisch
+        double noise = AsteroidBeltFeature.clusterNoise(13.0D, 0.7D);
+        assertTrue(noise >= 0.0D && noise <= 1.0D);
+        assertEquals(noise, AsteroidBeltFeature.clusterNoise(13.0D, 0.7D), 0.0D);
+        // Maximale Dichte bei Phase + Viertelwelle
+        assertEquals(1.0D, AsteroidBeltFeature.clusterNoise(Math.PI / 2.0D / 0.25D, 0.0D), 0.0001D);
     }
 
     private static <T> T privateField(Object owner, String name, Class<T> type) {
