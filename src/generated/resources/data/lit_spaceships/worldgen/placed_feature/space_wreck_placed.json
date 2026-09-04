@@ -1,9 +1,9 @@
 {
-  "feature": "lit_spaceships:asteroid",
+  "feature": "lit_spaceships:space_wreck",
   "placement": [
     {
-      "type": "minecraft:count",
-      "count": 4
+      "type": "minecraft:rarity_filter",
+      "chance": 32
     },
     {
       "type": "minecraft:in_square"
@@ -12,11 +12,11 @@
       "type": "minecraft:height_range",
       "height": {
         "type": "minecraft:uniform",
-        "min_inclusive": {
-          "absolute": -40
-        },
         "max_inclusive": {
-          "absolute": 280
+          "absolute": 200
+        },
+        "min_inclusive": {
+          "absolute": 0
         }
       }
     },

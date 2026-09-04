@@ -56,7 +56,7 @@ An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21.
   * **Symmetric Bilingual Localization:** Automated DataGen via `ModEnglishLanguageProvider` (`en_us`) and `ModGermanLanguageProvider` (`de_de`) ensuring 100% dictionary completeness with positional string interpolation (`%1$s`, `%2$s`, `%1$.1f`) and typed styling via `ChatFormatting`.
 * **Automated Data Generation Pipeline (`com.lit.spaceships.datagen`):**
   * **Client DataGen (View Layer):** `ModBlockStateProvider` for automated `cubeAll` models and mathematical Euler angle rotation mapping (`FACING` direction property) for laser split-models; `ModItemModelProvider` for parent references (`laser_base`) and 2D item models (`BACKFLIP_TOOL`); `ModEnglishLanguageProvider` and `ModGermanLanguageProvider` for synchronized bilingual dictionaries (`en_us`, `de_de`).
-  * **Server DataGen (Domain Layer):** `ModLootTableProvider` and `ModBlockLootTableProvider` with asynchronous `HolderLookup.Provider` resolving, self-drop declarations, and programmatic registry validation via `getKnownBlocks()`; `ModRecipeProvider` for compile-time verified recipe and advancement generation.
+  * **Server DataGen (Domain Layer):** `ModWorldGenProvider` coupling a `RegistrySetBuilder` (Biomes, ConfiguredFeatures, PlacedFeatures — structures to follow) into `DatapackBuiltinEntriesProvider`, making the Deep Space Dimension 100% code-generated with zero hand-written worldgen JSON (`ModBiomes`, `ModConfiguredFeatures`, `ModPlacedFeatures` bootstraps); `ModLootTableProvider` and `ModBlockLootTableProvider` with asynchronous `HolderLookup.Provider` resolving, self-drop declarations, and programmatic registry validation via `getKnownBlocks()`; `ModRecipeProvider` for compile-time verified recipe and advancement generation.
 * **Crafting Recipe Architecture, Progression Tiering & Material Economy:**
   * **Tier 1 (Terrestrial Navigation & Chassis):** Confined to Overworld resources (Iron, Copper, Redstone, Slime, Quartz).
     * `lit_spaceships:example_block` (Hull Plating / Chassis, 16x): Copper ingots, iron ingots, smooth stone. Mass-producible structural building block to mitigate BFS volume costs.
@@ -323,7 +323,7 @@ classDiagram
 
 The project enforces continuous testing according to the **70/20 Rule** (70% Unit / Math Tests, 20% Engine GameTests, 10% Manual QA).
 
-### Automated Test Matrix (82 Unit Tests & 7 GameTest Suites / 26 GameTests)
+### Automated Test Matrix (159 Unit Tests & 7 GameTest Suites / 26 GameTests)
 
 | Test-Suite | Typ | Abdeckung |
 | :--- | :--- | :--- |
@@ -343,6 +343,9 @@ The project enforces continuous testing according to the **70/20 Rule** (70% Uni
 | **`FastVoxelTraversalShieldTest`** | JUnit 5 | 3D-DDA-Traversierung mit extrahierter `shieldId` im `VoxelHit` bei Treffern auf Hülle und Schild. |
 | **`ShieldZonePayloadSerializationTest`** | JUnit 5 | Bit-genaue 64-Bit Bitmasken-Serialisierung und -Dekodierung in $< 32$ Bytes via `ShieldZoneStatePayload`. |
 | **`LaserNodeRenderStateTest`** | JUnit 5 (Mockito) | Thread-sichere Render-State Extraktion, interpolierte Kinematik (Yaw/Pitch), 180°-Winkel-Wrap und alle 6 `FACING`-Ausrichtungen (`UP`, `DOWN`, `NORTH`, `SOUTH`, `WEST`, `EAST`). |
+| **`ModSpaceWorldGenTest`** | JUnit 5 (Mockito) | Weltgen-DataGen-Migration: Registry-Key-Validierung, `RegistrySetBuilder`-Bootstrap für Biome/Configured/Placed Features, Platzierungs-Mathe (Count 4 / Rarity 1/32, Uniformhöhen-Bounds, Biome-Filter) und Void-Biome-Eigenschaften (Farben, Null-Spawns, Deko-Stufe 0). |
+| **`AsteroidFeatureTest`** | JUnit 5 | Registrierungs-Holder für Asteroiden-/Wrack-Features und Classpath-Existenz der generierten Configured-/Placed-Feature-JSONs. |
+| **`ModDimensionsTest`** | JUnit 5 | `ResourceKey`-Namespaces/-Pfade der Space-Dimension und Classpath-Existenz der Dimension-JSONs. |
 | **`DataGeneratorsTest`** | JUnit 5 (Mockito) | Event-Handling für `GatherDataEvent`, Provider-Registrierung und HolderLookup-Lifecycle. |
 | **`ModBlockStateProviderTest`** | JUnit 5 | 6-Achsen Euler-Winkel-Transformation (`rotX`, `rotY`) für `FACING` Split-Modell Basisplatten und `cubeAll` Generierung. |
 | **`ModItemModelProviderTest`** | JUnit 5 | Parent-Referenzen auf Block-Basen (`laser_base`) und 2D-Item-Modelle (`backflip_tool`). |

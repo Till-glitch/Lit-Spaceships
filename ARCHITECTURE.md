@@ -338,12 +338,9 @@ classDiagram
             +consumeEnergy(Level level, ShipState ship, int amount)$ void
             +tryConsumeEnergyAmount(Level level, ShipState ship, int amount)$ boolean
             +tryConsumeFlightEnergy(Level level, ShipState ship, int dx, int dy, int dz, Player player)$ boolean
-<<<<<<< HEAD:ARCHITECTURE.md
             +tryConsumeRotationEnergy(Level level, ShipState ship, Rotation rotation, Player player)$ boolean
-=======
             +distributeEnergyToShields(Level level, ShipState ship)$ int
             +distributeEnergyToShields(int availableEnergy, ShipState ship, long currentGameTime)$ int
->>>>>>> main:Outdate_ARCHITECTURE.md
         }
     }
 
@@ -654,14 +651,33 @@ Für 90°-Drehungen um den Spaceship-Controller als Pivot $(px, pz)$ wird eine d
 | **Laser-Rendering (Client)** | Render-Frame (`AFTER_TRANSLUCENT_BLOCKS`) | `LaserBeamRenderer.onRenderLevelStage()` | Berechnet Strahlenursprung aus Schiffsanker + relativem Offset. Führt `level.clip()` aus $\rightarrow$ Strahl stoppt exakt auf der Blockoberfläche. Rendert Quads additiv (`GL_ONE`). |
 | **VRAM & Laser-Freigabe** | Chunk entlädt / Schiff gelöscht / Logout | `ClientShipManager` & `ClientLaserState` | `ClientLaserState.removeBeamsForShip(shipId)` räumt Laser auf; `ClientShipState.dispose()` schließt VBOs im GL-Thread. |
 
+### Weltraum-Weltgen: Datapack-Registry-Abhängigkeitsgraph
+
+Alle Weltraum-Weltgen-Assets werden ausschließlich über Java-DataGen erzeugt:
+`ModWorldGenProvider` (extends `DatapackBuiltinEntriesProvider`) koppelt einen
+`RegistrySetBuilder` (`Registries.BIOME`, `Registries.CONFIGURED_FEATURE`, `Registries.PLACED_FEATURE`)
+in `DataGenerators.java` unter `event.includeServer()`; `./gradlew runData` schreibt die JSONs
+nach `src/generated/resources`. Manuelle JSON-Dateien unter `data/lit_spaceships/worldgen/` sind verboten.
+
+| Datapack-Registry | Schlüssel | Bootstrap | Abhängigkeiten / Platzierungs-Mathe |
+| :--- | :--- | :--- | :--- |
+| `worldgen/biome` | `lit_spaceships:space_biome` | `ModBiomes` | → `asteroid_placed`, `space_wreck_placed` (Deko-Stufe 0); schwarzer Himmel/Nebel (0), `MobSpawnSettings.EMPTY` |
+| `worldgen/configured_feature` | `lit_spaceships:asteroid` | `ModConfiguredFeatures` | → Runtime-Feature `lit_spaceships:asteroid` (`ModFeatures`, `AsteroidFeature`) |
+| `worldgen/configured_feature` | `lit_spaceships:space_wreck` | `ModConfiguredFeatures` | → Runtime-Feature `lit_spaceships:space_wreck` (`ModFeatures`, `SpaceWreckFeature`) |
+| `worldgen/placed_feature` | `lit_spaceships:asteroid_placed` | `ModPlacedFeatures` | → `lit_spaceships:asteroid`; Count 4, InSquare, Uniform $Y \in [-40, 280]$, Biome-Filter |
+| `worldgen/placed_feature` | `lit_spaceships:space_wreck_placed` | `ModPlacedFeatures` | → `lit_spaceships:space_wreck`; Rarity 1/32, InSquare, Uniform $Y \in [0, 200]$, Biome-Filter |
+
+Referenzierte Dimension-Infrastruktur (Datumsebene, nicht Teil des RegistrySetBuilder):
+`dimension/space.json` (Fixed-Biome-Source auf `lit_spaceships:space_biome`),
+`dimension_type/space_type.json`, `noise_settings/space_noise.json`.
+
 ---
 
 ## 5. Testing-Architektur & CI/CD Pipeline
 
 Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
 
-<<<<<<< HEAD:ARCHITECTURE.md
-1. **JUnit 5 & Mockito Suite (75 Tests, 100% Erfolgsquote)**:
+1. **JUnit 5 & Mockito Suite (159 Tests, 100% Erfolgsquote)**:
    * **`VirtualSupportTestViewTest`**: Datengetriebenes Support-Probing über virtuelle Nachbar-Maskierung mit `state.canSurvive()` (löst alle hardcodierten `instanceof`-Ketten für Mod-Attachables ab).
    * **`NbtCoordinateRemapperTest`**: Rekursives Umschreiben von internen `BlockPos`-Referenzen (`masterPos`, `controllerPos`, Int-Arrays, Longs) in BlockEntity-NBTs für Master-Slave-Multiblöcke.
    * **`BlockDependencyGraphTest`**: Validierung der gerichteten Kantenbildung via `canSurvive` und `isFaceSturdy` für Multiblöcke (Türen, Betten, ausgefahrene Pistons Base $\rightarrow$ Head) und Wand-Attachables (Wandfackeln); Prüfung der Schicht-Linearisierung.
@@ -670,8 +686,6 @@ Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
    * **`ShipMovement3PassTest`**: Validierung der 3-Pass-Klassifizierung (`PASS_1_SOLIDS`, `PASS_2_ROOTS_AND_NORMALS`, `PASS_3_ATTACHABLES_AND_TOPS`) für Vollblöcke, untere/obere Türhälften, Betten, Treppen, Fackeln, Redstone, Piston-Köpfe und $Y$-Sortierung.
    * **`ShipMovementFragileSortingTest`**: Validierung von `isFragileBlock` für Redstone Wire, Fackeln, Repeater, Hebel vs. Vollblöcke & Luft; Überprüfung der absteigenden Y-Entfernungs- und aufsteigenden Y-Platzierungs-Sortierung.
    * **`ShipRotationMathTest`**: Orthogonale 90° CW / CCW Transformation für alle 4 Quadranten, Pivot-Verschiebungen, Fließkomma-Entitätsrotationen um das Pivot-Zentrum, Yaw-Normalisierung über $[-180^\circ, 180^\circ]$, 4x 90° Identitätsinvarianz und `BlockState.rotate` für Directional Facing.
-=======
-1. **JUnit 5 & Mockito Suite (58 Tests, 100% Erfolgsquote)**:
    * **`VoxelGridCacheShieldTest`**: $O(1)$ Flach-Array `byte[] shieldMap` Adressierung, Rand- und Out-of-Bounds-Absicherung im `VoxelGridCache`.
    * **`ShipStateShieldZoneTest`**: Thread-sichere CRUD-Operationen auf `shieldZones`, `isCollapsed`-Auswertung bei Cooldown und Energiemangel.
    * **`VoronoiTessellationTest`**: 3D-Voronoi-Tesselierung über quadrierte euklidische Distanz, deterministischer ID-Tie-Break und 64-Generatoren-Cap.
@@ -679,7 +693,6 @@ Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
    * **`EnergyRoutingRemainderTest`**: Exakter Rest-Tröpfchen-Loop (+1 FE) für verlustfreie Energieerhaltung bei krummen Primzahl-Werten (3333 FE auf 7 Generatoren).
    * **`FastVoxelTraversalShieldTest`**: 3D-DDA-Traversierung mit extrahierter `shieldId` im `VoxelHit` bei Treffern auf Hülle und Schild.
    * **`ShieldZonePayloadSerializationTest`**: Bit-genaue 64-Bit Bitmasken-Serialisierung und -Dekodierung in $< 32$ Bytes via `ShieldZoneStatePayload`.
->>>>>>> main:Outdate_ARCHITECTURE.md
    * **`LaserNodeRenderStateTest`**: Thread-sichere Render-State Extraktion, interpolierte Kinematik (Yaw/Pitch), 180°-Winkel-Wrap und alle 6 `FACING`-Ausrichtungen (`UP`, `DOWN`, `NORTH`, `SOUTH`, `WEST`, `EAST`).
    * **`DataGeneratorsTest`**: Event-Handling für `GatherDataEvent`, Client/Server-Provider-Registrierung und HolderLookup-Lifecycle.
    * **`ModBlockStateProviderTest`**: 6-Achsen Euler-Winkel-Transformation (`rotX`, `rotY`) für `FACING` Split-Modell Basisplatten und `cubeAll` Generierung.

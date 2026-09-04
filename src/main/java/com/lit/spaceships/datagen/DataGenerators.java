@@ -4,6 +4,7 @@ import com.lit.spaceships.LitSpaceships;
 import com.lit.spaceships.datagen.provider.ModBlockStateProvider;
 import com.lit.spaceships.datagen.provider.ModItemModelProvider;
 import com.lit.spaceships.datagen.provider.ModLootTableProvider;
+import com.lit.spaceships.datagen.provider.ModWorldGenProvider;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
@@ -31,6 +32,7 @@ public class DataGenerators {
         generator.addProvider(event.includeClient(), new com.lit.spaceships.datagen.provider.ModGermanLanguageProvider(packOutput));
 
         // Server / Domain-bezogene Provider
+        generator.addProvider(event.includeServer(), new ModWorldGenProvider(packOutput, lookupProvider));
         generator.addProvider(event.includeServer(), ModLootTableProvider.create(packOutput, lookupProvider));
         generator.addProvider(event.includeServer(), new com.lit.spaceships.datagen.provider.ModBlockTagsProvider(packOutput, lookupProvider, existingFileHelper));
         generator.addProvider(event.includeServer(), new com.lit.spaceships.datagen.provider.ModRecipeProvider(packOutput, lookupProvider));
