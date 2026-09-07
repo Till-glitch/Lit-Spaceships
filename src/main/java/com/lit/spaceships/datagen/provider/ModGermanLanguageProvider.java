@@ -173,6 +173,9 @@ public class ModGermanLanguageProvider extends LanguageProvider {
         add(ModI18n.Tooltip.ENERGY_COST, "Energiekosten: %1$s FE/Schuss");
         add(ModI18n.Tooltip.SHIELD_STATUS, "Schild-Matrix: %1$s");
         add(ModI18n.Structure.SHIPWRECK, "Verlassenes Raumschiff-Wrack");
+        add(ModI18n.Structure.SPACE_STATION, "Verlassene Orbitale Forschungsstation");
+        add(ModI18n.Structure.DREADNOUGHT_WRECK, "Verlassenes Schlachtschiff-Wrack");
+        add(ModI18n.Structure.ALIEN_OUTPOST, "Außerirdisches Monolith-Relikt");
         add(ModI18n.Biome.DEEP_SPACE, "Tiefraum-Vakuum");
     }
 }

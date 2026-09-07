@@ -15,7 +15,8 @@ public class ModLootTableProvider {
                 output,
                 Collections.emptySet(),
                 List.of(
-                        new LootTableProvider.SubProviderEntry(ModBlockLootTableProvider::new, LootContextParamSets.BLOCK)
+                        new LootTableProvider.SubProviderEntry(ModBlockLootTableProvider::new, LootContextParamSets.BLOCK),
+                        new LootTableProvider.SubProviderEntry(ModChestLootTableProvider::new, LootContextParamSets.CHEST)
                 ),
                 lookupProvider
         );

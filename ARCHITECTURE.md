@@ -655,7 +655,7 @@ Für 90°-Drehungen um den Spaceship-Controller als Pivot $(px, pz)$ wird eine d
 
 Alle Weltraum-Weltgen-Assets werden ausschließlich über Java-DataGen erzeugt:
 `ModWorldGenProvider` (extends `DatapackBuiltinEntriesProvider`) koppelt einen
-`RegistrySetBuilder` (`Registries.BIOME`, `Registries.CONFIGURED_FEATURE`, `Registries.PLACED_FEATURE`)
+`RegistrySetBuilder` (`Registries.BIOME`, `Registries.CONFIGURED_FEATURE`, `Registries.PLACED_FEATURE`, `Registries.TEMPLATE_POOL`, `Registries.STRUCTURE`, `Registries.STRUCTURE_SET`)
 in `DataGenerators.java` unter `event.includeServer()`; `./gradlew runData` schreibt die JSONs
 nach `src/generated/resources`. Manuelle JSON-Dateien unter `data/lit_spaceships/worldgen/` sind verboten.
 
@@ -678,6 +678,18 @@ nach `src/generated/resources`. Manuelle JSON-Dateien unter `data/lit_spaceships
 | `worldgen/placed_feature` | `lit_spaceships:mega_asteroid_placed` | `ModPlacedFeatures` | → `lit_spaceships:mega_asteroid`; Rarity 1/96 (Chunk-Generierungs-Budget für 40-70 Blöcke Durchmesser), InSquare, Uniform $Y \in [-40, 280]$, Biome-Filter. Radiale Schichten via `MegaAsteroidFeature.radialLayer` (Kruste → Erz-Mantel → Kaverne → Kalzit → Amethyst/sprossend → Geodenluft), in-World per GameTest verifiziert |
 | `worldgen/placed_feature` | `lit_spaceships:planetary_ring_placed` | `ModPlacedFeatures` | → `lit_spaceships:planetary_ring`; Count 1 + InSquare + Biome-Filter (Annulus-Geometrie regelt die Dichte). Chunk-Budget-Architektur: deterministischer `RingSpec` pro 2048er-Zelle (R 100-300, Y 64-192, Dicke 1-3, Zentrum in-Zelle geklemmt) — jeder Chunk schreibt nur sein 16x16-Segment (null Cross-Chunk-Writes, nahtlose Ringe), in-World per GameTest verifiziert |
 | `worldgen/placed_feature` | `lit_spaceships:asteroid_belt_placed` | `ModPlacedFeatures` | → `lit_spaceships:asteroid_belt`; Count 1 + InSquare + Biome-Filter (Korridor-Geometrie + Cluster-Noise regeln die Dichte, 6 Fragment-Versuche/Chunk). Deterministischer `BeltSpec` pro 1024er-Zelle (halbe Länge 160-320, halbe Breite 8-16, Y-Band -32..256), Sinus-Cluster-Noise entlang der Achse, Fragmente R 2-6 mit Erz-Kernen, in-World per GameTest verifiziert |
+| `worldgen/template_pool` | `lit_spaceships:space_station/start`, `rooms` | `ModTemplatePools` | Start: `docking_hub` (11x7x11, Gew. 1); Rooms: `solar_wing` (Gew. 3), `laboratory` (Gew. 3, Kiste mit `space_station_core`), `reactor_room` (Gew. 2), `empty` (Gew. 1) |
+| `worldgen/template_pool` | `lit_spaceships:dreadnought_wreck/start`, `sections` | `ModTemplatePools` | Start: `command_bridge` (13x7x13, Gew. 1); Sections: `corridor_breached` (Gew. 3, Rumpfbruch ins All), `engineering_core` (Gew. 2, instabiler Reaktor + Armory-Kiste), `empty` (Gew. 1) |
+| `worldgen/template_pool` | `lit_spaceships:alien_outpost/start` | `ModTemplatePools` | Start: `monolith` (11x15x11, Gew. 1) mit Basaltsockel, Purpursäulen, Lodestone-Kern & Reliktkiste |
+| `worldgen/structure` | `lit_spaceships:space_station` | `ModStructures::bootstrapStructure` | `JigsawStructure` (Start-Pool `space_station/start`, maxDepth 3, Uniform $Y \in [48, 192]$, TerrainAdjustment NONE); alle 4 Weltraum-Biome |
+| `worldgen/structure` | `lit_spaceships:dreadnought_wreck` | `ModStructures::bootstrapStructure` | `JigsawStructure` (Start-Pool `dreadnought_wreck/start`, maxDepth 3, Uniform $Y \in [32, 160]$, TerrainAdjustment NONE); `space_biome` & `void_wastes` |
+| `worldgen/structure` | `lit_spaceships:alien_outpost` | `ModStructures::bootstrapStructure` | `JigsawStructure` (Start-Pool `alien_outpost/start`, maxDepth 1, Uniform $Y \in [64, 200]$, TerrainAdjustment NONE); `space_biome` & `plasma_nebula` |
+| `worldgen/structure_set` | `lit_spaceships:space_station` | `ModStructures::bootstrapStructureSet` | `RandomSpreadStructurePlacement` (Spacing 36, Separation 12, LINEAR, Seed 1842089401) |
+| `worldgen/structure_set` | `lit_spaceships:dreadnought_wreck` | `ModStructures::bootstrapStructureSet` | `RandomSpreadStructurePlacement` (Spacing 48, Separation 16, LINEAR, Seed 1948102941) |
+| `worldgen/structure_set` | `lit_spaceships:alien_outpost` | `ModStructures::bootstrapStructureSet` | `RandomSpreadStructurePlacement` (Spacing 40, Separation 14, LINEAR, Seed 1739281743) |
+| `loot_table/chests` | `lit_spaceships:chests/space_station_core` | `ModChestLootTableProvider` | Netherite Upgrade Template, Diamant- & Redstone-Blöcke, Gold/Eisen/Kupfer, Goldäpfel |
+| `loot_table/chests` | `lit_spaceships:chests/dreadnought_armory` | `ModChestLootTableProvider` | Netherite Scrap/Ingot, Echo Shards (Pulslaser), Lohenruten/Quarz (Schwerer Strahl), TNT, Munition |
+| `loot_table/chests` | `lit_spaceships:chests/alien_monolith` | `ModChestLootTableProvider` | Lodestones, Nether-Sterne, Echo Shards, Enderaugen, Amethyst, Crying Obsidian, Chorusfrucht |
 | `worldgen/noise_settings` | `lit_spaceships:space_noise` | `ModNoiseSettings` | Konstante Dichte $-1$ (reiner Void, keine Terrain-Geometrie); Temperatur = `minecraft:temperature`-Noise, Feuchte (vegetation) = `minecraft:vegetation`-Noise (beide Multi-Noise-Achsen), Rest 0 |
 | `dimension_type` | `lit_spaceships:space_type` | `ModDimensions::bootstrapDimensionType` | Kosmische Nacht (`fixed_time` 18000), kein Skylight/Ceiling, $Y \in [-64, 320]$, Betten verboten, Respawn-Anker erlaubt, `monster_spawn_light_level` 0 |
 | `dimension` (LEVEL_STEM) | `lit_spaceships:space` | `ModDimensions::bootstrapLevelStem` | `NoiseBasedChunkGenerator` + `minecraft:multi_noise` Biome-Quelle als lückenlose Rechteck-Partition über Temperatur × Feuchte: `frozen_expanse` (Temp $[-1.0, -0.3]$, Feuchte beliebig), `void_wastes` (Temp $[-0.3, 0.4]$, Feuchte $[-1.0, 0.0]$), `space_biome` (Temp $[-0.3, 0.4]$, Feuchte $[0.0, 1.0]$), `plasma_nebula` (Temp $[0.4, 1.0]$, Feuchte beliebig) → 3D-volumetrische Biome-Zonen |
@@ -688,7 +700,15 @@ nach `src/generated/resources`. Manuelle JSON-Dateien unter `data/lit_spaceships
 
 Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
 
-1. **JUnit 5 & Mockito Suite (159 Tests, 100% Erfolgsquote)**:
+1. **JUnit 5 & Mockito Suite (179 Tests, 100% Erfolgsquote)**:
+   * **`ModSpaceWorldGenTest` (20 Tests)**:
+     - Biome, Noise, DimensionType, LevelStem & Multi-Noise Routing.
+     - Configured & Placed Features (Asteroiden, Eiskometen, Wracks, Mega-Asteroiden, Planetenringe, dichte Asteroidengürtel).
+     - Template-Pools: Station Start/Rooms, Dreadnought Start/Sections, Alien Outpost Start.
+     - JigsawStructures: Höhenintervalle, Biome-Zuordnung, Decoration Step & Terrain Adaptation.
+     - StructureSets: RandomSpread-Parameter (Spacing, Separation, LINEAR).
+     - NBT-Template-Integrität: Alle 8 NBTs im Classpath vorhanden.
+     - Kisten-Loot: Vollständige Validierung von `space_station_core`, `dreadnought_armory` und `alien_monolith`.
    * **`VirtualSupportTestViewTest`**: Datengetriebenes Support-Probing über virtuelle Nachbar-Maskierung mit `state.canSurvive()` (löst alle hardcodierten `instanceof`-Ketten für Mod-Attachables ab).
    * **`NbtCoordinateRemapperTest`**: Rekursives Umschreiben von internen `BlockPos`-Referenzen (`masterPos`, `controllerPos`, Int-Arrays, Longs) in BlockEntity-NBTs für Master-Slave-Multiblöcke.
    * **`BlockDependencyGraphTest`**: Validierung der gerichteten Kantenbildung via `canSurvive` und `isFaceSturdy` für Multiblöcke (Türen, Betten, ausgefahrene Pistons Base $\rightarrow$ Head) und Wand-Attachables (Wandfackeln); Prüfung der Schicht-Linearisierung.
@@ -718,7 +738,14 @@ Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
    * **`SpaceshipEnergyManagerTest`**: Multi-Reaktor-Bündelung, sequenzieller FE-Drain, Transaktionssicherheit (Rollback).
    * **`AimTransformMathTest`**: Quaternion-Transformationen, Euler-Winkel-Konvertierung, 16-Bit Kompression und GimbalLimits.
    * **`TurretSeatTest`**: TurretSeat DTO Attribute, NBT-Persistenz und Aim-Lock-Status.
-2. **NeoForge GameTests (`@GameTestHolder`, 26 Tests auf Dedicated GameTest-Server, 100% Erfolgsquote)**:
+2. **NeoForge GameTests (`@GameTestHolder`, 32 Tests auf Dedicated GameTest-Server, 100% Erfolgsquote)**:
+   * **`WorldGenGameTests` (6 Tests)**:
+     - `megaAsteroidEllipsoidLayersMatchPattern`: Radiale Schichtung (Geode, Kaverne, Erz-Mantel, Kruste) auf skaliertem 15³-Ellipsoid.
+     - `planetaryRingSegmentMatchesPattern`: Annulus-Geometrie, Kardinalpunkte, zentrierte Leerzone und 1-Block-Dicke.
+     - `asteroidBeltFragmentIsSolidOreBlob`: Erz-Fragment Kern-/Krusten-Dichte und Außenraum-Vakuum.
+     - `spaceStationDockingHubTemplateLoadsAndPlaces`: Registrierungs-Integrität und In-World-Platzierung des 11x7x11 Docking-Hubs samt Eisenwänden, Glasfenstern und Jigsaw-Connector.
+     - `dreadnoughtWreckTemplateLoadsAndPlaces`: Registrierungs-Integrität und Platzierung der 13x7x13 Command-Bridge des Dreadnoughts (Polished Blackstone Bricks, rote Glas-Sichtbrücke, Jigsaw-Südconnector).
+     - `alienOutpostTemplateLoadsAndPlaces`: Registrierungs-Integrität und Platzierung des 11x15x11 Alien-Monolithen (Purpursäulen, Lodestone-Kern, Seelaterne, Relikt-Kiste mit Custom-Loot).
    * **`ShipScannerVoronoiGameTest`**: Voronoi-Zonierung und ShieldZone-Erfassung bei mehreren Schildgeneratoren im Schiff.
    * **`LaserCombatPiercingGameTest`**: Zonen-Kollaps und Durchschlag auf darunterliegende Schiffshülle bei inaktiver ShieldZone.
    * **`ShipCollisionGameTests` (10 Tests)**:

@@ -173,6 +173,9 @@ public class ModEnglishLanguageProvider extends LanguageProvider {
         add(ModI18n.Tooltip.ENERGY_COST, "Energy Cost: %1$s FE/shot");
         add(ModI18n.Tooltip.SHIELD_STATUS, "Shield Matrix: %1$s");
         add(ModI18n.Structure.SHIPWRECK, "Derelict Spacecraft Wreck");
+        add(ModI18n.Structure.SPACE_STATION, "Abandoned Orbital Research Station");
+        add(ModI18n.Structure.DREADNOUGHT_WRECK, "Derelict Dreadnought Warship");
+        add(ModI18n.Structure.ALIEN_OUTPOST, "Alien Monolith Relic");
         add(ModI18n.Biome.DEEP_SPACE, "Deep Space Void");
     }
 }

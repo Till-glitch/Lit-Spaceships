@@ -654,10 +654,14 @@ classDiagram
     DataGenerators ..> ModEnglishLanguageProvider : instantiates client
     DataGenerators ..> ModGermanLanguageProvider : instantiates client
     DataGenerators ..> ModLootTableProvider : instantiates server
+    DataGenerators ..> ModWorldGenProvider : instantiates server
     DataGenerators ..> ModBlockTagsProvider : instantiates server
     ModEnglishLanguageProvider ..> ModI18n : references keys
     ModGermanLanguageProvider ..> ModI18n : references keys
     ModLootTableProvider ..> ModBlockLootTableProvider : creates
+    ModLootTableProvider ..> ModChestLootTableProvider : creates
+    ModWorldGenProvider ..> ModStructures : bootstraps
+    ModWorldGenProvider ..> ModTemplatePools : bootstraps
     DataGenerators ..> ModRecipeProvider : instantiates server
     ModJeiPlugin ..> SpaceshipReactorScreen : exclusion & click area
     ModJeiPlugin ..> SpaceshipShieldScreen : exclusion area

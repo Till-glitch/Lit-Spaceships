@@ -6,6 +6,8 @@ import com.lit.spaceships.world.ModConfiguredFeatures;
 import com.lit.spaceships.world.ModDimensions;
 import com.lit.spaceships.world.ModNoiseSettings;
 import com.lit.spaceships.world.ModPlacedFeatures;
+import com.lit.spaceships.world.ModStructures;
+import com.lit.spaceships.world.ModTemplatePools;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistrySetBuilder;
 import net.minecraft.core.registries.Registries;
@@ -28,7 +30,10 @@ public final class ModWorldGenProvider extends DatapackBuiltinEntriesProvider {
             .add(Registries.PLACED_FEATURE, ModPlacedFeatures::bootstrap)
             .add(Registries.DIMENSION_TYPE, ModDimensions::bootstrapDimensionType)
             .add(Registries.NOISE_SETTINGS, ModNoiseSettings::bootstrap)
-            .add(Registries.LEVEL_STEM, ModDimensions::bootstrapLevelStem);
+            .add(Registries.LEVEL_STEM, ModDimensions::bootstrapLevelStem)
+            .add(Registries.TEMPLATE_POOL, ModTemplatePools::bootstrap)
+            .add(Registries.STRUCTURE, ModStructures::bootstrapStructure)
+            .add(Registries.STRUCTURE_SET, ModStructures::bootstrapStructureSet);
 
     public ModWorldGenProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider) {
         super(output, lookupProvider, BUILDER, Set.of(LitSpaceships.MODID));

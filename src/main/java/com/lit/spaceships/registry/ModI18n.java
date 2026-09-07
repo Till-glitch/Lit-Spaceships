@@ -172,6 +172,9 @@ public final class ModI18n {
 
     public static final class Structure {
         public static final String SHIPWRECK = "structure." + LitSpaceships.MODID + ".shipwreck";
+        public static final String SPACE_STATION = "structure." + LitSpaceships.MODID + ".space_station";
+        public static final String DREADNOUGHT_WRECK = "structure." + LitSpaceships.MODID + ".dreadnought_wreck";
+        public static final String ALIEN_OUTPOST = "structure." + LitSpaceships.MODID + ".alien_outpost";
     }
 
     public static final class Biome {
