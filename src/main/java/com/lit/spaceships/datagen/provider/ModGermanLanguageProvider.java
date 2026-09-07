@@ -111,6 +111,7 @@ public class ModGermanLanguageProvider extends LanguageProvider {
         add(ModI18n.Screen.CONTROL_SUBSYSTEM_CORES, "⚡ Reaktoren: %1$d Kerne | 🛡 Schilde: %2$d Generatoren");
         add(ModI18n.Screen.CONTROL_SUBSYSTEM_WEAPONS, "⚔ Geschütztürme: %1$d (Schwer: %2$d | Puls: %3$d | Bergbau: %4$d)");
         add(ModI18n.Screen.CONTROL_SUBSYSTEM_NAV, "🧭 Navigation: %1$d Steuerkonsole");
+        add(ModI18n.Screen.CONTROL_SUBSYSTEM_WARP, "🌌 Warpantrieb: %1$d Kern(e)");
         add(ModI18n.Screen.CONTROL_BTN_CREATE, "Schiff binden");
         add(ModI18n.Screen.CONTROL_BTN_UPDATE, "Grenzen updaten");
         add(ModI18n.Screen.CONTROL_BTN_DISASSEMBLE, "Schiff auflösen");

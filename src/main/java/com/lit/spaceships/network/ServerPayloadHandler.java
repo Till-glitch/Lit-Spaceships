@@ -34,12 +34,18 @@ public class ServerPayloadHandler {
                 return;
             }
 
-            // 2. FÜR ALLE ANDEREN AKTIONEN: UUID BENÖTIGT
-            if (payload.shipId().isEmpty()) {
+            // 2. FÜR ALLE ANDEREN AKTIONEN: UUID BENÖTIGT (mit BlockEntity-Fallback bei Desync)
+            UUID shipUuid = payload.shipId().orElse(null);
+            if (shipUuid == null && pos != null) {
+                if (level.getBlockEntity(pos) instanceof com.lit.spaceships.block.ISpaceshipNode node) {
+                    shipUuid = node.getShipId();
+                }
+            }
+            if (shipUuid == null) {
                 return;
             }
 
-            ShipState ship = ServerShipManager.getShip(payload.shipId().get());
+            ShipState ship = ServerShipManager.getShip(shipUuid);
             if (ship == null) {
                 return;
             }
@@ -304,6 +310,7 @@ public class ServerPayloadHandler {
                 switch (payload.action()) {
                     case START_COUNTDOWN -> engine.startCountdown(player);
                     case ABORT_COUNTDOWN -> engine.abortCountdown(net.minecraft.network.chat.Component.translatable(com.lit.spaceships.registry.ModI18n.Message.WARP_COUNTDOWN_ABORTED));
+                    case REQUEST_SYNC -> engine.syncStateToClients();
                 }
             }
         });

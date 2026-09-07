@@ -18,7 +18,8 @@ public record WarpActionPayload(
 
     public enum Action {
         START_COUNTDOWN(0),
-        ABORT_COUNTDOWN(1);
+        ABORT_COUNTDOWN(1),
+        REQUEST_SYNC(2);
 
         private final int id;
 

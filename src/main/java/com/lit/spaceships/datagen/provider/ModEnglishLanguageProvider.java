@@ -111,6 +111,7 @@ public class ModEnglishLanguageProvider extends LanguageProvider {
         add(ModI18n.Screen.CONTROL_SUBSYSTEM_CORES, "⚡ Reactors: %1$d Cores | 🛡 Shields: %2$d Generators");
         add(ModI18n.Screen.CONTROL_SUBSYSTEM_WEAPONS, "⚔ Laser Turrets: %1$d (Heavy: %2$d | Pulse: %3$d | Mining: %4$d)");
         add(ModI18n.Screen.CONTROL_SUBSYSTEM_NAV, "🧭 Navigation: %1$d Helm");
+        add(ModI18n.Screen.CONTROL_SUBSYSTEM_WARP, "🌌 Warp Drive: %1$d Engine(s)");
         add(ModI18n.Screen.CONTROL_BTN_CREATE, "Create Ship");
         add(ModI18n.Screen.CONTROL_BTN_UPDATE, "Update Bounds");
         add(ModI18n.Screen.CONTROL_BTN_DISASSEMBLE, "Disassemble Ship");

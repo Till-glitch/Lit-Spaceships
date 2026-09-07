@@ -27,8 +27,11 @@ import java.util.UUID;
 
 public class WarpEngineBlockEntity extends AbstractSpaceshipNodeBlockEntity implements IEnergyStorage {
 
-    public static final int REQUIRED_ENERGY = 100000;
-    public static final int ENERGY_CAPACITY = REQUIRED_ENERGY;
+    public static final int BASE_REQUIRED_ENERGY = 100000;
+    public static final int ENERGY_PER_BLOCK = 10;
+    public static final int MAX_ENERGY_CAPACITY = 2000000;
+    public static final int REQUIRED_ENERGY = BASE_REQUIRED_ENERGY;
+    public static final int ENERGY_CAPACITY = BASE_REQUIRED_ENERGY;
     public static final int COUNTDOWN_TOTAL_TICKS = 200; // 10 Sekunden (20 Ticks/s)
     public static final int COUNTDOWN_MAX_TICKS = COUNTDOWN_TOTAL_TICKS;
     public static final long COOLDOWN_TOTAL_TICKS = 1200L; // 60 Sekunden (1 Minute)
@@ -36,7 +39,7 @@ public class WarpEngineBlockEntity extends AbstractSpaceshipNodeBlockEntity impl
     public static final int TRICKLE_CHARGE_RATE = 500; // FE pro Tick aus dem Schiffsnetz
     public static final int TRICKLE_DRAW_PER_TICK = TRICKLE_CHARGE_RATE;
 
-    private final EnergyStorage energyStorage = new EnergyStorage(REQUIRED_ENERGY, 10000, REQUIRED_ENERGY) {
+    private final EnergyStorage energyStorage = new EnergyStorage(MAX_ENERGY_CAPACITY, 50000, MAX_ENERGY_CAPACITY) {
         @Override
         public int receiveEnergy(int maxReceive, boolean simulate) {
             int received = super.receiveEnergy(maxReceive, simulate);
@@ -68,10 +71,27 @@ public class WarpEngineBlockEntity extends AbstractSpaceshipNodeBlockEntity impl
         super(ModBlockEntities.WARP_ENGINE_BE.get(), pos, state);
     }
 
+    public static int calculateRequiredEnergy(ShipState ship) {
+        int blockCount = (ship != null && ship.getBlocks() != null) ? ship.getBlocks().size() : 0;
+        return BASE_REQUIRED_ENERGY + (blockCount * ENERGY_PER_BLOCK);
+    }
+
+    public int getRequiredEnergy() {
+        if (level != null && getShipId() != null) {
+            ShipState ship = ServerShipManager.getShip(getShipId());
+            if (ship != null) {
+                return calculateRequiredEnergy(ship);
+            }
+        }
+        return BASE_REQUIRED_ENERGY;
+    }
+
     // --- IEnergyStorage Implementierung ---
     @Override
     public int receiveEnergy(int maxReceive, boolean simulate) {
-        return energyStorage.receiveEnergy(maxReceive, simulate);
+        int space = Math.max(0, getRequiredEnergy() - energyStorage.getEnergyStored());
+        int toReceive = Math.min(maxReceive, space);
+        return energyStorage.receiveEnergy(toReceive, simulate);
     }
 
     @Override
@@ -86,7 +106,7 @@ public class WarpEngineBlockEntity extends AbstractSpaceshipNodeBlockEntity impl
 
     @Override
     public int getMaxEnergyStored() {
-        return energyStorage.getMaxEnergyStored();
+        return getRequiredEnergy();
     }
 
     @Override
@@ -96,7 +116,7 @@ public class WarpEngineBlockEntity extends AbstractSpaceshipNodeBlockEntity impl
 
     @Override
     public boolean canReceive() {
-        return energyStorage.getEnergyStored() < REQUIRED_ENERGY;
+        return energyStorage.getEnergyStored() < getRequiredEnergy();
     }
 
     public IEnergyStorage getEnergyStorage() {
@@ -121,7 +141,7 @@ public class WarpEngineBlockEntity extends AbstractSpaceshipNodeBlockEntity impl
     }
 
     public boolean isReady(long gameTime) {
-        return getEnergyStored() >= REQUIRED_ENERGY && getCooldownRemaining(gameTime) <= 0L && !isCountingDown;
+        return getEnergyStored() >= getRequiredEnergy() && getCooldownRemaining(gameTime) <= 0L && !isCountingDown;
     }
 
     // --- Countdown Start & Abbruch ---
@@ -151,11 +171,19 @@ public class WarpEngineBlockEntity extends AbstractSpaceshipNodeBlockEntity impl
             return false;
         }
 
-        if (getEnergyStored() < REQUIRED_ENERGY) {
-            if (initiator != null) {
-                initiator.displayClientMessage(Component.translatable(ModI18n.Message.WARP_ENERGY_INSUFFICIENT), true);
+        int required = getRequiredEnergy();
+        if (getEnergyStored() < required) {
+            int deficit = required - getEnergyStored();
+            // Falls Basis-Energie im Warp-Kern geladen ist, versuchen wir den Block-Zuschlag direkt aus Schiffsreaktoren zu decken
+            if (getEnergyStored() >= BASE_REQUIRED_ENERGY && SpaceshipEnergyManager.tryConsumeEnergyAmount(serverLevel, ship, deficit)) {
+                energyStorage.receiveEnergy(deficit, false);
+                setChanged();
+            } else {
+                if (initiator != null) {
+                    initiator.displayClientMessage(Component.translatable(ModI18n.Message.WARP_ENERGY_INSUFFICIENT), true);
+                }
+                return false;
             }
-            return false;
         }
 
         this.isCountingDown = true;
@@ -211,14 +239,22 @@ public class WarpEngineBlockEntity extends AbstractSpaceshipNodeBlockEntity impl
         long gameTime = level.getGameTime();
 
         // 1. Grid-Laden aus Schiffsreaktoren, wenn nicht voll und nicht im Countdown
-        if (!be.isCountingDown && be.getEnergyStored() < REQUIRED_ENERGY && be.getShipId() != null) {
+        int required = be.getRequiredEnergy();
+        if (!be.isCountingDown && be.getEnergyStored() < required && be.getShipId() != null) {
             ShipState ship = ServerShipManager.getShip(be.getShipId());
             if (ship != null && !ship.getReactors().isEmpty()) {
-                int needed = REQUIRED_ENERGY - be.getEnergyStored();
-                int toDraw = Math.min(TRICKLE_CHARGE_RATE, needed);
-                if (SpaceshipEnergyManager.tryConsumeEnergyAmount(level, ship, toDraw)) {
-                    be.energyStorage.receiveEnergy(toDraw, false);
-                    be.setChanged();
+                int available = SpaceshipEnergyManager.getTotalAvailableEnergy(level, ship);
+                if (available > 0) {
+                    int needed = required - be.getEnergyStored();
+                    int toDraw = Math.min(Math.min(TRICKLE_CHARGE_RATE, needed), available);
+                    if (toDraw > 0 && SpaceshipEnergyManager.tryConsumeEnergyAmount(level, ship, toDraw)) {
+                        be.energyStorage.receiveEnergy(toDraw, false);
+                        be.setChanged();
+                        // Live-Sync an Clients periodisch (alle 10 Ticks) oder sobald 100% erreicht
+                        if (gameTime % 10 == 0 || be.getEnergyStored() >= required) {
+                            be.syncStateToClients();
+                        }
+                    }
                 }
             }
         }
@@ -279,7 +315,8 @@ public class WarpEngineBlockEntity extends AbstractSpaceshipNodeBlockEntity impl
                 }
 
                 // Energie verbrauchen und Cooldown starten
-                be.energyStorage.extractEnergy(REQUIRED_ENERGY, false);
+                int requiredToConsume = be.getRequiredEnergy();
+                be.energyStorage.extractEnergy(requiredToConsume, false);
                 be.cooldownUntil = gameTime + COOLDOWN_TOTAL_TICKS;
 
                 Player initiator = be.initiatorId != null ? level.getPlayerByUUID(be.initiatorId) : null;

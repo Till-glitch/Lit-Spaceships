@@ -30,12 +30,26 @@ public abstract class AbstractSpaceshipScreen extends Screen {
     // Die Methode, die sich immer den neuesten Stand holt
     protected void updateShipIdFromBlock() {
         if (this.minecraft != null && this.minecraft.level != null) {
-            // Prüfung auf ISpaceshipNode
+            // 1. Prüfung auf ISpaceshipNode
             if (this.minecraft.level.getBlockEntity(this.blockPos) instanceof com.lit.spaceships.block.ISpaceshipNode node) {
-                this.shipId = node.getShipId();
-            } else {
-                this.shipId = null;
+                UUID id = node.getShipId();
+                if (id != null) {
+                    this.shipId = id;
+                    return;
+                }
             }
+            // 2. Fallback über ClientShipManager Anker-Prüfung
+            for (com.lit.spaceships.client.state.ClientShipState state : com.lit.spaceships.client.state.ClientShipManager.getAllShips()) {
+                if (this.blockPos.equals(state.getAnchorPos())) {
+                    this.shipId = state.getShipId();
+                    return;
+                }
+            }
+            // 3. Bestehende gültige ShipId beibehalten, falls im ClientShipManager registriert
+            if (this.shipId != null && com.lit.spaceships.client.state.ClientShipManager.getShip(this.shipId) != null) {
+                return;
+            }
+            this.shipId = null;
         }
     }
 

@@ -97,6 +97,30 @@ classDiagram
             +setMining(boolean mining) void
         }
 
+        class WarpEngineBlockEntity {
+            +BASE_REQUIRED_ENERGY: int$
+            +ENERGY_PER_BLOCK: int$
+            +MAX_ENERGY_CAPACITY: int$
+            +calculateRequiredEnergy(ShipState ship)$ int
+            +getRequiredEnergy() int
+            +startCountdown(Player initiator) boolean
+            +abortCountdown(Component reason) void
+            +serverTick(Level level, BlockPos pos, BlockState state, WarpEngineBlockEntity be)$ void
+            +syncStateToClients() void
+        }
+
+        class WarpService {
+            +MAX_SEARCH_RADIUS: int$
+            +RADIUS_STEP: int$
+            +getTargetLevel(ServerLevel originLevel)$ ServerLevel
+            +findSafeTargetPos(ServerLevel origin, ServerLevel target, ShipState ship)$ Optional~BlockPos~
+            +executeWarp(ServerLevel origin, ServerLevel target, ShipState ship, BlockPos targetPos, Player initiator)$ boolean
+        }
+
+        class ShipTeleportationService {
+            +teleportShip(ServerLevel origin, ServerLevel target, ShipState ship, BlockPos targetPos, Player initiator)$ boolean
+        }
+
         class ModAttachments {
             +Supplier~AttachmentType~UUID~~ SHIP_ID$
             +register(IEventBus bus)$ void
@@ -192,11 +216,16 @@ classDiagram
             +createShip(Level level, BlockPos startPos)$ ShipState
             +updateShipBlocks(Level level, ShipState ship)$ void
             +deleteShip(Level level, ShipState ship)$ void
+            +changeShipDimension(Level level, ShipState ship, ResourceKey~Level~ newDimension)$ void
             +saveData(Level level)$ void
             +syncShieldZoneStates(Level level, ShipState ship)$ void
+            +syncShipToPlayer(ServerPlayer player, ShipState ship, Level level)$ void
+            +syncAllShipsInDimensionToPlayer(ServerPlayer player, ServerLevel level)$ void
             +calculateShieldActiveMask(ShipState ship, long gameTime)$ long
             +onServerStarted(ServerStartedEvent event)$ void
             +onChunkSent(ChunkWatchEvent.Sent event)$ void
+            +onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event)$ void
+            +onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event)$ void
         }
 
         class ShipScannerService {

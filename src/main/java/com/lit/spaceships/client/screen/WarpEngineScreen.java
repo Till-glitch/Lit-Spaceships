@@ -64,6 +64,14 @@ public class WarpEngineScreen extends AbstractSpaceshipScreen {
 
         this.addRenderableWidget(this.warpButton);
         updateButtonState();
+
+        // Sofort aktuellen Zustand vom Server anfordern
+        PacketDistributor.sendToServer(new WarpActionPayload(this.blockPos, WarpActionPayload.Action.REQUEST_SYNC));
+    }
+
+    @Override
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        // Leere Implementierung: Verhindert, dass super.render() einen zweiten Blur/Dim-Pass über das Terminal legt!
     }
 
     public void updateState(WarpStateSyncPayload payload) {
@@ -99,19 +107,35 @@ public class WarpEngineScreen extends AbstractSpaceshipScreen {
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+        // 1. Hintergrund der 3D-Welt abdunkeln/weichzeichnen (nur 1x)
+        super.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
 
         int startX = (this.width - this.imageWidth) / 2;
         int startY = (this.height - this.imageHeight) / 2;
 
-        // Terminal Hintergrund (Dunkelblau-Schwarz mit Cyan Outline)
+        // 2. Terminal Hintergrund (Dunkelblau-Schwarz mit Cyan Outline)
         guiGraphics.fill(startX, startY, startX + this.imageWidth, startY + this.imageHeight, 0xEE0A121D);
         guiGraphics.renderOutline(startX, startY, this.imageWidth, this.imageHeight, 0xFF00D4FF);
 
-        // Header
+        // 3. Panel-Hintergründe & Outlines
+        int barX = startX + 12;
+        int barY = startY + 62;
+        int barW = this.imageWidth - 24;
+        int barH = 14;
+
+        guiGraphics.fill(barX, barY, barX + barW, barY + barH, 0xFF060B12);
+        guiGraphics.renderOutline(barX, barY, barW, barH, 0xFF1E3A5F);
+
+        int detailsY = startY + 98;
+        guiGraphics.fill(barX, detailsY, barX + barW, detailsY + 60, 0x880E1B2B);
+        guiGraphics.renderOutline(barX, detailsY, barW, 60, 0xFF1E3A5F);
+
+        // 4. Widgets / Buttons rendern
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+
+        // 5. Header & Sub-Header
         guiGraphics.drawString(this.font, this.title, startX + 12, startY + 12, 0xFF00E5FF, false);
 
-        // Sub-Header: Ziel-Dimension
         Component destComponent = Component.translatable(ModI18n.Screen.WARP_DESTINATION,
                 this.targetIsSpace
                         ? Component.translatable(ModI18n.Screen.WARP_DEST_SPACE)
@@ -143,15 +167,7 @@ public class WarpEngineScreen extends AbstractSpaceshipScreen {
 
         guiGraphics.drawString(this.font, statusBadge, startX + 12, startY + 46, statusColor, false);
 
-        // --- PANEL B: ENERGIE PUFFER (LIGHT BLUE GAUGE) ---
-        int barX = startX + 12;
-        int barY = startY + 62;
-        int barW = this.imageWidth - 24;
-        int barH = 14;
-
-        guiGraphics.fill(barX, barY, barX + barW, barY + barH, 0xFF060B12);
-        guiGraphics.renderOutline(barX, barY, barW, barH, 0xFF1E3A5F);
-
+        // --- PANEL B: ENERGIE BALKEN FILL & TEXT ---
         float fillRatio = this.maxEnergy > 0 ? Math.clamp((float) this.currentEnergy / (float) this.maxEnergy, 0.0f, 1.0f) : 0.0f;
         int filledWidth = (int) (fillRatio * (barW - 2));
 
@@ -164,20 +180,19 @@ public class WarpEngineScreen extends AbstractSpaceshipScreen {
         int strW = this.font.width(energyStr);
         guiGraphics.drawString(this.font, energyStr, startX + (this.imageWidth - strW) / 2, barY + 18, 0xFFE0F7FA, false);
 
-        // --- PANEL C: TELEMETRIE DETAILS ---
-        int detailsY = startY + 100;
-        guiGraphics.fill(barX, detailsY, barX + barW, detailsY + 56, 0x880E1B2B);
-        guiGraphics.renderOutline(barX, detailsY, barW, 56, 0xFF1E3A5F);
-
+        // --- PANEL C: TELEMETRIE DETAILS TEXT ---
         String shipInfo = this.shipId != null ? "Vessel: #" + this.shipId.toString().substring(0, 8) : "Vessel: Unlinked";
-        guiGraphics.drawString(this.font, shipInfo, barX + 8, detailsY + 8, 0xFFA0C4FF, false);
+        guiGraphics.drawString(this.font, shipInfo, barX + 8, detailsY + 6, 0xFFA0C4FF, false);
 
         String coordInfo = String.format(Locale.ROOT, "Origin: [%d, %d, %d]", this.blockPos.getX(), this.blockPos.getY(), this.blockPos.getZ());
-        guiGraphics.drawString(this.font, coordInfo, barX + 8, detailsY + 22, 0xFFA0C4FF, false);
+        guiGraphics.drawString(this.font, coordInfo, barX + 8, detailsY + 19, 0xFFA0C4FF, false);
 
-        String safetyInfo = "Safety Protocol: Adaptive Spiral Collision Avoidance [ON]";
-        guiGraphics.drawString(this.font, safetyInfo, barX + 8, detailsY + 36, 0xFF00FFCC, false);
+        int blockCost = Math.max(0, this.maxEnergy - com.lit.spaceships.block.entity.WarpEngineBlockEntity.BASE_REQUIRED_ENERGY);
+        int blockCount = blockCost / com.lit.spaceships.block.entity.WarpEngineBlockEntity.ENERGY_PER_BLOCK;
+        String costInfo = String.format(Locale.ROOT, "Warp Cost: %,d FE (Base 100k + %,d FE for %d blk)", this.maxEnergy, blockCost, blockCount);
+        guiGraphics.drawString(this.font, costInfo, barX + 8, detailsY + 32, 0xFF8BE9FD, false);
 
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        String safetyInfo = "Safety Protocol: Spiral Collision Avoidance [ON]";
+        guiGraphics.drawString(this.font, safetyInfo, barX + 8, detailsY + 45, 0xFF00FFCC, false);
     }
 }

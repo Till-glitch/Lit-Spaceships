@@ -74,6 +74,7 @@ public final class ModI18n {
         public static final String CONTROL_SUBSYSTEM_CORES = "screen." + LitSpaceships.MODID + ".control.subsystem_cores";
         public static final String CONTROL_SUBSYSTEM_WEAPONS = "screen." + LitSpaceships.MODID + ".control.subsystem_weapons";
         public static final String CONTROL_SUBSYSTEM_NAV = "screen." + LitSpaceships.MODID + ".control.subsystem_nav";
+        public static final String CONTROL_SUBSYSTEM_WARP = "screen." + LitSpaceships.MODID + ".control.subsystem_warp";
         public static final String CONTROL_BTN_CREATE = "screen." + LitSpaceships.MODID + ".control.btn.create";
         public static final String CONTROL_BTN_UPDATE = "screen." + LitSpaceships.MODID + ".control.btn.update";
         public static final String CONTROL_BTN_DISASSEMBLE = "screen." + LitSpaceships.MODID + ".control.btn.disassemble";

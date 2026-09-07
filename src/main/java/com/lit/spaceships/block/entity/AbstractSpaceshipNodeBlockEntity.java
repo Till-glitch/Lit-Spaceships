@@ -27,12 +27,18 @@ public abstract class AbstractSpaceshipNodeBlockEntity extends BlockEntity imple
     // --- GETTER & SETTER via Data Attachment & Fallback ---
     @Override
     public UUID getShipId() {
+        if (this.cachedShipId != null) {
+            return this.cachedShipId;
+        }
         try {
             if (this.hasData(ModAttachments.SHIP_ID)) {
-                return this.getData(ModAttachments.SHIP_ID);
+                UUID data = this.getData(ModAttachments.SHIP_ID);
+                if (data != null) {
+                    this.cachedShipId = data;
+                    return data;
+                }
             }
-        } catch (IllegalStateException e) {
-            return this.cachedShipId;
+        } catch (Exception ignored) {
         }
         return this.cachedShipId;
     }
@@ -85,5 +91,19 @@ public abstract class AbstractSpaceshipNodeBlockEntity extends BlockEntity imple
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+        super.handleUpdateTag(tag, lookupProvider);
+        loadAdditional(tag, lookupProvider);
+    }
+
+    @Override
+    public void onDataPacket(net.minecraft.network.Connection net, ClientboundBlockEntityDataPacket pkt, HolderLookup.Provider lookupProvider) {
+        CompoundTag tag = pkt.getTag();
+        if (tag != null) {
+            handleUpdateTag(tag, lookupProvider);
+        }
     }
 }

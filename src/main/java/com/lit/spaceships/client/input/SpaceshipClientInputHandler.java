@@ -39,10 +39,19 @@ public class SpaceshipClientInputHandler {
             }
         } else if (block instanceof SpaceshipControlBlock) {
             BlockEntity be = event.getLevel().getBlockEntity(pos);
+            UUID shipId = null;
             if (be instanceof com.lit.spaceships.block.ISpaceshipNode node) {
-                UUID shipId = node.getShipId();
-                ClientHooks.openControlScreen(shipId, pos);
+                shipId = node.getShipId();
             }
+            if (shipId == null) {
+                for (com.lit.spaceships.client.state.ClientShipState shipState : com.lit.spaceships.client.state.ClientShipManager.getAllShips()) {
+                    if (pos.equals(shipState.getAnchorPos())) {
+                        shipId = shipState.getShipId();
+                        break;
+                    }
+                }
+            }
+            ClientHooks.openControlScreen(shipId, pos);
         } else if (block instanceof com.lit.spaceships.block.WarpEngineBlock) {
             BlockEntity be = event.getLevel().getBlockEntity(pos);
             if (be instanceof com.lit.spaceships.block.ISpaceshipNode node) {

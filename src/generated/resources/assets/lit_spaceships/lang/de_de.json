@@ -66,6 +66,7 @@
   "screen.lit_spaceships.control.subsystem_cores": "⚡ Reaktoren: %1$d Kerne | 🛡 Schilde: %2$d Generatoren",
   "screen.lit_spaceships.control.subsystem_header": "SUBSYSTEM-REGISTER",
   "screen.lit_spaceships.control.subsystem_nav": "🧭 Navigation: %1$d Steuerkonsole",
+  "screen.lit_spaceships.control.subsystem_warp": "🌌 Warpantrieb: %1$d Kern(e)",
   "screen.lit_spaceships.control.subsystem_weapons": "⚔ Geschütztürme: %1$d (Schwer: %2$d | Puls: %3$d | Bergbau: %4$d)",
   "screen.lit_spaceships.control.title": "Raumschiff Kontroll-Terminal",
   "screen.lit_spaceships.helm.btn.down": "Abwärts",

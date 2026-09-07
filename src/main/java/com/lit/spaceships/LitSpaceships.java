@@ -48,5 +48,10 @@ public class LitSpaceships {
                 ModBlockEntities.SPACESHIP_REACTOR_BE.get(),
                 (be, side) -> be.getEnergyStorage()
         );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.BLOCK,
+                ModBlockEntities.WARP_ENGINE_BE.get(),
+                (be, side) -> be.getEnergyStorage()
+        );
     }
 }

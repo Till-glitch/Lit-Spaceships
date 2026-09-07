@@ -49,55 +49,74 @@ public class WarpService {
 
         int initialX = currentCtrl.getX();
         int initialZ = currentCtrl.getZ();
-        int initialY;
 
         AABB shipBounds = ship.getTotalBoundingBox();
-        int halfHeight = shipBounds != null ? (int) Math.ceil((shipBounds.maxY - shipBounds.minY) / 2.0) : 10;
+        int bottomOffset = shipBounds != null ? Math.max(0, currentCtrl.getY() - (int) Math.floor(shipBounds.minY)) : 0;
+        int minAllowedY = targetLevel.getMinBuildHeight() + bottomOffset + 4;
+        int maxAllowedY = targetLevel.getMaxBuildHeight() - 10;
 
+        int initialY;
         if (toSpace) {
-            // Im Weltraum: Standard-Flughöhe Y=128 (oder aktuelle Höhe im sicheren Bereich -30 bis 250)
+            // Im Weltraum: Standard-Flughöhe Y=128 (oder aktuelle Höhe im sicheren Bereich 64 bis 200)
             initialY = Math.clamp(currentCtrl.getY(), 64, 200);
         } else {
-            // In der Oberwelt: Mindestens 15 Blöcke über der höchsten Oberfläche
-            int surfaceY = targetLevel.getHeight(Heightmap.Types.MOTION_BLOCKING, initialX, initialZ);
-            initialY = Math.clamp(surfaceY + halfHeight + 15, 80, 260);
+            // In der Oberwelt: Schiffshülle landet ca. 4 Blöcke über der höchsten Blockoberfläche
+            int surfaceY = getSafeSurfaceY(targetLevel, initialX, initialZ);
+            initialY = Math.clamp(surfaceY + bottomOffset + 4, minAllowedY, maxAllowedY);
         }
 
-        BlockPos initialPos = new BlockPos(initialX, initialY, initialZ);
-
-        // 1. Initialprüfung
-        if (isPositionSafe(targetLevel, ship, initialPos)) {
-            return Optional.of(initialPos);
+        // 1. Initialprüfung am Ursprungs-XZ (mit kleinem Höhen-Scan bei Bodenhindernissen)
+        Optional<BlockPos> safeInitial = findSafeElevationAt(targetLevel, ship, initialX, initialZ, initialY, toSpace, minAllowedY, maxAllowedY);
+        if (safeInitial.isPresent()) {
+            return safeInitial;
         }
 
         // 2. Adaptive Spiral-Suche (Radius 16 bis 256 Blöcke in 8 Winkel-Schritten)
         for (int radius = RADIUS_STEP; radius <= MAX_SEARCH_RADIUS; radius += RADIUS_STEP) {
             for (int angleDeg = 0; angleDeg < 360; angleDeg += 45) {
                 double rad = Math.toRadians(angleDeg);
-                int offsetX = (int) Math.round(radius * Math.cos(rad));
-                int offsetZ = (int) Math.round(radius * Math.sin(rad));
+                int candidateX = initialX + (int) Math.round(radius * Math.cos(rad));
+                int candidateZ = initialZ + (int) Math.round(radius * Math.sin(rad));
 
                 int targetY = initialY;
                 if (!toSpace) {
-                    int surfaceAtOffset = targetLevel.getHeight(Heightmap.Types.MOTION_BLOCKING, initialX + offsetX, initialZ + offsetZ);
-                    targetY = Math.clamp(surfaceAtOffset + halfHeight + 15, 80, 260);
+                    int surfaceAtOffset = getSafeSurfaceY(targetLevel, candidateX, candidateZ);
+                    targetY = Math.clamp(surfaceAtOffset + bottomOffset + 4, minAllowedY, maxAllowedY);
                 }
 
-                BlockPos candidate = new BlockPos(initialX + offsetX, targetY, initialZ + offsetZ);
-                if (isPositionSafe(targetLevel, ship, candidate)) {
-                    return Optional.of(candidate);
+                Optional<BlockPos> candidate = findSafeElevationAt(targetLevel, ship, candidateX, candidateZ, targetY, toSpace, minAllowedY, maxAllowedY);
+                if (candidate.isPresent()) {
+                    return candidate;
                 }
             }
         }
 
-        // 3. Fallback für den Weltraum: Höhere leere Orbit-Ebene versuchen (Y=240)
-        if (toSpace) {
-            BlockPos highOrbit = new BlockPos(initialX, 240, initialZ);
-            if (isPositionSafe(targetLevel, ship, highOrbit)) {
-                return Optional.of(highOrbit);
-            }
+        // 3. Fallback: Höhere leere Orbit-/Flugebene versuchen
+        BlockPos fallbackPos = toSpace ? new BlockPos(initialX, 240, initialZ) : new BlockPos(initialX, 150, initialZ);
+        if (isPositionSafe(targetLevel, ship, fallbackPos)) {
+            return Optional.of(fallbackPos);
         }
 
+        return Optional.empty();
+    }
+
+    private static int getSafeSurfaceY(ServerLevel level, int x, int z) {
+        try {
+            level.getChunk(x >> 4, z >> 4, net.minecraft.world.level.chunk.status.ChunkStatus.FULL, true);
+        } catch (Exception ignored) {}
+        return level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
+    }
+
+    private static Optional<BlockPos> findSafeElevationAt(ServerLevel level, ShipState ship, int x, int z, int baseY, boolean toSpace, int minY, int maxY) {
+        // Testet die berechnete Höhe und bis zu 4 sanfte Erhöhungen (z.B. um Bäume oder Dächer im Schiffs-Footprint zu überfliegen)
+        int[] yOffsets = toSpace ? new int[]{0} : new int[]{0, 3, 6, 9, 12};
+        for (int lift : yOffsets) {
+            int candidateY = Math.clamp(baseY + lift, minY, maxY);
+            BlockPos candidate = new BlockPos(x, candidateY, z);
+            if (isPositionSafe(level, ship, candidate)) {
+                return Optional.of(candidate);
+            }
+        }
         return Optional.empty();
     }
 

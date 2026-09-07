@@ -131,6 +131,30 @@ classDiagram
             +setMining(boolean mining) void
         }
 
+        class WarpEngineBlockEntity {
+            +BASE_REQUIRED_ENERGY: int$
+            +ENERGY_PER_BLOCK: int$
+            +MAX_ENERGY_CAPACITY: int$
+            +calculateRequiredEnergy(ShipState ship)$ int
+            +getRequiredEnergy() int
+            +startCountdown(Player initiator) boolean
+            +abortCountdown(Component reason) void
+            +serverTick(Level level, BlockPos pos, BlockState state, WarpEngineBlockEntity be)$ void
+            +syncStateToClients() void
+        }
+
+        class WarpService {
+            +MAX_SEARCH_RADIUS: int$
+            +RADIUS_STEP: int$
+            +getTargetLevel(ServerLevel originLevel)$ ServerLevel
+            +findSafeTargetPos(ServerLevel origin, ServerLevel target, ShipState ship)$ Optional~BlockPos~
+            +executeWarp(ServerLevel origin, ServerLevel target, ShipState ship, BlockPos targetPos, Player initiator)$ boolean
+        }
+
+        class ShipTeleportationService {
+            +teleportShip(ServerLevel origin, ServerLevel target, ShipState ship, BlockPos targetPos, Player initiator)$ boolean
+        }
+
         class ModAttachments {
             +Supplier~AttachmentType~UUID~~ SHIP_ID$
             +register(IEventBus bus)$ void
@@ -782,7 +806,7 @@ Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
    * **`ModItemModelProviderTest`**: Parent-Referenzen auf Block-Basen (`laser_base`) und 2D-Item-Modelle (`backflip_tool`).
    * **`ModLanguageProviderTest`**: Symmetrische I18n- und L10n-Übersetzungen für `en_us` und `de_de` via `ModEnglishLanguageProvider` und `ModGermanLanguageProvider`.
    * **`ModI18nTest`**: Strict Lowercase-Taxonomie-Validierung, Duplikatsfreiheit und 100% Symmetrie-Coverage für alle Keys aus `ModI18n`.
-   * **`ModLootTableProviderTest`**: `BlockLootSubProvider` Factory, Self-Drop-Logik und Vollständigkeitsprüfung via `getKnownBlocks()`.
+   * **`ModLootTableProviderTest`**: `BlockLootSubProvider` Factory, Self-Drop-Logik und Vollständigkeitsprüfung aller 9 Blöcke.
    * **`ShipCollisionMathTest`**: Continuous Swept-AABB Extrusion & BitSet-Linearisierung.
    * **`ShipStateTest`**: Domain-Zustand, AABB-Neuberechnung, Controller-Translation, Cooldown-Arithmetik.
    * **`CombatLogicTest`**: 3D-DDA Ray-Traversal, Normalenflächen (`WEST`, `DOWN`), Fehlschuss- & Reichweitenbegrenzung, Tier-Konfigurationen.
@@ -790,6 +814,9 @@ Das Projekt erzwingt kontinuierliche Testabdeckung gemäß der **70/20-Regel**:
    * **`SpaceshipEnergyManagerTest`**: Multi-Reaktor-Bündelung, sequenzieller FE-Drain, Transaktionssicherheit (Rollback).
    * **`AimTransformMathTest`**: Quaternion-Transformationen, Euler-Winkel-Konvertierung, 16-Bit Kompression und GimbalLimits.
    * **`TurretSeatTest`**: TurretSeat DTO Attribute, NBT-Persistenz und Aim-Lock-Status.
+   * **`WarpEngineEnergySyncTest`**: Grid-Trickle-Charging mit Reaktor-Restwerten, `REQUEST_SYNC` Payload-Codec und Subsystem-Erkennung für den Warpantrieb.
+   * **`WarpEngineMathTest`**: 100.000 FE Schwellwerte, Countdown- und Cooldown-Umrechnungen und Spiral-Suchradius.
+   * **`WarpServiceHeightAndUsabilityTest`**: Bodenabstands-Kalkulation (4 Blöcke Hüllen-Freiraum), `ACTIVE_SHIPS` Retention bei Dimensionswechsel und `onRemove` Exzisions-Schutz bei aktiver Warp-Teleportation (`isJumping`).
 2. **NeoForge GameTests (`@GameTestHolder`, 26 Tests auf Dedicated GameTest-Server, 100% Erfolgsquote)**:
    * **`ShipScannerVoronoiGameTest`**: Voronoi-Zonierung und ShieldZone-Erfassung bei mehreren Schildgeneratoren im Schiff.
    * **`LaserCombatPiercingGameTest`**: Zonen-Kollaps und Durchschlag auf darunterliegende Schiffshülle bei inaktiver ShieldZone.

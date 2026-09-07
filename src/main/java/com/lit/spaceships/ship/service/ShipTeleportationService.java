@@ -85,14 +85,16 @@ public class ShipTeleportationService {
 
             // 4. Phase: Exzision (Ursprungsort sauber entfernen ohne Drops)
             for (BlockPos pos : ship.getBlocks()) {
+                if (originLevel.getBlockEntity(pos) != null) {
+                    originLevel.removeBlockEntity(pos);
+                }
+            }
+            for (BlockPos pos : ship.getBlocks()) {
                 originLevel.setBlock(pos, Blocks.AIR.defaultBlockState(), 50);
             }
 
             // 5. Phase: Materialisierung am Zielort
             Set<BlockPos> newBlocks = new HashSet<>(clipboard.size());
-            List<BlockPos> newReactors = new ArrayList<>();
-            List<BlockPos> newShields = new ArrayList<>();
-            List<BlockPos> newWeapons = new ArrayList<>();
 
             for (Map.Entry<BlockPos, BlockData> entry : clipboard.entrySet()) {
                 BlockPos oldPos = entry.getKey();
@@ -117,22 +119,15 @@ public class ShipTeleportationService {
                 BlockEntity placedBe = targetLevel.getBlockEntity(newPos);
                 if (placedBe instanceof ISpaceshipNode node) {
                     node.setShipId(ship.getId());
-                }
-                if (placedBe instanceof SpaceshipReactorBlockEntity) {
-                    newReactors.add(newPos);
-                }
-                if (placedBe instanceof SpaceshipShieldBlockEntity) {
-                    newShields.add(newPos);
-                }
-                if (placedBe instanceof AbstractLaserNodeBlockEntity) {
-                    newWeapons.add(newPos);
+                    placedBe.setChanged();
+                    targetLevel.sendBlockUpdated(newPos, state, state, 3);
                 }
             }
 
             // State & Dimension Update
             ship.translate(dx, dy, dz);
             ServerShipManager.changeShipDimension(targetLevel, ship, targetLevel.dimension());
-            ServerShipManager.syncShieldZoneStates(targetLevel, ship);
+            ServerShipManager.populateAndSyncShipState(targetLevel, ship);
 
             // 6. Phase: Entitäts- & Passagier-Transfer
             AABB originBox = ship.getTotalBoundingBox().move(-dx, -dy, -dz).inflate(1.0);

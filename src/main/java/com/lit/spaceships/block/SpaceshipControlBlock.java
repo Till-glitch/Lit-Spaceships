@@ -38,7 +38,10 @@ public class SpaceshipControlBlock extends Block implements EntityBlock {
             if (!level.isClientSide()) {
                 BlockEntity be = level.getBlockEntity(pos);
                 if (be instanceof SpaceshipControlBlockEntity shipBe && shipBe.getShipId() != null) {
-                    ServerShipManager.deleteShip(level, ServerShipManager.getShip(shipBe.getShipId()));
+                    com.lit.spaceships.ship.domain.ShipState ship = ServerShipManager.getShip(shipBe.getShipId());
+                    if (ship != null && !ship.isJumping() && !com.lit.spaceships.ship.service.ShipMovementService.isShipMoving(ship.getId())) {
+                        ServerShipManager.deleteShip(level, ship);
+                    }
                 }
             }
             super.onRemove(state, level, pos, newState, isMoving);

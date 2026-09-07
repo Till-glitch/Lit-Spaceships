@@ -66,6 +66,7 @@
   "screen.lit_spaceships.control.subsystem_cores": "⚡ Reactors: %1$d Cores | 🛡 Shields: %2$d Generators",
   "screen.lit_spaceships.control.subsystem_header": "SUBSYSTEM REGISTRY",
   "screen.lit_spaceships.control.subsystem_nav": "🧭 Navigation: %1$d Helm",
+  "screen.lit_spaceships.control.subsystem_warp": "🌌 Warp Drive: %1$d Engine(s)",
   "screen.lit_spaceships.control.subsystem_weapons": "⚔ Laser Turrets: %1$d (Heavy: %2$d | Pulse: %3$d | Mining: %4$d)",
   "screen.lit_spaceships.control.title": "Spaceship Controller Terminal",
   "screen.lit_spaceships.helm.btn.down": "Down",

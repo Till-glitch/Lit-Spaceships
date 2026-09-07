@@ -96,7 +96,22 @@ public class ClientShipManager {
     }
 
     public static void clearAllVBOs() {
-        clear();
+        net.minecraft.world.level.Level clientLevel = net.minecraft.client.Minecraft.getInstance().level;
+        net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> currentDim =
+                clientLevel != null ? clientLevel.dimension() : null;
+
+        ShieldLifecycleLogger.logClientReset("Dimension-Wechsel: VBOs freigeben");
+        var it = ACTIVE_CLIENT_SHIPS.entrySet().iterator();
+        while (it.hasNext()) {
+            var entry = it.next();
+            ClientShipState state = entry.getValue();
+            state.dispose();
+            // Schiffe behalten, die zur aktuellen Dimension gehören (oder noch ohne Dimensionsangabe sind)
+            if (currentDim != null && state.getDimension() != null && !state.getDimension().equals(currentDim)) {
+                it.remove();
+            }
+        }
+        ClientLaserState.clearAll();
     }
 
     public static void addImpact(UUID shipId, Vec3 localPos) {

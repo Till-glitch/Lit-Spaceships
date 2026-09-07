@@ -66,6 +66,7 @@ public class WarpEngineBlock extends BaseEntityBlock {
                 if (level.getBlockEntity(pos) instanceof WarpEngineBlockEntity be) {
                     be.receiveEnergy(100000, false);
                     be.setChanged();
+                    be.syncStateToClients();
                     level.sendBlockUpdated(pos, state, state, 3);
                     player.sendSystemMessage(Component.translatable(ModI18n.Message.DEV_CHEAT_ENERGY, "100,000"));
                 }

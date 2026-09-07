@@ -125,7 +125,7 @@ public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
 
         // 1. Status & Button-Aktivierung berechnen
         var clientState = getClientShipState();
-        boolean isBound = (clientState != null && this.shipId != null);
+        boolean isBound = (this.shipId != null || (clientState != null && clientState.getShipId() != null));
 
         if (this.createButton != null) this.createButton.active = !isBound;
         if (this.updateButton != null) this.updateButton.active = isBound;
@@ -158,9 +158,9 @@ public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
         guiGraphics.fill(startX + 6, startY + 26, startX + this.imageWidth - 6, startY + 82, 0xFF0F2215);
         guiGraphics.renderOutline(startX + 6, startY + 26, this.imageWidth - 12, 56, 0xFF1E4D2B);
 
-        // Panel B: Subsystem-Register Box (Y: 86..150)
-        guiGraphics.fill(startX + 6, startY + 86, startX + this.imageWidth - 6, startY + 150, 0xFF0F2215);
-        guiGraphics.renderOutline(startX + 6, startY + 86, this.imageWidth - 12, 64, 0xFF1E4D2B);
+        // Panel B: Subsystem-Register Box (Y: 86..152)
+        guiGraphics.fill(startX + 6, startY + 86, startX + this.imageWidth - 6, startY + 152, 0xFF0F2215);
+        guiGraphics.renderOutline(startX + 6, startY + 86, this.imageWidth - 12, 66, 0xFF1E4D2B);
     }
 
     private void renderTerminalLabels(GuiGraphics guiGraphics, int startX, int startY, ClientShipState clientState, boolean isBound) {
@@ -242,6 +242,7 @@ public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
         int pulseTurretCount = 0;
         int miningLaserCount = 0;
         int helmCount = 0;
+        int warpCount = 0;
 
         if (this.minecraft != null && this.minecraft.level != null && relativeBlocks != null && !relativeBlocks.isEmpty()) {
             for (BlockPos rel : relativeBlocks) {
@@ -259,13 +260,16 @@ public class SpaceshipControlScreen extends AbstractSpaceshipScreen {
                     miningLaserCount++;
                 } else if (block instanceof com.lit.spaceships.block.SpaceshipHelmBlock) {
                     helmCount++;
+                } else if (block instanceof com.lit.spaceships.block.WarpEngineBlock) {
+                    warpCount++;
                 }
             }
         }
 
         int totalTurrets = heavyTurretCount + pulseTurretCount + miningLaserCount;
-        guiGraphics.drawString(this.font, Component.translatable(ModI18n.Screen.CONTROL_SUBSYSTEM_CORES, reactorCount, shieldCount), startX + 10, startY + 104, 0xEEEEEE, false);
-        guiGraphics.drawString(this.font, Component.translatable(ModI18n.Screen.CONTROL_SUBSYSTEM_WEAPONS, totalTurrets, heavyTurretCount, pulseTurretCount, miningLaserCount), startX + 10, startY + 117, 0xFFA726, false);
-        guiGraphics.drawString(this.font, Component.translatable(ModI18n.Screen.CONTROL_SUBSYSTEM_NAV, helmCount), startX + 10, startY + 130, 0x66BB6A, false);
+        guiGraphics.drawString(this.font, Component.translatable(ModI18n.Screen.CONTROL_SUBSYSTEM_CORES, reactorCount, shieldCount), startX + 10, startY + 102, 0xEEEEEE, false);
+        guiGraphics.drawString(this.font, Component.translatable(ModI18n.Screen.CONTROL_SUBSYSTEM_WEAPONS, totalTurrets, heavyTurretCount, pulseTurretCount, miningLaserCount), startX + 10, startY + 114, 0xFFA726, false);
+        guiGraphics.drawString(this.font, Component.translatable(ModI18n.Screen.CONTROL_SUBSYSTEM_NAV, helmCount), startX + 10, startY + 126, 0x66BB6A, false);
+        guiGraphics.drawString(this.font, Component.translatable(ModI18n.Screen.CONTROL_SUBSYSTEM_WARP, warpCount), startX + 10, startY + 138, 0x00D4FF, false);
     }
 }
