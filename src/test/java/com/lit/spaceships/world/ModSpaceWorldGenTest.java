@@ -201,7 +201,7 @@ class ModSpaceWorldGenTest {
     }
 
     @Test
-    @DisplayName("Asteroiden-Platzierung: Count 4, InSquare, Uniformhöhe -40..280, Biome-Filter")
+    @DisplayName("Asteroiden-Platzierung: Count 1 (Rebalance), InSquare, Uniformhöhe -40..280, Biome-Filter")
     void asteroidPlacementMathIsBounded() {
         List<PlacementModifier> modifiers = ModPlacedFeatures.asteroidPlacement();
 
@@ -214,13 +214,31 @@ class ModSpaceWorldGenTest {
         CountPlacement count = (CountPlacement) modifiers.get(0);
         IntProvider provider = privateField(count, "count", IntProvider.class);
         assertSame(ConstantInt.class, provider.getClass());
-        assertEquals(4, provider.getMinValue());
-        assertEquals(4, provider.getMaxValue());
+        assertEquals(1, provider.getMinValue());
+        assertEquals(1, provider.getMaxValue());
 
         HeightRangePlacement height = (HeightRangePlacement) modifiers.get(2);
         UniformHeight uniform = privateField(height, "height", UniformHeight.class);
         assertEquals(-40, absoluteAnchorY(privateField(uniform, "minInclusive", VerticalAnchor.class)));
         assertEquals(280, absoluteAnchorY(privateField(uniform, "maxInclusive", VerticalAnchor.class)));
+    }
+
+    @Test
+    @DisplayName("Asteroiden-Erz-Kern: bewusst selten (Diamant 3%, Debris 2%) nach Rebalance")
+    void asteroidOreRatesAreRebalanced() {
+        net.minecraft.util.RandomSource random = net.minecraft.util.RandomSource.create(4242L);
+        int diamond = 0, debris = 0, gold = 0, iron = 0;
+        for (int i = 0; i < 100_000; i++) {
+            BlockState state = AsteroidFeature.determineBlockState(0, 0.0D, random);
+            if (state.is(Blocks.DIAMOND_ORE)) diamond++;
+            if (state.is(Blocks.ANCIENT_DEBRIS)) debris++;
+            if (state.is(Blocks.RAW_GOLD_BLOCK)) gold++;
+            if (state.is(Blocks.RAW_IRON_BLOCK)) iron++;
+        }
+        assertEquals(0.03D, diamond / 100_000.0D, 0.005D, "Diamant-Kernrate ~3%");
+        assertEquals(0.02D, debris / 100_000.0D, 0.005D, "Ancient-Debris-Kernrate ~2%");
+        assertEquals(0.06D, gold / 100_000.0D, 0.005D, "Raw-Gold-Kernrate ~6%");
+        assertEquals(0.10D, iron / 100_000.0D, 0.005D, "Raw-Iron-Kernrate ~10%");
     }
 
     @Test
@@ -423,7 +441,7 @@ class ModSpaceWorldGenTest {
     }
 
     @Test
-    @DisplayName("Wrack-Feld-Platzierung: 8x dichtere Rarity 1/4, InSquare, Uniformhöhe 0..200, Biome-Filter")
+    @DisplayName("Wrack-Feld-Platzierung: Rarity 1/10 (Rebalance), InSquare, Uniformhöhe 0..200, Biome-Filter")
     void wreckFieldPlacementMathIsBounded() {
         List<PlacementModifier> modifiers = ModPlacedFeatures.wreckFieldPlacement();
 
@@ -434,7 +452,7 @@ class ModSpaceWorldGenTest {
         assertSame(BiomeFilter.biome(), modifiers.get(3));
 
         RarityFilter rarity = (RarityFilter) modifiers.get(0);
-        assertEquals(4, (int) privateField(rarity, "chance", Integer.class));
+        assertEquals(10, (int) privateField(rarity, "chance", Integer.class));
 
         HeightRangePlacement height = (HeightRangePlacement) modifiers.get(2);
         UniformHeight uniform = privateField(height, "height", UniformHeight.class);

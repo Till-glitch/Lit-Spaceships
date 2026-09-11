@@ -54,11 +54,12 @@ public final class ModPlacedFeatures {
     }
 
     /**
-     * Asteroiden-Gürtel: durchschnittlich 4 Versuche pro Chunk, komplett von Y -40 bis +280.
+     * Asteroiden-Gürtel: im Schnitt 1 Versuch pro Chunk (Rebalance 2026-09-11:
+     * 4 -> 1 für mehr leeren Weltraum), komplett von Y -40 bis +280.
      */
     static List<PlacementModifier> asteroidPlacement() {
         return List.of(
-                CountPlacement.of(4),
+                CountPlacement.of(1),
                 InSquarePlacement.spread(),
                 HeightRangePlacement.uniform(VerticalAnchor.absolute(-40), VerticalAnchor.absolute(280)),
                 BiomeFilter.biome()
@@ -78,13 +79,14 @@ public final class ModPlacedFeatures {
     }
 
     /**
-     * Wrack-Feld der Void Wastes: im Schnitt 1 Wrack pro 4 Chunks (8x dichter
-     * als der Basis-Weltraum) zwischen Y 0 und +200 — Friedhof verlassener
-     * Schiffe, wiederverwendet das konfigurierte space_wreck-Feature.
+     * Wrack-Feld der Void Wastes: im Schnitt 1 Wrack pro 10 Chunks (Rebalance
+     * 2026-09-11: 1/4 -> 1/10 für mehr leeren Weltraum) zwischen Y 0 und +200
+     * — Friedhof verlassener Schiffe, wiederverwendet das konfigurierte
+     * space_wreck-Feature.
      */
     static List<PlacementModifier> wreckFieldPlacement() {
         return List.of(
-                RarityFilter.onAverageOnceEvery(4),
+                RarityFilter.onAverageOnceEvery(10),
                 InSquarePlacement.spread(),
                 HeightRangePlacement.uniform(VerticalAnchor.absolute(0), VerticalAnchor.absolute(200)),
                 BiomeFilter.biome()

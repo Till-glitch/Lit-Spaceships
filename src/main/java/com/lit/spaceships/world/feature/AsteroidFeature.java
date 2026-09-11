@@ -53,7 +53,7 @@ public class AsteroidFeature extends Feature<NoneFeatureConfiguration> {
         return true;
     }
 
-    private BlockState determineBlockState(int type, double normalizedDistSq, RandomSource random) {
+    public static BlockState determineBlockState(int type, double normalizedDistSq, RandomSource random) {
         if (type >= 7 && type <= 8) {
             // Eiskomet
             if (normalizedDistSq < 0.3) {
@@ -67,20 +67,22 @@ public class AsteroidFeature extends Feature<NoneFeatureConfiguration> {
 
         // Stein- / Erz-Asteroid
         if (normalizedDistSq < 0.25) {
-            // Kern
+            // Kern — bewusst selten (Rebalance: der Void soll großteils leer sein)
             int coreRoll = random.nextInt(100);
-            if (coreRoll < 15) return Blocks.DIAMOND_ORE.defaultBlockState();
-            if (coreRoll < 35) return Blocks.ANCIENT_DEBRIS.defaultBlockState();
-            if (coreRoll < 60) return Blocks.RAW_GOLD_BLOCK.defaultBlockState();
-            if (coreRoll < 85) return Blocks.RAW_IRON_BLOCK.defaultBlockState();
-            return Blocks.DEEPSLATE.defaultBlockState();
+            if (coreRoll < 3) return Blocks.DIAMOND_ORE.defaultBlockState();
+            if (coreRoll < 5) return Blocks.ANCIENT_DEBRIS.defaultBlockState();
+            if (coreRoll < 11) return Blocks.RAW_GOLD_BLOCK.defaultBlockState();
+            if (coreRoll < 21) return Blocks.RAW_IRON_BLOCK.defaultBlockState();
+            return random.nextInt(100) < 60
+                    ? Blocks.DEEPSLATE.defaultBlockState()
+                    : Blocks.TUFF.defaultBlockState();
         } else if (normalizedDistSq < 0.6) {
-            // Mantelschicht
+            // Mantelschicht — Reduzierte Erzdichte (Rebalance)
             int mantleRoll = random.nextInt(100);
-            if (mantleRoll < 10) return Blocks.IRON_ORE.defaultBlockState();
-            if (mantleRoll < 20) return Blocks.COPPER_ORE.defaultBlockState();
-            if (mantleRoll < 30) return Blocks.REDSTONE_ORE.defaultBlockState();
-            if (mantleRoll < 50) return Blocks.TUFF.defaultBlockState();
+            if (mantleRoll < 5) return Blocks.IRON_ORE.defaultBlockState();
+            if (mantleRoll < 10) return Blocks.COPPER_ORE.defaultBlockState();
+            if (mantleRoll < 14) return Blocks.REDSTONE_ORE.defaultBlockState();
+            if (mantleRoll < 34) return Blocks.TUFF.defaultBlockState();
             return Blocks.DEEPSLATE.defaultBlockState();
         } else {
             // Kruste
