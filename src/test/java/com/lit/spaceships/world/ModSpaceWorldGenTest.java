@@ -167,6 +167,8 @@ class ModSpaceWorldGenTest {
         assertKey(ModPlacedFeatures.MEGA_ASTEROID_PLACED, Registries.PLACED_FEATURE, "mega_asteroid_placed");
         assertKey(ModPlacedFeatures.PLANETARY_RING_PLACED, Registries.PLACED_FEATURE, "planetary_ring_placed");
         assertKey(ModPlacedFeatures.ASTEROID_BELT_PLACED, Registries.PLACED_FEATURE, "asteroid_belt_placed");
+        assertKey(ModConfiguredFeatures.SATELLITE_GRAVEYARD, Registries.CONFIGURED_FEATURE, "satellite_graveyard");
+        assertKey(ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED, Registries.PLACED_FEATURE, "satellite_graveyard_placed");
         assertKey(ModPlacedFeatures.WRECK_FIELD_PLACED, Registries.PLACED_FEATURE, "wreck_field_placed");
     }
 
@@ -184,8 +186,10 @@ class ModSpaceWorldGenTest {
         MegaAsteroidFeature megaAsteroid = new MegaAsteroidFeature(NoneFeatureConfiguration.CODEC);
         PlanetaryRingFeature planetaryRing = new PlanetaryRingFeature(NoneFeatureConfiguration.CODEC);
         AsteroidBeltFeature asteroidBelt = new AsteroidBeltFeature(NoneFeatureConfiguration.CODEC);
+        com.lit.spaceships.world.feature.SatelliteGraveyardFeature satelliteGraveyard =
+                new com.lit.spaceships.world.feature.SatelliteGraveyardFeature(NoneFeatureConfiguration.CODEC);
 
-        ModConfiguredFeatures.bootstrapWith(configuredContext, asteroid, wreck, iceComet, megaAsteroid, planetaryRing, asteroidBelt);
+        ModConfiguredFeatures.bootstrapWith(configuredContext, asteroid, wreck, iceComet, megaAsteroid, planetaryRing, asteroidBelt, satelliteGraveyard);
 
         ArgumentCaptor<ConfiguredFeature<?, ?>> captor = ArgumentCaptor.forClass(ConfiguredFeature.class);
         verify(configuredContext).register(eq(ModConfiguredFeatures.ASTEROID), captor.capture());
@@ -194,6 +198,7 @@ class ModSpaceWorldGenTest {
         verify(configuredContext).register(eq(ModConfiguredFeatures.MEGA_ASTEROID), any());
         verify(configuredContext).register(eq(ModConfiguredFeatures.PLANETARY_RING), any());
         verify(configuredContext).register(eq(ModConfiguredFeatures.ASTEROID_BELT), any());
+        verify(configuredContext).register(eq(ModConfiguredFeatures.SATELLITE_GRAVEYARD), any());
 
         ConfiguredFeature<?, ?> registered = captor.getValue();
         assertSame(asteroid, registered.feature());
@@ -303,6 +308,8 @@ class ModSpaceWorldGenTest {
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.PLANETARY_RING_PLACED);
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.ASTEROID_BELT_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.ASTEROID_BELT_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 
@@ -351,6 +358,8 @@ class ModSpaceWorldGenTest {
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.PLANETARY_RING_PLACED);
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.ASTEROID_BELT_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.ASTEROID_BELT_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 
@@ -377,7 +386,7 @@ class ModSpaceWorldGenTest {
                 .toList();
         assertEquals(List.of(ModPlacedFeatures.ASTEROID_PLACED, ModPlacedFeatures.WRECK_FIELD_PLACED,
                 ModPlacedFeatures.MEGA_ASTEROID_PLACED, ModPlacedFeatures.PLANETARY_RING_PLACED,
-                ModPlacedFeatures.ASTEROID_BELT_PLACED), stepZeroKeys);
+                ModPlacedFeatures.ASTEROID_BELT_PLACED, ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED), stepZeroKeys);
     }
 
     @Test
@@ -478,6 +487,8 @@ class ModSpaceWorldGenTest {
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.PLANETARY_RING_PLACED);
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.ASTEROID_BELT_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.ASTEROID_BELT_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 
@@ -634,6 +645,8 @@ class ModSpaceWorldGenTest {
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.PLANETARY_RING_PLACED);
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.ASTEROID_BELT_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.ASTEROID_BELT_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 
@@ -951,6 +964,7 @@ class ModSpaceWorldGenTest {
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.LEVIATHAN_HOARD));
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.MONOLITH_SECRET));
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.GATE_CACHE));
+        assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.SATELLITE_DEBRIS));
 
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.SPACE_STATION_CORE).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.DREADNOUGHT_ARMORY).build());
@@ -960,6 +974,7 @@ class ModSpaceWorldGenTest {
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.LEVIATHAN_HOARD).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.MONOLITH_SECRET).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.GATE_CACHE).build());
+        assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.SATELLITE_DEBRIS).build());
     }
 
     private static <T> T privateField(Object owner, String name, Class<T> type) {

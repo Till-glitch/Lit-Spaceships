@@ -697,6 +697,8 @@ nach `src/generated/resources`. Manuelle JSON-Dateien unter `data/lit_spaceships
 | `worldgen/structure_set` | `lit_spaceships:the_monolith` | `ModStructures::bootstrapStructureSet` | `RandomSpreadStructurePlacement` (Spacing 56, Separation 20, LINEAR, Seed 2110014021) |
 | `worldgen/structure` | `lit_spaceships:jump_gate` | `ModStructures::bootstrapStructure` | `JigsawStructure` (Start-Pool `jump_gate/start`, maxDepth 1, Uniform $Y \in [80, 224]$, TerrainAdjustment NONE); `space_biome` & `void_wastes` |
 | `worldgen/structure_set` | `lit_spaceships:jump_gate` | `ModStructures::bootstrapStructureSet` | `RandomSpreadStructurePlacement` (Spacing 48, Separation 16, LINEAR, Seed 221109918) |
+| `worldgen/configured_feature` | `lit_spaceships:satellite_graveyard` | `ModConfiguredFeatures` | → Runtime-Feature `lit_spaceships:satellite_graveyard` (`ModFeatures`, `SatelliteGraveyardFeature`) |
+| `worldgen/placed_feature` | `lit_spaceships:satellite_graveyard_placed` | `ModPlacedFeatures` | → `lit_spaceships:satellite_graveyard`; Count 2 + InSquare + Biome-Filter (Orbit-Band der 1024er-Zelle, 45% der Zellen). Intakte Satelliten (10%) tragen `chests/satellite_debris` |
 | `loot_table/chests` | `lit_spaceships:chests/space_station_core` | `ModChestLootTableProvider` | Netherite Upgrade Template, Diamant- & Redstone-Blöcke, Gold/Eisen/Kupfer, Goldäpfel |
 | `loot_table/chests` | `lit_spaceships:chests/dreadnought_armory` | `ModChestLootTableProvider` | Netherite Scrap/Ingot, Echo Shards (Pulslaser), Lohenruten/Quarz (Schwerer Strahl), TNT, Munition |
 | `loot_table/chests` | `lit_spaceships:chests/alien_monolith` | `ModChestLootTableProvider` | Lodestones, Nether-Sterne, Echo Shards, Enderaugen, Amethyst, Crying Obsidian, Chorusfrucht |

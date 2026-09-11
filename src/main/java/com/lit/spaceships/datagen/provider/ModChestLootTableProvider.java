@@ -54,6 +54,10 @@ public class ModChestLootTableProvider implements LootTableSubProvider {
             Registries.LOOT_TABLE,
             ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/gate_cache"));
 
+    public static final ResourceKey<LootTable> SATELLITE_DEBRIS = ResourceKey.create(
+            Registries.LOOT_TABLE,
+            ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/satellite_debris"));
+
     private final HolderLookup.Provider registries;
 
     public ModChestLootTableProvider(HolderLookup.Provider registries) {
@@ -233,5 +237,20 @@ public class ModChestLootTableProvider implements LootTableSubProvider {
                         .setRolls(UniformGenerator.between(0.0F, 1.0F))
                         .add(LootItem.lootTableItem(Items.END_CRYSTAL).setWeight(1))
                         .add(LootItem.lootTableItem(Items.DIAMOND_BLOCK).setWeight(2))));
+
+        // Satellite Debris: Technik-Schrott intakter Satelliten
+        consumer.accept(SATELLITE_DEBRIS, LootTable.lootTable()
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(2.0F, 4.0F))
+                        .add(LootItem.lootTableItem(Items.REDSTONE).setWeight(10)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(4.0F, 12.0F))))
+                        .add(LootItem.lootTableItem(Items.COPPER_INGOT).setWeight(10)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 6.0F))))
+                        .add(LootItem.lootTableItem(Items.IRON_INGOT).setWeight(8)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 5.0F))))
+                        .add(LootItem.lootTableItem(Items.GOLD_NUGGET).setWeight(8)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(4.0F, 10.0F))))
+                        .add(LootItem.lootTableItem(Items.COMPASS).setWeight(2))
+                        .add(LootItem.lootTableItem(Items.CLOCK).setWeight(2))));
     }
 }

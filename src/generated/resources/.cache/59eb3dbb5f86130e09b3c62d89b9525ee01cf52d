@@ -1,4 +1,4 @@
-// 1.21.1	2026-09-11T18:39:26.808724	Loot Tables
+// 1.21.1	2026-09-11T18:47:10.7742983	Loot Tables
 c686c702816b7ce3a51573b04d9c31a7c294fde0 data/lit_spaceships/loot_table/blocks/example_block.json
 4652d0d85eebdf140eea1bc96156348470c64200 data/lit_spaceships/loot_table/blocks/heavy_beam.json
 82b3e7a03f2d0ed9f706d2eb95496a8e8787725c data/lit_spaceships/loot_table/blocks/mining_laser.json
@@ -14,4 +14,5 @@ f96680743fc48a722d4c696f354b8990bedbfd6a data/lit_spaceships/loot_table/chests/a
 885267d073d7eead73d3adb29b6016da826dc8d3 data/lit_spaceships/loot_table/chests/leviathan_hoard.json
 bb8fc8ba3498f18d9e131aad807fae4dbba3f487 data/lit_spaceships/loot_table/chests/monolith_secret.json
 deef9782bb21016fcae5472b62764e85c665442f data/lit_spaceships/loot_table/chests/pirate_cache.json
+d169e746b7de66c53d640193471b7df4ecd48bd2 data/lit_spaceships/loot_table/chests/satellite_debris.json
 20c78f25891be28a5e6c4d2cf4c5b48735a32003 data/lit_spaceships/loot_table/chests/space_station_core.json

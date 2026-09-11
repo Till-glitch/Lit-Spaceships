@@ -31,6 +31,7 @@ public final class ModPlacedFeatures {
     public static final ResourceKey<PlacedFeature> MEGA_ASTEROID_PLACED = createKey("mega_asteroid_placed");
     public static final ResourceKey<PlacedFeature> PLANETARY_RING_PLACED = createKey("planetary_ring_placed");
     public static final ResourceKey<PlacedFeature> ASTEROID_BELT_PLACED = createKey("asteroid_belt_placed");
+    public static final ResourceKey<PlacedFeature> SATELLITE_GRAVEYARD_PLACED = createKey("satellite_graveyard_placed");
 
     private ModPlacedFeatures() {
     }
@@ -51,6 +52,8 @@ public final class ModPlacedFeatures {
                 configuredFeatures.getOrThrow(ModConfiguredFeatures.PLANETARY_RING), planetaryRingPlacement()));
         context.register(ASTEROID_BELT_PLACED, new PlacedFeature(
                 configuredFeatures.getOrThrow(ModConfiguredFeatures.ASTEROID_BELT), asteroidBeltPlacement()));
+        context.register(SATELLITE_GRAVEYARD_PLACED, new PlacedFeature(
+                configuredFeatures.getOrThrow(ModConfiguredFeatures.SATELLITE_GRAVEYARD), satelliteGraveyardPlacement()));
     }
 
     /**
@@ -125,6 +128,18 @@ public final class ModPlacedFeatures {
     static List<PlacementModifier> asteroidBeltPlacement() {
         return List.of(
                 CountPlacement.of(1),
+                InSquarePlacement.spread(),
+                BiomeFilter.biome()
+        );
+    }
+
+    /**
+     * Satellite Graveyard: 2 Versuche pro Chunk (Orbit-Band der 1024er-Zelle
+     * regelt die regionalen Friedhoefe, 45% der Zellen).
+     */
+    static List<PlacementModifier> satelliteGraveyardPlacement() {
+        return List.of(
+                CountPlacement.of(2),
                 InSquarePlacement.spread(),
                 BiomeFilter.biome()
         );

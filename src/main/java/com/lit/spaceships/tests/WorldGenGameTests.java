@@ -503,4 +503,23 @@ public class WorldGenGameTests {
 
         helper.succeed();
     }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void satelliteGraveyardPlacesIntactWreck(GameTestHelper helper) {
+        // Intakter Satellit (mit Kiste) im 15er-Template
+        RandomSource random = RandomSource.create(29L);
+        com.lit.spaceships.world.feature.SatelliteGraveyardFeature.placeSatellite(
+                helper.getLevel(), helper.absolutePos(new BlockPos(7, 7, 7)).getX(),
+                helper.absolutePos(new BlockPos(7, 7, 7)).getY(),
+                helper.absolutePos(new BlockPos(7, 7, 7)).getZ(), random, true);
+
+        // Rumpf (Eisen) + Kupferecken + Solar-Panels + Antenne
+        helper.assertBlock(new BlockPos(7, 7, 7), Blocks.IRON_BLOCK::equals, "Satellit-Rumpf muss Eisen sein");
+        helper.assertBlock(new BlockPos(6, 7, 6), Blocks.COPPER_BLOCK::equals, "Rumpfecke muss Kupfer sein");
+        helper.assertBlock(new BlockPos(5, 7, 7), Blocks.LIGHT_BLUE_STAINED_GLASS::equals, "Solar-Panel muss Cyan-Glas sein");
+        helper.assertBlock(new BlockPos(7, 9, 7), Blocks.LIGHTNING_ROD::equals, "Antenne muss Blitzableiter sein");
+        helper.assertBlock(new BlockPos(7, 6, 7), Blocks.CHEST::equals, "Intakter Satellit muss die Pluender-Kiste tragen");
+
+        helper.succeed();
+    }
 }
