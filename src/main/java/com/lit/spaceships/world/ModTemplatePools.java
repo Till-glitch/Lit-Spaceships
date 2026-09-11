@@ -38,6 +38,8 @@ public final class ModTemplatePools {
             createKey("pirate_outpost/start");
     public static final ResourceKey<StructureTemplatePool> LEVIATHAN_BONES_START =
             createKey("leviathan_bones/start");
+    public static final ResourceKey<StructureTemplatePool> THE_MONOLITH_START =
+            createKey("the_monolith/start");
 
     private ModTemplatePools() {
     }
@@ -87,6 +89,11 @@ public final class ModTemplatePools {
         // Frozen Leviathan (Kolossales Skelett im Frozen Expanse)
         context.register(LEVIATHAN_BONES_START, new StructureTemplatePool(empty, List.of(
                 Pair.of(StructurePoolElement.single("lit_spaceships:leviathan_bones/skeleton"), 1)
+        ), StructureTemplatePool.Projection.RIGID));
+
+        // The Silent Monolith (Geheimkammer im treibenden Void-Rock)
+        context.register(THE_MONOLITH_START, new StructureTemplatePool(empty, List.of(
+                Pair.of(StructurePoolElement.single("lit_spaceships:the_monolith/monolith"), 1)
         ), StructureTemplatePool.Projection.RIGID));
     }
 

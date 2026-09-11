@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:jigsaw",
+  "biomes": [
+    "lit_spaceships:space_biome",
+    "lit_spaceships:plasma_nebula"
+  ],
+  "max_distance_from_center": 80,
+  "size": 1,
+  "spawn_overrides": {},
+  "start_height": {
+    "type": "minecraft:uniform",
+    "max_inclusive": {
+      "absolute": 240
+    },
+    "min_inclusive": {
+      "absolute": 96
+    }
+  },
+  "start_pool": "lit_spaceships:the_monolith/start",
+  "step": "surface_structures",
+  "use_expansion_hack": false
+}

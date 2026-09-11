@@ -46,6 +46,10 @@ public class ModChestLootTableProvider implements LootTableSubProvider {
             Registries.LOOT_TABLE,
             ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/leviathan_hoard"));
 
+    public static final ResourceKey<LootTable> MONOLITH_SECRET = ResourceKey.create(
+            Registries.LOOT_TABLE,
+            ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/monolith_secret"));
+
     private final HolderLookup.Provider registries;
 
     public ModChestLootTableProvider(HolderLookup.Provider registries) {
@@ -185,5 +189,26 @@ public class ModChestLootTableProvider implements LootTableSubProvider {
                         .add(LootItem.lootTableItem(Items.EMERALD).setWeight(4)
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 4.0F))))
                         .add(LootItem.lootTableItem(Items.GOLD_BLOCK).setWeight(2))));
+
+        // Monolith Secret: Belohnung fuers Graben - Netherit-Splitter, Echo-Shards, Endaugen
+        consumer.accept(MONOLITH_SECRET, LootTable.lootTable()
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(1.0F, 2.0F))
+                        .add(LootItem.lootTableItem(Items.NETHERITE_SCRAP).setWeight(3)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 2.0F))))
+                        .add(LootItem.lootTableItem(Items.ENCHANTED_GOLDEN_APPLE).setWeight(1))
+                        .add(LootItem.lootTableItem(Items.NAME_TAG).setWeight(2))
+                        .add(LootItem.lootTableItem(Items.DIAMOND).setWeight(4)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 2.0F)))))
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(2.0F, 4.0F))
+                        .add(LootItem.lootTableItem(Items.ENDER_EYE).setWeight(6)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))
+                        .add(LootItem.lootTableItem(Items.ECHO_SHARD).setWeight(6)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 2.0F))))
+                        .add(LootItem.lootTableItem(Items.OBSIDIAN).setWeight(8)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 4.0F))))
+                        .add(LootItem.lootTableItem(Items.EMERALD).setWeight(6)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))));
     }
 }

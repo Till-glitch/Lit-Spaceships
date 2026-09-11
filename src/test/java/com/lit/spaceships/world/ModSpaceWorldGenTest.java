@@ -785,7 +785,7 @@ class ModSpaceWorldGenTest {
         ModTemplatePools.bootstrap(poolContext);
 
         ArgumentCaptor<StructureTemplatePool> captor = ArgumentCaptor.forClass(StructureTemplatePool.class);
-        verify(poolContext, times(8)).register(any(), captor.capture());
+        verify(poolContext, times(9)).register(any(), captor.capture());
 
         // 1. Station Start & Rooms
         StructureTemplatePool stationStart = captor.getAllValues().get(0);
@@ -814,6 +814,10 @@ class ModSpaceWorldGenTest {
         // 6. Leviathan Start
         StructureTemplatePool leviathanStart = captor.getAllValues().get(7);
         assertEquals(1, leviathanStart.size());
+
+        // 7. Monolith Start
+        StructureTemplatePool monolithStart = captor.getAllValues().get(8);
+        assertEquals(1, monolithStart.size());
     }
 
     @Test
@@ -941,6 +945,7 @@ class ModSpaceWorldGenTest {
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.COSMIC_VAULT));
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.PIRATE_CACHE));
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.LEVIATHAN_HOARD));
+        assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.MONOLITH_SECRET));
 
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.SPACE_STATION_CORE).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.DREADNOUGHT_ARMORY).build());
@@ -948,6 +953,7 @@ class ModSpaceWorldGenTest {
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.COSMIC_VAULT).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.PIRATE_CACHE).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.LEVIATHAN_HOARD).build());
+        assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.MONOLITH_SECRET).build());
     }
 
     private static <T> T privateField(Object owner, String name, Class<T> type) {

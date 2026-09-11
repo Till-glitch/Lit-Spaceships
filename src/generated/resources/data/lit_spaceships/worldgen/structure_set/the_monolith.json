@@ -1,0 +1,14 @@
+{
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 2110014021,
+    "separation": 20,
+    "spacing": 56
+  },
+  "structures": [
+    {
+      "structure": "lit_spaceships:the_monolith",
+      "weight": 1
+    }
+  ]
+}

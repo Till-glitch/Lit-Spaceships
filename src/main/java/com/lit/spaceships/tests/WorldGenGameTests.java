@@ -415,4 +415,51 @@ public class WorldGenGameTests {
         // ist hier nicht moeglich. Die Templates-Syntax wurde dennoch geladen (get() ok).
         helper.succeed();
     }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void monolithTemplateLoadsAndHidesSecret(GameTestHelper helper) {
+        var structureRegistry = helper.getLevel().registryAccess()
+                .registryOrThrow(net.minecraft.core.registries.Registries.STRUCTURE);
+        if (!structureRegistry.containsKey(ModStructures.THE_MONOLITH)) {
+            helper.fail("Struktur lit_spaceships:the_monolith ist nicht registriert");
+            return;
+        }
+
+        var template = helper.getLevel().getStructureManager()
+                .get(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                        com.lit.spaceships.LitSpaceships.MODID, "the_monolith/monolith"))
+                .orElse(null);
+        if (template == null) {
+            helper.fail("Template lit_spaceships:the_monolith/monolith wurde nicht geladen");
+            return;
+        }
+        var size = template.getSize();
+        if (size.getX() != 9 || size.getY() != 14 || size.getZ() != 9) {
+            helper.fail("Monolith hat unerwartete Größe: " + size);
+            return;
+        }
+
+        BlockPos origin = helper.absolutePos(new BlockPos(3, 0, 3));
+        boolean placed = template.placeInWorld(helper.getLevel(), origin, origin,
+                new net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings(),
+                RandomSource.create(17L), 2);
+        if (!placed) {
+            helper.fail("Monolith-Template konnte nicht platziert werden");
+            return;
+        }
+
+        // Monolith (Template 3..5, 5..12, 3..4 -> relativ 6..8, 5..12, 6..7)
+        helper.assertBlock(new BlockPos(7, 6, 6), Blocks.OBSIDIAN::equals, "Monolith muss Obsidian sein");
+        helper.assertBlock(new BlockPos(7, 12, 6), Blocks.OBSIDIAN::equals, "Monolith-Spitze muss Obsidian sein");
+
+        // Die Geheimkammer unter dem Monolith: Kiste tief im Rock (Template 4,1,4 -> relativ 7,1,7)
+        helper.assertBlock(new BlockPos(7, 1, 7), Blocks.CHEST::equals, "Geheimkammer muss die Kiste tragen");
+        helper.assertBlock(new BlockPos(6, 1, 7), Blocks.GOLD_BLOCK::equals, "Opfergold neben der Kiste");
+        helper.assertBlock(new BlockPos(8, 1, 7), Blocks.DIAMOND_ORE::equals, "Diamanterz-Opfergabe neben der Kiste");
+
+        // Kein Hinweis von oben: die Oberflaeche des Rocks verrät nichts
+        helper.assertBlock(new BlockPos(7, 4, 7), Blocks.BASALT::equals, "Sockel muss unschuldig bleiben");
+
+        helper.succeed();
+    }
 }

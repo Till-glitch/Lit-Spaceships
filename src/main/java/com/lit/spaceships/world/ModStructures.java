@@ -80,6 +80,14 @@ public final class ModStructures {
             ResourceKey.create(Registries.STRUCTURE_SET,
                     ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "leviathan_bones"));
 
+    public static final ResourceKey<Structure> THE_MONOLITH =
+            ResourceKey.create(Registries.STRUCTURE,
+                    ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "the_monolith"));
+
+    public static final ResourceKey<StructureSet> THE_MONOLITH_SET =
+            ResourceKey.create(Registries.STRUCTURE_SET,
+                    ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "the_monolith"));
+
     private ModStructures() {
     }
 
@@ -202,6 +210,25 @@ public final class ModStructures {
                 1,
                 UniformHeight.of(VerticalAnchor.absolute(64), VerticalAnchor.absolute(208)),
                 false));
+
+        // 7. The Silent Monolith (Mysterium im Space Biome und Plasma Nebula)
+        Holder<StructureTemplatePool> monolithStartPool =
+                pools.getOrThrow(ModTemplatePools.THE_MONOLITH_START);
+
+        Structure.StructureSettings monolithSettings = new Structure.StructureSettings(
+                HolderSet.direct(
+                        biomes.getOrThrow(ModDimensions.SPACE_BIOME),
+                        biomes.getOrThrow(ModBiomes.PLASMA_NEBULA)),
+                Map.of(),
+                GenerationStep.Decoration.SURFACE_STRUCTURES,
+                TerrainAdjustment.NONE);
+
+        context.register(THE_MONOLITH, new JigsawStructure(
+                monolithSettings,
+                monolithStartPool,
+                1,
+                UniformHeight.of(VerticalAnchor.absolute(96), VerticalAnchor.absolute(240)),
+                false));
     }
 
     public static void bootstrapStructureSet(BootstrapContext<StructureSet> context) {
@@ -230,5 +257,9 @@ public final class ModStructures {
         Holder<Structure> leviathan = structures.getOrThrow(LEVIATHAN_BONES);
         context.register(LEVIATHAN_BONES_SET, new StructureSet(leviathan,
                 new RandomSpreadStructurePlacement(52, 18, RandomSpreadType.LINEAR, 1984233611)));
+
+        Holder<Structure> monolith = structures.getOrThrow(THE_MONOLITH);
+        context.register(THE_MONOLITH_SET, new StructureSet(monolith,
+                new RandomSpreadStructurePlacement(56, 20, RandomSpreadType.LINEAR, 2110014021)));
     }
 }
