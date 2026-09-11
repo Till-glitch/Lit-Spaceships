@@ -58,6 +58,10 @@ public class ModChestLootTableProvider implements LootTableSubProvider {
             Registries.LOOT_TABLE,
             ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/satellite_debris"));
 
+    public static final ResourceKey<LootTable> JELLY_HEART = ResourceKey.create(
+            Registries.LOOT_TABLE,
+            ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/jelly_heart"));
+
     private final HolderLookup.Provider registries;
 
     public ModChestLootTableProvider(HolderLookup.Provider registries) {
@@ -252,5 +256,23 @@ public class ModChestLootTableProvider implements LootTableSubProvider {
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(4.0F, 10.0F))))
                         .add(LootItem.lootTableItem(Items.COMPASS).setWeight(2))
                         .add(LootItem.lootTableItem(Items.CLOCK).setWeight(2))));
+
+        // Jelly Heart: biolumineszente Kostbarkeit im Schwebezustand
+        consumer.accept(JELLY_HEART, LootTable.lootTable()
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(1.0F, 2.0F))
+                        .add(LootItem.lootTableItem(Items.SPIRE_ARMOR_TRIM_SMITHING_TEMPLATE).setWeight(2))
+                        .add(LootItem.lootTableItem(Items.GOLDEN_CARROT).setWeight(4)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))
+                        .add(LootItem.lootTableItem(Items.PRISMARINE_CRYSTALS).setWeight(6)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 6.0F)))))
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(2.0F, 4.0F))
+                        .add(LootItem.lootTableItem(Items.ECHO_SHARD).setWeight(6)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 2.0F))))
+                        .add(LootItem.lootTableItem(Items.GLOWSTONE_DUST).setWeight(10)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(3.0F, 8.0F))))
+                        .add(LootItem.lootTableItem(Items.AMETHYST_SHARD).setWeight(10)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(3.0F, 8.0F))))));
     }
 }

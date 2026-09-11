@@ -32,6 +32,7 @@ public final class ModPlacedFeatures {
     public static final ResourceKey<PlacedFeature> PLANETARY_RING_PLACED = createKey("planetary_ring_placed");
     public static final ResourceKey<PlacedFeature> ASTEROID_BELT_PLACED = createKey("asteroid_belt_placed");
     public static final ResourceKey<PlacedFeature> SATELLITE_GRAVEYARD_PLACED = createKey("satellite_graveyard_placed");
+    public static final ResourceKey<PlacedFeature> COSMIC_JELLYFISH_PLACED = createKey("cosmic_jellyfish_placed");
 
     private ModPlacedFeatures() {
     }
@@ -54,6 +55,8 @@ public final class ModPlacedFeatures {
                 configuredFeatures.getOrThrow(ModConfiguredFeatures.ASTEROID_BELT), asteroidBeltPlacement()));
         context.register(SATELLITE_GRAVEYARD_PLACED, new PlacedFeature(
                 configuredFeatures.getOrThrow(ModConfiguredFeatures.SATELLITE_GRAVEYARD), satelliteGraveyardPlacement()));
+        context.register(COSMIC_JELLYFISH_PLACED, new PlacedFeature(
+                configuredFeatures.getOrThrow(ModConfiguredFeatures.COSMIC_JELLYFISH), cosmicJellyfishPlacement()));
     }
 
     /**
@@ -140,6 +143,18 @@ public final class ModPlacedFeatures {
     static List<PlacementModifier> satelliteGraveyardPlacement() {
         return List.of(
                 CountPlacement.of(2),
+                InSquarePlacement.spread(),
+                BiomeFilter.biome()
+        );
+    }
+
+    /**
+     * Cosmic Jellyfish: 1 Versuch pro Chunk (Zellen-Spec: 35% der Zellen,
+     * pro Versuch 25%).
+     */
+    static List<PlacementModifier> cosmicJellyfishPlacement() {
+        return List.of(
+                CountPlacement.of(1),
                 InSquarePlacement.spread(),
                 BiomeFilter.biome()
         );

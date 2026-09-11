@@ -169,6 +169,8 @@ class ModSpaceWorldGenTest {
         assertKey(ModPlacedFeatures.ASTEROID_BELT_PLACED, Registries.PLACED_FEATURE, "asteroid_belt_placed");
         assertKey(ModConfiguredFeatures.SATELLITE_GRAVEYARD, Registries.CONFIGURED_FEATURE, "satellite_graveyard");
         assertKey(ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED, Registries.PLACED_FEATURE, "satellite_graveyard_placed");
+        assertKey(ModConfiguredFeatures.COSMIC_JELLYFISH, Registries.CONFIGURED_FEATURE, "cosmic_jellyfish");
+        assertKey(ModPlacedFeatures.COSMIC_JELLYFISH_PLACED, Registries.PLACED_FEATURE, "cosmic_jellyfish_placed");
         assertKey(ModPlacedFeatures.WRECK_FIELD_PLACED, Registries.PLACED_FEATURE, "wreck_field_placed");
     }
 
@@ -188,8 +190,10 @@ class ModSpaceWorldGenTest {
         AsteroidBeltFeature asteroidBelt = new AsteroidBeltFeature(NoneFeatureConfiguration.CODEC);
         com.lit.spaceships.world.feature.SatelliteGraveyardFeature satelliteGraveyard =
                 new com.lit.spaceships.world.feature.SatelliteGraveyardFeature(NoneFeatureConfiguration.CODEC);
+        com.lit.spaceships.world.feature.CosmicJellyfishFeature cosmicJellyfish =
+                new com.lit.spaceships.world.feature.CosmicJellyfishFeature(NoneFeatureConfiguration.CODEC);
 
-        ModConfiguredFeatures.bootstrapWith(configuredContext, asteroid, wreck, iceComet, megaAsteroid, planetaryRing, asteroidBelt, satelliteGraveyard);
+        ModConfiguredFeatures.bootstrapWith(configuredContext, asteroid, wreck, iceComet, megaAsteroid, planetaryRing, asteroidBelt, satelliteGraveyard, cosmicJellyfish);
 
         ArgumentCaptor<ConfiguredFeature<?, ?>> captor = ArgumentCaptor.forClass(ConfiguredFeature.class);
         verify(configuredContext).register(eq(ModConfiguredFeatures.ASTEROID), captor.capture());
@@ -199,6 +203,7 @@ class ModSpaceWorldGenTest {
         verify(configuredContext).register(eq(ModConfiguredFeatures.PLANETARY_RING), any());
         verify(configuredContext).register(eq(ModConfiguredFeatures.ASTEROID_BELT), any());
         verify(configuredContext).register(eq(ModConfiguredFeatures.SATELLITE_GRAVEYARD), any());
+        verify(configuredContext).register(eq(ModConfiguredFeatures.COSMIC_JELLYFISH), any());
 
         ConfiguredFeature<?, ?> registered = captor.getValue();
         assertSame(asteroid, registered.feature());
@@ -310,6 +315,8 @@ class ModSpaceWorldGenTest {
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.ASTEROID_BELT_PLACED);
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.COSMIC_JELLYFISH_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.COSMIC_JELLYFISH_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 
@@ -360,6 +367,8 @@ class ModSpaceWorldGenTest {
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.ASTEROID_BELT_PLACED);
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.COSMIC_JELLYFISH_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.COSMIC_JELLYFISH_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 
@@ -489,6 +498,8 @@ class ModSpaceWorldGenTest {
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.ASTEROID_BELT_PLACED);
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.COSMIC_JELLYFISH_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.COSMIC_JELLYFISH_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 
@@ -514,7 +525,11 @@ class ModSpaceWorldGenTest {
         for (MobCategory category : MobCategory.values()) {
             assertTrue(nebula.getMobSettings().getMobs(category).isEmpty(), category.getName());
         }
-        assertTrue(nebula.getGenerationSettings().features().isEmpty());
+        // Nebula hat jetzt ihre ersten Features: die leuchtenden Quallen
+        List<net.minecraft.core.HolderSet<PlacedFeature>> nebulaSteps = nebula.getGenerationSettings().features();
+        assertEquals(1, nebulaSteps.size());
+        assertTrue(nebulaSteps.get(0).stream().anyMatch(h -> h.unwrapKey().orElseThrow()
+                .equals(ModPlacedFeatures.COSMIC_JELLYFISH_PLACED)));
     }
 
     @Test
@@ -647,6 +662,8 @@ class ModSpaceWorldGenTest {
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.ASTEROID_BELT_PLACED);
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.COSMIC_JELLYFISH_PLACED))
+                .when(placedGetter).getOrThrow(ModPlacedFeatures.COSMIC_JELLYFISH_PLACED);
 
         ModBiomes.bootstrap(biomeContext);
 
@@ -965,6 +982,7 @@ class ModSpaceWorldGenTest {
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.MONOLITH_SECRET));
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.GATE_CACHE));
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.SATELLITE_DEBRIS));
+        assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.JELLY_HEART));
 
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.SPACE_STATION_CORE).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.DREADNOUGHT_ARMORY).build());
@@ -975,6 +993,7 @@ class ModSpaceWorldGenTest {
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.MONOLITH_SECRET).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.GATE_CACHE).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.SATELLITE_DEBRIS).build());
+        assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.JELLY_HEART).build());
     }
 
     private static <T> T privateField(Object owner, String name, Class<T> type) {

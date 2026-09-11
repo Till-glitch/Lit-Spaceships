@@ -23,6 +23,7 @@ public final class ModConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> PLANETARY_RING = createKey("planetary_ring");
     public static final ResourceKey<ConfiguredFeature<?, ?>> ASTEROID_BELT = createKey("asteroid_belt");
     public static final ResourceKey<ConfiguredFeature<?, ?>> SATELLITE_GRAVEYARD = createKey("satellite_graveyard");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> COSMIC_JELLYFISH = createKey("cosmic_jellyfish");
 
     private ModConfiguredFeatures() {
     }
@@ -31,7 +32,7 @@ public final class ModConfiguredFeatures {
         bootstrapWith(context, ModFeatures.ASTEROID.get(), ModFeatures.SPACE_WRECK.get(),
                 ModFeatures.ICE_COMET.get(), ModFeatures.MEGA_ASTEROID.get(),
                 ModFeatures.PLANETARY_RING.get(), ModFeatures.ASTEROID_BELT.get(),
-                ModFeatures.SATELLITE_GRAVEYARD.get());
+                ModFeatures.SATELLITE_GRAVEYARD.get(), ModFeatures.COSMIC_JELLYFISH.get());
     }
 
     static void bootstrapWith(BootstrapContext<ConfiguredFeature<?, ?>> context,
@@ -41,7 +42,8 @@ public final class ModConfiguredFeatures {
                               Feature<NoneFeatureConfiguration> megaAsteroid,
                               Feature<NoneFeatureConfiguration> planetaryRing,
                               Feature<NoneFeatureConfiguration> asteroidBelt,
-                              Feature<NoneFeatureConfiguration> satelliteGraveyard) {
+                              Feature<NoneFeatureConfiguration> satelliteGraveyard,
+                              Feature<NoneFeatureConfiguration> cosmicJellyfish) {
         context.register(ASTEROID, new ConfiguredFeature<>(asteroid, NoneFeatureConfiguration.INSTANCE));
         context.register(SPACE_WRECK, new ConfiguredFeature<>(spaceWreck, NoneFeatureConfiguration.INSTANCE));
         context.register(ICE_COMET, new ConfiguredFeature<>(iceComet, NoneFeatureConfiguration.INSTANCE));
@@ -49,6 +51,7 @@ public final class ModConfiguredFeatures {
         context.register(PLANETARY_RING, new ConfiguredFeature<>(planetaryRing, NoneFeatureConfiguration.INSTANCE));
         context.register(ASTEROID_BELT, new ConfiguredFeature<>(asteroidBelt, NoneFeatureConfiguration.INSTANCE));
         context.register(SATELLITE_GRAVEYARD, new ConfiguredFeature<>(satelliteGraveyard, NoneFeatureConfiguration.INSTANCE));
+        context.register(COSMIC_JELLYFISH, new ConfiguredFeature<>(cosmicJellyfish, NoneFeatureConfiguration.INSTANCE));
     }
 
     private static ResourceKey<ConfiguredFeature<?, ?>> createKey(String name) {

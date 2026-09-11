@@ -57,14 +57,14 @@ public final class ModBiomes {
     public static void bootstrap(BootstrapContext<Biome> context) {
         HolderGetter<PlacedFeature> placedFeatures = context.lookup(Registries.PLACED_FEATURE);
         context.register(SPACE_BIOME, spaceBiome(placedFeatures));
-        context.register(PLASMA_NEBULA, plasmaNebula());
+        context.register(PLASMA_NEBULA, plasmaNebula(placedFeatures));
         context.register(FROZEN_EXPANSE, frozenExpanse(placedFeatures));
         context.register(VOID_WASTES, voidWastes(placedFeatures));
     }
 
     static void bootstrapWith(BootstrapContext<Biome> context, HolderGetter<PlacedFeature> placedFeatures) {
         context.register(SPACE_BIOME, spaceBiome(placedFeatures));
-        context.register(PLASMA_NEBULA, plasmaNebula());
+        context.register(PLASMA_NEBULA, plasmaNebula(placedFeatures));
         context.register(FROZEN_EXPANSE, frozenExpanse(placedFeatures));
         context.register(VOID_WASTES, voidWastes(placedFeatures));
     }
@@ -97,7 +97,7 @@ public final class ModBiomes {
      * Himmel, schwebende glühende Plasmastaub-Partikel, keine Mob-Spawns und
      * bewusst keine Features — der Nebel ist eine reine Atmosphären-/Gefahrenzone.
      */
-    static Biome plasmaNebula() {
+    static Biome plasmaNebula(HolderGetter<PlacedFeature> placedFeatures) {
         return new Biome.BiomeBuilder()
                 .hasPrecipitation(false)
                 .temperature(0.5F)
@@ -112,7 +112,10 @@ public final class ModBiomes {
                                 new DustParticleOptions(new Vector3f(0.498F, 0.0F, 1.0F), 0.8F), 0.006F))
                         .build())
                 .mobSpawnSettings(MobSpawnSettings.EMPTY)
-                .generationSettings(BiomeGenerationSettings.EMPTY)
+                .generationSettings(new BiomeGenerationSettings.PlainBuilder()
+                        .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                                placedFeatures.getOrThrow(ModPlacedFeatures.COSMIC_JELLYFISH_PLACED))
+                        .build())
                 .build();
     }
 
@@ -199,6 +202,8 @@ public final class ModBiomes {
                         placedFeatures.getOrThrow(ModPlacedFeatures.ASTEROID_BELT_PLACED))
                 .addFeature(GenerationStep.Decoration.RAW_GENERATION,
                         placedFeatures.getOrThrow(ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED))
+                .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                        placedFeatures.getOrThrow(ModPlacedFeatures.COSMIC_JELLYFISH_PLACED))
                 .build();
     }
 

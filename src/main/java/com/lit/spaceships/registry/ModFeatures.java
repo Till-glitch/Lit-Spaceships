@@ -6,6 +6,7 @@ import com.lit.spaceships.world.feature.AsteroidFeature;
 import com.lit.spaceships.world.feature.IceCometFeature;
 import com.lit.spaceships.world.feature.MegaAsteroidFeature;
 import com.lit.spaceships.world.feature.PlanetaryRingFeature;
+import com.lit.spaceships.world.feature.CosmicJellyfishFeature;
 import com.lit.spaceships.world.feature.SatelliteGraveyardFeature;
 import com.lit.spaceships.world.feature.SpaceWreckFeature;
 import net.minecraft.core.registries.Registries;
@@ -40,6 +41,9 @@ public class ModFeatures {
 
     public static final DeferredHolder<Feature<?>, SatelliteGraveyardFeature> SATELLITE_GRAVEYARD =
             FEATURES.register("satellite_graveyard", () -> new SatelliteGraveyardFeature(NoneFeatureConfiguration.CODEC));
+
+    public static final DeferredHolder<Feature<?>, CosmicJellyfishFeature> COSMIC_JELLYFISH =
+            FEATURES.register("cosmic_jellyfish", () -> new CosmicJellyfishFeature(NoneFeatureConfiguration.CODEC));
 
     public static void register(IEventBus eventBus) {
         FEATURES.register(eventBus);

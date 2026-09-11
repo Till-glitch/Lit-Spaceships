@@ -19,7 +19,11 @@
     "water_color": 1703987,
     "water_fog_color": 1703987
   },
-  "features": [],
+  "features": [
+    [
+      "lit_spaceships:cosmic_jellyfish_placed"
+    ]
+  ],
   "has_precipitation": false,
   "spawn_costs": {},
   "spawners": {

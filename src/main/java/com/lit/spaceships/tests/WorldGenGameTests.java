@@ -522,4 +522,30 @@ public class WorldGenGameTests {
 
         helper.succeed();
     }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void cosmicJellyfishPlacesHeartAndTentacles(GameTestHelper helper) {
+        // Qualle mit Radius 4, Zentrum bei (7,9,7) -> Schirm bis y13, Tentakeln bis y4
+        RandomSource random = RandomSource.create(31L);
+        com.lit.spaceships.world.feature.CosmicJellyfishFeature.placeJellyfish(
+                helper.getLevel(), helper.absolutePos(new BlockPos(7, 9, 7)).getX(),
+                helper.absolutePos(new BlockPos(7, 9, 7)).getY(),
+                helper.absolutePos(new BlockPos(7, 9, 7)).getZ(), random, 4);
+
+        // Herz-Kiste schwebt im Zentrum (relativ 7,9,7)
+        helper.assertBlock(new BlockPos(7, 9, 7), Blocks.CHEST::equals, "Herz-Kiste muss im Zentrum schweben");
+
+        // Schirmscheitel (relativ 7,13,7) ist Glas
+        helper.assertBlockState(new BlockPos(7, 13, 7),
+                state -> state.is(Blocks.MAGENTA_STAINED_GLASS) || state.is(Blocks.PURPLE_STAINED_GLASS),
+                () -> "Schirmspitze muss Magenta/Violett-Glas sein");
+
+        // Tentakel: Kette unter dem Schirmrand (rim x=7-4+1=4, y ab 8 abwaerts)
+        helper.assertBlock(new BlockPos(4, 7, 7), Blocks.CHAIN::equals, "Tentakel muss Kette sein");
+
+        // Innenraum bleibt Luft (relativ 7,11,7 ist unter der Schale, ueber der Kiste)
+        helper.assertBlock(new BlockPos(7, 11, 7), Blocks.AIR::equals, "Schirm-Inneres muss Luft bleiben");
+
+        helper.succeed();
+    }
 }
