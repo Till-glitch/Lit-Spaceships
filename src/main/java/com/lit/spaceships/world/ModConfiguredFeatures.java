@@ -3,6 +3,7 @@ package com.lit.spaceships.world;
 import com.lit.spaceships.LitSpaceships;
 import com.lit.spaceships.registry.ModFeatures;
 import net.minecraft.core.registries.Registries;
+import com.lit.spaceships.world.ModAmbientFeatures;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -35,6 +36,7 @@ public final class ModConfiguredFeatures {
                 ModFeatures.PLANETARY_RING.get(), ModFeatures.ASTEROID_BELT.get(),
                 ModFeatures.SATELLITE_GRAVEYARD.get(), ModFeatures.COSMIC_JELLYFISH.get(),
                 ModFeatures.ANCIENT_BATTLEFIELD.get());
+        ModAmbientFeatures.bootstrapConfigured(context);
     }
 
     static void bootstrapWith(BootstrapContext<ConfiguredFeature<?, ?>> context,

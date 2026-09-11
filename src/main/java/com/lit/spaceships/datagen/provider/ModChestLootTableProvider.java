@@ -1,6 +1,7 @@
 package com.lit.spaceships.datagen.provider;
 
 import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.world.feature.PodFeature;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.loot.LootTableSubProvider;
@@ -65,6 +66,8 @@ public class ModChestLootTableProvider implements LootTableSubProvider {
     public static final ResourceKey<LootTable> BATTLEFIELD_SALVAGE = ResourceKey.create(
             Registries.LOOT_TABLE,
             ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/battlefield_salvage"));
+
+    public static final ResourceKey<LootTable> CARGO_POD = PodFeature.CARGO_POD_LOOT;
 
     public static final ResourceKey<LootTable> COLONY_LARDER = ResourceKey.create(
             Registries.LOOT_TABLE,
@@ -321,5 +324,24 @@ public class ModChestLootTableProvider implements LootTableSubProvider {
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(3.0F, 9.0F))))
                         .add(LootItem.lootTableItem(Items.OBSIDIAN).setWeight(5)
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))));
+
+        // Cargo Pod: verlorene Fracht - lebenswichtige Vorrraete
+        consumer.accept(CARGO_POD, LootTable.lootTable()
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(2.0F, 4.0F))
+                        .add(LootItem.lootTableItem(Items.IRON_INGOT).setWeight(10)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 4.0F))))
+                        .add(LootItem.lootTableItem(Items.COPPER_INGOT).setWeight(8)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 5.0F))))
+                        .add(LootItem.lootTableItem(Items.REDSTONE).setWeight(8)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(3.0F, 8.0F))))
+                        .add(LootItem.lootTableItem(Items.COAL).setWeight(6)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(3.0F, 7.0F)))))
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(0.0F, 1.0F))
+                        .add(LootItem.lootTableItem(Items.DIAMOND).setWeight(2)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 2.0F))))
+                        .add(LootItem.lootTableItem(Items.GOLDEN_APPLE).setWeight(1))
+                        .add(LootItem.lootTableItem(Items.MUSIC_DISC_OTHERSIDE).setWeight(1))));
     }
 }

@@ -17,7 +17,12 @@
       "lit_spaceships:planetary_ring_placed",
       "lit_spaceships:asteroid_belt_placed",
       "lit_spaceships:satellite_graveyard_placed",
-      "lit_spaceships:ancient_battlefield_placed"
+      "lit_spaceships:ancient_battlefield_placed",
+      "lit_spaceships:bone_debris_placed",
+      "lit_spaceships:scrap_wasteland_placed",
+      "lit_spaceships:dust_drift_placed",
+      "lit_spaceships:ash_vent_placed",
+      "lit_spaceships:void_cyst_placed"
     ]
   ],
   "has_precipitation": false,

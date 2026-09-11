@@ -60,6 +60,7 @@ public final class ModPlacedFeatures {
                 configuredFeatures.getOrThrow(ModConfiguredFeatures.COSMIC_JELLYFISH), cosmicJellyfishPlacement()));
         context.register(ANCIENT_BATTLEFIELD_PLACED, new PlacedFeature(
                 configuredFeatures.getOrThrow(ModConfiguredFeatures.ANCIENT_BATTLEFIELD), ancientBattlefieldPlacement()));
+        ModAmbientFeatures.bootstrapPlaced(context);
     }
 
     /**

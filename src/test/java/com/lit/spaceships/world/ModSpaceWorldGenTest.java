@@ -4,6 +4,7 @@ import com.lit.spaceships.world.feature.AsteroidBeltFeature;
 import com.lit.spaceships.world.feature.AsteroidFeature;
 import com.lit.spaceships.world.feature.IceCometFeature;
 import com.lit.spaceships.world.feature.MegaAsteroidFeature;
+import com.lit.spaceships.world.ModAmbientFeatures;
 import com.lit.spaceships.world.feature.PlanetaryRingFeature;
 import com.lit.spaceships.world.feature.SpaceWreckFeature;
 import net.minecraft.SharedConstants;
@@ -138,6 +139,23 @@ class ModSpaceWorldGenTest {
     private final HolderOwner<StructureTemplatePool> poolOwner = new HolderOwner<>() {
     };
 
+    private static final String[][] AMBIENT_FEATURES = {
+            {"debris_field", "meteor_shower", "void_crystal_spike", "beacon_pylon", "cargo_pod"},
+            {"nebula_spore_drift", "plasma_ember", "nebula_gas_bloom", "crystal_lattice", "nebula_arc"},
+            {"ice_shard_field", "glacier_floe", "frost_pillar", "snow_bloom", "cryo_geode"},
+            {"bone_debris", "scrap_wasteland", "dust_drift", "ash_vent", "void_cyst"}
+    };
+
+    /** Stubbt alle 20 Ambient-Placed-Features (Bootstrap registriert alle 4 Biome). */
+    private void stubAmbientPlacedFeatures() {
+        for (String[] names : AMBIENT_FEATURES) {
+            for (String n : names) {
+                doReturn(Holder.Reference.createStandAlone(placedOwner, ModAmbientFeatures.placedForTest(n + "_placed")))
+                        .when(placedGetter).getOrThrow(ModAmbientFeatures.placedForTest(n + "_placed"));
+            }
+        }
+    }
+
     private void stubAllBiomes() {
         doReturn(Holder.Reference.createStandAlone(biomeOwner, ModDimensions.SPACE_BIOME))
                 .when(biomeGetter).getOrThrow(ModDimensions.SPACE_BIOME);
@@ -173,6 +191,17 @@ class ModSpaceWorldGenTest {
         assertKey(ModPlacedFeatures.COSMIC_JELLYFISH_PLACED, Registries.PLACED_FEATURE, "cosmic_jellyfish_placed");
         assertKey(ModConfiguredFeatures.ANCIENT_BATTLEFIELD, Registries.CONFIGURED_FEATURE, "ancient_battlefield");
         assertKey(ModPlacedFeatures.ANCIENT_BATTLEFIELD_PLACED, Registries.PLACED_FEATURE, "ancient_battlefield_placed");
+        for (String[] name : new String[][]{
+                {"debris_field", "meteor_shower", "void_crystal_spike", "beacon_pylon", "cargo_pod"},
+                {"nebula_spore_drift", "plasma_ember", "nebula_gas_bloom", "crystal_lattice", "nebula_arc"},
+                {"ice_shard_field", "glacier_floe", "frost_pillar", "snow_bloom", "cryo_geode"},
+                {"bone_debris", "scrap_wasteland", "dust_drift", "ash_vent", "void_cyst"}}) {
+            for (String feature : name) {
+                ResourceKey<ConfiguredFeature<?, ?>> cfg = ModAmbientFeatures.cfgForTest(feature);
+                assertKey(cfg, Registries.CONFIGURED_FEATURE, feature);
+                assertKey(ModAmbientFeatures.placedForTest(feature + "_placed"), Registries.PLACED_FEATURE, feature + "_placed");
+            }
+        }
         assertKey(ModPlacedFeatures.WRECK_FIELD_PLACED, Registries.PLACED_FEATURE, "wreck_field_placed");
     }
 
@@ -325,6 +354,7 @@ class ModSpaceWorldGenTest {
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.ANCIENT_BATTLEFIELD_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.ANCIENT_BATTLEFIELD_PLACED);
 
+        stubAmbientPlacedFeatures();
         ModBiomes.bootstrap(biomeContext);
 
         ArgumentCaptor<Biome> captor = ArgumentCaptor.forClass(Biome.class);
@@ -379,6 +409,7 @@ class ModSpaceWorldGenTest {
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.ANCIENT_BATTLEFIELD_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.ANCIENT_BATTLEFIELD_PLACED);
 
+        stubAmbientPlacedFeatures();
         ModBiomes.bootstrap(biomeContext);
 
         ArgumentCaptor<Biome> captor = ArgumentCaptor.forClass(Biome.class);
@@ -405,7 +436,9 @@ class ModSpaceWorldGenTest {
         assertEquals(List.of(ModPlacedFeatures.ASTEROID_PLACED, ModPlacedFeatures.WRECK_FIELD_PLACED,
                 ModPlacedFeatures.MEGA_ASTEROID_PLACED, ModPlacedFeatures.PLANETARY_RING_PLACED,
                 ModPlacedFeatures.ASTEROID_BELT_PLACED, ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED,
-                ModPlacedFeatures.ANCIENT_BATTLEFIELD_PLACED), stepZeroKeys);
+                ModPlacedFeatures.ANCIENT_BATTLEFIELD_PLACED, ModAmbientFeatures.BONE_DEBRIS_PLACED,
+                ModAmbientFeatures.SCRAP_WASTELAND_PLACED, ModAmbientFeatures.DUST_DRIFT_PLACED,
+                ModAmbientFeatures.ASH_VENT_PLACED, ModAmbientFeatures.VOID_CYST_PLACED), stepZeroKeys);
     }
 
     @Test
@@ -513,6 +546,7 @@ class ModSpaceWorldGenTest {
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.ANCIENT_BATTLEFIELD_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.ANCIENT_BATTLEFIELD_PLACED);
 
+        stubAmbientPlacedFeatures();
         ModBiomes.bootstrap(biomeContext);
 
         ArgumentCaptor<Biome> captor = ArgumentCaptor.forClass(Biome.class);
@@ -540,8 +574,12 @@ class ModSpaceWorldGenTest {
         // Nebula hat jetzt ihre ersten Features: die leuchtenden Quallen
         List<net.minecraft.core.HolderSet<PlacedFeature>> nebulaSteps = nebula.getGenerationSettings().features();
         assertEquals(1, nebulaSteps.size());
-        assertTrue(nebulaSteps.get(0).stream().anyMatch(h -> h.unwrapKey().orElseThrow()
-                .equals(ModPlacedFeatures.COSMIC_JELLYFISH_PLACED)));
+        List<ResourceKey<PlacedFeature>> nebulaKeys = nebulaSteps.get(0).stream()
+                .map(h -> h.unwrapKey().orElseThrow()).toList();
+        assertEquals(List.of(ModPlacedFeatures.COSMIC_JELLYFISH_PLACED,
+                ModAmbientFeatures.NEBULA_SPORE_DRIFT_PLACED, ModAmbientFeatures.PLASMA_EMBER_PLACED,
+                ModAmbientFeatures.NEBULA_GAS_BLOOM_PLACED, ModAmbientFeatures.CRYSTAL_LATTICE_PLACED,
+                ModAmbientFeatures.NEBULA_ARC_PLACED), nebulaKeys);
     }
 
     @Test
@@ -679,6 +717,7 @@ class ModSpaceWorldGenTest {
         doReturn(Holder.Reference.createStandAlone(placedOwner, ModPlacedFeatures.ANCIENT_BATTLEFIELD_PLACED))
                 .when(placedGetter).getOrThrow(ModPlacedFeatures.ANCIENT_BATTLEFIELD_PLACED);
 
+        stubAmbientPlacedFeatures();
         ModBiomes.bootstrap(biomeContext);
 
         ArgumentCaptor<Biome> captor = ArgumentCaptor.forClass(Biome.class);
@@ -704,7 +743,10 @@ class ModSpaceWorldGenTest {
                 .map(holder -> holder.unwrapKey().orElseThrow())
                 .toList();
         assertEquals(List.of(ModPlacedFeatures.ICE_COMET_PLACED, ModPlacedFeatures.MEGA_ASTEROID_PLACED,
-                ModPlacedFeatures.PLANETARY_RING_PLACED, ModPlacedFeatures.ASTEROID_BELT_PLACED), stepZeroKeys);
+                ModPlacedFeatures.PLANETARY_RING_PLACED, ModPlacedFeatures.ASTEROID_BELT_PLACED,
+                ModAmbientFeatures.ICE_SHARD_FIELD_PLACED, ModAmbientFeatures.GLACIER_FLOE_PLACED,
+                ModAmbientFeatures.FROST_PILLAR_PLACED, ModAmbientFeatures.SNOW_BLOOM_PLACED,
+                ModAmbientFeatures.CRYO_GEODE_PLACED), stepZeroKeys);
     }
 
     @Test
@@ -1002,6 +1044,7 @@ class ModSpaceWorldGenTest {
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.SATELLITE_DEBRIS));
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.JELLY_HEART));
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.BATTLEFIELD_SALVAGE));
+        assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.CARGO_POD));
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.COLONY_LARDER));
 
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.SPACE_STATION_CORE).build());
@@ -1015,6 +1058,7 @@ class ModSpaceWorldGenTest {
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.SATELLITE_DEBRIS).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.JELLY_HEART).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.BATTLEFIELD_SALVAGE).build());
+        assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.CARGO_POD).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.COLONY_LARDER).build());
     }
 

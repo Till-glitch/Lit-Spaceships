@@ -18,7 +18,12 @@
       "lit_spaceships:ice_comet_placed",
       "lit_spaceships:mega_asteroid_placed",
       "lit_spaceships:planetary_ring_placed",
-      "lit_spaceships:asteroid_belt_placed"
+      "lit_spaceships:asteroid_belt_placed",
+      "lit_spaceships:ice_shard_field_placed",
+      "lit_spaceships:glacier_floe_placed",
+      "lit_spaceships:frost_pillar_placed",
+      "lit_spaceships:snow_bloom_placed",
+      "lit_spaceships:cryo_geode_placed"
     ]
   ],
   "has_precipitation": false,

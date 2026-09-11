@@ -18,7 +18,12 @@
       "lit_spaceships:asteroid_belt_placed",
       "lit_spaceships:satellite_graveyard_placed",
       "lit_spaceships:cosmic_jellyfish_placed",
-      "lit_spaceships:ancient_battlefield_placed"
+      "lit_spaceships:ancient_battlefield_placed",
+      "lit_spaceships:debris_field_placed",
+      "lit_spaceships:meteor_shower_placed",
+      "lit_spaceships:void_crystal_spike_placed",
+      "lit_spaceships:beacon_pylon_placed",
+      "lit_spaceships:cargo_pod_placed"
     ]
   ],
   "has_precipitation": false,

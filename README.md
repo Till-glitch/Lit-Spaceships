@@ -63,6 +63,10 @@ An advanced spaceship, energy shield, and naval combat mod for **Minecraft 1.21.
   * **Jump Gate Ruins (`lit_spaceships:jump_gate`):** The shattered remains of an ancient warp gate — a 15-block stone ring, its upper arc broken away, anchored by basalt pillars around a glowing void crystal. Buried beneath the center lies a gate cache (`lit_spaceships:chests/gate_cache`) with ender pearls, eyes of ender, chorus fruit and — rarely — an end crystal. Deep Space and Void Wastes, Random-Spread (Spacing 48, Separation 16).
   * **Satellite Graveyard (`lit_spaceships:satellite_graveyard`):** Dead satellites tumble in orbital bands around certain regions of the void — iron hulls with copper joints, cyan solar panels and lightning-rod antennae. Most are wreckage; roughly one in ten is intact and still carries its payload chest (`lit_spaceships:chests/satellite_debris`) with redstone, copper ingots, a compass or a clock. Deep Space and Void Wastes.
   * **Cosmic Jellyfish (`lit_spaceships:cosmic_jellyfish`):** Enormous bioluminescent creatures of magenta and purple glass drift through the Plasma Nebula and Deep Space, pulsing with sea-lantern organs, trailing chain tentacles — and carrying a treasure heart: a chest suspended weightless at the center of each dome (`lit_spaceships:chests/jelly_heart`) with a spire armor trim, prismarine crystals, echo shards and glowstone. Look for the glow in the dark.
+  * **Deep Space ambient features:** Debris fields, meteor showers, void crystal spikes, beacon pylons and rare cargo pods (rarity 1/24, `lit_spaceships:chests/cargo_pod` with a chance of a music disc) litter the void.
+  * **Plasma Nebula ambient features:** Nebula spore drifts (glowstone/froglights), plasma embers, magenta gas blooms, budding crystal lattices and shroomlight-capped chain arcs.
+  * **Frozen Expanse ambient features:** Ice shard fields, glacier floes, frost pillars with blue-ice caps, snow blooms and mini cryo-geodes.
+  * **Void Wastes ambient features:** Bone debris, scrap wastelands (iron/chains), dust drifts, ash vents with magma caps and crying-obsidian void cysts.
   * **Abandoned Colony Dome (`lit_spaceships:colony_dome`):** A settler outpost that lost its people — a glass dome with a still-burning campfire, supply barrels and a larder chest (`lit_spaceships:chests/colony_larder`) full of bread, roasts and hay. Amethyst has begun to overgrow the floor tiles. Deep Space and Frozen Expanse, Random-Spread (Spacing 50, Separation 18).
   * **Ancient Battlefield (`lit_spaceships:ancient_battlefield`):** Scorched debris fields from a war nobody remembers — craters of obsidian and smoldering magma, blackstone hulks trailing chains. Some hulks still carry salvage chests (`lit_spaceships:chests/battlefield_salvage`) with swords, shields, crossbows, TNT and netherite scrap. Deep Space and Void Wastes.
   * **Derelict Spacecraft Wrecks:** Rare abandoned shipwrecks featuring intact spaceship reactor cores and ancient treasure chests.
@@ -342,7 +346,7 @@ classDiagram
 
 The project enforces continuous testing according to the **70/20 Rule** (70% Unit / Math Tests, 20% Engine GameTests, 10% Manual QA).
 
-### Automated Test Matrix (180 Unit Tests & 8 GameTest Suites / 41 GameTests)
+### Automated Test Matrix (180 Unit Tests & 8 GameTest Suites / 45 GameTests)
 
 | Test-Suite | Typ | Abdeckung |
 | :--- | :--- | :--- |

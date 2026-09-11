@@ -21,7 +21,12 @@
   },
   "features": [
     [
-      "lit_spaceships:cosmic_jellyfish_placed"
+      "lit_spaceships:cosmic_jellyfish_placed",
+      "lit_spaceships:nebula_spore_drift_placed",
+      "lit_spaceships:plasma_ember_placed",
+      "lit_spaceships:nebula_gas_bloom_placed",
+      "lit_spaceships:crystal_lattice_placed",
+      "lit_spaceships:nebula_arc_placed"
     ]
   ],
   "has_precipitation": false,

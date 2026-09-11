@@ -115,6 +115,16 @@ public final class ModBiomes {
                 .generationSettings(new BiomeGenerationSettings.PlainBuilder()
                         .addFeature(GenerationStep.Decoration.RAW_GENERATION,
                                 placedFeatures.getOrThrow(ModPlacedFeatures.COSMIC_JELLYFISH_PLACED))
+                        .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                                placedFeatures.getOrThrow(ModAmbientFeatures.NEBULA_SPORE_DRIFT_PLACED))
+                        .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                                placedFeatures.getOrThrow(ModAmbientFeatures.PLASMA_EMBER_PLACED))
+                        .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                                placedFeatures.getOrThrow(ModAmbientFeatures.NEBULA_GAS_BLOOM_PLACED))
+                        .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                                placedFeatures.getOrThrow(ModAmbientFeatures.CRYSTAL_LATTICE_PLACED))
+                        .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                                placedFeatures.getOrThrow(ModAmbientFeatures.NEBULA_ARC_PLACED))
                         .build())
                 .build();
     }
@@ -147,6 +157,16 @@ public final class ModBiomes {
                                 placedFeatures.getOrThrow(ModPlacedFeatures.PLANETARY_RING_PLACED))
                         .addFeature(GenerationStep.Decoration.RAW_GENERATION,
                                 placedFeatures.getOrThrow(ModPlacedFeatures.ASTEROID_BELT_PLACED))
+                        .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                                placedFeatures.getOrThrow(ModAmbientFeatures.ICE_SHARD_FIELD_PLACED))
+                        .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                                placedFeatures.getOrThrow(ModAmbientFeatures.GLACIER_FLOE_PLACED))
+                        .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                                placedFeatures.getOrThrow(ModAmbientFeatures.FROST_PILLAR_PLACED))
+                        .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                                placedFeatures.getOrThrow(ModAmbientFeatures.SNOW_BLOOM_PLACED))
+                        .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                                placedFeatures.getOrThrow(ModAmbientFeatures.CRYO_GEODE_PLACED))
                         .build())
                 .build();
     }
@@ -186,6 +206,16 @@ public final class ModBiomes {
                                 placedFeatures.getOrThrow(ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED))
                         .addFeature(GenerationStep.Decoration.RAW_GENERATION,
                                 placedFeatures.getOrThrow(ModPlacedFeatures.ANCIENT_BATTLEFIELD_PLACED))
+                        .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                                placedFeatures.getOrThrow(ModAmbientFeatures.BONE_DEBRIS_PLACED))
+                        .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                                placedFeatures.getOrThrow(ModAmbientFeatures.SCRAP_WASTELAND_PLACED))
+                        .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                                placedFeatures.getOrThrow(ModAmbientFeatures.DUST_DRIFT_PLACED))
+                        .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                                placedFeatures.getOrThrow(ModAmbientFeatures.ASH_VENT_PLACED))
+                        .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                                placedFeatures.getOrThrow(ModAmbientFeatures.VOID_CYST_PLACED))
                         .build())
                 .build();
     }
@@ -208,6 +238,16 @@ public final class ModBiomes {
                         placedFeatures.getOrThrow(ModPlacedFeatures.COSMIC_JELLYFISH_PLACED))
                 .addFeature(GenerationStep.Decoration.RAW_GENERATION,
                         placedFeatures.getOrThrow(ModPlacedFeatures.ANCIENT_BATTLEFIELD_PLACED))
+                .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                        placedFeatures.getOrThrow(ModAmbientFeatures.DEBRIS_FIELD_PLACED))
+                .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                        placedFeatures.getOrThrow(ModAmbientFeatures.METEOR_SHOWER_PLACED))
+                .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                        placedFeatures.getOrThrow(ModAmbientFeatures.VOID_CRYSTAL_SPIKE_PLACED))
+                .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                        placedFeatures.getOrThrow(ModAmbientFeatures.BEACON_PYLON_PLACED))
+                .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                        placedFeatures.getOrThrow(ModAmbientFeatures.CARGO_POD_PLACED))
                 .build();
     }
 
