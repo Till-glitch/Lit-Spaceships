@@ -72,6 +72,14 @@ public final class ModStructures {
             ResourceKey.create(Registries.STRUCTURE_SET,
                     ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "pirate_outpost"));
 
+    public static final ResourceKey<Structure> LEVIATHAN_BONES =
+            ResourceKey.create(Registries.STRUCTURE,
+                    ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "leviathan_bones"));
+
+    public static final ResourceKey<StructureSet> LEVIATHAN_BONES_SET =
+            ResourceKey.create(Registries.STRUCTURE_SET,
+                    ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "leviathan_bones"));
+
     private ModStructures() {
     }
 
@@ -177,6 +185,23 @@ public final class ModStructures {
                 1,
                 UniformHeight.of(VerticalAnchor.absolute(48), VerticalAnchor.absolute(184)),
                 false));
+
+        // 6. Frozen Leviathan (nur Frozen Expanse - die Bestie des Eises)
+        Holder<StructureTemplatePool> leviathanStartPool =
+                pools.getOrThrow(ModTemplatePools.LEVIATHAN_BONES_START);
+
+        Structure.StructureSettings leviathanSettings = new Structure.StructureSettings(
+                HolderSet.direct(biomes.getOrThrow(ModBiomes.FROZEN_EXPANSE)),
+                Map.of(),
+                GenerationStep.Decoration.SURFACE_STRUCTURES,
+                TerrainAdjustment.NONE);
+
+        context.register(LEVIATHAN_BONES, new JigsawStructure(
+                leviathanSettings,
+                leviathanStartPool,
+                1,
+                UniformHeight.of(VerticalAnchor.absolute(64), VerticalAnchor.absolute(208)),
+                false));
     }
 
     public static void bootstrapStructureSet(BootstrapContext<StructureSet> context) {
@@ -201,5 +226,9 @@ public final class ModStructures {
         Holder<Structure> pirate = structures.getOrThrow(PIRATE_OUTPOST);
         context.register(PIRATE_OUTPOST_SET, new StructureSet(pirate,
                 new RandomSpreadStructurePlacement(44, 16, RandomSpreadType.LINEAR, 1666420707)));
+
+        Holder<Structure> leviathan = structures.getOrThrow(LEVIATHAN_BONES);
+        context.register(LEVIATHAN_BONES_SET, new StructureSet(leviathan,
+                new RandomSpreadStructurePlacement(52, 18, RandomSpreadType.LINEAR, 1984233611)));
     }
 }

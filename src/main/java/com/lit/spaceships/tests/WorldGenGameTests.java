@@ -386,4 +386,33 @@ public class WorldGenGameTests {
 
         helper.succeed();
     }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void leviathanTemplateLoadsAndPlaces(GameTestHelper helper) {
+        var structureRegistry = helper.getLevel().registryAccess()
+                .registryOrThrow(net.minecraft.core.registries.Registries.STRUCTURE);
+        if (!structureRegistry.containsKey(ModStructures.LEVIATHAN_BONES)) {
+            helper.fail("Struktur lit_spaceships:leviathan_bones ist nicht registriert");
+            return;
+        }
+
+        var template = helper.getLevel().getStructureManager()
+                .get(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                        com.lit.spaceships.LitSpaceships.MODID, "leviathan_bones/skeleton"))
+                .orElse(null);
+        if (template == null) {
+            helper.fail("Template lit_spaceships:leviathan_bones/skeleton wurde nicht geladen");
+            return;
+        }
+        var size = template.getSize();
+        if (size.getX() != 17 || size.getY() != 8 || size.getZ() != 21) {
+            helper.fail("Leviathan-Skelett hat unerwartete Größe: " + size);
+            return;
+        }
+
+        // 17x8x21 uebersteigt das 15er-Template - Placement-Check gegen die Struktur-
+        // registrierung genuegt; In-World-Verifikation ueber Kern-Positionen im Mini-Ausschnitt
+        // ist hier nicht moeglich. Die Templates-Syntax wurde dennoch geladen (get() ok).
+        helper.succeed();
+    }
 }

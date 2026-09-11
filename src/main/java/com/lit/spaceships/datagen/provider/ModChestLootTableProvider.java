@@ -42,6 +42,10 @@ public class ModChestLootTableProvider implements LootTableSubProvider {
             Registries.LOOT_TABLE,
             ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/pirate_cache"));
 
+    public static final ResourceKey<LootTable> LEVIATHAN_HOARD = ResourceKey.create(
+            Registries.LOOT_TABLE,
+            ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/leviathan_hoard"));
+
     private final HolderLookup.Provider registries;
 
     public ModChestLootTableProvider(HolderLookup.Provider registries) {
@@ -163,5 +167,23 @@ public class ModChestLootTableProvider implements LootTableSubProvider {
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 4.0F))))
                         .add(LootItem.lootTableItem(Items.OBSIDIAN).setWeight(4)
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))));
+
+        // Leviathan Hoard: Herzensgabe der Bestie - Herz des Meeres, Diamanten, Eis-Schaetze
+        consumer.accept(LEVIATHAN_HOARD, LootTable.lootTable()
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(1.0F, 1.0F))
+                        .add(LootItem.lootTableItem(Items.HEART_OF_THE_SEA).setWeight(2))
+                        .add(LootItem.lootTableItem(Items.DIAMOND_BLOCK).setWeight(3)))
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(2.0F, 4.0F))
+                        .add(LootItem.lootTableItem(Items.BLUE_ICE).setWeight(8)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 6.0F))))
+                        .add(LootItem.lootTableItem(Items.PRISMARINE_CRYSTALS).setWeight(8)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(3.0F, 8.0F))))
+                        .add(LootItem.lootTableItem(Items.DIAMOND).setWeight(4)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))
+                        .add(LootItem.lootTableItem(Items.EMERALD).setWeight(4)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 4.0F))))
+                        .add(LootItem.lootTableItem(Items.GOLD_BLOCK).setWeight(2))));
     }
 }

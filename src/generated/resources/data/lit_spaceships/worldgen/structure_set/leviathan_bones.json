@@ -1,0 +1,14 @@
+{
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 1984233611,
+    "separation": 18,
+    "spacing": 52
+  },
+  "structures": [
+    {
+      "structure": "lit_spaceships:leviathan_bones",
+      "weight": 1
+    }
+  ]
+}

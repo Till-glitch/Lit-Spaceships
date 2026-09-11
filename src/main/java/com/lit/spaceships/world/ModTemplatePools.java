@@ -36,6 +36,8 @@ public final class ModTemplatePools {
             createKey("cosmic_vault/start");
     public static final ResourceKey<StructureTemplatePool> PIRATE_OUTPOST_START =
             createKey("pirate_outpost/start");
+    public static final ResourceKey<StructureTemplatePool> LEVIATHAN_BONES_START =
+            createKey("leviathan_bones/start");
 
     private ModTemplatePools() {
     }
@@ -80,6 +82,11 @@ public final class ModTemplatePools {
         // Pirate Satellite Outpost (mit Fallen-Kiste)
         context.register(PIRATE_OUTPOST_START, new StructureTemplatePool(empty, List.of(
                 Pair.of(StructurePoolElement.single("lit_spaceships:pirate_outpost/platform"), 1)
+        ), StructureTemplatePool.Projection.RIGID));
+
+        // Frozen Leviathan (Kolossales Skelett im Frozen Expanse)
+        context.register(LEVIATHAN_BONES_START, new StructureTemplatePool(empty, List.of(
+                Pair.of(StructurePoolElement.single("lit_spaceships:leviathan_bones/skeleton"), 1)
         ), StructureTemplatePool.Projection.RIGID));
     }
 

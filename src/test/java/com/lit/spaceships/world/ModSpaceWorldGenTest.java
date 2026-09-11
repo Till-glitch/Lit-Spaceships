@@ -785,7 +785,7 @@ class ModSpaceWorldGenTest {
         ModTemplatePools.bootstrap(poolContext);
 
         ArgumentCaptor<StructureTemplatePool> captor = ArgumentCaptor.forClass(StructureTemplatePool.class);
-        verify(poolContext, times(7)).register(any(), captor.capture());
+        verify(poolContext, times(8)).register(any(), captor.capture());
 
         // 1. Station Start & Rooms
         StructureTemplatePool stationStart = captor.getAllValues().get(0);
@@ -810,6 +810,10 @@ class ModSpaceWorldGenTest {
         // 5. Pirate Outpost Start
         StructureTemplatePool pirateStart = captor.getAllValues().get(6);
         assertEquals(1, pirateStart.size());
+
+        // 6. Leviathan Start
+        StructureTemplatePool leviathanStart = captor.getAllValues().get(7);
+        assertEquals(1, leviathanStart.size());
     }
 
     @Test
@@ -936,12 +940,14 @@ class ModSpaceWorldGenTest {
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.ALIEN_MONOLITH));
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.COSMIC_VAULT));
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.PIRATE_CACHE));
+        assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.LEVIATHAN_HOARD));
 
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.SPACE_STATION_CORE).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.DREADNOUGHT_ARMORY).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.ALIEN_MONOLITH).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.COSMIC_VAULT).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.PIRATE_CACHE).build());
+        assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.LEVIATHAN_HOARD).build());
     }
 
     private static <T> T privateField(Object owner, String name, Class<T> type) {
