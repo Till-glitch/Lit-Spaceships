@@ -88,6 +88,14 @@ public final class ModStructures {
             ResourceKey.create(Registries.STRUCTURE_SET,
                     ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "the_monolith"));
 
+    public static final ResourceKey<Structure> JUMP_GATE =
+            ResourceKey.create(Registries.STRUCTURE,
+                    ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "jump_gate"));
+
+    public static final ResourceKey<StructureSet> JUMP_GATE_SET =
+            ResourceKey.create(Registries.STRUCTURE_SET,
+                    ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "jump_gate"));
+
     private ModStructures() {
     }
 
@@ -229,6 +237,25 @@ public final class ModStructures {
                 1,
                 UniformHeight.of(VerticalAnchor.absolute(96), VerticalAnchor.absolute(240)),
                 false));
+
+        // 8. Jump Gate Ruins (Space Biome & Void Wastes - die alten Sprungtore)
+        Holder<StructureTemplatePool> gateStartPool =
+                pools.getOrThrow(ModTemplatePools.JUMP_GATE_START);
+
+        Structure.StructureSettings gateSettings = new Structure.StructureSettings(
+                HolderSet.direct(
+                        biomes.getOrThrow(ModDimensions.SPACE_BIOME),
+                        biomes.getOrThrow(ModBiomes.VOID_WASTES)),
+                Map.of(),
+                GenerationStep.Decoration.SURFACE_STRUCTURES,
+                TerrainAdjustment.NONE);
+
+        context.register(JUMP_GATE, new JigsawStructure(
+                gateSettings,
+                gateStartPool,
+                1,
+                UniformHeight.of(VerticalAnchor.absolute(80), VerticalAnchor.absolute(224)),
+                false));
     }
 
     public static void bootstrapStructureSet(BootstrapContext<StructureSet> context) {
@@ -261,5 +288,9 @@ public final class ModStructures {
         Holder<Structure> monolith = structures.getOrThrow(THE_MONOLITH);
         context.register(THE_MONOLITH_SET, new StructureSet(monolith,
                 new RandomSpreadStructurePlacement(56, 20, RandomSpreadType.LINEAR, 2110014021)));
+
+        Holder<Structure> gate = structures.getOrThrow(JUMP_GATE);
+        context.register(JUMP_GATE_SET, new StructureSet(gate,
+                new RandomSpreadStructurePlacement(48, 16, RandomSpreadType.LINEAR, 221109918)));
     }
 }

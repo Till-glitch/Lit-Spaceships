@@ -50,6 +50,10 @@ public class ModChestLootTableProvider implements LootTableSubProvider {
             Registries.LOOT_TABLE,
             ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/monolith_secret"));
 
+    public static final ResourceKey<LootTable> GATE_CACHE = ResourceKey.create(
+            Registries.LOOT_TABLE,
+            ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/gate_cache"));
+
     private final HolderLookup.Provider registries;
 
     public ModChestLootTableProvider(HolderLookup.Provider registries) {
@@ -210,5 +214,24 @@ public class ModChestLootTableProvider implements LootTableSubProvider {
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 4.0F))))
                         .add(LootItem.lootTableItem(Items.EMERALD).setWeight(6)
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))));
+
+        // Gate Cache: Warp-Essenz - Enderperlen, Endaugen, Chorus, Amethyst
+        consumer.accept(GATE_CACHE, LootTable.lootTable()
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(2.0F, 4.0F))
+                        .add(LootItem.lootTableItem(Items.ENDER_PEARL).setWeight(10)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 6.0F))))
+                        .add(LootItem.lootTableItem(Items.ENDER_EYE).setWeight(5)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))
+                        .add(LootItem.lootTableItem(Items.CHORUS_FRUIT).setWeight(8)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(3.0F, 7.0F))))
+                        .add(LootItem.lootTableItem(Items.AMETHYST_SHARD).setWeight(8)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(3.0F, 9.0F))))
+                        .add(LootItem.lootTableItem(Items.PURPUR_BLOCK).setWeight(4)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 4.0F)))))
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(0.0F, 1.0F))
+                        .add(LootItem.lootTableItem(Items.END_CRYSTAL).setWeight(1))
+                        .add(LootItem.lootTableItem(Items.DIAMOND_BLOCK).setWeight(2))));
     }
 }

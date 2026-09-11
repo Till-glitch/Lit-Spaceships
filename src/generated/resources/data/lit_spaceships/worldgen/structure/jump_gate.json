@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:jigsaw",
+  "biomes": [
+    "lit_spaceships:space_biome",
+    "lit_spaceships:void_wastes"
+  ],
+  "max_distance_from_center": 80,
+  "size": 1,
+  "spawn_overrides": {},
+  "start_height": {
+    "type": "minecraft:uniform",
+    "max_inclusive": {
+      "absolute": 224
+    },
+    "min_inclusive": {
+      "absolute": 80
+    }
+  },
+  "start_pool": "lit_spaceships:jump_gate/start",
+  "step": "surface_structures",
+  "use_expansion_hack": false
+}

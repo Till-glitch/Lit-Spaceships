@@ -462,4 +462,45 @@ public class WorldGenGameTests {
 
         helper.succeed();
     }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void jumpGateTemplateLoadsAndPlaces(GameTestHelper helper) {
+        var structureRegistry = helper.getLevel().registryAccess()
+                .registryOrThrow(net.minecraft.core.registries.Registries.STRUCTURE);
+        if (!structureRegistry.containsKey(ModStructures.JUMP_GATE)) {
+            helper.fail("Struktur lit_spaceships:jump_gate ist nicht registriert");
+            return;
+        }
+
+        var template = helper.getLevel().getStructureManager()
+                .get(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                        com.lit.spaceships.LitSpaceships.MODID, "jump_gate/gate"))
+                .orElse(null);
+        if (template == null) {
+            helper.fail("Template lit_spaceships:jump_gate/gate wurde nicht geladen");
+            return;
+        }
+        var size = template.getSize();
+        if (size.getX() != 15 || size.getY() != 13 || size.getZ() != 15) {
+            helper.fail("Jump Gate hat unerwartete Größe: " + size);
+            return;
+        }
+
+        BlockPos origin = helper.absolutePos(new BlockPos(0, 1, 0));
+        boolean placed = template.placeInWorld(helper.getLevel(), origin, origin,
+                new net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings(),
+                RandomSource.create(21L), 2);
+        if (!placed) {
+            helper.fail("Gate-Template konnte nicht platziert werden");
+            return;
+        }
+
+        // Void-Kristall im Zentrum (relativ 7,7/8,7) + versteckter Cache (7,2,7)
+        helper.assertBlock(new BlockPos(7, 7, 7), Blocks.AMETHYST_BLOCK::equals, "Gate-Zentrum muss Void-Kristall tragen");
+        helper.assertBlock(new BlockPos(7, 8, 7), Blocks.SEA_LANTERN::equals, "Kristall muss leuchten");
+        helper.assertBlock(new BlockPos(7, 2, 7), Blocks.CHEST::equals, "Gate-Cache muss unter dem Tor begraben sein");
+        helper.assertBlock(new BlockPos(7, 0, 7), Blocks.AIR::equals, "Unter dem Cache muss die Leere liegen");
+
+        helper.succeed();
+    }
 }

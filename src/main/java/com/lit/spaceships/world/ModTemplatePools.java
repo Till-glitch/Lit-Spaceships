@@ -40,6 +40,8 @@ public final class ModTemplatePools {
             createKey("leviathan_bones/start");
     public static final ResourceKey<StructureTemplatePool> THE_MONOLITH_START =
             createKey("the_monolith/start");
+    public static final ResourceKey<StructureTemplatePool> JUMP_GATE_START =
+            createKey("jump_gate/start");
 
     private ModTemplatePools() {
     }
@@ -94,6 +96,11 @@ public final class ModTemplatePools {
         // The Silent Monolith (Geheimkammer im treibenden Void-Rock)
         context.register(THE_MONOLITH_START, new StructureTemplatePool(empty, List.of(
                 Pair.of(StructurePoolElement.single("lit_spaceships:the_monolith/monolith"), 1)
+        ), StructureTemplatePool.Projection.RIGID));
+
+        // Jump Gate Ruins (zerbrochenes Ringtor mit Void-Kristall)
+        context.register(JUMP_GATE_START, new StructureTemplatePool(empty, List.of(
+                Pair.of(StructurePoolElement.single("lit_spaceships:jump_gate/gate"), 1)
         ), StructureTemplatePool.Projection.RIGID));
     }
 
