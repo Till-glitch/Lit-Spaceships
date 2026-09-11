@@ -62,6 +62,10 @@ public class ModChestLootTableProvider implements LootTableSubProvider {
             Registries.LOOT_TABLE,
             ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/jelly_heart"));
 
+    public static final ResourceKey<LootTable> COLONY_LARDER = ResourceKey.create(
+            Registries.LOOT_TABLE,
+            ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/colony_larder"));
+
     private final HolderLookup.Provider registries;
 
     public ModChestLootTableProvider(HolderLookup.Provider registries) {
@@ -274,5 +278,23 @@ public class ModChestLootTableProvider implements LootTableSubProvider {
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(3.0F, 8.0F))))
                         .add(LootItem.lootTableItem(Items.AMETHYST_SHARD).setWeight(10)
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(3.0F, 8.0F))))));
+
+        // Colony Larder: Vorraete der verlassenen Siedler
+        consumer.accept(COLONY_LARDER, LootTable.lootTable()
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(3.0F, 6.0F))
+                        .add(LootItem.lootTableItem(Items.BREAD).setWeight(10)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 6.0F))))
+                        .add(LootItem.lootTableItem(Items.COOKED_BEEF).setWeight(8)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 5.0F))))
+                        .add(LootItem.lootTableItem(Items.CARROT).setWeight(8)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(3.0F, 8.0F))))
+                        .add(LootItem.lootTableItem(Items.APPLE).setWeight(6)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 4.0F))))
+                        .add(LootItem.lootTableItem(Items.HAY_BLOCK).setWeight(3))
+                        .add(LootItem.lootTableItem(Items.IRON_INGOT).setWeight(4)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))
+                        .add(LootItem.lootTableItem(Items.EXPERIENCE_BOTTLE).setWeight(2)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))));
     }
 }

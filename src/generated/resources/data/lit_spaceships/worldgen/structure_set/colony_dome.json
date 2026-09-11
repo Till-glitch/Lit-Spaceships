@@ -1,0 +1,14 @@
+{
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 223356207,
+    "separation": 18,
+    "spacing": 50
+  },
+  "structures": [
+    {
+      "structure": "lit_spaceships:colony_dome",
+      "weight": 1
+    }
+  ]
+}

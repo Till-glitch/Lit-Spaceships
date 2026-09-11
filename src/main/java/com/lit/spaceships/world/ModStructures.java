@@ -96,6 +96,14 @@ public final class ModStructures {
             ResourceKey.create(Registries.STRUCTURE_SET,
                     ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "jump_gate"));
 
+    public static final ResourceKey<Structure> COLONY_DOME =
+            ResourceKey.create(Registries.STRUCTURE,
+                    ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "colony_dome"));
+
+    public static final ResourceKey<StructureSet> COLONY_DOME_SET =
+            ResourceKey.create(Registries.STRUCTURE_SET,
+                    ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "colony_dome"));
+
     private ModStructures() {
     }
 
@@ -256,6 +264,25 @@ public final class ModStructures {
                 1,
                 UniformHeight.of(VerticalAnchor.absolute(80), VerticalAnchor.absolute(224)),
                 false));
+
+        // 9. Abandoned Colony Dome (Space Biome & Frozen Expanse - Siedler im Eis)
+        Holder<StructureTemplatePool> colonyStartPool =
+                pools.getOrThrow(ModTemplatePools.COLONY_DOME_START);
+
+        Structure.StructureSettings colonySettings = new Structure.StructureSettings(
+                HolderSet.direct(
+                        biomes.getOrThrow(ModDimensions.SPACE_BIOME),
+                        biomes.getOrThrow(ModBiomes.FROZEN_EXPANSE)),
+                Map.of(),
+                GenerationStep.Decoration.SURFACE_STRUCTURES,
+                TerrainAdjustment.NONE);
+
+        context.register(COLONY_DOME, new JigsawStructure(
+                colonySettings,
+                colonyStartPool,
+                1,
+                UniformHeight.of(VerticalAnchor.absolute(64), VerticalAnchor.absolute(200)),
+                false));
     }
 
     public static void bootstrapStructureSet(BootstrapContext<StructureSet> context) {
@@ -292,5 +319,9 @@ public final class ModStructures {
         Holder<Structure> gate = structures.getOrThrow(JUMP_GATE);
         context.register(JUMP_GATE_SET, new StructureSet(gate,
                 new RandomSpreadStructurePlacement(48, 16, RandomSpreadType.LINEAR, 221109918)));
+
+        Holder<Structure> colony = structures.getOrThrow(COLONY_DOME);
+        context.register(COLONY_DOME_SET, new StructureSet(colony,
+                new RandomSpreadStructurePlacement(50, 18, RandomSpreadType.LINEAR, 223356207)));
     }
 }

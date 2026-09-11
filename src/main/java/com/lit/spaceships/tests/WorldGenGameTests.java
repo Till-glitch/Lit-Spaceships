@@ -548,4 +548,48 @@ public class WorldGenGameTests {
 
         helper.succeed();
     }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void colonyDomeTemplateLoadsAndPlaces(GameTestHelper helper) {
+        var structureRegistry = helper.getLevel().registryAccess()
+                .registryOrThrow(net.minecraft.core.registries.Registries.STRUCTURE);
+        if (!structureRegistry.containsKey(ModStructures.COLONY_DOME)) {
+            helper.fail("Struktur lit_spaceships:colony_dome ist nicht registriert");
+            return;
+        }
+
+        var template = helper.getLevel().getStructureManager()
+                .get(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                        com.lit.spaceships.LitSpaceships.MODID, "colony_dome/dome"))
+                .orElse(null);
+        if (template == null) {
+            helper.fail("Template lit_spaceships:colony_dome/dome wurde nicht geladen");
+            return;
+        }
+        var size = template.getSize();
+        if (size.getX() != 13 || size.getY() != 10 || size.getZ() != 13) {
+            helper.fail("Koloniekuppel hat unerwartete Größe: " + size);
+            return;
+        }
+
+        BlockPos origin = helper.absolutePos(new BlockPos(1, 1, 1));
+        boolean placed = template.placeInWorld(helper.getLevel(), origin, origin,
+                new net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings(),
+                RandomSource.create(41L), 2);
+        if (!placed) {
+            helper.fail("Kuppel-Template konnte nicht platziert werden");
+            return;
+        }
+
+        // Vorrats-Kiste (Template 8,1,6 -> relativ 9,2,7), Lagerfeuer (6,1,6 -> 7,2,7),
+        // Amethyst-Ueberwucherung (Template 3,1,3 -> relativ 4,2,4)
+        helper.assertBlock(new BlockPos(9, 2, 7), Blocks.CHEST::equals, "Vorrats-Kiste muss in der Kuppel stehen");
+        helper.assertBlock(new BlockPos(7, 2, 7), Blocks.CAMPFIRE::equals, "Lagerfeuer der Siedler muss brennen");
+        helper.assertBlockState(new BlockPos(4, 2, 4),
+                state -> state.is(Blocks.AMETHYST_BLOCK) || state.is(Blocks.BUDDING_AMETHYST),
+                () -> "Amethyst muss die Kolonie ueberwuchert haben");
+        helper.assertBlock(new BlockPos(7, 7, 7), Blocks.GLASS::equals, "Kuppelscheitel muss Glas sein");
+
+        helper.succeed();
+    }
 }

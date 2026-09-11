@@ -815,7 +815,7 @@ class ModSpaceWorldGenTest {
         ModTemplatePools.bootstrap(poolContext);
 
         ArgumentCaptor<StructureTemplatePool> captor = ArgumentCaptor.forClass(StructureTemplatePool.class);
-        verify(poolContext, times(10)).register(any(), captor.capture());
+        verify(poolContext, times(11)).register(any(), captor.capture());
 
         // 1. Station Start & Rooms
         StructureTemplatePool stationStart = captor.getAllValues().get(0);
@@ -852,6 +852,10 @@ class ModSpaceWorldGenTest {
         // 8. Jump Gate Start
         StructureTemplatePool gateStart = captor.getAllValues().get(9);
         assertEquals(1, gateStart.size());
+
+        // 9. Colony Dome Start
+        StructureTemplatePool colonyStart = captor.getAllValues().get(10);
+        assertEquals(1, colonyStart.size());
     }
 
     @Test
@@ -983,6 +987,7 @@ class ModSpaceWorldGenTest {
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.GATE_CACHE));
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.SATELLITE_DEBRIS));
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.JELLY_HEART));
+        assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.COLONY_LARDER));
 
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.SPACE_STATION_CORE).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.DREADNOUGHT_ARMORY).build());
@@ -994,6 +999,7 @@ class ModSpaceWorldGenTest {
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.GATE_CACHE).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.SATELLITE_DEBRIS).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.JELLY_HEART).build());
+        assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.COLONY_LARDER).build());
     }
 
     private static <T> T privateField(Object owner, String name, Class<T> type) {

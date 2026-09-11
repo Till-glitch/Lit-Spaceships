@@ -42,6 +42,8 @@ public final class ModTemplatePools {
             createKey("the_monolith/start");
     public static final ResourceKey<StructureTemplatePool> JUMP_GATE_START =
             createKey("jump_gate/start");
+    public static final ResourceKey<StructureTemplatePool> COLONY_DOME_START =
+            createKey("colony_dome/start");
 
     private ModTemplatePools() {
     }
@@ -101,6 +103,11 @@ public final class ModTemplatePools {
         // Jump Gate Ruins (zerbrochenes Ringtor mit Void-Kristall)
         context.register(JUMP_GATE_START, new StructureTemplatePool(empty, List.of(
                 Pair.of(StructurePoolElement.single("lit_spaceships:jump_gate/gate"), 1)
+        ), StructureTemplatePool.Projection.RIGID));
+
+        // Abandoned Colony Dome (ueberwucherte Siedlerkuppel)
+        context.register(COLONY_DOME_START, new StructureTemplatePool(empty, List.of(
+                Pair.of(StructurePoolElement.single("lit_spaceships:colony_dome/dome"), 1)
         ), StructureTemplatePool.Projection.RIGID));
     }
 
