@@ -689,6 +689,8 @@ nach `src/generated/resources`. Manuelle JSON-Dateien unter `data/lit_spaceships
 | `worldgen/structure_set` | `lit_spaceships:alien_outpost` | `ModStructures::bootstrapStructureSet` | `RandomSpreadStructurePlacement` (Spacing 40, Separation 14, LINEAR, Seed 1739281743) |
 | `worldgen/structure` | `lit_spaceships:cosmic_vault` | `ModStructures::bootstrapStructure` | `JigsawStructure` (Start-Pool `cosmic_vault/start`, maxDepth 1, Uniform $Y \in [64, 200]$, TerrainAdjustment NONE); alle 4 Weltraum-Biome |
 | `worldgen/structure_set` | `lit_spaceships:cosmic_vault` | `ModStructures::bootstrapStructureSet` | `RandomSpreadStructurePlacement` (Spacing 64, Separation 20, LINEAR, Seed 2095820113) — seltenste Struktur |
+| `worldgen/structure` | `lit_spaceships:pirate_outpost` | `ModStructures::bootstrapStructure` | `JigsawStructure` (Start-Pool `pirate_outpost/start`, maxDepth 1, Uniform $Y \in [48, 184]$, TerrainAdjustment NONE); `space_biome` & `void_wastes` |
+| `worldgen/structure_set` | `lit_spaceships:pirate_outpost` | `ModStructures::bootstrapStructureSet` | `RandomSpreadStructurePlacement` (Spacing 44, Separation 16, LINEAR, Seed 1666420707) |
 | `loot_table/chests` | `lit_spaceships:chests/space_station_core` | `ModChestLootTableProvider` | Netherite Upgrade Template, Diamant- & Redstone-Blöcke, Gold/Eisen/Kupfer, Goldäpfel |
 | `loot_table/chests` | `lit_spaceships:chests/dreadnought_armory` | `ModChestLootTableProvider` | Netherite Scrap/Ingot, Echo Shards (Pulslaser), Lohenruten/Quarz (Schwerer Strahl), TNT, Munition |
 | `loot_table/chests` | `lit_spaceships:chests/alien_monolith` | `ModChestLootTableProvider` | Lodestones, Nether-Sterne, Echo Shards, Enderaugen, Amethyst, Crying Obsidian, Chorusfrucht |

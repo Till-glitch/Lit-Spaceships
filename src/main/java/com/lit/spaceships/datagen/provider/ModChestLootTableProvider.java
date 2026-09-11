@@ -38,6 +38,10 @@ public class ModChestLootTableProvider implements LootTableSubProvider {
             Registries.LOOT_TABLE,
             ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/cosmic_vault"));
 
+    public static final ResourceKey<LootTable> PIRATE_CACHE = ResourceKey.create(
+            Registries.LOOT_TABLE,
+            ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/pirate_cache"));
+
     private final HolderLookup.Provider registries;
 
     public ModChestLootTableProvider(HolderLookup.Provider registries) {
@@ -138,5 +142,26 @@ public class ModChestLootTableProvider implements LootTableSubProvider {
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(3.0F, 8.0F))))
                         .add(LootItem.lootTableItem(Items.AMETHYST_SHARD).setWeight(6)
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(3.0F, 8.0F))))));
+
+        // Pirate Cache: Waffen, Gluecksgut und ein Hauch Chaos (Kiste sitzt auf TNT!)
+        consumer.accept(PIRATE_CACHE, LootTable.lootTable()
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(1.0F, 2.0F))
+                        .add(LootItem.lootTableItem(Items.CROSSBOW).setWeight(3))
+                        .add(LootItem.lootTableItem(Items.GOLDEN_APPLE).setWeight(3))
+                        .add(LootItem.lootTableItem(Items.EMERALD).setWeight(4)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 5.0F)))))
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(3.0F, 6.0F))
+                        .add(LootItem.lootTableItem(Items.ARROW).setWeight(10)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(6.0F, 16.0F))))
+                        .add(LootItem.lootTableItem(Items.GUNPOWDER).setWeight(8)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 8.0F))))
+                        .add(LootItem.lootTableItem(Items.GOLD_NUGGET).setWeight(8)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(4.0F, 12.0F))))
+                        .add(LootItem.lootTableItem(Items.IRON_INGOT).setWeight(6)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 4.0F))))
+                        .add(LootItem.lootTableItem(Items.OBSIDIAN).setWeight(4)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))));
     }
 }

@@ -176,6 +176,12 @@ public class ModEnglishLanguageProvider extends LanguageProvider {
         add(ModI18n.Structure.SPACE_STATION, "Abandoned Orbital Research Station");
         add(ModI18n.Structure.DREADNOUGHT_WRECK, "Derelict Dreadnought Warship");
         add(ModI18n.Structure.ALIEN_OUTPOST, "Alien Monolith Relic");
+        add(ModI18n.Structure.COSMIC_VAULT, "Cosmic Vault");
+        add(ModI18n.Structure.PIRATE_OUTPOST, "Pirate Satellite Outpost");
+        add(ModI18n.Structure.LEVIATHAN_BONES, "Frozen Leviathan");
+        add(ModI18n.Structure.THE_MONOLITH, "The Silent Monolith");
+        add(ModI18n.Structure.JUMP_GATE, "Jump Gate Ruins");
+        add(ModI18n.Structure.COLONY_DOME, "Abandoned Colony Dome");
         add(ModI18n.Biome.DEEP_SPACE, "Deep Space Void");
     }
 }

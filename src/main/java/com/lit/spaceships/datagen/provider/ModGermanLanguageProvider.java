@@ -176,6 +176,12 @@ public class ModGermanLanguageProvider extends LanguageProvider {
         add(ModI18n.Structure.SPACE_STATION, "Verlassene Orbitale Forschungsstation");
         add(ModI18n.Structure.DREADNOUGHT_WRECK, "Verlassenes Schlachtschiff-Wrack");
         add(ModI18n.Structure.ALIEN_OUTPOST, "Außerirdisches Monolith-Relikt");
+        add(ModI18n.Structure.COSMIC_VAULT, "Kosmischer Tresor");
+        add(ModI18n.Structure.PIRATE_OUTPOST, "Piraten-Satellitenposten");
+        add(ModI18n.Structure.LEVIATHAN_BONES, "Gefrorener Leviathan");
+        add(ModI18n.Structure.THE_MONOLITH, "Der stille Monolith");
+        add(ModI18n.Structure.JUMP_GATE, "Sprungtor-Ruinen");
+        add(ModI18n.Structure.COLONY_DOME, "Verlassene Koloniekuppel");
         add(ModI18n.Biome.DEEP_SPACE, "Tiefraum-Vakuum");
     }
 }

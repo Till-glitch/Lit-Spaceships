@@ -64,6 +64,14 @@ public final class ModStructures {
             ResourceKey.create(Registries.STRUCTURE_SET,
                     ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "cosmic_vault"));
 
+    public static final ResourceKey<Structure> PIRATE_OUTPOST =
+            ResourceKey.create(Registries.STRUCTURE,
+                    ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "pirate_outpost"));
+
+    public static final ResourceKey<StructureSet> PIRATE_OUTPOST_SET =
+            ResourceKey.create(Registries.STRUCTURE_SET,
+                    ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "pirate_outpost"));
+
     private ModStructures() {
     }
 
@@ -150,6 +158,25 @@ public final class ModStructures {
                 1,
                 UniformHeight.of(VerticalAnchor.absolute(64), VerticalAnchor.absolute(200)),
                 false));
+
+        // 5. Pirate Satellite Outpost (Space Biome & Void Wastes - Raeuber pluendern Wracks)
+        Holder<StructureTemplatePool> pirateStartPool =
+                pools.getOrThrow(ModTemplatePools.PIRATE_OUTPOST_START);
+
+        Structure.StructureSettings pirateSettings = new Structure.StructureSettings(
+                HolderSet.direct(
+                        biomes.getOrThrow(ModDimensions.SPACE_BIOME),
+                        biomes.getOrThrow(ModBiomes.VOID_WASTES)),
+                Map.of(),
+                GenerationStep.Decoration.SURFACE_STRUCTURES,
+                TerrainAdjustment.NONE);
+
+        context.register(PIRATE_OUTPOST, new JigsawStructure(
+                pirateSettings,
+                pirateStartPool,
+                1,
+                UniformHeight.of(VerticalAnchor.absolute(48), VerticalAnchor.absolute(184)),
+                false));
     }
 
     public static void bootstrapStructureSet(BootstrapContext<StructureSet> context) {
@@ -170,5 +197,9 @@ public final class ModStructures {
         Holder<Structure> vault = structures.getOrThrow(COSMIC_VAULT);
         context.register(COSMIC_VAULT_SET, new StructureSet(vault,
                 new RandomSpreadStructurePlacement(64, 20, RandomSpreadType.LINEAR, 2095820113)));
+
+        Holder<Structure> pirate = structures.getOrThrow(PIRATE_OUTPOST);
+        context.register(PIRATE_OUTPOST_SET, new StructureSet(pirate,
+                new RandomSpreadStructurePlacement(44, 16, RandomSpreadType.LINEAR, 1666420707)));
     }
 }

@@ -175,6 +175,12 @@ public final class ModI18n {
         public static final String SPACE_STATION = "structure." + LitSpaceships.MODID + ".space_station";
         public static final String DREADNOUGHT_WRECK = "structure." + LitSpaceships.MODID + ".dreadnought_wreck";
         public static final String ALIEN_OUTPOST = "structure." + LitSpaceships.MODID + ".alien_outpost";
+        public static final String COSMIC_VAULT = "structure." + LitSpaceships.MODID + ".cosmic_vault";
+        public static final String PIRATE_OUTPOST = "structure." + LitSpaceships.MODID + ".pirate_outpost";
+        public static final String LEVIATHAN_BONES = "structure." + LitSpaceships.MODID + ".leviathan_bones";
+        public static final String THE_MONOLITH = "structure." + LitSpaceships.MODID + ".the_monolith";
+        public static final String JUMP_GATE = "structure." + LitSpaceships.MODID + ".jump_gate";
+        public static final String COLONY_DOME = "structure." + LitSpaceships.MODID + ".colony_dome";
     }
 
     public static final class Biome {

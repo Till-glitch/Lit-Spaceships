@@ -345,4 +345,45 @@ public class WorldGenGameTests {
 
         helper.succeed();
     }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void pirateOutpostTemplateLoadsAndTraps(GameTestHelper helper) {
+        var structureRegistry = helper.getLevel().registryAccess()
+                .registryOrThrow(net.minecraft.core.registries.Registries.STRUCTURE);
+        if (!structureRegistry.containsKey(ModStructures.PIRATE_OUTPOST)) {
+            helper.fail("Struktur lit_spaceships:pirate_outpost ist nicht registriert");
+            return;
+        }
+
+        var template = helper.getLevel().getStructureManager()
+                .get(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                        com.lit.spaceships.LitSpaceships.MODID, "pirate_outpost/platform"))
+                .orElse(null);
+        if (template == null) {
+            helper.fail("Template lit_spaceships:pirate_outpost/platform wurde nicht geladen");
+            return;
+        }
+        var size = template.getSize();
+        if (size.getX() != 11 || size.getY() != 6 || size.getZ() != 11) {
+            helper.fail("Piraten-Plattform hat unerwartete Größe: " + size);
+            return;
+        }
+
+        BlockPos origin = helper.absolutePos(new BlockPos(2, 2, 2));
+        boolean placed = template.placeInWorld(helper.getLevel(), origin, origin,
+                new net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings(),
+                RandomSource.create(13L), 2);
+        if (!placed) {
+            helper.fail("Piraten-Plattform konnte nicht platziert werden");
+            return;
+        }
+
+        // Cache-Kiste (Template 5,3,5 -> relativ 7,5,7) mit Falle: TNT direkt darunter!
+        helper.assertBlock(new BlockPos(7, 5, 7), Blocks.CHEST::equals, "Beutekiste muss auf dem Podest stehen");
+        helper.assertBlock(new BlockPos(7, 4, 7), Blocks.TNT::equals, "Unter der Kiste muss die TNT-Falle lauern");
+        helper.assertBlock(new BlockPos(2, 5, 2), Blocks.SOUL_LANTERN::equals, "Seelenlaterne muss auf der Ecke stehen");
+        helper.assertBlock(new BlockPos(5, 5, 2), Blocks.IRON_BARS::equals, "Gelaender muss Eisenstangen sein");
+
+        helper.succeed();
+    }
 }

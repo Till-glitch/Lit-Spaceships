@@ -34,6 +34,8 @@ public final class ModTemplatePools {
             createKey("alien_outpost/start");
     public static final ResourceKey<StructureTemplatePool> COSMIC_VAULT_START =
             createKey("cosmic_vault/start");
+    public static final ResourceKey<StructureTemplatePool> PIRATE_OUTPOST_START =
+            createKey("pirate_outpost/start");
 
     private ModTemplatePools() {
     }
@@ -73,6 +75,11 @@ public final class ModTemplatePools {
         // Cosmic Vault (seltenste Struktur des Void)
         context.register(COSMIC_VAULT_START, new StructureTemplatePool(empty, List.of(
                 Pair.of(StructurePoolElement.single("lit_spaceships:cosmic_vault/vault"), 1)
+        ), StructureTemplatePool.Projection.RIGID));
+
+        // Pirate Satellite Outpost (mit Fallen-Kiste)
+        context.register(PIRATE_OUTPOST_START, new StructureTemplatePool(empty, List.of(
+                Pair.of(StructurePoolElement.single("lit_spaceships:pirate_outpost/platform"), 1)
         ), StructureTemplatePool.Projection.RIGID));
     }
 
