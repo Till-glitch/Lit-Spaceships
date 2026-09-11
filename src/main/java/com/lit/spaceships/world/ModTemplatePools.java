@@ -32,6 +32,8 @@ public final class ModTemplatePools {
             createKey("dreadnought_wreck/sections");
     public static final ResourceKey<StructureTemplatePool> ALIEN_OUTPOST_START =
             createKey("alien_outpost/start");
+    public static final ResourceKey<StructureTemplatePool> COSMIC_VAULT_START =
+            createKey("cosmic_vault/start");
 
     private ModTemplatePools() {
     }
@@ -66,6 +68,11 @@ public final class ModTemplatePools {
         // Alien Monolith Relic
         context.register(ALIEN_OUTPOST_START, new StructureTemplatePool(empty, List.of(
                 Pair.of(StructurePoolElement.single("lit_spaceships:alien_outpost/monolith"), 1)
+        ), StructureTemplatePool.Projection.RIGID));
+
+        // Cosmic Vault (seltenste Struktur des Void)
+        context.register(COSMIC_VAULT_START, new StructureTemplatePool(empty, List.of(
+                Pair.of(StructurePoolElement.single("lit_spaceships:cosmic_vault/vault"), 1)
         ), StructureTemplatePool.Projection.RIGID));
     }
 

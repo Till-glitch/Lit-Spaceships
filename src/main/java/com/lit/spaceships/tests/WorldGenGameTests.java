@@ -299,4 +299,50 @@ public class WorldGenGameTests {
 
         helper.succeed();
     }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void cosmicVaultTemplateLoadsAndPlaces(GameTestHelper helper) {
+        var registryAccess = helper.getLevel().registryAccess();
+        var structureRegistry = registryAccess.registryOrThrow(net.minecraft.core.registries.Registries.STRUCTURE);
+        var poolRegistry = registryAccess.registryOrThrow(net.minecraft.core.registries.Registries.TEMPLATE_POOL);
+        if (!structureRegistry.containsKey(ModStructures.COSMIC_VAULT)) {
+            helper.fail("Struktur lit_spaceships:cosmic_vault ist nicht registriert");
+            return;
+        }
+        if (!poolRegistry.containsKey(ModTemplatePools.COSMIC_VAULT_START)) {
+            helper.fail("Template-Pool cosmic_vault/start ist nicht registriert");
+            return;
+        }
+
+        var template = helper.getLevel().getStructureManager()
+                .get(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                        com.lit.spaceships.LitSpaceships.MODID, "cosmic_vault/vault"))
+                .orElse(null);
+        if (template == null) {
+            helper.fail("Template lit_spaceships:cosmic_vault/vault wurde nicht geladen");
+            return;
+        }
+        var size = template.getSize();
+        if (size.getX() != 9 || size.getY() != 7 || size.getZ() != 9) {
+            helper.fail("Cosmic Vault hat unerwartete Größe: " + size);
+            return;
+        }
+
+        BlockPos origin = helper.absolutePos(new BlockPos(3, 2, 2));
+        boolean placed = template.placeInWorld(helper.getLevel(), origin, origin,
+                new net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings(),
+                RandomSource.create(9L), 2);
+        if (!placed) {
+            helper.fail("Vault-Template konnte nicht platziert werden");
+            return;
+        }
+
+        // Versiegelte Obsidianhülle (Template 0,0,0 -> relativ 3,2,2), Fenster, Beutekiste
+        helper.assertBlock(new BlockPos(3, 4, 2), Blocks.OBSIDIAN::equals, "Vault-Hülle muss Obsidian sein");
+        helper.assertBlock(new BlockPos(7, 4, 10), Blocks.CYAN_STAINED_GLASS::equals, "Blickfenster muss Cyan-Glas sein");
+        helper.assertBlock(new BlockPos(7, 3, 6), Blocks.CHEST::equals, "Vault-Kiste muss im Zentrum stehen");
+        helper.assertBlock(new BlockPos(7, 7, 6), Blocks.SEA_LANTERN::equals, "Deckenleuchte ueber der Beute");
+
+        helper.succeed();
+    }
 }

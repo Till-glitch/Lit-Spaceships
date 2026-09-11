@@ -56,6 +56,14 @@ public final class ModStructures {
             ResourceKey.create(Registries.STRUCTURE_SET,
                     ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "alien_outpost"));
 
+    public static final ResourceKey<Structure> COSMIC_VAULT =
+            ResourceKey.create(Registries.STRUCTURE,
+                    ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "cosmic_vault"));
+
+    public static final ResourceKey<StructureSet> COSMIC_VAULT_SET =
+            ResourceKey.create(Registries.STRUCTURE_SET,
+                    ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "cosmic_vault"));
+
     private ModStructures() {
     }
 
@@ -121,6 +129,27 @@ public final class ModStructures {
                 1,
                 UniformHeight.of(VerticalAnchor.absolute(64), VerticalAnchor.absolute(200)),
                 false));
+
+        // 4. Cosmic Vault — seltenste Struktur des Void (alle 4 Biome, RandomSpread 64/20)
+        Holder<StructureTemplatePool> vaultStartPool =
+                pools.getOrThrow(ModTemplatePools.COSMIC_VAULT_START);
+
+        Structure.StructureSettings vaultSettings = new Structure.StructureSettings(
+                HolderSet.direct(
+                        biomes.getOrThrow(ModDimensions.SPACE_BIOME),
+                        biomes.getOrThrow(ModBiomes.PLASMA_NEBULA),
+                        biomes.getOrThrow(ModBiomes.FROZEN_EXPANSE),
+                        biomes.getOrThrow(ModBiomes.VOID_WASTES)),
+                Map.of(),
+                GenerationStep.Decoration.SURFACE_STRUCTURES,
+                TerrainAdjustment.NONE);
+
+        context.register(COSMIC_VAULT, new JigsawStructure(
+                vaultSettings,
+                vaultStartPool,
+                1,
+                UniformHeight.of(VerticalAnchor.absolute(64), VerticalAnchor.absolute(200)),
+                false));
     }
 
     public static void bootstrapStructureSet(BootstrapContext<StructureSet> context) {
@@ -137,5 +166,9 @@ public final class ModStructures {
         Holder<Structure> alien = structures.getOrThrow(ALIEN_OUTPOST);
         context.register(ALIEN_OUTPOST_SET, new StructureSet(alien,
                 new RandomSpreadStructurePlacement(40, 14, RandomSpreadType.LINEAR, 1739281743)));
+
+        Holder<Structure> vault = structures.getOrThrow(COSMIC_VAULT);
+        context.register(COSMIC_VAULT_SET, new StructureSet(vault,
+                new RandomSpreadStructurePlacement(64, 20, RandomSpreadType.LINEAR, 2095820113)));
     }
 }

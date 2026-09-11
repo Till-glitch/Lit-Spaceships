@@ -785,7 +785,7 @@ class ModSpaceWorldGenTest {
         ModTemplatePools.bootstrap(poolContext);
 
         ArgumentCaptor<StructureTemplatePool> captor = ArgumentCaptor.forClass(StructureTemplatePool.class);
-        verify(poolContext, times(5)).register(any(), captor.capture());
+        verify(poolContext, times(6)).register(any(), captor.capture());
 
         // 1. Station Start & Rooms
         StructureTemplatePool stationStart = captor.getAllValues().get(0);
@@ -802,6 +802,10 @@ class ModSpaceWorldGenTest {
         // 3. Alien Outpost Start
         StructureTemplatePool alienStart = captor.getAllValues().get(4);
         assertEquals(1, alienStart.size());
+
+        // 4. Cosmic Vault Start
+        StructureTemplatePool vaultStart = captor.getAllValues().get(5);
+        assertEquals(1, vaultStart.size());
     }
 
     @Test
@@ -916,7 +920,7 @@ class ModSpaceWorldGenTest {
     }
 
     @Test
-    @DisplayName("Kisten-Loot: ModChestLootTableProvider generiert alle 3 Weltraum-Loot-Tables")
+    @DisplayName("Kisten-Loot: ModChestLootTableProvider generiert alle Weltraum-Loot-Tables (inkl. Cosmic Vault)")
     void chestLootTablesGenerateExpectedEntries() {
         java.util.Map<ResourceKey<net.minecraft.world.level.storage.loot.LootTable>, net.minecraft.world.level.storage.loot.LootTable.Builder> tables =
                 new java.util.HashMap<>();
@@ -926,10 +930,12 @@ class ModSpaceWorldGenTest {
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.SPACE_STATION_CORE));
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.DREADNOUGHT_ARMORY));
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.ALIEN_MONOLITH));
+        assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.COSMIC_VAULT));
 
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.SPACE_STATION_CORE).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.DREADNOUGHT_ARMORY).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.ALIEN_MONOLITH).build());
+        assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.COSMIC_VAULT).build());
     }
 
     private static <T> T privateField(Object owner, String name, Class<T> type) {

@@ -23,6 +23,19 @@
 - [x] **Custom Loot Table: Dreadnought Armory (`lit_spaceships:chests/dreadnought_armory`)**: Netherite scrap/ingot, pulse laser echo shards, heavy beam components (blaze rods/quartz), explosives. **[COMPLETED 2026-09-07]** — Verdrahtet in `ModChestLootTableProvider` und in `dreadnought_wreck/engineering_core.nbt` Kiste eingebettet.
 - [x] **Custom Loot Table: Alien Monolith (`lit_spaceships:chests/alien_monolith`)**: Ancient technology lodestones, nether stars, echo shards, ender eyes, void materials. **[COMPLETED 2026-09-07]** — Verdrahtet in `ModChestLootTableProvider` und in `alien_outpost/monolith.nbt` Kiste eingebettet. EPOCH 4 KOMPLETT.
 
+### Epoch 5: Mysteries of the Void (Discovery & Loot Expansion)
+- [x] **Rebalance**: Asteroidendichte 4->1 pro Chunk, Erz-Kernraten massiv gesenkt (Diamant 15%->3%, Debris 20%->2%), Wrack-Feld 1/4->1/10. **[COMPLETED 2026-09-11]** — Commit 143fe84; 100k-Sample-Statistik-Test; leerer Weltraum als Norm, Reichtümer in Gürteln/Riesen-Asteroiden/Wracks.
+- [x] **Cosmic Vault (`cosmic_vault`)**: Sealed obsidian vault, rarest structure of the void, top-tier loot. **[COMPLETED 2026-09-11]** — versiegeltes Obsidian-Gewölbe (9x7x9) mit Cyan-Blickfenster, Goldpodest, Sea-Lantern und Kiste (`chests/cosmic_vault`: verzauberter goldener Apfel, Netherit-Barren, Endkristall, Totem). Jigsaw-Struktur (Y 64-200, alle 4 Biome), RandomSpread 64/20 = seltenste Struktur. GameTest `cosmicVaultTemplateLoadsAndPlaces`; Template-Generator dedupliziert jetzt Blocks pro Position (Fix für Palette-Reihenfolge-Ambiguität).
+- [ ] **Pirate Satellite Outpost (`pirate_outpost`)**: Ramshackle blackstone platform with a booby-trapped cache.
+- [ ] **Frozen Leviathan (`leviathan_bones`)**: Colossal bone ribcage in the Frozen Expanse with a hoard at its heart.
+- [ ] **The Silent Monolith (`the_monolith`)**: Pitch-black slab with a buried secret chamber.
+- [ ] **Jump Gate Ruins (`jump_gate`)**: Colossal broken ring gate with a glowing void crystal.
+- [ ] **Satellite Graveyard (`satellite_graveyard`)**: Debris-cluster feature with hidden caches.
+- [ ] **Cosmic Jellyfish (`cosmic_jellyfish`)**: Glowing glass membrane with a suspended gravity-heart chest.
+- [ ] **Abandoned Colony Dome (`colony_dome`)**: Overgrown glass habitat with settler supplies.
+- [ ] **Ancient Battlefield (`ancient_battlefield`)**: Scorched wreck-debris field with salvage caches.
+- [ ] **Galactic Wonders Polish**: i18n sweep, README/ARCHITECTURE sync, full balance & gate pass.
+
 ---
 
 ## Completed Changelog

@@ -34,6 +34,10 @@ public class ModChestLootTableProvider implements LootTableSubProvider {
             Registries.LOOT_TABLE,
             ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/alien_monolith"));
 
+    public static final ResourceKey<LootTable> COSMIC_VAULT = ResourceKey.create(
+            Registries.LOOT_TABLE,
+            ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/cosmic_vault"));
+
     private final HolderLookup.Provider registries;
 
     public ModChestLootTableProvider(HolderLookup.Provider registries) {
@@ -112,5 +116,27 @@ public class ModChestLootTableProvider implements LootTableSubProvider {
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 5.0F))))
                         .add(LootItem.lootTableItem(Items.CHORUS_FRUIT).setWeight(8)
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(4.0F, 8.0F))))));
+
+        // Cosmic Vault: Endgame-Beute im versiegelten Obsidian-Gewoelb (seltenste Struktur)
+        consumer.accept(COSMIC_VAULT, LootTable.lootTable()
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(1.0F, 1.0F))
+                        .add(LootItem.lootTableItem(Items.ENCHANTED_GOLDEN_APPLE).setWeight(2))
+                        .add(LootItem.lootTableItem(Items.NETHERITE_INGOT).setWeight(1))
+                        .add(LootItem.lootTableItem(Items.END_CRYSTAL).setWeight(1))
+                        .add(LootItem.lootTableItem(Items.TOTEM_OF_UNDYING).setWeight(1))
+                        .add(LootItem.lootTableItem(Items.DIAMOND_BLOCK).setWeight(3)))
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(2.0F, 4.0F))
+                        .add(LootItem.lootTableItem(Items.DIAMOND).setWeight(3)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))
+                        .add(LootItem.lootTableItem(Items.EMERALD).setWeight(5)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 6.0F))))
+                        .add(LootItem.lootTableItem(Items.ENDER_PEARL).setWeight(5)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 6.0F))))
+                        .add(LootItem.lootTableItem(Items.GOLD_INGOT).setWeight(8)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(3.0F, 8.0F))))
+                        .add(LootItem.lootTableItem(Items.AMETHYST_SHARD).setWeight(6)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(3.0F, 8.0F))))));
     }
 }
