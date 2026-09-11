@@ -62,6 +62,10 @@ public class ModChestLootTableProvider implements LootTableSubProvider {
             Registries.LOOT_TABLE,
             ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/jelly_heart"));
 
+    public static final ResourceKey<LootTable> BATTLEFIELD_SALVAGE = ResourceKey.create(
+            Registries.LOOT_TABLE,
+            ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/battlefield_salvage"));
+
     public static final ResourceKey<LootTable> COLONY_LARDER = ResourceKey.create(
             Registries.LOOT_TABLE,
             ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/colony_larder"));
@@ -295,6 +299,27 @@ public class ModChestLootTableProvider implements LootTableSubProvider {
                         .add(LootItem.lootTableItem(Items.IRON_INGOT).setWeight(4)
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))
                         .add(LootItem.lootTableItem(Items.EXPERIENCE_BOTTLE).setWeight(2)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))));
+
+        // Battlefield Salvage: Waffen und Munition einer alten Schlacht
+        consumer.accept(BATTLEFIELD_SALVAGE, LootTable.lootTable()
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(1.0F, 2.0F))
+                        .add(LootItem.lootTableItem(Items.IRON_SWORD).setWeight(4))
+                        .add(LootItem.lootTableItem(Items.SHIELD).setWeight(3))
+                        .add(LootItem.lootTableItem(Items.NETHERITE_SCRAP).setWeight(1))
+                        .add(LootItem.lootTableItem(Items.CROSSBOW).setWeight(2)))
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(2.0F, 5.0F))
+                        .add(LootItem.lootTableItem(Items.ARROW).setWeight(10)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(4.0F, 14.0F))))
+                        .add(LootItem.lootTableItem(Items.TNT).setWeight(3)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))
+                        .add(LootItem.lootTableItem(Items.IRON_INGOT).setWeight(8)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 6.0F))))
+                        .add(LootItem.lootTableItem(Items.COAL).setWeight(8)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(3.0F, 9.0F))))
+                        .add(LootItem.lootTableItem(Items.OBSIDIAN).setWeight(5)
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))));
     }
 }

@@ -184,6 +184,8 @@ public final class ModBiomes {
                                 placedFeatures.getOrThrow(ModPlacedFeatures.ASTEROID_BELT_PLACED))
                         .addFeature(GenerationStep.Decoration.RAW_GENERATION,
                                 placedFeatures.getOrThrow(ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED))
+                        .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                                placedFeatures.getOrThrow(ModPlacedFeatures.ANCIENT_BATTLEFIELD_PLACED))
                         .build())
                 .build();
     }
@@ -204,6 +206,8 @@ public final class ModBiomes {
                         placedFeatures.getOrThrow(ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED))
                 .addFeature(GenerationStep.Decoration.RAW_GENERATION,
                         placedFeatures.getOrThrow(ModPlacedFeatures.COSMIC_JELLYFISH_PLACED))
+                .addFeature(GenerationStep.Decoration.RAW_GENERATION,
+                        placedFeatures.getOrThrow(ModPlacedFeatures.ANCIENT_BATTLEFIELD_PLACED))
                 .build();
     }
 

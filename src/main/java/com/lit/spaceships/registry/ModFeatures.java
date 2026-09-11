@@ -1,6 +1,7 @@
 package com.lit.spaceships.registry;
 
 import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.world.feature.AncientBattlefieldFeature;
 import com.lit.spaceships.world.feature.AsteroidBeltFeature;
 import com.lit.spaceships.world.feature.AsteroidFeature;
 import com.lit.spaceships.world.feature.IceCometFeature;
@@ -44,6 +45,9 @@ public class ModFeatures {
 
     public static final DeferredHolder<Feature<?>, CosmicJellyfishFeature> COSMIC_JELLYFISH =
             FEATURES.register("cosmic_jellyfish", () -> new CosmicJellyfishFeature(NoneFeatureConfiguration.CODEC));
+
+    public static final DeferredHolder<Feature<?>, AncientBattlefieldFeature> ANCIENT_BATTLEFIELD =
+            FEATURES.register("ancient_battlefield", () -> new AncientBattlefieldFeature(NoneFeatureConfiguration.CODEC));
 
     public static void register(IEventBus eventBus) {
         FEATURES.register(eventBus);

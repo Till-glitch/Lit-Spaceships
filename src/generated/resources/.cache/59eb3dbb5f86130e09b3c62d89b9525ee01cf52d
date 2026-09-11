@@ -1,4 +1,4 @@
-// 1.21.1	2026-09-11T18:55:57.5572609	Loot Tables
+// 1.21.1	2026-09-11T19:06:17.5483383	Loot Tables
 c686c702816b7ce3a51573b04d9c31a7c294fde0 data/lit_spaceships/loot_table/blocks/example_block.json
 4652d0d85eebdf140eea1bc96156348470c64200 data/lit_spaceships/loot_table/blocks/heavy_beam.json
 82b3e7a03f2d0ed9f706d2eb95496a8e8787725c data/lit_spaceships/loot_table/blocks/mining_laser.json
@@ -8,6 +8,7 @@ ce627dc9cfe8113343de901148b176b576813af5 data/lit_spaceships/loot_table/blocks/s
 bde3253b3649480a467b34249fb263b05c030dfc data/lit_spaceships/loot_table/blocks/spaceship_reactor.json
 f3362b8bc4e3a775d441121a8f1a89df443dd0f2 data/lit_spaceships/loot_table/blocks/spaceship_shield.json
 f96680743fc48a722d4c696f354b8990bedbfd6a data/lit_spaceships/loot_table/chests/alien_monolith.json
+62b663e5b22d6cc3ec4ed1c6d2b0710a1e5f645e data/lit_spaceships/loot_table/chests/battlefield_salvage.json
 7e3e83d34a083df7ad94329dd1507817b14b42eb data/lit_spaceships/loot_table/chests/colony_larder.json
 4dd5a50f2bdee40af4da3b7b022a73fefd269d17 data/lit_spaceships/loot_table/chests/cosmic_vault.json
 5b23383ad239b220fb2e3b791acfa5c2d6e46164 data/lit_spaceships/loot_table/chests/dreadnought_armory.json

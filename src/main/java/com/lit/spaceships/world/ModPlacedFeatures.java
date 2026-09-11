@@ -33,6 +33,7 @@ public final class ModPlacedFeatures {
     public static final ResourceKey<PlacedFeature> ASTEROID_BELT_PLACED = createKey("asteroid_belt_placed");
     public static final ResourceKey<PlacedFeature> SATELLITE_GRAVEYARD_PLACED = createKey("satellite_graveyard_placed");
     public static final ResourceKey<PlacedFeature> COSMIC_JELLYFISH_PLACED = createKey("cosmic_jellyfish_placed");
+    public static final ResourceKey<PlacedFeature> ANCIENT_BATTLEFIELD_PLACED = createKey("ancient_battlefield_placed");
 
     private ModPlacedFeatures() {
     }
@@ -57,6 +58,8 @@ public final class ModPlacedFeatures {
                 configuredFeatures.getOrThrow(ModConfiguredFeatures.SATELLITE_GRAVEYARD), satelliteGraveyardPlacement()));
         context.register(COSMIC_JELLYFISH_PLACED, new PlacedFeature(
                 configuredFeatures.getOrThrow(ModConfiguredFeatures.COSMIC_JELLYFISH), cosmicJellyfishPlacement()));
+        context.register(ANCIENT_BATTLEFIELD_PLACED, new PlacedFeature(
+                configuredFeatures.getOrThrow(ModConfiguredFeatures.ANCIENT_BATTLEFIELD), ancientBattlefieldPlacement()));
     }
 
     /**
@@ -155,6 +158,17 @@ public final class ModPlacedFeatures {
     static List<PlacementModifier> cosmicJellyfishPlacement() {
         return List.of(
                 CountPlacement.of(1),
+                InSquarePlacement.spread(),
+                BiomeFilter.biome()
+        );
+    }
+
+    /**
+     * Ancient Battlefield: 2 Versuche pro Chunk (Zellen-Spec: 30% der Zellen).
+     */
+    static List<PlacementModifier> ancientBattlefieldPlacement() {
+        return List.of(
+                CountPlacement.of(2),
                 InSquarePlacement.spread(),
                 BiomeFilter.biome()
         );

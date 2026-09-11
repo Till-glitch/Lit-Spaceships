@@ -592,4 +592,35 @@ public class WorldGenGameTests {
 
         helper.succeed();
     }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void ancientBattlefieldPlacesScorchedCluster(GameTestHelper helper) {
+        RandomSource random = RandomSource.create(43L);
+        com.lit.spaceships.world.feature.AncientBattlefieldFeature.placeWreckCluster(
+                helper.getLevel(), helper.absolutePos(new BlockPos(7, 8, 7)).getX(),
+                helper.absolutePos(new BlockPos(7, 8, 7)).getY(),
+                helper.absolutePos(new BlockPos(7, 8, 7)).getZ(), random, true);
+
+        // Bergungs-Kiste obenauf (y = 8 + radius 2..4)
+        boolean chestFound = false;
+        for (int dy = 10; dy <= 12; dy++) {
+            if (helper.getLevel().getBlockState(helper.absolutePos(new BlockPos(7, dy, 7))).is(Blocks.CHEST)) {
+                chestFound = true;
+                break;
+            }
+        }
+        if (!chestFound) {
+            helper.fail("Salvage-Kiste muss ueber dem Cluster liegen");
+            return;
+        }
+
+        // Rand des Clusters: verkohlte Mischung oder Luft (Perturbation)
+        helper.assertBlockState(new BlockPos(10, 8, 7),
+                state -> state.is(Blocks.OBSIDIAN) || state.is(Blocks.MAGMA_BLOCK)
+                        || state.is(Blocks.BLACKSTONE) || state.is(Blocks.DEEPSLATE)
+                        || state.is(Blocks.IRON_BLOCK) || state.is(Blocks.AIR),
+                () -> "Cluster-Rand muss verkohlt oder Luft sein");
+
+        helper.succeed();
+    }
 }

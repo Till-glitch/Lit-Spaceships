@@ -17,7 +17,8 @@
       "lit_spaceships:planetary_ring_placed",
       "lit_spaceships:asteroid_belt_placed",
       "lit_spaceships:satellite_graveyard_placed",
-      "lit_spaceships:cosmic_jellyfish_placed"
+      "lit_spaceships:cosmic_jellyfish_placed",
+      "lit_spaceships:ancient_battlefield_placed"
     ]
   ],
   "has_precipitation": false,
