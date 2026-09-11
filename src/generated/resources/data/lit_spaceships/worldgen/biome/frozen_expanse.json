@@ -2,7 +2,17 @@
   "carvers": {},
   "downfall": 0.0,
   "effects": {
+    "additions_sound": {
+      "sound": "minecraft:ambient.soul_sand_valley.additions",
+      "tick_chance": 0.008
+    },
     "fog_color": 65535,
+    "mood_sound": {
+      "block_search_extent": 8,
+      "offset": 2.0,
+      "sound": "minecraft:ambient.cave",
+      "tick_delay": 6000
+    },
     "particle": {
       "options": {
         "type": "minecraft:snowflake"

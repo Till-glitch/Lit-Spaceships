@@ -183,5 +183,9 @@ public class ModEnglishLanguageProvider extends LanguageProvider {
         add(ModI18n.Structure.JUMP_GATE, "Jump Gate Ruins");
         add(ModI18n.Structure.COLONY_DOME, "Abandoned Colony Dome");
         add(ModI18n.Biome.DEEP_SPACE, "Deep Space Void");
+        add(ModI18n.Biome.NEBULA_STATIC, "Static from the nebula clings to your suit...");
+        add(ModI18n.Biome.NEBULA_UPDRAFT, "A plasma updraft catches you...");
+        add(ModI18n.Biome.FROST_HYPOTHERMIA, "The cold of the expanse bites into your bones...");
+        add(ModI18n.Biome.WASTES_DREAD, "The silence presses on your eyes...");
     }
 }

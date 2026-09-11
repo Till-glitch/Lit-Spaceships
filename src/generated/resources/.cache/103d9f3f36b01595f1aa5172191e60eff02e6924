@@ -1,9 +1,9 @@
-// 1.21.1	2026-09-11T19:18:13.1002338	Registries
+// 1.21.1	2026-09-11T19:41:17.4711521	Registries
 189808a3fdbec16cd0b1172daf2f37109443c6dd data/lit_spaceships/dimension/space.json
 ae85b548080cb8751c4e27601d4ff5cc12ba2609 data/lit_spaceships/dimension_type/space_type.json
-0ee843c1851e6f8990b08bc87dd8fb82cc1d74f5 data/lit_spaceships/worldgen/biome/frozen_expanse.json
-286e27f4b8c78f044b22292760cff09d0ea76046 data/lit_spaceships/worldgen/biome/plasma_nebula.json
-eb22ede8902ce184e594c5d859be58fdd0f0a15e data/lit_spaceships/worldgen/biome/space_biome.json
+941acec1303445d1cbc85e4343e2bfc3bfd805e7 data/lit_spaceships/worldgen/biome/frozen_expanse.json
+e33ab30489e682e9ce6bc36f12cf52a805719a7a data/lit_spaceships/worldgen/biome/plasma_nebula.json
+da756ce40be3e7006a5c73bec36db39854aefc4a data/lit_spaceships/worldgen/biome/space_biome.json
 d2414534434c5e805fd803495ae99b8550db1e91 data/lit_spaceships/worldgen/biome/void_wastes.json
 b3a264c1177209a0907d8e1033b0abca43becc38 data/lit_spaceships/worldgen/configured_feature/ancient_battlefield.json
 82bf1c9768af45b9d2ac2cd48fc77860bdaa8c35 data/lit_spaceships/worldgen/configured_feature/ash_vent.json

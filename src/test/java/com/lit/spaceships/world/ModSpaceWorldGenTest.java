@@ -562,6 +562,11 @@ class ModSpaceWorldGenTest {
 
         java.util.Optional<net.minecraft.world.level.biome.AmbientParticleSettings> particle = nebula.getAmbientParticle();
         assertTrue(particle.isPresent());
+        // Nebel-Atmen: Seelenwind-Loop + Warped-Mood
+        assertSame(net.minecraft.sounds.SoundEvents.AMBIENT_SOUL_SAND_VALLEY_LOOP,
+                nebula.getAmbientLoop().orElseThrow());
+        assertTrue(nebula.getAmbientMood().isPresent());
+        assertTrue(nebula.getAmbientAdditions().isPresent());
         DustParticleOptions dust = assertType(DustParticleOptions.class, particle.get().getOptions());
         assertEquals(0.498F, dust.getColor().x(), 0.0001F);
         assertEquals(0.0F, dust.getColor().y(), 0.0001F);

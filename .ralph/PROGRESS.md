@@ -23,6 +23,11 @@
 - [x] **Custom Loot Table: Dreadnought Armory (`lit_spaceships:chests/dreadnought_armory`)**: Netherite scrap/ingot, pulse laser echo shards, heavy beam components (blaze rods/quartz), explosives. **[COMPLETED 2026-09-07]** — Verdrahtet in `ModChestLootTableProvider` und in `dreadnought_wreck/engineering_core.nbt` Kiste eingebettet.
 - [x] **Custom Loot Table: Alien Monolith (`lit_spaceships:chests/alien_monolith`)**: Ancient technology lodestones, nether stars, echo shards, ender eyes, void materials. **[COMPLETED 2026-09-07]** — Verdrahtet in `ModChestLootTableProvider` und in `alien_outpost/monolith.nbt` Kiste eingebettet. EPOCH 4 KOMPLETT.
 
+### Epoch 7: Biome Identity (Soundscapes & Atmosphere Effects)
+- [x] **Eigene Soundlandschaften**: Deep Space = Basalt-Loop/-Mood/-Additions (tiefes Groehnen), Plasma Nebula = Seelenwind-Loop + Karmesin-Zischen + Warped-Mood, Frozen Expanse = Seelen-Fluestern + Hoehlen-Mood (kein Loop), Void Wastes = bewusst komplett stumm. **[COMPLETED 2026-09-11]**
+- [x] **Atmosphaeren-Effekte pro Biom** (`BiomeAtmosphereService`, `PlayerTickEvent.Post`): Nebula = Glowing 5s / Slow Falling 15s (Aufwind), Frozen = Hypothermie-Langsamkeit 4s, Void Wastes = Dunkelheit 8s (Deprivation), Deep Space = neutral. Statistische JUnit-Tests (100k-Samples), i18n Action-Bar-Nachrichten (en/de). **[COMPLETED 2026-09-11]** EPOCH 7 KOMPLETT.
+
+---
 ### Epoch 6: Ambient Biome Textures (5 Features per Biome)
 - [x] **20 Ambient-Features (5 pro Biom)**: `ScatterBlockFeature` (gewichtetes Streuen), `PillarFeature` (Säule+Cap), `OrbFeature` (Hülle+Kern Kugel), `PodFeature` (Frachtpod mit `chests/cargo_pod`). Deep Space: debris_field, meteor_shower, void_crystal_spike, beacon_pylon, cargo_pod. Plasma Nebula: nebula_spore_drift, plasma_ember, nebula_gas_bloom, crystal_lattice, nebula_arc. Frozen Expanse: ice_shard_field, glacier_floe, frost_pillar, snow_bloom, cryo_geode. Void Wastes: bone_debris, scrap_wasteland, dust_drift, ash_vent, void_cyst. **[COMPLETED 2026-09-11]** — alle via `ModAmbientFeatures` (chained in Configured/Placed-Bootstrap), biome stepZero-Listen erweitert, 4 neue GameTests (45/45 grün), JUnit-Keys/Palette/Loot-Tests.
 

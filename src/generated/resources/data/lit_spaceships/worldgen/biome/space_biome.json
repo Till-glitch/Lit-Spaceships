@@ -2,9 +2,20 @@
   "carvers": {},
   "downfall": 0.0,
   "effects": {
+    "additions_sound": {
+      "sound": "minecraft:ambient.basalt_deltas.additions",
+      "tick_chance": 0.008
+    },
+    "ambient_sound": "minecraft:ambient.basalt_deltas.loop",
     "fog_color": 0,
     "foliage_color": 0,
     "grass_color": 0,
+    "mood_sound": {
+      "block_search_extent": 8,
+      "offset": 2.0,
+      "sound": "minecraft:ambient.basalt_deltas.mood",
+      "tick_delay": 6000
+    },
     "sky_color": 0,
     "water_color": 328981,
     "water_fog_color": 328981

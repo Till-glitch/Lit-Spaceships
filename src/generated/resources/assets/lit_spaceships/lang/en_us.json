@@ -1,5 +1,9 @@
 {
   "biome.lit_spaceships.deep_space": "Deep Space Void",
+  "biome.lit_spaceships.frost_hypothermia": "The cold of the expanse bites into your bones...",
+  "biome.lit_spaceships.nebula_static": "Static from the nebula clings to your suit...",
+  "biome.lit_spaceships.nebula_updraft": "A plasma updraft catches you...",
+  "biome.lit_spaceships.wastes_dread": "The silence presses on your eyes...",
   "block.lit_spaceships.example_block": "Example Block",
   "block.lit_spaceships.heavy_beam": "Heavy Laser Beam",
   "block.lit_spaceships.mining_laser": "Mining Laser",

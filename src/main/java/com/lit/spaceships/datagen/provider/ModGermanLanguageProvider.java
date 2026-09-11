@@ -183,5 +183,9 @@ public class ModGermanLanguageProvider extends LanguageProvider {
         add(ModI18n.Structure.JUMP_GATE, "Sprungtor-Ruinen");
         add(ModI18n.Structure.COLONY_DOME, "Verlassene Koloniekuppel");
         add(ModI18n.Biome.DEEP_SPACE, "Tiefraum-Vakuum");
+        add(ModI18n.Biome.NEBULA_STATIC, "Statische Elektrizitaet des Nebels haftet an deinem Anzug...");
+        add(ModI18n.Biome.NEBULA_UPDRAFT, "Ein Plasma-Aufwind faengt dich...");
+        add(ModI18n.Biome.FROST_HYPOTHERMIA, "Die Kaelte der Weite beisst sich in deine Knochen...");
+        add(ModI18n.Biome.WASTES_DREAD, "Die Stille drueckt auf deine Augen...");
     }
 }

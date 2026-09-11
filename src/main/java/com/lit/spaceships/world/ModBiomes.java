@@ -7,12 +7,15 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.biome.AmbientAdditionsSettings;
+import net.minecraft.world.level.biome.AmbientMoodSettings;
 import net.minecraft.world.level.biome.AmbientParticleSettings;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeGenerationSettings;
 import net.minecraft.world.level.biome.BiomeSpecialEffects;
 import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import org.joml.Vector3f;
@@ -86,6 +89,12 @@ public final class ModBiomes {
                         .waterFogColor(328981)
                         .grassColorOverride(0)
                         .foliageColorOverride(0)
+                        // Tiefes Basalt-Groehnen: der "Atem" des Weltraums
+                        .ambientLoopSound(SoundEvents.AMBIENT_BASALT_DELTAS_LOOP)
+                        .ambientAdditionsSound(new AmbientAdditionsSettings(
+                                SoundEvents.AMBIENT_BASALT_DELTAS_ADDITIONS, 0.008D))
+                        .ambientMoodSound(new AmbientMoodSettings(
+                                SoundEvents.AMBIENT_BASALT_DELTAS_MOOD, 6000, 8, 2.0D))
                         .build())
                 .mobSpawnSettings(MobSpawnSettings.EMPTY)
                 .generationSettings(spaceGenerationSettings(placedFeatures))
@@ -110,6 +119,12 @@ public final class ModBiomes {
                         .waterFogColor(0x1A0033)
                         .ambientParticle(new AmbientParticleSettings(
                                 new DustParticleOptions(new Vector3f(0.498F, 0.0F, 1.0F), 0.8F), 0.006F))
+                        // Irrer Seelenwind, Karmesin-Zischen: die Nebel atmen
+                        .ambientLoopSound(SoundEvents.AMBIENT_SOUL_SAND_VALLEY_LOOP)
+                        .ambientAdditionsSound(new AmbientAdditionsSettings(
+                                SoundEvents.AMBIENT_CRIMSON_FOREST_ADDITIONS, 0.0111D))
+                        .ambientMoodSound(new AmbientMoodSettings(
+                                SoundEvents.AMBIENT_WARPED_FOREST_MOOD, 6000, 8, 2.0D))
                         .build())
                 .mobSpawnSettings(MobSpawnSettings.EMPTY)
                 .generationSettings(new BiomeGenerationSettings.PlainBuilder()
@@ -146,6 +161,10 @@ public final class ModBiomes {
                         .waterColor(0x003344)
                         .waterFogColor(0x003344)
                         .ambientParticle(new AmbientParticleSettings(ParticleTypes.SNOWFLAKE, 0.015F))
+                        // Kein Loop - nur fluesternde Additions und hoehlenartige Echos im Eis
+                        .ambientAdditionsSound(new AmbientAdditionsSettings(
+                                SoundEvents.AMBIENT_SOUL_SAND_VALLEY_ADDITIONS, 0.008D))
+                        .ambientMoodSound(AmbientMoodSettings.LEGACY_CAVE_SETTINGS)
                         .build())
                 .mobSpawnSettings(MobSpawnSettings.EMPTY)
                 .generationSettings(new BiomeGenerationSettings.PlainBuilder()
