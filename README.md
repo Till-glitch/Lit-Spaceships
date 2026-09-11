@@ -342,7 +342,7 @@ classDiagram
 
 The project enforces continuous testing according to the **70/20 Rule** (70% Unit / Math Tests, 20% Engine GameTests, 10% Manual QA).
 
-### Automated Test Matrix (159 Unit Tests & 7 GameTest Suites / 26 GameTests)
+### Automated Test Matrix (180 Unit Tests & 8 GameTest Suites / 41 GameTests)
 
 | Test-Suite | Typ | Abdeckung |
 | :--- | :--- | :--- |
