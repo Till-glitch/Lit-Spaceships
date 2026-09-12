@@ -2,6 +2,7 @@ package com.lit.spaceships.registry;
 
 import com.lit.spaceships.LitSpaceships;
 import com.lit.spaceships.item.BackflipToolItem;
+import com.lit.spaceships.item.FlightRecorderItem;
 import com.lit.spaceships.item.SignalScopeItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -42,6 +43,10 @@ public class ModItems {
     public static final DeferredItem<com.lit.spaceships.item.AccessCipherItem> ACCESS_CIPHER =
             ITEMS.register("access_cipher", () -> new com.lit.spaceships.item.AccessCipherItem(
                     new Item.Properties().stacksTo(1).durability(8)));
+
+    public static final DeferredItem<FlightRecorderItem> FLIGHT_RECORDER =
+            ITEMS.register("flight_recorder", () -> new FlightRecorderItem(
+                    new Item.Properties().stacksTo(4)));
 
     public static final DeferredItem<SignalScopeItem> SIGNALSCOPE = ITEMS.register("signalscope",
             () -> new SignalScopeItem(new Item.Properties().stacksTo(1)));

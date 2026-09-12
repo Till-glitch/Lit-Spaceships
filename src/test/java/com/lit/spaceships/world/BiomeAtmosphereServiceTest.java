@@ -90,6 +90,34 @@ class BiomeAtmosphereServiceTest {
     }
 
     @Test
+    @DisplayName("Plasma-Aufwind: exakt 15 Sekunden Dauer")
+    void updraftDurationIsExactlyFifteenSeconds() {
+        RandomSource random = RandomSource.create(404L);
+        for (int i = 0; i < 10_000; i++) {
+            var plan = BiomeAtmosphereService.planFor(ModBiomes.PLASMA_NEBULA, random);
+            if (plan.isPresent() && plan.get().effect() == MobEffects.SLOW_FALLING) {
+                assertEquals(300, plan.get().durationTicks(), "Aufwind = 15s");
+                return;
+            }
+        }
+        org.junit.jupiter.api.Assertions.fail("Aufwind musste in 10k Rolls auftreten");
+    }
+
+    @Test
+    @DisplayName("Alle Biome-Plaene tragen nicht-leere i18n-Schluessel")
+    void allPlansCarryMessageKeys() {
+        RandomSource random = RandomSource.create(505L);
+        for (int i = 0; i < 10_000; i++) {
+            var nebula = BiomeAtmosphereService.planFor(ModBiomes.PLASMA_NEBULA, random);
+            nebula.ifPresent(plan -> org.junit.jupiter.api.Assertions.assertFalse(plan.messageKey().isBlank()));
+            var frozen = BiomeAtmosphereService.planFor(ModBiomes.FROZEN_EXPANSE, random);
+            frozen.ifPresent(plan -> assertTrue(plan.messageKey().contains("frost")));
+            var wastes = BiomeAtmosphereService.planFor(ModBiomes.VOID_WASTES, random);
+            wastes.ifPresent(plan -> assertTrue(plan.messageKey().contains("wastes")));
+        }
+    }
+
+    @Test
     @DisplayName("Deep Space bleibt neutral: niemals Effekte")
     void deepSpaceIsNeutral() {
         RandomSource random = RandomSource.create(5L);

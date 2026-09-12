@@ -27,6 +27,18 @@ public class ModEnglishLanguageProvider extends LanguageProvider {
         add("block.lit_spaceships.cut_point", "Alloy Cut-Point");
         add("block.lit_spaceships.sealed_salvage_crate", "Sealed Salvage Crate");
         add("item.lit_spaceships.access_cipher", "Access Cipher");
+        add("item.lit_spaceships.flight_recorder", "Flight Recorder");
+        add("item.lit_spaceships.flight_recorder.header", "== FLIGHT DATA RECOVERY ==");
+        add("item.lit_spaceships.flight_recorder.log1", "Day 12: Hull integrity failing. We sealed the cargo decks, but the ringing in the walls won't stop.");
+        add("item.lit_spaceships.flight_recorder.log2", "Day 30: The rift pulls at our instruments. Navigation is a guess now. The stars here are wrong.");
+        add("item.lit_spaceships.flight_recorder.log3", "Day 55: Reactor stage four. Coolant lines frozen. Whoever finds this - cut the panels, do not trust the core.");
+        add("item.lit_spaceships.flight_recorder.log4", "Day 61: We picked up a research beacon on every channel. Someone is still transmitting out there.");
+        add("item.lit_spaceships.flight_recorder.log5", "Day 88: Last entry. The colonists sealed the dome and went quiet. May the void keep them.");
+        add("item.lit_spaceships.flight_recorder.clue_freighter", "Transponder chain resolved: freighter wreckage in the deep space lanes, cell drift %1$s");
+        add("item.lit_spaceships.flight_recorder.clue_relay", "Relay intercept: an antenna lattice hums beyond the nebula veil, drift %1$s");
+        add("item.lit_spaceships.flight_recorder.clue_collector", "Thermal bloom detected: solar collectors near the corona, drift %1$s");
+        add("item.lit_spaceships.flight_recorder.clue_outpost", "Deep signal: a listening post hides inside a rift asteroid, drift %1$s");
+        add("item.lit_spaceships.flight_recorder.decrypted", "== DATA DECRYPTED ==");
         // 1. Creative Tabs
         add(ModI18n.Tab.MAIN, "Lit Spaceships - Spaceships");
 

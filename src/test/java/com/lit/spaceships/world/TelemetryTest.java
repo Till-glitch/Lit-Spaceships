@@ -112,6 +112,67 @@ class TelemetryTest {
     }
 
     @Test
+    @DisplayName("bestSignal Tie-Break: gleiche Ausrichtung -> naeheres Signal gewinnt")
+    void bestSignalTieBreaksByDistance() {
+        Vec3 listener = new Vec3(0, 0, 0);
+        Vec3 look = new Vec3(1, 0, 0);
+        var near = new Telemetry.BeaconSignal(Telemetry.Frequencies.DISTRESS_CALL, new Vec3(50, 0, 0));
+        var far = new Telemetry.BeaconSignal(Telemetry.Frequencies.RESEARCH_BEACON, new Vec3(100, 0, 0));
+        var best = Telemetry.bestSignal(listener, look, List.of(far, near));
+        assertTrue(best.isPresent());
+        assertEquals(near, best.get().signal(), "Gleiche Ausrichtung -> naeheres Signal");
+        assertTrue(best.get().distance() < 100.0);
+    }
+
+    @Test
+    @DisplayName("bestSignal: leere Signalliste -> Optional.empty")
+    void bestSignalHandlesEmptyList() {
+        assertTrue(Telemetry.bestSignal(Vec3.ZERO, new Vec3(1, 0, 0), List.of()).isEmpty());
+    }
+
+    @Test
+    @DisplayName("Ping-Pitch ist monoton steigend mit dem Alignment")
+    void pingPitchIsMonotonic() {
+        float previous = -Float.MAX_VALUE;
+        for (int i = -10; i <= 10; i++) {
+            float pitch = Telemetry.pingPitch(i / 10.0D);
+            assertTrue(pitch > previous, "Pitch muss monoton steigen bei " + i);
+            previous = pitch;
+        }
+    }
+
+    @Test
+    @DisplayName("Verschluesselung: unterschiedliche Transponder-IDs -> unterschiedliche Chiffren")
+    void encryptionVariesByTransponderId() {
+        long coord = 999_999L;
+        assertTrue(Telemetry.encryptCoordinate(coord, 1) != Telemetry.encryptCoordinate(coord, 2),
+                "Verschiedene IDs muessen verschiedene Chiffren liefern");
+    }
+
+    @Test
+    @DisplayName("bestSignal skaliert die Daempfung mit benutzerdefinierter Range")
+    void attenuationScalesWithCustomRange() {
+        Vec3 listener = new Vec3(0, 0, 0);
+        Vec3 look = new Vec3(1, 0, 0);
+        var signal = new Telemetry.BeaconSignal(Telemetry.Frequencies.DISTRESS_CALL, new Vec3(50, 0, 0));
+        var reading = Telemetry.bestSignal(listener, look, List.of(signal), 100.0).orElseThrow();
+        assertTrue(reading.attenuation() > 0.0 && reading.attenuation() < 1.0,
+                "Daempfung in benutzerdefinierter Range muss zwischen 0 und 1 liegen");
+        // Gleiche Distanz, volle Range: geringere relative Daempfung
+        var fullRange = Telemetry.bestSignal(listener, look, List.of(signal), Telemetry.MAX_RANGE).orElseThrow();
+        assertTrue(reading.attenuation() < fullRange.attenuation(),
+                "Kleiner Range = geringere relative Daempfung");
+    }
+
+    @Test
+    @DisplayName("Alignment: diagonale Ziele ergeben 1/sqrt(2)")
+    void alignmentHandlesDiagonals() {
+        Vec3 look = new Vec3(1, 0, 0);
+        double diagonal = Telemetry.alignment(look, new Vec3(1, 0, 1));
+        assertEquals(1.0 / Math.sqrt(2.0), diagonal, 1e-9);
+    }
+
+    @Test
     @DisplayName("TelemetryData Codec: Feld-Roundtrip via generiertem Codec")
     @SuppressWarnings("unchecked")
     void telemetryDataCodecRoundTrip() {

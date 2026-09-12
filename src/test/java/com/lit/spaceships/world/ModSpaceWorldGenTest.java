@@ -1150,6 +1150,21 @@ class ModSpaceWorldGenTest {
     }
 
     @Test
+    @DisplayName("Gravity Rift schneidet den Eis-Schwanz, Ion Storm den Nebel-Schwanz")
+    void gravityRiftCarvesFrozenTail() {
+        Climate.ParameterList<ResourceKey<Biome>> dist = ModDimensions.spaceBiomeDistribution();
+        // C=-0.9, W=0.9: ohne Extreme wuerde Frozen gelten (T=-0.5) — Rift gewinnt
+        assertEquals(ModBiomes.GRAVITY_RIFT, dist.findValue(
+                point(-0.5F, 0.5F, -0.9F, 0.0F, 0.0F, 0.9F)));
+        // C=0.9, T=0.9, W=0.9: Stellar Corona (C hoch + T heiss) gewinnt vor Nebula
+        assertEquals(ModBiomes.STELLAR_CORONA, dist.findValue(
+                point(0.9F, 0.5F, 0.9F, 0.0F, 0.0F, 0.9F)));
+        // W=-0.9, T=0.9: Nebula hat W-Basisband-W... Ion gewinnt bei H=0.5
+        assertEquals(ModBiomes.ION_STORM, dist.findValue(
+                point(0.9F, 0.5F, 0.0F, 0.0F, 0.0F, -0.8F)));
+    }
+
+    @Test
     @DisplayName("Extreme-Zellen-Specs: deterministisch und in Zellgrenzen geklemmt")
     void extremeCellSpecsAreDeterministicAndBounded() {
         // Gravity Rift

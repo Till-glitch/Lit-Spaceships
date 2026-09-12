@@ -107,6 +107,33 @@ class ReactorMeltdownLogicTest {
     }
 
     @Test
+    @DisplayName("Kuehlung nach Freischaltung: Zustand bleibt stabil")
+    void coolingBeyondTwoValvesIsNoOp() {
+        var state = ReactorMeltdownLogic.ReactorState.INITIAL;
+        state = ReactorMeltdownLogic.cool(state);
+        state = ReactorMeltdownLogic.cool(state);
+        var unlocked = state;
+        for (int i = 0; i < 5; i++) {
+            state = ReactorMeltdownLogic.cool(state);
+        }
+        assertEquals(unlocked, state, "Nach Freischaltung darf Kuehlung nichts mehr aendern");
+        for (int i = 0; i < 100; i++) {
+            assertEquals(ReactorMeltdownLogic.ReactorEvent.NONE, ReactorMeltdownLogic.tick(state));
+        }
+    }
+
+    @Test
+    @DisplayName("Valve-Counter: drittes Ventil erhaelt den Counter (kein Overflow)")
+    void valveCounterGrowsMonotonically() {
+        var state = ReactorMeltdownLogic.ReactorState.INITIAL;
+        state = ReactorMeltdownLogic.cool(state);
+        state = ReactorMeltdownLogic.cool(state);
+        int afterTwo = state.valvesCooled();
+        state = ReactorMeltdownLogic.cool(state);
+        assertTrue(state.valvesCooled() >= afterTwo, "Counter darf nicht schrumpfen");
+    }
+
+    @Test
     @DisplayName("Rauch: ab Stufe 2 mit wahrscheinlichkeitsbasiertem Auftreten")
     void smokeEmissionScalesWithStage() {
         var stage1 = new ReactorMeltdownLogic.ReactorState(1, 0, 0, false);

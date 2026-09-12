@@ -25,6 +25,9 @@ public class ModItemModelProvider extends ItemModelProvider {
         withExistingParent(ModItems.SIGNALSCOPE.getId().getPath(), "item/generated")
                 .texture("layer0", modLoc("item/backflip_tool"));
 
+        withExistingParent(ModItems.FLIGHT_RECORDER.getId().getPath(), "item/generated")
+                .texture("layer0", modLoc("item/backflip_tool"));
+
         // Maschinen Block-Items mit bestehendem Parent
         withExistingParent(ModBlocks.SPACESHIP_CONTROL.getId().getPath(), modLoc("block/spaceship_control"));
         withExistingParent(ModBlocks.SPACESHIP_HELM.getId().getPath(), modLoc("block/spaceship_helm"));

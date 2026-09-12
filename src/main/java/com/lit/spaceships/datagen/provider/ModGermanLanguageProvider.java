@@ -27,6 +27,18 @@ public class ModGermanLanguageProvider extends LanguageProvider {
         add("block.lit_spaceships.cut_point", "Legierungs-Trennpunkt");
         add("block.lit_spaceships.sealed_salvage_crate", "Versiegelte Bergungskiste");
         add("item.lit_spaceships.access_cipher", "Zugriffsschluessel");
+        add("item.lit_spaceships.flight_recorder", "Flugschreiber");
+        add("item.lit_spaceships.flight_recorder.header", "== FLUGDATEN-WIEDERHERSTELLUNG ==");
+        add("item.lit_spaceships.flight_recorder.log1", "Tag 12: Huellenintegritaet bricht. Wir haben die Frachtdecks versiegelt, aber das Klingeln in den Waenden endet nicht.");
+        add("item.lit_spaceships.flight_recorder.log2", "Tag 30: Die Spalte zieht an unseren Instrumenten. Navigation ist jetzt Raten. Die Sterne hier sind falsch.");
+        add("item.lit_spaceships.flight_recorder.log3", "Tag 55: Reaktor Stufe vier. Kuehlleitungen eingefroren. Wer das findet - schneidet die Paneele, vertraut dem Kern nicht.");
+        add("item.lit_spaceships.flight_recorder.log4", "Tag 61: Wir hoerten ein Forschungssignal auf jedem Kanal. Da draussen sendet noch jemand.");
+        add("item.lit_spaceships.flight_recorder.log5", "Tag 88: Letzter Eintrag. Die Kolonisten versiegelten die Kuppel und schwiegen. Die Leere behuetet sie.");
+        add("item.lit_spaceships.flight_recorder.clue_freighter", "Transponderkette aufgeloest: Frachterwrack in den Tiefraum-Lanes, Zellabweichung %1$s");
+        add("item.lit_spaceships.flight_recorder.clue_relay", "Relais-Abfang: Ein Antennengitter summt hinter dem Nebelschleier, Abweichung %1$s");
+        add("item.lit_spaceships.flight_recorder.clue_collector", "Thermische Anomalie: Solarkollektoren nahe der Corona, Abweichung %1$s");
+        add("item.lit_spaceships.flight_recorder.clue_outpost", "Tiefensignal: Ein Horchposten verbirgt sich im Rift-Asteroiden, Abweichung %1$s");
+        add("item.lit_spaceships.flight_recorder.decrypted", "== DATEN ENTSCHLUESSELT ==");
         // 1. Creative Tabs
         add(ModI18n.Tab.MAIN, "Lit Spaceships - Raumschiffe");
 

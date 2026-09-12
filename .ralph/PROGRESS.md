@@ -31,6 +31,13 @@
 - [x] **Tests**: Alignment/Daempfung/Pitch/Wellenform/XOR/Frequenz-Kanaele (JUnit), Beacon-Signal-Registrierung + Detection + Alignment-Priorisierung (GameTest). 196 JUnit + 50/50 GameTests gruen. Epoch 10 KOMPLETT.
 
 ---
+### Epoch 13: Space Archaeology, Localization & Final Polish
+- [x] **FlightRecorderItem**: entschlüsselt übersetzte Bord-Logs (5 Narrative en/de) mit Koordinaten-Ketten-Hinweisen auf die 4 Megastrukturen (XOR-Zell-Drift via ID 13). **[COMPLETED 2026-09-12]**
+- [x] **Bilingual Localization**: alle neuen Blocks (Beacon/Reactor/CutPoint/Crate), Items (Signalscope/Cipher/Recorder), Action-Bar-Alerts (Gravity Shear/Solar Radiation/Ion Interference) und 5 Flight-Recorder-Narrativen in en_us + de_de. **[COMPLETED 2026-09-12]**
+- [x] **Documentation**: README-Testmatrix + Feature-Katalog, ARCHITECTURE-Registry-Tabellen (Epoch 8-12), .ralph/guardrails.md Pitfalls. **[COMPLETED 2026-09-12]**
+- [x] **Final Quality Verification**: runData-Idempotenz (0 rewrites), 230+ JUnit green, 60/60 GameTests green, 0 hand-written worldgen JSON. **[COMPLETED 2026-09-12]** EPOCH 13 KOMPLETT — ALLE EPOCHEN 1-13 ABGESCHLOSSEN.
+
+---
 ### Epoch 12: Systemic Salvage & Engineering Puzzles
 - [x] **ReactorMeltdownLogic (pure State-Machine)**: Stufe 0..4 x 450 Ticks (90 s), 2 Kuehlventile resetten Countdown + schalten die Kernkammer (reactor_core_salvage-Kiste) frei; Versagen loest Explosion (Power 4) aus. 7 JUnit-Tests (Timing, Reset, Explosion, Rauch). **[COMPLETED 2026-09-12]**
 - [x] **UnstableReactorBlock + BE**: serverTick treibt die State-Machine; use() ohne Item = Kuehlversuch; NBT-Persistenz. **[COMPLETED 2026-09-12]**
