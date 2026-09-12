@@ -190,5 +190,8 @@ public class ModEnglishLanguageProvider extends LanguageProvider {
         add(ModI18n.Biome.GRAVITY_RIFT, "Gravity Rift");
         add(ModI18n.Biome.STELLAR_CORONA, "Stellar Corona");
         add(ModI18n.Biome.ION_STORM, "Ion Storm");
+        add(ModI18n.Biome.GRAVITY_SHEAR, "Warning: Gravitational Shear Detected!");
+        add(ModI18n.Biome.SOLAR_RADIATION, "Alert: Solar Radiation Critical!");
+        add(ModI18n.Biome.ION_INTERFERENCE, "Warning: High-Density Ion Interference!");
     }
 }

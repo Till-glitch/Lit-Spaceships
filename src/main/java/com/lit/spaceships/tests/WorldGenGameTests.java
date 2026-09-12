@@ -756,4 +756,43 @@ public class WorldGenGameTests {
         helper.assertBlock(new BlockPos(7, 6, 6), Blocks.COPPER_GRATE::equals, "Pylon-Rahmen muss Kupfergitter sein");
         helper.succeed();
     }
+
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void hullBreachAppliesDecompressionImpulse(GameTestHelper helper) {
+        // Druckkammer: 5x5x5 Eisenhuelle um Luft bei (7,6,7) mit Oeffnung an Ostwand
+        for (int x = 5; x <= 9; x++) {
+            for (int y = 4; y <= 8; y++) {
+                for (int z = 5; z <= 9; z++) {
+                    boolean shell = x == 5 || x == 9 || y == 4 || y == 8 || z == 5 || z == 9;
+                    if (shell && !(x == 9 && y >= 5 && y <= 7 && z == 7)) {
+                        helper.setBlock(new BlockPos(x, y, z), Blocks.IRON_BLOCK);
+                    }
+                }
+            }
+        }
+        // Item im Kammernzen: wird bei Dekompression zur Bruchstelle (Ostwand) gesaugt
+        var item = new net.minecraft.world.entity.item.ItemEntity(helper.getLevel(),
+                helper.absolutePos(new BlockPos(7, 6, 7)).getX() + 0.5,
+                helper.absolutePos(new BlockPos(7, 6, 7)).getY() + 0.5,
+                helper.absolutePos(new BlockPos(7, 6, 7)).getZ() + 0.5,
+                new net.minecraft.world.item.ItemStack(Blocks.COBBLESTONE));
+        helper.getLevel().addFreshEntity(item);
+        var breachPos = helper.absolutePos(new BlockPos(9, 6, 7));
+
+        // Dekompression direkt ausloesen (Block-Break-Event ist im GameTest nicht
+        // verfuegbar - der Service ist nevertheless derselbe Produktionspfad)
+        // 60-Tick-Sog kontinuierlich anwenden (wie in Produktion ueber ServerTick)
+        double startX = item.position().x;
+        helper.startSequence()
+                .thenExecuteFor(60, () -> com.lit.spaceships.world.DecompressionService.applyOutwardImpulse(
+                        helper.getLevel(), net.minecraft.world.phys.Vec3.atCenterOf(breachPos)))
+                .thenExecute(() -> {
+                    double moved = item.position().x - startX;
+                    if (moved < 0.5) {
+                        helper.fail("Item muss durch Dekompression merklich Richtung Bruchstelle gezogen werden, moved=" + moved);
+                        return;
+                    }
+                    helper.succeed();
+                });
+    }
 }

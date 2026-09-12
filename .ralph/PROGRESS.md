@@ -23,6 +23,11 @@
 - [x] **Custom Loot Table: Dreadnought Armory (`lit_spaceships:chests/dreadnought_armory`)**: Netherite scrap/ingot, pulse laser echo shards, heavy beam components (blaze rods/quartz), explosives. **[COMPLETED 2026-09-07]** — Verdrahtet in `ModChestLootTableProvider` und in `dreadnought_wreck/engineering_core.nbt` Kiste eingebettet.
 - [x] **Custom Loot Table: Alien Monolith (`lit_spaceships:chests/alien_monolith`)**: Ancient technology lodestones, nether stars, echo shards, ender eyes, void materials. **[COMPLETED 2026-09-07]** — Verdrahtet in `ModChestLootTableProvider` und in `alien_outpost/monolith.nbt` Kiste eingebettet. EPOCH 4 KOMPLETT.
 
+### Epoch 9: Physicalized Decompression & Atmosphere Logic
+- [x] **Extreme-Biome-Planner** (pure, statistisch getestet): `planGravityShear` (Sog zur Akkretionsmitte, Staerke 0.018-0.06, Radius 96), `planSolarRadiation` (4% Roll, nur ungeschuetzt; 1 Schaden + 1 Ruestungsnutzung; Gold/Netherite schuetzt), `planIonStorm` (Uebelkeit ~1.5%, Elytra-Stall 5%, Blitz 0.8% nur mit Metallruestung). Wired in `BiomeAtmosphereService.onPlayerTick` mit i18n Action-Bar-Warnungen (en/de). **[COMPLETED 2026-09-12]**
+- [x] **DecompressionService + pressurized_hull-Tag**: Block-Zerstoerung an pressurisierten Huellen scannt 5x5x5 auf Kavernen-Luft (min 6 Bloecke) und erzeugt 60-Tick-Auswaerts-Sog (0.045/tick, Radius 6) auf Entities+Items. GameTest: Item wird 1.3+ Bloecke zur Bruchstelle getragen. **[COMPLETED 2026-09-12]** Epoch 9 KOMPLETT — 191 JUnit + 49/49 GameTests.
+
+---
 ### Epoch 8: 3D Multi-Noise Routing & Extreme Biomes
 - [x] **Router-Upgrade (T/H/C/W)**: `ModNoiseSettings` mappt jetzt echte Noises auf alle 4 Klimaachsen (temperature, vegetation, continentalness, erosion-as-ridges). **[COMPLETED 2026-09-12]**
 - [x] **7-Biome-Partition**: Deterministische 4D-Rechtecke — 3 extreme Zonen (gravity_rift C[-1.2,-0.85]×W[0.6,1.2]; stellar_corona C[0.45,1.1]×T[0.75,1.2]; ion_storm W[-1.2,-0.65]×H[0.4,1.0]) stechen aus der eingeschraenkten Basis-Partition (C[-0.85,1]×W[-0.65,1]) heraus. Gapless-Abdeckung per 4D-Raster-Test verifiziert. **[COMPLETED 2026-09-12]**

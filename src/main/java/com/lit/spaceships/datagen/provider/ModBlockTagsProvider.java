@@ -36,5 +36,12 @@ public class ModBlockTagsProvider extends BlockTagsProvider {
         tag(ModTags.Blocks.INVENTORY_RELOCATION_SAFE);
         tag(ModTags.Blocks.INVENTORY_RELOCATION_SAFE_FORGE)
                 .addTag(ModTags.Blocks.INVENTORY_RELOCATION_SAFE);
+
+        // Pressurisierte Huellenbloecke: brechen sie, droht Dekompression (Epoch 9)
+        tag(ModTags.Blocks.PRESSURIZED_HULL)
+                .add(Blocks.IRON_BLOCK, Blocks.IRON_BARS, Blocks.IRON_TRAPDOOR,
+                        Blocks.COPPER_BLOCK, Blocks.CUT_COPPER, Blocks.COPPER_GRATE,
+                        Blocks.GRAY_CONCRETE, Blocks.LIGHT_GRAY_CONCRETE, Blocks.WHITE_CONCRETE,
+                        Blocks.STONE_BRICKS, Blocks.SMOOTH_STONE);
     }
 }

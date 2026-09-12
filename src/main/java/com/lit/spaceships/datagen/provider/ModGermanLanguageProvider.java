@@ -190,5 +190,8 @@ public class ModGermanLanguageProvider extends LanguageProvider {
         add(ModI18n.Biome.GRAVITY_RIFT, "Gravitationsspalte");
         add(ModI18n.Biome.STELLAR_CORONA, "Stellare Corona");
         add(ModI18n.Biome.ION_STORM, "Ionensturm");
+        add(ModI18n.Biome.GRAVITY_SHEAR, "Warnung: Gravitationsscherung erkannt!");
+        add(ModI18n.Biome.SOLAR_RADIATION, "Alarm: Solare Strahlung kritisch!");
+        add(ModI18n.Biome.ION_INTERFERENCE, "Warnung: Hochdichte Ionstoerung!");
     }
 }

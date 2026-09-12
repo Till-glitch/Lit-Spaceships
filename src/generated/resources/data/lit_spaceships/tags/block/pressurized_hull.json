@@ -1,0 +1,15 @@
+{
+  "values": [
+    "minecraft:iron_block",
+    "minecraft:iron_bars",
+    "minecraft:iron_trapdoor",
+    "minecraft:copper_block",
+    "minecraft:cut_copper",
+    "minecraft:copper_grate",
+    "minecraft:gray_concrete",
+    "minecraft:light_gray_concrete",
+    "minecraft:white_concrete",
+    "minecraft:stone_bricks",
+    "minecraft:smooth_stone"
+  ]
+}

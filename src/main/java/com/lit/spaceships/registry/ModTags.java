@@ -1,5 +1,8 @@
 package com.lit.spaceships.registry;
 
+import com.lit.spaceships.LitSpaceships;
+
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
@@ -25,6 +28,10 @@ public final class ModTags {
 
         public static final TagKey<Block> RELOCATES_AS_CLUSTER_FORGE =
                 BlockTags.create(ResourceLocation.fromNamespaceAndPath("forge", "relocates_as_cluster"));
+
+        public static final TagKey<Block> PRESSURIZED_HULL =
+                TagKey.create(Registries.BLOCK,
+                        ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "pressurized_hull"));
 
         public static final TagKey<Block> INVENTORY_RELOCATION_SAFE =
                 BlockTags.create(ResourceLocation.fromNamespaceAndPath("c", "inventory_relocation_safe"));
