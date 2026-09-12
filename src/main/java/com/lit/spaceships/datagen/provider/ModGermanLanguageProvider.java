@@ -187,5 +187,8 @@ public class ModGermanLanguageProvider extends LanguageProvider {
         add(ModI18n.Biome.NEBULA_UPDRAFT, "Ein Plasma-Aufwind faengt dich...");
         add(ModI18n.Biome.FROST_HYPOTHERMIA, "Die Kaelte der Weite beisst sich in deine Knochen...");
         add(ModI18n.Biome.WASTES_DREAD, "Die Stille drueckt auf deine Augen...");
+        add(ModI18n.Biome.GRAVITY_RIFT, "Gravitationsspalte");
+        add(ModI18n.Biome.STELLAR_CORONA, "Stellare Corona");
+        add(ModI18n.Biome.ION_STORM, "Ionensturm");
     }
 }

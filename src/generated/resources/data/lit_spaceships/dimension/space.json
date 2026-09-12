@@ -6,10 +6,100 @@
       "type": "minecraft:multi_noise",
       "biomes": [
         {
-          "biome": "lit_spaceships:frozen_expanse",
+          "biome": "lit_spaceships:gravity_rift",
+          "parameters": {
+            "continentalness": [
+              -1.2,
+              -0.85
+            ],
+            "depth": [
+              -1.0,
+              1.0
+            ],
+            "erosion": [
+              -1.0,
+              1.0
+            ],
+            "humidity": [
+              -1.0,
+              1.0
+            ],
+            "offset": 0.0,
+            "temperature": [
+              -1.0,
+              1.0
+            ],
+            "weirdness": [
+              0.6,
+              1.2
+            ]
+          }
+        },
+        {
+          "biome": "lit_spaceships:stellar_corona",
+          "parameters": {
+            "continentalness": [
+              0.45,
+              1.1
+            ],
+            "depth": [
+              -1.0,
+              1.0
+            ],
+            "erosion": [
+              -1.0,
+              1.0
+            ],
+            "humidity": [
+              -1.0,
+              1.0
+            ],
+            "offset": 0.0,
+            "temperature": [
+              0.75,
+              1.2
+            ],
+            "weirdness": [
+              -1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "biome": "lit_spaceships:ion_storm",
           "parameters": {
             "continentalness": [
               -1.0,
+              1.0
+            ],
+            "depth": [
+              -1.0,
+              1.0
+            ],
+            "erosion": [
+              -1.0,
+              1.0
+            ],
+            "humidity": [
+              0.4,
+              1.0
+            ],
+            "offset": 0.0,
+            "temperature": [
+              -1.0,
+              1.0
+            ],
+            "weirdness": [
+              -1.2,
+              -0.65
+            ]
+          }
+        },
+        {
+          "biome": "lit_spaceships:frozen_expanse",
+          "parameters": {
+            "continentalness": [
+              -0.85,
               1.0
             ],
             "depth": [
@@ -30,7 +120,7 @@
               -0.3
             ],
             "weirdness": [
-              -1.0,
+              -0.65,
               1.0
             ]
           }
@@ -39,7 +129,7 @@
           "biome": "lit_spaceships:void_wastes",
           "parameters": {
             "continentalness": [
-              -1.0,
+              -0.85,
               1.0
             ],
             "depth": [
@@ -60,7 +150,7 @@
               0.4
             ],
             "weirdness": [
-              -1.0,
+              -0.65,
               1.0
             ]
           }
@@ -69,7 +159,7 @@
           "biome": "lit_spaceships:space_biome",
           "parameters": {
             "continentalness": [
-              -1.0,
+              -0.85,
               1.0
             ],
             "depth": [
@@ -90,7 +180,7 @@
               0.4
             ],
             "weirdness": [
-              -1.0,
+              -0.65,
               1.0
             ]
           }
@@ -100,7 +190,7 @@
           "parameters": {
             "continentalness": [
               -1.0,
-              1.0
+              0.45
             ],
             "depth": [
               -1.0,
@@ -120,7 +210,7 @@
               1.0
             ],
             "weirdness": [
-              -1.0,
+              -0.65,
               1.0
             ]
           }

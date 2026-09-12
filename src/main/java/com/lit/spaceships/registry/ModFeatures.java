@@ -8,6 +8,9 @@ import com.lit.spaceships.world.feature.IceCometFeature;
 import com.lit.spaceships.world.feature.MegaAsteroidFeature;
 import com.lit.spaceships.world.feature.PlanetaryRingFeature;
 import com.lit.spaceships.world.feature.CosmicJellyfishFeature;
+import com.lit.spaceships.world.feature.GravityRiftFeature;
+import com.lit.spaceships.world.feature.StellarCoronaFeature;
+import com.lit.spaceships.world.feature.IonStormFeature;
 import com.lit.spaceships.world.feature.ModAmbientPalettes;
 import com.lit.spaceships.world.feature.OrbFeature;
 import com.lit.spaceships.world.feature.PillarFeature;
@@ -53,6 +56,14 @@ public class ModFeatures {
 
     public static final DeferredHolder<Feature<?>, AncientBattlefieldFeature> ANCIENT_BATTLEFIELD =
             FEATURES.register("ancient_battlefield", () -> new AncientBattlefieldFeature(NoneFeatureConfiguration.CODEC));
+
+    // ---------- Epoch 8: extreme biome signature features ----------
+    public static final DeferredHolder<Feature<?>, GravityRiftFeature> GRAVITY_RIFT =
+            FEATURES.register("gravity_rift_disk", () -> new GravityRiftFeature(NoneFeatureConfiguration.CODEC));
+    public static final DeferredHolder<Feature<?>, StellarCoronaFeature> STELLAR_CORONA =
+            FEATURES.register("stellar_flare", () -> new StellarCoronaFeature(NoneFeatureConfiguration.CODEC));
+    public static final DeferredHolder<Feature<?>, IonStormFeature> ION_STORM =
+            FEATURES.register("ion_pylon", () -> new IonStormFeature(NoneFeatureConfiguration.CODEC));
 
     // ---------- Ambient-Features: 5 pro Biom ----------
 

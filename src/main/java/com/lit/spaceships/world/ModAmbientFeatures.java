@@ -77,12 +77,19 @@ public final class ModAmbientFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> CFG_DUST_DRIFT = cfg("dust_drift");
     public static final ResourceKey<ConfiguredFeature<?, ?>> CFG_ASH_VENT = cfg("ash_vent");
     public static final ResourceKey<ConfiguredFeature<?, ?>> CFG_VOID_CYST = cfg("void_cyst");
+    // ---------- Epoch 8: extreme biome signature features ----------
+    public static final ResourceKey<ConfiguredFeature<?, ?>> CFG_GRAVITY_RIFT_DISK = cfg("gravity_rift_disk");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> CFG_STELLAR_FLARE = cfg("stellar_flare");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> CFG_ION_PYLON = cfg("ion_pylon");
 
     public static final ResourceKey<PlacedFeature> BONE_DEBRIS_PLACED = placed("bone_debris_placed");
     public static final ResourceKey<PlacedFeature> SCRAP_WASTELAND_PLACED = placed("scrap_wasteland_placed");
     public static final ResourceKey<PlacedFeature> DUST_DRIFT_PLACED = placed("dust_drift_placed");
     public static final ResourceKey<PlacedFeature> ASH_VENT_PLACED = placed("ash_vent_placed");
     public static final ResourceKey<PlacedFeature> VOID_CYST_PLACED = placed("void_cyst_placed");
+    public static final ResourceKey<PlacedFeature> GRAVITY_RIFT_DISK_PLACED = placed("gravity_rift_disk_placed");
+    public static final ResourceKey<PlacedFeature> STELLAR_FLARE_PLACED = placed("stellar_flare_placed");
+    public static final ResourceKey<PlacedFeature> ION_PYLON_PLACED = placed("ion_pylon_placed");
 
     private ModAmbientFeatures() {
     }
@@ -112,6 +119,9 @@ public final class ModAmbientFeatures {
         register(context, CFG_DUST_DRIFT, ModFeatures.DUST_DRIFT.get());
         register(context, CFG_ASH_VENT, ModFeatures.ASH_VENT.get());
         register(context, CFG_VOID_CYST, ModFeatures.VOID_CYST.get());
+        register(context, CFG_GRAVITY_RIFT_DISK, ModFeatures.GRAVITY_RIFT.get());
+        register(context, CFG_STELLAR_FLARE, ModFeatures.STELLAR_CORONA.get());
+        register(context, CFG_ION_PYLON, ModFeatures.ION_STORM.get());
     }
 
     /** Registriert alle 20 PlacedFeatures mit Biom-thematischen Hoehenbaendern. */
@@ -145,6 +155,10 @@ public final class ModAmbientFeatures {
         placed(context, configured, DUST_DRIFT_PLACED, CFG_DUST_DRIFT, 2, -40, 240, 1);
         placed(context, configured, ASH_VENT_PLACED, CFG_ASH_VENT, 1, 0, 240, 2);
         placed(context, configured, VOID_CYST_PLACED, CFG_VOID_CYST, 1, 0, 240, 2);
+        // Epoch 8: extreme biome signature features
+        placed(context, configured, GRAVITY_RIFT_DISK_PLACED, CFG_GRAVITY_RIFT_DISK, 2, 0, 240, 1);
+        placed(context, configured, STELLAR_FLARE_PLACED, CFG_STELLAR_FLARE, 2, 96, 288, 1);
+        placed(context, configured, ION_PYLON_PLACED, CFG_ION_PYLON, 2, 64, 256, 1);
     }
 
     private static void register(BootstrapContext<ConfiguredFeature<?, ?>> context,

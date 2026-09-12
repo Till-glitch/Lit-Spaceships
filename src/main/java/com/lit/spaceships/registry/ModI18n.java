@@ -189,5 +189,8 @@ public final class ModI18n {
         public static final String NEBULA_UPDRAFT = "biome." + LitSpaceships.MODID + ".nebula_updraft";
         public static final String FROST_HYPOTHERMIA = "biome." + LitSpaceships.MODID + ".frost_hypothermia";
         public static final String WASTES_DREAD = "biome." + LitSpaceships.MODID + ".wastes_dread";
+        public static final String GRAVITY_RIFT = "biome." + LitSpaceships.MODID + ".gravity_rift";
+        public static final String STELLAR_CORONA = "biome." + LitSpaceships.MODID + ".stellar_corona";
+        public static final String ION_STORM = "biome." + LitSpaceships.MODID + ".ion_storm";
     }
 }

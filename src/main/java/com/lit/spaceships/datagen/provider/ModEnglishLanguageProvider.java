@@ -187,5 +187,8 @@ public class ModEnglishLanguageProvider extends LanguageProvider {
         add(ModI18n.Biome.NEBULA_UPDRAFT, "A plasma updraft catches you...");
         add(ModI18n.Biome.FROST_HYPOTHERMIA, "The cold of the expanse bites into your bones...");
         add(ModI18n.Biome.WASTES_DREAD, "The silence presses on your eyes...");
+        add(ModI18n.Biome.GRAVITY_RIFT, "Gravity Rift");
+        add(ModI18n.Biome.STELLAR_CORONA, "Stellar Corona");
+        add(ModI18n.Biome.ION_STORM, "Ion Storm");
     }
 }

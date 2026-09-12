@@ -154,6 +154,13 @@ class ModSpaceWorldGenTest {
                         .when(placedGetter).getOrThrow(ModAmbientFeatures.placedForTest(n + "_placed"));
             }
         }
+        // Epoch 8: extreme biome signature features (alle 7 Biome werden gebootstrapped)
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModAmbientFeatures.GRAVITY_RIFT_DISK_PLACED))
+                .when(placedGetter).getOrThrow(ModAmbientFeatures.GRAVITY_RIFT_DISK_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModAmbientFeatures.STELLAR_FLARE_PLACED))
+                .when(placedGetter).getOrThrow(ModAmbientFeatures.STELLAR_FLARE_PLACED);
+        doReturn(Holder.Reference.createStandAlone(placedOwner, ModAmbientFeatures.ION_PYLON_PLACED))
+                .when(placedGetter).getOrThrow(ModAmbientFeatures.ION_PYLON_PLACED);
     }
 
     private void stubAllBiomes() {
@@ -165,6 +172,12 @@ class ModSpaceWorldGenTest {
                 .when(biomeGetter).getOrThrow(ModBiomes.FROZEN_EXPANSE);
         doReturn(Holder.Reference.createStandAlone(biomeOwner, ModBiomes.VOID_WASTES))
                 .when(biomeGetter).getOrThrow(ModBiomes.VOID_WASTES);
+        doReturn(Holder.Reference.createStandAlone(biomeOwner, ModBiomes.GRAVITY_RIFT))
+                .when(biomeGetter).getOrThrow(ModBiomes.GRAVITY_RIFT);
+        doReturn(Holder.Reference.createStandAlone(biomeOwner, ModBiomes.STELLAR_CORONA))
+                .when(biomeGetter).getOrThrow(ModBiomes.STELLAR_CORONA);
+        doReturn(Holder.Reference.createStandAlone(biomeOwner, ModBiomes.ION_STORM))
+                .when(biomeGetter).getOrThrow(ModBiomes.ION_STORM);
     }
 
     @Test
@@ -189,8 +202,19 @@ class ModSpaceWorldGenTest {
         assertKey(ModPlacedFeatures.SATELLITE_GRAVEYARD_PLACED, Registries.PLACED_FEATURE, "satellite_graveyard_placed");
         assertKey(ModConfiguredFeatures.COSMIC_JELLYFISH, Registries.CONFIGURED_FEATURE, "cosmic_jellyfish");
         assertKey(ModPlacedFeatures.COSMIC_JELLYFISH_PLACED, Registries.PLACED_FEATURE, "cosmic_jellyfish_placed");
+        for (String[] pair : new String[][]{
+                {"gravity_rift_disk", "stellar_flare", "ion_pylon"}}) {
+            for (String feature : pair) {
+                assertKey(ModAmbientFeatures.cfgForTest(feature), Registries.CONFIGURED_FEATURE, feature);
+                assertKey(ModAmbientFeatures.placedForTest(feature + "_placed"), Registries.PLACED_FEATURE, feature + "_placed");
+            }
+        }
         assertKey(ModConfiguredFeatures.ANCIENT_BATTLEFIELD, Registries.CONFIGURED_FEATURE, "ancient_battlefield");
         assertKey(ModPlacedFeatures.ANCIENT_BATTLEFIELD_PLACED, Registries.PLACED_FEATURE, "ancient_battlefield_placed");
+        assertEquals("lit_spaceships", ModBiomes.GRAVITY_RIFT.location().getNamespace());
+        assertEquals("gravity_rift", ModBiomes.GRAVITY_RIFT.location().getPath());
+        assertEquals("stellar_corona", ModBiomes.STELLAR_CORONA.location().getPath());
+        assertEquals("ion_storm", ModBiomes.ION_STORM.location().getPath());
         for (String[] name : new String[][]{
                 {"debris_field", "meteor_shower", "void_crystal_spike", "beacon_pylon", "cargo_pod"},
                 {"nebula_spore_drift", "plasma_ember", "nebula_gas_bloom", "crystal_lattice", "nebula_arc"},
@@ -613,8 +637,13 @@ class ModSpaceWorldGenTest {
                 Holder.direct(new NormalNoise.NoiseParameters(-9, 1.0));
         Holder<NormalNoise.NoiseParameters> vegetationNoise =
                 Holder.direct(new NormalNoise.NoiseParameters(-9, 1.0));
+        Holder<NormalNoise.NoiseParameters> continentalnessNoise =
+                Holder.direct(new NormalNoise.NoiseParameters(-9, 1.0));
+        Holder<NormalNoise.NoiseParameters> erosionNoise =
+                Holder.direct(new NormalNoise.NoiseParameters(-9, 1.0));
 
-        NoiseGeneratorSettings settings = ModNoiseSettings.spaceNoiseSettings(temperatureNoise, vegetationNoise);
+        NoiseGeneratorSettings settings = ModNoiseSettings.spaceNoiseSettings(
+                temperatureNoise, vegetationNoise, continentalnessNoise, erosionNoise);
 
         assertEquals(-64, settings.seaLevel());
         assertTrue(settings.disableMobGeneration());
@@ -635,6 +664,11 @@ class ModSpaceWorldGenTest {
                 "Temperatur muss echte Noise-Struktur besitzen (Multi-Noise-Routing)");
         assertTrue(router.vegetation().minValue() < 0.0 && router.vegetation().maxValue() > 0.0,
                 "Feuchteachse (vegetation) muss echte Noise-Struktur besitzen");
+        assertTrue(router.continents().minValue() < 0.0 && router.continents().maxValue() > 0.0,
+                "Continentalness-Achse (C) muss echte Noise-Struktur besitzen");
+        assertTrue(router.ridges().minValue() < 0.0 && router.ridges().maxValue() > 0.0,
+                "Ridges-Achse (W) muss echte Noise-Struktur besitzen");
+        assertEquals(0.0, router.erosion().minValue(), 0.0, "Erosionsachse bleibt ungenutzt");
         assertEquals(-1.0D, router.finalDensity().minValue(), 0.0D);
         assertEquals(-1.0D, router.finalDensity().maxValue(), 0.0D);
     }
@@ -669,17 +703,12 @@ class ModSpaceWorldGenTest {
     @Test
     @DisplayName("LevelStem verdrahtet Noise-Generator mit Multi-Noise-Quelle über beide Weltraum-Biome")
     void levelStemWiresMultiNoiseGenerator() {
-        doReturn(Holder.Reference.createStandAlone(biomeOwner, ModDimensions.SPACE_BIOME))
-                .when(biomeGetter).getOrThrow(ModDimensions.SPACE_BIOME);
-        doReturn(Holder.Reference.createStandAlone(biomeOwner, ModBiomes.PLASMA_NEBULA))
-                .when(biomeGetter).getOrThrow(ModBiomes.PLASMA_NEBULA);
-        doReturn(Holder.Reference.createStandAlone(biomeOwner, ModBiomes.FROZEN_EXPANSE))
-                .when(biomeGetter).getOrThrow(ModBiomes.FROZEN_EXPANSE);
-        doReturn(Holder.Reference.createStandAlone(biomeOwner, ModBiomes.VOID_WASTES))
-                .when(biomeGetter).getOrThrow(ModBiomes.VOID_WASTES);
+        stubAllBiomes();
 
         Holder<NoiseGeneratorSettings> settingsHolder =
                 Holder.direct(ModNoiseSettings.spaceNoiseSettings(
+                        Holder.direct(new NormalNoise.NoiseParameters(-9, 1.0)),
+                        Holder.direct(new NormalNoise.NoiseParameters(-9, 1.0)),
                         Holder.direct(new NormalNoise.NoiseParameters(-9, 1.0)),
                         Holder.direct(new NormalNoise.NoiseParameters(-9, 1.0))));
         Holder<DimensionType> typeHolder = Holder.direct(ModDimensions.spaceDimensionType());
@@ -694,7 +723,8 @@ class ModSpaceWorldGenTest {
                 .map(holder -> holder.unwrapKey().orElseThrow())
                 .collect(java.util.stream.Collectors.toSet());
         assertEquals(Set.of(ModDimensions.SPACE_BIOME, ModBiomes.PLASMA_NEBULA, ModBiomes.FROZEN_EXPANSE,
-                ModBiomes.VOID_WASTES), possibleBiomes);
+                ModBiomes.VOID_WASTES, ModBiomes.GRAVITY_RIFT, ModBiomes.STELLAR_CORONA,
+                ModBiomes.ION_STORM), possibleBiomes);
     }
 
     @Test
@@ -931,7 +961,15 @@ class ModSpaceWorldGenTest {
 
         when(structureContext.lookup(Registries.TEMPLATE_POOL)).thenReturn(poolGetter);
         when(structureContext.lookup(Registries.BIOME)).thenReturn(biomeGetter);
-        stubAllBiomes();
+        // Nur die 4 Biome, die die Strukturen tatsaechlich referenzieren (Strict Stubs)
+        doReturn(Holder.Reference.createStandAlone(biomeOwner, ModDimensions.SPACE_BIOME))
+                .when(biomeGetter).getOrThrow(ModDimensions.SPACE_BIOME);
+        doReturn(Holder.Reference.createStandAlone(biomeOwner, ModBiomes.PLASMA_NEBULA))
+                .when(biomeGetter).getOrThrow(ModBiomes.PLASMA_NEBULA);
+        doReturn(Holder.Reference.createStandAlone(biomeOwner, ModBiomes.VOID_WASTES))
+                .when(biomeGetter).getOrThrow(ModBiomes.VOID_WASTES);
+        doReturn(Holder.Reference.createStandAlone(biomeOwner, ModBiomes.FROZEN_EXPANSE))
+                .when(biomeGetter).getOrThrow(ModBiomes.FROZEN_EXPANSE);
 
         ModStructures.bootstrapStructure(structureContext);
 
@@ -1065,6 +1103,79 @@ class ModSpaceWorldGenTest {
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.BATTLEFIELD_SALVAGE).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.CARGO_POD).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.COLONY_LARDER).build());
+    }
+
+    @Test
+    @DisplayName("7-Biome-Partition: extreme Zonen stechen heraus, Basis-Zonen bleiben intakt")
+    void sevenBiomePartitionRoutesExtremeZones() {
+        Climate.ParameterList<ResourceKey<Biome>> dist = ModDimensions.spaceBiomeDistribution();
+
+        // Gravity Rift: C extrem niedrig + W extrem hoch gewinnt ueber ALLE Basis-Biome
+        assertEquals(ModBiomes.GRAVITY_RIFT, dist.findValue(
+                point(-0.5F, 0.5F, -0.95F, 0.0F, 0.0F, 0.85F)));
+        // Stellar Corona: C hoch + T extrem heiss
+        assertEquals(ModBiomes.STELLAR_CORONA, dist.findValue(
+                point(0.9F, 0.5F, 0.8F, 0.0F, 0.0F, 0.0F)));
+        // Ion Storm: W extrem tief + H hoch
+        assertEquals(ModBiomes.ION_STORM, dist.findValue(
+                point(0.0F, 0.7F, 0.0F, 0.0F, 0.0F, -0.8F)));
+
+        // Basis-Partition bleibt intakt bei neutralen C/W:
+        assertEquals(ModBiomes.FROZEN_EXPANSE, dist.findValue(point(-0.8F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F)));
+        assertEquals(ModBiomes.VOID_WASTES, dist.findValue(point(0.0F, -0.5F, 0.0F, 0.0F, 0.0F, 0.0F)));
+        assertEquals(ModDimensions.SPACE_BIOME, dist.findValue(point(0.0F, 0.5F, 0.0F, 0.0F, 0.0F, 0.0F)));
+        assertEquals(ModBiomes.PLASMA_NEBULA, dist.findValue(point(0.9F, 0.5F, 0.0F, 0.0F, 0.0F, 0.0F)));
+
+        // Gapless-Abdeckung: alle 7 Biome werden von einem 4D-Raster erreicht
+        java.util.Set<ResourceKey<Biome>> reachable = new java.util.HashSet<>();
+        for (float t = -1.0F; t <= 1.0F; t += 0.25F) {
+            for (float h = -1.0F; h <= 1.0F; h += 0.25F) {
+                for (float c = -1.0F; c <= 1.0F; c += 0.25F) {
+                    for (float w = -1.0F; w <= 1.0F; w += 0.25F) {
+                        reachable.add(dist.findValue(point(t, h, c, 0.0F, 0.0F, w)));
+                    }
+                }
+            }
+        }
+        assertEquals(java.util.Set.of(ModBiomes.GRAVITY_RIFT, ModBiomes.STELLAR_CORONA,
+                ModBiomes.ION_STORM, ModBiomes.FROZEN_EXPANSE, ModBiomes.VOID_WASTES,
+                ModDimensions.SPACE_BIOME, ModBiomes.PLASMA_NEBULA), reachable, "Alle 7 Biome muessen erreichbar sein");
+    }
+
+    private static Climate.TargetPoint point(float t, float h, float c, float e, float d, float w) {
+        // Climate-Parameter werden mit 10000 skaliert (vanilla Climate.Parameter.point)
+        return new Climate.TargetPoint((long) (t * 10000F), (long) (h * 10000F), (long) (c * 10000F),
+                (long) (e * 10000F), (long) (d * 10000F), (long) (w * 10000F));
+    }
+
+    @Test
+    @DisplayName("Extreme-Zellen-Specs: deterministisch und in Zellgrenzen geklemmt")
+    void extremeCellSpecsAreDeterministicAndBounded() {
+        // Gravity Rift
+        var rift = com.lit.spaceships.world.feature.GravityRiftFeature.specForCell(3, -4);
+        assertEquals(rift, com.lit.spaceships.world.feature.GravityRiftFeature.specForCell(3, -4));
+        assertTrue(rift.riftY() >= 40 && rift.riftY() <= 200);
+        double riftMargin = com.lit.spaceships.world.feature.GravityRiftFeature.R_DUST_OUT + 16.0D;
+        assertTrue(rift.centerX() >= 3 * 2048.0D + riftMargin
+                && rift.centerX() <= 4 * 2048.0D - riftMargin);
+
+        // Stellar Corona: 3 Flares, Y 96..288, sicher in der Zelle
+        var flares = com.lit.spaceships.world.feature.StellarCoronaFeature.specsForCell(1, 2);
+        assertEquals(3, flares.length);
+        assertEquals(flares[0], com.lit.spaceships.world.feature.StellarCoronaFeature.specsForCell(1, 2)[0]);
+        for (var flare : flares) {
+            assertTrue(flare.flareY() >= 96 && flare.flareY() <= 288);
+            assertTrue(flare.flareX() >= 1 * 1024 + 64 && flare.flareX() <= 2 * 1024 - 64);
+        }
+
+        // Ion Storm: 4 Pylone, Y 64..256
+        var pylons = com.lit.spaceships.world.feature.IonStormFeature.specsForCell(-2, 5);
+        assertEquals(4, pylons.length);
+        assertEquals(pylons[3], com.lit.spaceships.world.feature.IonStormFeature.specsForCell(-2, 5)[3]);
+        for (var pylon : pylons) {
+            assertTrue(pylon.groundY() >= 64 && pylon.groundY() <= 256);
+            assertTrue(pylon.height() >= 3 && pylon.height() <= 5);
+        }
     }
 
     private static <T> T privateField(Object owner, String name, Class<T> type) {

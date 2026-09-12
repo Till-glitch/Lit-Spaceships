@@ -35,22 +35,25 @@ public final class ModNoiseSettings {
     public static void bootstrap(BootstrapContext<NoiseGeneratorSettings> context) {
         HolderGetter<NormalNoise.NoiseParameters> noises = context.lookup(Registries.NOISE);
         context.register(ModDimensions.SPACE_NOISE_SETTINGS, spaceNoiseSettings(
-                noises.getOrThrow(Noises.TEMPERATURE), noises.getOrThrow(Noises.VEGETATION)));
+                noises.getOrThrow(Noises.TEMPERATURE), noises.getOrThrow(Noises.VEGETATION),
+                noises.getOrThrow(Noises.CONTINENTALNESS), noises.getOrThrow(Noises.EROSION)));
     }
 
     static NoiseGeneratorSettings spaceNoiseSettings(Holder<NormalNoise.NoiseParameters> temperatureNoise,
-                                                     Holder<NormalNoise.NoiseParameters> vegetationNoise) {
+                                                     Holder<NormalNoise.NoiseParameters> vegetationNoise,
+                                                     Holder<NormalNoise.NoiseParameters> continentalnessNoise,
+                                                     Holder<NormalNoise.NoiseParameters> erosionNoise) {
         NoiseRouter router = new NoiseRouter(
                 DensityFunctions.zero(),        // barrier
                 DensityFunctions.zero(),        // fluid_level_floodedness
                 DensityFunctions.zero(),        // fluid_level_spread
                 DensityFunctions.zero(),        // lava
-                DensityFunctions.noise(temperatureNoise), // temperature (steuert Multi-Noise-Biome)
-                DensityFunctions.noise(vegetationNoise),  // vegetation = Feuchteachse (Multi-Noise-Biome)
-                DensityFunctions.zero(),        // continents
-                DensityFunctions.zero(),        // erosion
+                DensityFunctions.noise(temperatureNoise), // temperature (Multi-Noise-Achse T)
+                DensityFunctions.noise(vegetationNoise),  // vegetation = Feuchteachse (H)
+                DensityFunctions.noise(continentalnessNoise), // continents (C) - Gravity Rift / Stellar Corona
+                DensityFunctions.zero(),        // erosion (ungenutzt)
                 DensityFunctions.zero(),        // depth
-                DensityFunctions.zero(),        // ridges
+                DensityFunctions.noise(erosionNoise),     // ridges = Weirdness-Achse (W) - Ion Storm / Gravity Rift
                 DensityFunctions.constant(-1.0D), // initial_density_without_jaggedness
                 DensityFunctions.constant(-1.0D), // final_density (immer Luft)
                 DensityFunctions.zero(),        // vein_toggle

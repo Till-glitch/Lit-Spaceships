@@ -1,0 +1,46 @@
+{
+  "carvers": {},
+  "downfall": 0.0,
+  "effects": {
+    "additions_sound": {
+      "sound": "minecraft:ambient.basalt_deltas.additions",
+      "tick_chance": 0.01
+    },
+    "ambient_sound": "minecraft:ambient.nether_wastes.loop",
+    "fog_color": 16729344,
+    "mood_sound": {
+      "block_search_extent": 8,
+      "offset": 2.0,
+      "sound": "minecraft:ambient.basalt_deltas.mood",
+      "tick_delay": 5000
+    },
+    "particle": {
+      "options": {
+        "type": "minecraft:flame"
+      },
+      "probability": 0.015
+    },
+    "sky_color": 3344896,
+    "water_color": 16729344,
+    "water_fog_color": 3344896
+  },
+  "features": [
+    [
+      "lit_spaceships:stellar_flare_placed",
+      "lit_spaceships:plasma_ember_placed"
+    ]
+  ],
+  "has_precipitation": false,
+  "spawn_costs": {},
+  "spawners": {
+    "ambient": [],
+    "axolotls": [],
+    "creature": [],
+    "misc": [],
+    "monster": [],
+    "underground_water_creature": [],
+    "water_ambient": [],
+    "water_creature": []
+  },
+  "temperature": 1.2
+}

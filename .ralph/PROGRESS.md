@@ -23,6 +23,14 @@
 - [x] **Custom Loot Table: Dreadnought Armory (`lit_spaceships:chests/dreadnought_armory`)**: Netherite scrap/ingot, pulse laser echo shards, heavy beam components (blaze rods/quartz), explosives. **[COMPLETED 2026-09-07]** — Verdrahtet in `ModChestLootTableProvider` und in `dreadnought_wreck/engineering_core.nbt` Kiste eingebettet.
 - [x] **Custom Loot Table: Alien Monolith (`lit_spaceships:chests/alien_monolith`)**: Ancient technology lodestones, nether stars, echo shards, ender eyes, void materials. **[COMPLETED 2026-09-07]** — Verdrahtet in `ModChestLootTableProvider` und in `alien_outpost/monolith.nbt` Kiste eingebettet. EPOCH 4 KOMPLETT.
 
+### Epoch 8: 3D Multi-Noise Routing & Extreme Biomes
+- [x] **Router-Upgrade (T/H/C/W)**: `ModNoiseSettings` mappt jetzt echte Noises auf alle 4 Klimaachsen (temperature, vegetation, continentalness, erosion-as-ridges). **[COMPLETED 2026-09-12]**
+- [x] **7-Biome-Partition**: Deterministische 4D-Rechtecke — 3 extreme Zonen (gravity_rift C[-1.2,-0.85]×W[0.6,1.2]; stellar_corona C[0.45,1.1]×T[0.75,1.2]; ion_storm W[-1.2,-0.65]×H[0.4,1.0]) stechen aus der eingeschraenkten Basis-Partition (C[-0.85,1]×W[-0.65,1]) heraus. Gapless-Abdeckung per 4D-Raster-Test verifiziert. **[COMPLETED 2026-09-12]**
+- [x] **3 Extreme-Biome**: gravity_rift (Fog #0B001A, reverse_portal p=0.012, Basalt-Rumble), stellar_corona (Fog #FF4500, flame p=0.015, Nether-Wind), ion_storm (Fog #1E90FF, electric_spark p=0.020, Karmesin-Hum). **[COMPLETED 2026-09-12]**
+- [x] **3 Signature-Makro-Features** (Chunk-Budget-Zellarchitektur): `GravityRiftFeature` (Akkretionsscheibe: Crying Obsidian/Gilded Blackstone/dunkler Staub, 2048er-Zellen), `StellarCoronaFeature` (Flare-Herde: Magma/glattem Basalt/Lava-Kessel, 1024er-Zellen), `IonStormFeature` (EMP-Pylone: Kupfer/Blitzableiter/Kupferbirnen/Kettennetze, 2048er-Zellen). **[COMPLETED 2026-09-12]**
+- [x] **Tests**: 7-Biome-Partition (extreme Zonen + Basis + Gapless-Raster), Zell-Spec-Determinismus/Bounds, 3 GameTests (Singularitaet, Flare-Herd, geladener Pylon). 187 JUnit + 48/48 GameTests gruen.
+
+---
 ### Epoch 7: Biome Identity (Soundscapes & Atmosphere Effects)
 - [x] **Eigene Soundlandschaften**: Deep Space = Basalt-Loop/-Mood/-Additions (tiefes Groehnen), Plasma Nebula = Seelenwind-Loop + Karmesin-Zischen + Warped-Mood, Frozen Expanse = Seelen-Fluestern + Hoehlen-Mood (kein Loop), Void Wastes = bewusst komplett stumm. **[COMPLETED 2026-09-11]**
 - [x] **Atmosphaeren-Effekte pro Biom** (`BiomeAtmosphereService`, `PlayerTickEvent.Post`): Nebula = Glowing 5s / Slow Falling 15s (Aufwind), Frozen = Hypothermie-Langsamkeit 4s, Void Wastes = Dunkelheit 8s (Deprivation), Deep Space = neutral. Statistische JUnit-Tests (100k-Samples), i18n Action-Bar-Nachrichten (en/de). **[COMPLETED 2026-09-11]** EPOCH 7 KOMPLETT.

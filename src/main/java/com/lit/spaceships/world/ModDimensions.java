@@ -104,26 +104,42 @@ public class ModDimensions {
     }
 
     /**
-     * Klimatische Verteilung der Weltraum-Biome: Zwei-achsen-lückenlose
-     * Rechteck-Partition über Temperatur (Router-Noise) und Feuchte
-     * (Router-vegetation): Frozen Expanse = kältester Streifen, Void Wastes =
-     * trockene Hälfte des gemäßigten Bandes, Void (Basis) = feuchte Hälfte,
-     * Plasma-Nebel = heißester Streifen. An den Plattengrenzen ist jeder Punkt
-     * strikt dem nächstgelegenen Rechteck zugeordnet.
+     * Klimatische 4-Achsen-Verteilung (T, H, C, W) der 7 Weltraum-Biome:
+     * Drei extreme Zonen stechen aus der Basis-Partition heraus, indem die
+     * Basis-Biome deterministisch (ohne Tie-Breaking) auf C in [-0.85, 1] und
+     * W in [-0.65, 1] eingeschraenkt sind:
+     * - Gravity Rift: C extrem niedrig UND W extrem hoch (Akktretions-Singularitaet)
+     * - Stellar Corona: C hoch UND T extrem heiss (Sonnen-Naehe)
+     * - Ion Storm: W extrem tief (Rift-Taeler) UND H hoch (geladene Wolken)
+     * Jeder Punkt im 4D-Raum wird strikt vom naechstgelegenen Rechteck bedient.
      */
     static Climate.ParameterList<ResourceKey<Biome>> spaceBiomeDistribution() {
         Climate.Parameter any = Climate.Parameter.span(-1.0F, 1.0F);
+        Climate.Parameter baseC = Climate.Parameter.span(-0.85F, 1.0F);
+        Climate.Parameter baseW = Climate.Parameter.span(-0.65F, 1.0F);
         return new Climate.ParameterList<>(List.of(
+                // Extreme Zonen zuerst (schneiden die Basis-Rechtecke an)
                 Pair.of(new Climate.ParameterPoint(
-                        Climate.Parameter.span(-1.0F, -0.3F), any, any, any, any, any, 0L), ModBiomes.FROZEN_EXPANSE),
+                        any, any, Climate.Parameter.span(-1.2F, -0.85F), any, any,
+                        Climate.Parameter.span(0.6F, 1.2F), 0L), ModBiomes.GRAVITY_RIFT),
+                Pair.of(new Climate.ParameterPoint(
+                        Climate.Parameter.span(0.75F, 1.2F), any, Climate.Parameter.span(0.45F, 1.1F),
+                        any, any, any, 0L), ModBiomes.STELLAR_CORONA),
+                Pair.of(new Climate.ParameterPoint(
+                        any, Climate.Parameter.span(0.4F, 1.0F), any, any, any,
+                        Climate.Parameter.span(-1.2F, -0.65F), 0L), ModBiomes.ION_STORM),
+                // Basis-Partition (eingeschraenkt auf C/W-Basisband)
+                Pair.of(new Climate.ParameterPoint(
+                        Climate.Parameter.span(-1.0F, -0.3F), any, baseC, any, any, baseW, 0L), ModBiomes.FROZEN_EXPANSE),
                 Pair.of(new Climate.ParameterPoint(
                         Climate.Parameter.span(-0.3F, 0.4F), Climate.Parameter.span(-1.0F, 0.0F),
-                        any, any, any, any, 0L), ModBiomes.VOID_WASTES),
+                        baseC, any, any, baseW, 0L), ModBiomes.VOID_WASTES),
                 Pair.of(new Climate.ParameterPoint(
                         Climate.Parameter.span(-0.3F, 0.4F), Climate.Parameter.span(0.0F, 1.0F),
-                        any, any, any, any, 0L), SPACE_BIOME),
+                        baseC, any, any, baseW, 0L), SPACE_BIOME),
                 Pair.of(new Climate.ParameterPoint(
-                        Climate.Parameter.span(0.4F, 1.0F), any, any, any, any, any, 0L), ModBiomes.PLASMA_NEBULA)
+                        Climate.Parameter.span(0.4F, 1.0F), any, Climate.Parameter.span(-1.0F, 0.45F),
+                        any, any, baseW, 0L), ModBiomes.PLASMA_NEBULA)
         ));
     }
 }
