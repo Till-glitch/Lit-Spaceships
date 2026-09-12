@@ -19,6 +19,10 @@ public class ModGermanLanguageProvider extends LanguageProvider {
 
     @Override
     protected void addTranslations() {
+        add("block.lit_spaceships.beacon", "Transponder-Sendeboje");
+        add("item.lit_spaceships.signalscope", "Signalfernrohr");
+        add("item.lit_spaceships.signalscope.signal", "Signal: %1$s | Ausrichtung %2$s%% | Entfernung %3$s m");
+        add("item.lit_spaceships.signalscope.none", "Kein Transpondersignal empfangen...");
         // 1. Creative Tabs
         add(ModI18n.Tab.MAIN, "Lit Spaceships - Raumschiffe");
 

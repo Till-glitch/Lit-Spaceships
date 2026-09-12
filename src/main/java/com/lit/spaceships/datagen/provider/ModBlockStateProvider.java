@@ -35,6 +35,11 @@ public class ModBlockStateProvider extends BlockStateProvider {
         ModelFile shieldModel = models().getExistingFile(modLoc("block/spaceship_shield"));
         simpleBlock(ModBlocks.SPACESHIP_SHIELD.get(), shieldModel);
 
+        // Transponder-Beacon (Epoch 10): nutzt die existierende machine_side-Textur
+        ModelFile beaconModel = models().cubeAll(ModBlocks.BEACON.getId().getPath(),
+                modLoc("block/machine_side"));
+        simpleBlockWithItem(ModBlocks.BEACON.get(), beaconModel);
+
         // Laser Split-Model Extrahierung (Nur die statische Voxel-Basisplatte)
         ModelFile laserBaseModel = models().getExistingFile(modLoc("block/laser_base"));
         registerLaserBase(ModBlocks.PULSE_LASER.get(), laserBaseModel);

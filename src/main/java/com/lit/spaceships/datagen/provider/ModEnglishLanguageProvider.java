@@ -19,6 +19,10 @@ public class ModEnglishLanguageProvider extends LanguageProvider {
 
     @Override
     protected void addTranslations() {
+        add("block.lit_spaceships.beacon", "Transponder Beacon");
+        add("item.lit_spaceships.signalscope", "Signalscope");
+        add("item.lit_spaceships.signalscope.signal", "Signal: %1$s | Alignment %2$s%% | Range %3$sm");
+        add("item.lit_spaceships.signalscope.none", "No transponder signal detected...");
         // 1. Creative Tabs
         add(ModI18n.Tab.MAIN, "Lit Spaceships - Spaceships");
 

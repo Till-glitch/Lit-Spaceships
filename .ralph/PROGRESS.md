@@ -23,6 +23,14 @@
 - [x] **Custom Loot Table: Dreadnought Armory (`lit_spaceships:chests/dreadnought_armory`)**: Netherite scrap/ingot, pulse laser echo shards, heavy beam components (blaze rods/quartz), explosives. **[COMPLETED 2026-09-07]** — Verdrahtet in `ModChestLootTableProvider` und in `dreadnought_wreck/engineering_core.nbt` Kiste eingebettet.
 - [x] **Custom Loot Table: Alien Monolith (`lit_spaceships:chests/alien_monolith`)**: Ancient technology lodestones, nether stars, echo shards, ender eyes, void materials. **[COMPLETED 2026-09-07]** — Verdrahtet in `ModChestLootTableProvider` und in `alien_outpost/monolith.nbt` Kiste eingebettet. EPOCH 4 KOMPLETT.
 
+### Epoch 10: Diegetic Sensors & Telemetry System
+- [x] **Telemetry-Engine** (`Telemetry`, pure): Alignment = normiertes Skalarprodukt L·T in [-1,1]; Ping-Pitch 0.5..1.3; Distanz-Daempfung linear bis MAX_RANGE 512; `bestSignal` waehlt staerkstes Alignment (Tie-Break: Distanz). XOR-Koordinatenverschluesselung deterministisch/involutiv. **[COMPLETED 2026-09-12]**
+- [x] **Transponder Beacon** (`BeaconBlock` + `BeaconBlockEntity`): Frequenz im BE gespeichert (DISTRESS_CALL/RESEARCH_BEACON/ANOMALOUS_RELIC), Server-Tick-Sonar-Ping, volle BE-Speicherung. Datagen: Blockstate+Item-Modell (machine_side-Textur), Self-Drop-Loot. **[COMPLETED 2026-09-12]**
+- [x] **Signalscope-Item**: Rechtsklick scannt geladene Chunks (Radius 33 Chunks) nach Beacon-BlockEntities, bestSignal moduliert Ping-Pitch, Action-Bar zeigt Frequenz/Alignment%/Distanz, 20-Tick-Cooldown. **[COMPLETED 2026-09-12]**
+- [x] **TelemetryData Data Component**: verschluesselte Koordinate + Frequenz + Transponder-ID, persistent + networkSynchronized, Codec-Roundtrip getestet. **[COMPLETED 2026-09-12]**
+- [x] **Tests**: Alignment/Daempfung/Pitch/Wellenform/XOR/Frequenz-Kanaele (JUnit), Beacon-Signal-Registrierung + Detection + Alignment-Priorisierung (GameTest). 196 JUnit + 50/50 GameTests gruen. Epoch 10 KOMPLETT.
+
+---
 ### Epoch 9: Physicalized Decompression & Atmosphere Logic
 - [x] **Extreme-Biome-Planner** (pure, statistisch getestet): `planGravityShear` (Sog zur Akkretionsmitte, Staerke 0.018-0.06, Radius 96), `planSolarRadiation` (4% Roll, nur ungeschuetzt; 1 Schaden + 1 Ruestungsnutzung; Gold/Netherite schuetzt), `planIonStorm` (Uebelkeit ~1.5%, Elytra-Stall 5%, Blitz 0.8% nur mit Metallruestung). Wired in `BiomeAtmosphereService.onPlayerTick` mit i18n Action-Bar-Warnungen (en/de). **[COMPLETED 2026-09-12]**
 - [x] **DecompressionService + pressurized_hull-Tag**: Block-Zerstoerung an pressurisierten Huellen scannt 5x5x5 auf Kavernen-Luft (min 6 Bloecke) und erzeugt 60-Tick-Auswaerts-Sog (0.045/tick, Radius 6) auf Entities+Items. GameTest: Item wird 1.3+ Bloecke zur Bruchstelle getragen. **[COMPLETED 2026-09-12]** Epoch 9 KOMPLETT — 191 JUnit + 49/49 GameTests.

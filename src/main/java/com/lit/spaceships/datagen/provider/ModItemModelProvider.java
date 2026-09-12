@@ -20,6 +20,11 @@ public class ModItemModelProvider extends ItemModelProvider {
         withExistingParent(ModBlocks.HEAVY_BEAM.getId().getPath(), modLoc("block/laser_base"));
         withExistingParent(ModBlocks.MINING_LASER.getId().getPath(), modLoc("block/laser_base"));
 
+        // Epoch 10: Beacon (Parent = Blockmodell) + Signalscope (Parent = generiertes Item)
+        withExistingParent(ModBlocks.BEACON.getId().getPath(), modLoc("block/beacon"));
+        withExistingParent(ModItems.SIGNALSCOPE.getId().getPath(), "item/generated")
+                .texture("layer0", modLoc("item/backflip_tool"));
+
         // Maschinen Block-Items mit bestehendem Parent
         withExistingParent(ModBlocks.SPACESHIP_CONTROL.getId().getPath(), modLoc("block/spaceship_control"));
         withExistingParent(ModBlocks.SPACESHIP_HELM.getId().getPath(), modLoc("block/spaceship_helm"));

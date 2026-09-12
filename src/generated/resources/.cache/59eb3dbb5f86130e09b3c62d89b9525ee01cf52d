@@ -1,4 +1,5 @@
-// 1.21.1	2026-09-11T19:18:13.1002338	Loot Tables
+// 1.21.1	2026-09-12T12:49:03.2231523	Loot Tables
+f592844b4182dee0a4d92e45a0777017a19cffed data/lit_spaceships/loot_table/blocks/beacon.json
 c686c702816b7ce3a51573b04d9c31a7c294fde0 data/lit_spaceships/loot_table/blocks/example_block.json
 4652d0d85eebdf140eea1bc96156348470c64200 data/lit_spaceships/loot_table/blocks/heavy_beam.json
 82b3e7a03f2d0ed9f706d2eb95496a8e8787725c data/lit_spaceships/loot_table/blocks/mining_laser.json

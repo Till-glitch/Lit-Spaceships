@@ -1,6 +1,7 @@
 package com.lit.spaceships.registry;
 
 import com.lit.spaceships.LitSpaceships;
+import com.lit.spaceships.block.entity.BeaconBlockEntity;
 import com.lit.spaceships.block.entity.SpaceshipControlBlockEntity;
 import com.lit.spaceships.block.entity.SpaceshipHelmBlockEntity;
 import com.lit.spaceships.block.entity.SpaceshipReactorBlockEntity;
@@ -21,6 +22,10 @@ public class ModBlockEntities {
     public static final Supplier<BlockEntityType<SpaceshipControlBlockEntity>> SPACESHIP_CONTROL_BE =
             BLOCK_ENTITIES.register("spaceship_control_be", () ->
                     BlockEntityType.Builder.of(SpaceshipControlBlockEntity::new, ModBlocks.SPACESHIP_CONTROL.get()).build(null));
+
+    public static final Supplier<BlockEntityType<BeaconBlockEntity>> BEACON_BE =
+            BLOCK_ENTITIES.register("beacon_be", () ->
+                    BlockEntityType.Builder.of(BeaconBlockEntity::new, ModBlocks.BEACON.get()).build(null));
 
     public static final Supplier<BlockEntityType<SpaceshipHelmBlockEntity>> SPACESHIP_HELM_BE =
             BLOCK_ENTITIES.register("spaceship_helm_be", () ->

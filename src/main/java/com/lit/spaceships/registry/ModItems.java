@@ -2,6 +2,7 @@ package com.lit.spaceships.registry;
 
 import com.lit.spaceships.LitSpaceships;
 import com.lit.spaceships.item.BackflipToolItem;
+import com.lit.spaceships.item.SignalScopeItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
@@ -28,6 +29,12 @@ public class ModItems {
             ModBlocks.HEAVY_BEAM);
     public static final DeferredItem<BlockItem> MINING_LASER_ITEM = ITEMS.registerSimpleBlockItem("mining_laser",
             ModBlocks.MINING_LASER);
+
+    public static final DeferredItem<BlockItem> BEACON_ITEM = ITEMS.registerSimpleBlockItem("beacon",
+            ModBlocks.BEACON);
+
+    public static final DeferredItem<SignalScopeItem> SIGNALSCOPE = ITEMS.register("signalscope",
+            () -> new SignalScopeItem(new Item.Properties().stacksTo(1)));
 
     // Items
     public static final DeferredItem<Item> BACKFLIP_TOOL = ITEMS.register("backflip_tool",

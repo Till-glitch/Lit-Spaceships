@@ -795,4 +795,40 @@ public class WorldGenGameTests {
                     helper.succeed();
                 });
     }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void beaconSignalRegistrationAndDetection(GameTestHelper helper) {
+        var beaconPos = helper.absolutePos(new BlockPos(10, 6, 6));
+        helper.setBlock(new BlockPos(10, 6, 6), com.lit.spaceships.registry.ModBlocks.BEACON.get());
+        if (!(helper.getLevel().getBlockEntity(beaconPos)
+                instanceof com.lit.spaceships.block.entity.BeaconBlockEntity beacon)) {
+            helper.fail("Beacon-BlockEntity muss bei Platzierung entstehen");
+            return;
+        }
+        beacon.setFrequency(com.lit.spaceships.world.Telemetry.Frequencies.RESEARCH_BEACON);
+
+        var listenerPos = helper.absolutePos(new BlockPos(3, 6, 6));
+        var signals = com.lit.spaceships.item.SignalScopeItem.scanWorld(helper.getLevel(),
+                net.minecraft.world.phys.Vec3.atCenterOf(listenerPos));
+        boolean found = signals.stream().anyMatch(sig ->
+                sig.frequency().equals(com.lit.spaceships.world.Telemetry.Frequencies.RESEARCH_BEACON));
+        if (!found) {
+            helper.fail("Scan muss den Research-Beacon mit korrekter Frequenz finden");
+            return;
+        }
+
+        var reading = com.lit.spaceships.world.Telemetry.bestSignal(
+                net.minecraft.world.phys.Vec3.atCenterOf(listenerPos),
+                new net.minecraft.world.phys.Vec3(1, 0, 0), signals);
+        if (reading.isEmpty()) {
+            helper.fail("bestSignal muss den registrierten Beacon lesen");
+            return;
+        }
+        if (!reading.get().signal().frequency()
+                .equals(com.lit.spaceships.world.Telemetry.Frequencies.RESEARCH_BEACON)) {
+            helper.fail("Alignment-Lesung muss den Research-Beacon priorisieren (direkt anvisiert)");
+            return;
+        }
+        helper.succeed();
+    }
 }

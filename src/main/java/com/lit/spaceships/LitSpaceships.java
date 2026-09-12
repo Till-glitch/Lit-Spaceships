@@ -29,6 +29,7 @@ public class LitSpaceships {
         ModCreativeTabs.register(modEventBus);
         ModMenuTypes.register(modEventBus);
         ModAttachments.register(modEventBus);
+        com.lit.spaceships.registry.ModDataComponents.register(modEventBus);
         com.lit.spaceships.registry.ModEntities.register(modEventBus);
         com.lit.spaceships.registry.ModFeatures.register(modEventBus);
         modEventBus.addListener(this::registerGameTests);
