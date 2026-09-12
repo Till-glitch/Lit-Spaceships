@@ -53,7 +53,7 @@ class ModLootTableProviderTest {
 
         // Verify that all 8 essential blocks are registered in ModBlocks
         var entries = ModBlocks.BLOCKS.getEntries();
-        assertEquals(9, entries.size());
+        assertEquals(12, entries.size());
 
         var blockIds = entries.stream().map(e -> e.getId().getPath()).toList();
         assertTrue(blockIds.contains("example_block"));

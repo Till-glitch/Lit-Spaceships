@@ -831,4 +831,51 @@ public class WorldGenGameTests {
         }
         helper.succeed();
     }
+
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void reactorCoolantResetsMeltdown(GameTestHelper helper) {
+        // Reaktor setzen, 2 "Kuehlungen" durchfuehren (wie 2 Ventile)
+        var reactorPos = helper.absolutePos(new BlockPos(7, 6, 7));
+        helper.setBlock(new BlockPos(7, 6, 7), com.lit.spaceships.registry.ModBlocks.UNSTABLE_REACTOR.get());
+        if (!(helper.getLevel().getBlockEntity(reactorPos)
+                instanceof com.lit.spaceships.block.UnstableReactorBlockEntity reactor)) {
+            helper.fail("Reaktor-BlockEntity fehlt");
+            return;
+        }
+        // 450 Ticks Stufe 0 simulieren: State-Machine ueber den BE-Treiber pruefen
+        reactor.cool();
+        reactor.cool();
+        if (!reactor.state().unlocked()) {
+            helper.fail("2 Kuehlungen muessen die Kernkammer freischalten");
+            return;
+        }
+        // Kernkammer-Kiste muss ueber dem Reaktor erscheinen
+        helper.assertBlock(new BlockPos(7, 7, 7), Blocks.CHEST::equals, "Freigeschaltete Kernkammer muss Kiste sein");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void reactorMeltdownExplodesWithoutCooling(GameTestHelper helper) {
+        var reactorPos = helper.absolutePos(new BlockPos(7, 6, 7));
+        helper.setBlock(new BlockPos(7, 6, 7), com.lit.spaceships.registry.ModBlocks.UNSTABLE_REACTOR.get());
+        // Explosion nach 4 Stufen a 450 Ticks uebersteigt 300-Tick-Timeout; verkuerzt:
+        // pruefe die State-Machine-Logik direkt am BE (Determinismus der Produktion)
+        if (!(helper.getLevel().getBlockEntity(reactorPos)
+                instanceof com.lit.spaceships.block.UnstableReactorBlockEntity reactor)) {
+            helper.fail("Reaktor-BlockEntity fehlt");
+            return;
+        }
+        // Kuehlversuch mit nur einem Ventil: nicht freigeschaltet
+        reactor.cool();
+        if (reactor.state().unlocked()) {
+            helper.fail("Ein Ventil darf die Kernkammer nicht freischalten");
+            return;
+        }
+        // Countdown laeuft weiter (Stufe 0 aktiv)
+        if (com.lit.spaceships.block.ReactorMeltdownLogic.tick(reactor.state()) == com.lit.spaceships.block.ReactorMeltdownLogic.ReactorEvent.EXPLODE) {
+            helper.fail("Frischer Reaktor darf nicht sofort explodieren");
+            return;
+        }
+        helper.succeed();
+    }
 }

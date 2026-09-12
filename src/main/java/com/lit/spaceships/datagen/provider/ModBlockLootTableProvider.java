@@ -29,6 +29,9 @@ public class ModBlockLootTableProvider extends BlockLootSubProvider {
         this.dropSelf(ModBlocks.HEAVY_BEAM.get());
         this.dropSelf(ModBlocks.MINING_LASER.get());
         this.dropSelf(ModBlocks.BEACON.get());
+        this.dropSelf(ModBlocks.UNSTABLE_REACTOR.get());
+        this.dropSelf(ModBlocks.CUT_POINT.get());
+        this.dropSelf(ModBlocks.SEALED_SALVAGE_CRATE.get());
     }
 
     @Override

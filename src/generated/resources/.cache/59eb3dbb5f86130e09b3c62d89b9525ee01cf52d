@@ -1,13 +1,16 @@
-// 1.21.1	2026-09-12T13:04:19.199174	Loot Tables
+// 1.21.1	2026-09-12T13:20:10.13905	Loot Tables
 f592844b4182dee0a4d92e45a0777017a19cffed data/lit_spaceships/loot_table/blocks/beacon.json
+0c037c3f6267974f329595b3745e60306df1ca7d data/lit_spaceships/loot_table/blocks/cut_point.json
 c686c702816b7ce3a51573b04d9c31a7c294fde0 data/lit_spaceships/loot_table/blocks/example_block.json
 4652d0d85eebdf140eea1bc96156348470c64200 data/lit_spaceships/loot_table/blocks/heavy_beam.json
 82b3e7a03f2d0ed9f706d2eb95496a8e8787725c data/lit_spaceships/loot_table/blocks/mining_laser.json
 2c694c0970e8a1d0ef2481aa9a624a2c3cab03e7 data/lit_spaceships/loot_table/blocks/pulse_laser.json
+d2fc55fc7805f92f68b55d8503c7db629df449da data/lit_spaceships/loot_table/blocks/sealed_salvage_crate.json
 f55d85221ba5f6e2f8f45a037f9237bef291299c data/lit_spaceships/loot_table/blocks/spaceship_control.json
 ce627dc9cfe8113343de901148b176b576813af5 data/lit_spaceships/loot_table/blocks/spaceship_helm.json
 bde3253b3649480a467b34249fb263b05c030dfc data/lit_spaceships/loot_table/blocks/spaceship_reactor.json
 f3362b8bc4e3a775d441121a8f1a89df443dd0f2 data/lit_spaceships/loot_table/blocks/spaceship_shield.json
+7605cbcf45bbbea8741cc6be65db8ec2d3875881 data/lit_spaceships/loot_table/blocks/unstable_reactor.json
 f96680743fc48a722d4c696f354b8990bedbfd6a data/lit_spaceships/loot_table/chests/alien_monolith.json
 62b663e5b22d6cc3ec4ed1c6d2b0710a1e5f645e data/lit_spaceships/loot_table/chests/battlefield_salvage.json
 d8253a38e8329fbb317948f2fba7eb817d64e3af data/lit_spaceships/loot_table/chests/behemoth_manifest.json

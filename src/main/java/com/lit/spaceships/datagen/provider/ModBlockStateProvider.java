@@ -40,6 +40,15 @@ public class ModBlockStateProvider extends BlockStateProvider {
                 modLoc("block/machine_side"));
         simpleBlockWithItem(ModBlocks.BEACON.get(), beaconModel);
 
+        // Epoch 12: Salvage-Bloecke (existierende Texturen)
+        ModelFile reactorCoreModel = models().cubeAll(ModBlocks.UNSTABLE_REACTOR.getId().getPath(),
+                modLoc("block/machine_side"));
+        simpleBlockWithItem(ModBlocks.UNSTABLE_REACTOR.get(), reactorCoreModel);
+        simpleBlockWithItem(ModBlocks.CUT_POINT.get(),
+                models().cubeAll(ModBlocks.CUT_POINT.getId().getPath(), modLoc("block/laser_metal")));
+        simpleBlockWithItem(ModBlocks.SEALED_SALVAGE_CRATE.get(),
+                models().cubeAll(ModBlocks.SEALED_SALVAGE_CRATE.getId().getPath(), modLoc("block/machine_side")));
+
         // Laser Split-Model Extrahierung (Nur die statische Voxel-Basisplatte)
         ModelFile laserBaseModel = models().getExistingFile(modLoc("block/laser_base"));
         registerLaserBase(ModBlocks.PULSE_LASER.get(), laserBaseModel);

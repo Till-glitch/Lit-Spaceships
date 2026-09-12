@@ -33,6 +33,16 @@ public class ModItems {
     public static final DeferredItem<BlockItem> BEACON_ITEM = ITEMS.registerSimpleBlockItem("beacon",
             ModBlocks.BEACON);
 
+    public static final DeferredItem<BlockItem> UNSTABLE_REACTOR_ITEM = ITEMS.registerSimpleBlockItem("unstable_reactor",
+            ModBlocks.UNSTABLE_REACTOR);
+    public static final DeferredItem<BlockItem> CUT_POINT_ITEM = ITEMS.registerSimpleBlockItem("cut_point",
+            ModBlocks.CUT_POINT);
+    public static final DeferredItem<BlockItem> SEALED_SALVAGE_CRATE_ITEM = ITEMS.registerSimpleBlockItem("sealed_salvage_crate",
+            ModBlocks.SEALED_SALVAGE_CRATE);
+    public static final DeferredItem<com.lit.spaceships.item.AccessCipherItem> ACCESS_CIPHER =
+            ITEMS.register("access_cipher", () -> new com.lit.spaceships.item.AccessCipherItem(
+                    new Item.Properties().stacksTo(1).durability(8)));
+
     public static final DeferredItem<SignalScopeItem> SIGNALSCOPE = ITEMS.register("signalscope",
             () -> new SignalScopeItem(new Item.Properties().stacksTo(1)));
 

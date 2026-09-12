@@ -23,6 +23,10 @@ public class ModGermanLanguageProvider extends LanguageProvider {
         add("item.lit_spaceships.signalscope", "Signalfernrohr");
         add("item.lit_spaceships.signalscope.signal", "Signal: %1$s | Ausrichtung %2$s%% | Entfernung %3$s m");
         add("item.lit_spaceships.signalscope.none", "Kein Transpondersignal empfangen...");
+        add("block.lit_spaceships.unstable_reactor", "Instabiler Reaktorkern");
+        add("block.lit_spaceships.cut_point", "Legierungs-Trennpunkt");
+        add("block.lit_spaceships.sealed_salvage_crate", "Versiegelte Bergungskiste");
+        add("item.lit_spaceships.access_cipher", "Zugriffsschluessel");
         // 1. Creative Tabs
         add(ModI18n.Tab.MAIN, "Lit Spaceships - Raumschiffe");
 

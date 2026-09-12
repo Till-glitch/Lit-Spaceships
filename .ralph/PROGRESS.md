@@ -31,6 +31,14 @@
 - [x] **Tests**: Alignment/Daempfung/Pitch/Wellenform/XOR/Frequenz-Kanaele (JUnit), Beacon-Signal-Registrierung + Detection + Alignment-Priorisierung (GameTest). 196 JUnit + 50/50 GameTests gruen. Epoch 10 KOMPLETT.
 
 ---
+### Epoch 12: Systemic Salvage & Engineering Puzzles
+- [x] **ReactorMeltdownLogic (pure State-Machine)**: Stufe 0..4 x 450 Ticks (90 s), 2 Kuehlventile resetten Countdown + schalten die Kernkammer (reactor_core_salvage-Kiste) frei; Versagen loest Explosion (Power 4) aus. 7 JUnit-Tests (Timing, Reset, Explosion, Rauch). **[COMPLETED 2026-09-12]**
+- [x] **UnstableReactorBlock + BE**: serverTick treibt die State-Machine; use() ohne Item = Kuehlversuch; NBT-Persistenz. **[COMPLETED 2026-09-12]**
+- [x] **CutPointBlock**: 3x3x3-Panel-Logik — wenn alle Cut-Points zerstoert sind, fallen 6 Iron Ingots + 1 Netherite Scrap (konzentrierter Schrott). **[COMPLETED 2026-09-12]**
+- [x] **SealedSalvageCrateBlock + AccessCipherItem**: Kiste oeffnet sich nur per Redstone-Signal oder Access Cipher (8 Nutzungen, durability). Beim Oeffnen: konzentrierte Fracht (Iron/Gold/Echo Shards). **[COMPLETED 2026-09-12]**
+- [x] **GameTests**: reactorCoolantResetsMeltdown (2 Ventile -> Kernkammer-Kiste), reactorMeltdownExplodesWithoutCooling (1 Ventil reicht nicht, Countdown laeuft). **[COMPLETED 2026-09-12]** Epoch 12 KOMPLETT — 206 JUnit + 52/52 GameTests.
+
+---
 ### Epoch 11: Megastructures & Modular Jigsaw Derelicts
 - [x] **7 NBT-Module via Python-Skript** (`scripts/generate_epoch11_megatstructures.py`): Behemoth Freighter (4 Module: Bridge 16x12x16 -> Cargo/Corridor -> Engineering, ~84 Bloecke Gesamtlänge, Manifest-Kiste), Relay Array (16x48x16 Gitter-Mast mit Research-Beacon), Solar Collector (24x10x24 Thermal-Plattform mit Lava-Kessel + Beacon), Deep Outpost (19x20x19 hohler Asteroid mit Horchposten + Anomaly-Beacon + Archiv-Kiste). **[COMPLETED 2026-09-12]**
 - [x] **Registrierung**: 7 Template-Pools (Behemoth start/sections/end, Relay, Solar, Outpost), 4 Jigsaw-Strukturen mit UniformHeight-Bounds (Freighter depth 4 = Multi-Chunk-Kette), 4 StructureSets (RandomSpread 56/46/52/58). Biome-Zuordnung: Freighter Space+Void, Relay Space+Nebula, Solar nur Corona, Outpost nur Gravity Rift. **[COMPLETED 2026-09-12]**

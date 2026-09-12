@@ -42,6 +42,21 @@ public class ModBlocks {
                     .mapColor(MapColor.COLOR_CYAN).strength(4.0f).requiresCorrectToolForDrops()
                     .lightLevel(state -> 6)));
 
+    public static final DeferredBlock<com.lit.spaceships.block.UnstableReactorBlock> UNSTABLE_REACTOR =
+            BLOCKS.register("unstable_reactor", () -> new com.lit.spaceships.block.UnstableReactorBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_RED).strength(5.0f)
+                            .requiresCorrectToolForDrops().lightLevel(state -> 3)));
+
+    public static final DeferredBlock<com.lit.spaceships.block.CutPointBlock> CUT_POINT =
+            BLOCKS.register("cut_point", () -> new com.lit.spaceships.block.CutPointBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_ORANGE)
+                            .strength(6.0f, 1.0f).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<com.lit.spaceships.block.SealedSalvageCrateBlock> SEALED_SALVAGE_CRATE =
+            BLOCKS.register("sealed_salvage_crate", () -> new com.lit.spaceships.block.SealedSalvageCrateBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BROWN)
+                            .strength(5.0f).requiresCorrectToolForDrops()));
+
     // 3. Diese Methode ruft unsere Hauptklasse später auf
     public static void register(IEventBus eventBus) {
         BLOCKS.register(eventBus);

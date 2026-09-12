@@ -23,6 +23,10 @@ public class ModEnglishLanguageProvider extends LanguageProvider {
         add("item.lit_spaceships.signalscope", "Signalscope");
         add("item.lit_spaceships.signalscope.signal", "Signal: %1$s | Alignment %2$s%% | Range %3$sm");
         add("item.lit_spaceships.signalscope.none", "No transponder signal detected...");
+        add("block.lit_spaceships.unstable_reactor", "Unstable Reactor Core");
+        add("block.lit_spaceships.cut_point", "Alloy Cut-Point");
+        add("block.lit_spaceships.sealed_salvage_crate", "Sealed Salvage Crate");
+        add("item.lit_spaceships.access_cipher", "Access Cipher");
         // 1. Creative Tabs
         add(ModI18n.Tab.MAIN, "Lit Spaceships - Spaceships");
 
