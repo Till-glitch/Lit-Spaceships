@@ -69,6 +69,26 @@ public class ModChestLootTableProvider implements LootTableSubProvider {
 
     public static final ResourceKey<LootTable> CARGO_POD = PodFeature.CARGO_POD_LOOT;
 
+    public static final ResourceKey<LootTable> BEHEMOTH_MANIFEST = ResourceKey.create(
+            Registries.LOOT_TABLE,
+            ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/behemoth_manifest"));
+
+    public static final ResourceKey<LootTable> REACTOR_CORE_SALVAGE = ResourceKey.create(
+            Registries.LOOT_TABLE,
+            ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/reactor_core_salvage"));
+
+    public static final ResourceKey<LootTable> RELAY_INTERCEPT = ResourceKey.create(
+            Registries.LOOT_TABLE,
+            ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/relay_intercept"));
+
+    public static final ResourceKey<LootTable> SOLAR_HARVEST = ResourceKey.create(
+            Registries.LOOT_TABLE,
+            ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/solar_harvest"));
+
+    public static final ResourceKey<LootTable> DEEP_OUTPOST_ARCHIVE = ResourceKey.create(
+            Registries.LOOT_TABLE,
+            ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/deep_outpost_archive"));
+
     public static final ResourceKey<LootTable> COLONY_LARDER = ResourceKey.create(
             Registries.LOOT_TABLE,
             ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "chests/colony_larder"));
@@ -343,5 +363,93 @@ public class ModChestLootTableProvider implements LootTableSubProvider {
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 2.0F))))
                         .add(LootItem.lootTableItem(Items.GOLDEN_APPLE).setWeight(1))
                         .add(LootItem.lootTableItem(Items.MUSIC_DISC_OTHERSIDE).setWeight(1))));
+
+        // Behemoth Manifest: Industrie-Templates, Mineralbloecke, Schwermaschinen-Teile
+        consumer.accept(BEHEMOTH_MANIFEST, LootTable.lootTable()
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(2.0F, 4.0F))
+                        .add(LootItem.lootTableItem(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE).setWeight(1))
+                        .add(LootItem.lootTableItem(Items.IRON_BLOCK).setWeight(8)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 4.0F))))
+                        .add(LootItem.lootTableItem(Items.COPPER_BLOCK).setWeight(8)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 4.0F))))
+                        .add(LootItem.lootTableItem(Items.PISTON).setWeight(4)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 2.0F))))
+                        .add(LootItem.lootTableItem(Items.HOPPER).setWeight(3)))
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(2.0F, 3.0F))
+                        .add(LootItem.lootTableItem(Items.IRON_INGOT).setWeight(10)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(3.0F, 9.0F))))
+                        .add(LootItem.lootTableItem(Items.TUFF).setWeight(6)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 6.0F))))));
+
+        // Reactor Core Salvage: Plasmakerne, Netherite, Hochvolt-Kondensatoren
+        consumer.accept(REACTOR_CORE_SALVAGE, LootTable.lootTable()
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(1.0F, 2.0F))
+                        .add(LootItem.lootTableItem(Items.NETHERITE_SCRAP).setWeight(4)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))
+                        .add(LootItem.lootTableItem(Items.REDSTONE_BLOCK).setWeight(6)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 4.0F))))
+                        .add(LootItem.lootTableItem(Items.DIAMOND).setWeight(4)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F)))))
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(2.0F, 4.0F))
+                        .add(LootItem.lootTableItem(Items.GLOWSTONE_DUST).setWeight(10)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(4.0F, 10.0F))))
+                        .add(LootItem.lootTableItem(Items.MAGMA_CREAM).setWeight(8)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 5.0F))))
+                        .add(LootItem.lootTableItem(Items.CRYING_OBSIDIAN).setWeight(5)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))));
+
+        // Relay Intercept: verschluesselte Logs, Echo Shards, Transponder
+        consumer.accept(RELAY_INTERCEPT, LootTable.lootTable()
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(1.0F, 2.0F))
+                        .add(LootItem.lootTableItem(Items.ECHO_SHARD).setWeight(6)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))
+                        .add(LootItem.lootTableItem(Items.COMPASS).setWeight(2))
+                        .add(LootItem.lootTableItem(Items.RECOVERY_COMPASS).setWeight(1)))
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(2.0F, 3.0F))
+                        .add(LootItem.lootTableItem(Items.PAPER).setWeight(10)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(3.0F, 8.0F))))
+                        .add(LootItem.lootTableItem(Items.BOOK).setWeight(6)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 2.0F))))
+                        .add(LootItem.lootTableItem(Items.AMETHYST_SHARD).setWeight(8)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 6.0F))))));
+
+        // Solar Harvest: Kollektor-Zellen, Prismarinkristalle, Strahllegierungen
+        consumer.accept(SOLAR_HARVEST, LootTable.lootTable()
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(1.0F, 2.0F))
+                        .add(LootItem.lootTableItem(Items.PRISMARINE_CRYSTALS).setWeight(8)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(3.0F, 8.0F))))
+                        .add(LootItem.lootTableItem(Items.GLOWSTONE).setWeight(5)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F)))))
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(2.0F, 4.0F))
+                        .add(LootItem.lootTableItem(Items.GOLD_INGOT).setWeight(10)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 6.0F))))
+                        .add(LootItem.lootTableItem(Items.COPPER_INGOT).setWeight(10)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(3.0F, 8.0F))))
+                        .add(LootItem.lootTableItem(Items.DAYLIGHT_DETECTOR).setWeight(3))));
+
+        // Deep Outpost Archive: Sternkarten, Nether Stars, verzauberte Buecher
+        consumer.accept(DEEP_OUTPOST_ARCHIVE, LootTable.lootTable()
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(1.0F, 1.0F))
+                        .add(LootItem.lootTableItem(Items.NETHER_STAR).setWeight(1))
+                        .add(LootItem.lootTableItem(Items.ENCHANTED_BOOK).setWeight(3))
+                        .add(LootItem.lootTableItem(Items.EXPERIENCE_BOTTLE).setWeight(4)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 5.0F)))))
+                .withPool(LootPool.lootPool()
+                        .setRolls(UniformGenerator.between(2.0F, 3.0F))
+                        .add(LootItem.lootTableItem(Items.ENDER_EYE).setWeight(6)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))
+                        .add(LootItem.lootTableItem(Items.ECHO_SHARD).setWeight(6)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 2.0F))))
+                        .add(LootItem.lootTableItem(Items.OBSIDIAN).setWeight(8)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 4.0F))))));
     }
 }

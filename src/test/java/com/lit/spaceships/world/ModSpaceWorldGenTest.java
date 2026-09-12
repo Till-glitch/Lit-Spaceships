@@ -905,48 +905,35 @@ class ModSpaceWorldGenTest {
 
         ModTemplatePools.bootstrap(poolContext);
 
-        ArgumentCaptor<StructureTemplatePool> captor = ArgumentCaptor.forClass(StructureTemplatePool.class);
-        verify(poolContext, times(11)).register(any(), captor.capture());
+        ArgumentCaptor<ResourceKey<StructureTemplatePool>> keyCaptor =
+                ArgumentCaptor.forClass(ResourceKey.class);
+        ArgumentCaptor<StructureTemplatePool> poolCaptor =
+                ArgumentCaptor.forClass(StructureTemplatePool.class);
+        verify(poolContext, times(17)).register(keyCaptor.capture(), poolCaptor.capture());
 
-        // 1. Station Start & Rooms
-        StructureTemplatePool stationStart = captor.getAllValues().get(0);
-        assertEquals(1, stationStart.size());
-        StructureTemplatePool stationRooms = captor.getAllValues().get(1);
-        assertEquals(9, stationRooms.size()); // 3 + 3 + 2 + 1 gewichtet
+        java.util.Map<ResourceKey<StructureTemplatePool>, StructureTemplatePool> pools =
+                new java.util.HashMap<>();
+        for (int i = 0; i < keyCaptor.getAllValues().size(); i++) {
+            pools.put(keyCaptor.getAllValues().get(i), poolCaptor.getAllValues().get(i));
+        }
 
-        // 2. Dreadnought Start & Sections
-        StructureTemplatePool dreadnoughtStart = captor.getAllValues().get(2);
-        assertEquals(1, dreadnoughtStart.size());
-        StructureTemplatePool dreadnoughtSections = captor.getAllValues().get(3);
-        assertEquals(6, dreadnoughtSections.size()); // 3 + 2 + 1 gewichtet
-
-        // 3. Alien Outpost Start
-        StructureTemplatePool alienStart = captor.getAllValues().get(4);
-        assertEquals(1, alienStart.size());
-
-        // 4. Cosmic Vault Start
-        StructureTemplatePool vaultStart = captor.getAllValues().get(5);
-        assertEquals(1, vaultStart.size());
-
-        // 5. Pirate Outpost Start
-        StructureTemplatePool pirateStart = captor.getAllValues().get(6);
-        assertEquals(1, pirateStart.size());
-
-        // 6. Leviathan Start
-        StructureTemplatePool leviathanStart = captor.getAllValues().get(7);
-        assertEquals(1, leviathanStart.size());
-
-        // 7. Monolith Start
-        StructureTemplatePool monolithStart = captor.getAllValues().get(8);
-        assertEquals(1, monolithStart.size());
-
-        // 8. Jump Gate Start
-        StructureTemplatePool gateStart = captor.getAllValues().get(9);
-        assertEquals(1, gateStart.size());
-
-        // 9. Colony Dome Start
-        StructureTemplatePool colonyStart = captor.getAllValues().get(10);
-        assertEquals(1, colonyStart.size());
+        assertEquals(1, pools.get(ModTemplatePools.SPACE_STATION_START).size());
+        assertEquals(9, pools.get(ModTemplatePools.SPACE_STATION_ROOMS).size());
+        assertEquals(1, pools.get(ModTemplatePools.DREADNOUGHT_WRECK_START).size());
+        assertEquals(6, pools.get(ModTemplatePools.DREADNOUGHT_WRECK_SECTIONS).size());
+        assertEquals(1, pools.get(ModTemplatePools.ALIEN_OUTPOST_START).size());
+        assertEquals(1, pools.get(ModTemplatePools.COSMIC_VAULT_START).size());
+        assertEquals(1, pools.get(ModTemplatePools.PIRATE_OUTPOST_START).size());
+        assertEquals(1, pools.get(ModTemplatePools.LEVIATHAN_BONES_START).size());
+        assertEquals(1, pools.get(ModTemplatePools.THE_MONOLITH_START).size());
+        assertEquals(1, pools.get(ModTemplatePools.JUMP_GATE_START).size());
+        assertEquals(1, pools.get(ModTemplatePools.COLONY_DOME_START).size());
+        assertEquals(1, pools.get(ModTemplatePools.BEHEMOTH_BRIDGE).size());
+        assertEquals(5, pools.get(ModTemplatePools.BEHEMOTH_SECTIONS).size());
+        assertEquals(1, pools.get(ModTemplatePools.BEHEMOTH_END).size());
+        assertEquals(1, pools.get(ModTemplatePools.RELAY_ARRAY_START).size());
+        assertEquals(1, pools.get(ModTemplatePools.SOLAR_COLLECTOR_START).size());
+        assertEquals(1, pools.get(ModTemplatePools.DEEP_OUTPOST_START).size());
     }
 
     @Test
@@ -961,7 +948,7 @@ class ModSpaceWorldGenTest {
 
         when(structureContext.lookup(Registries.TEMPLATE_POOL)).thenReturn(poolGetter);
         when(structureContext.lookup(Registries.BIOME)).thenReturn(biomeGetter);
-        // Nur die 4 Biome, die die Strukturen tatsaechlich referenzieren (Strict Stubs)
+        // Alle 8 referenzierten Biome (Strict Stubs)
         doReturn(Holder.Reference.createStandAlone(biomeOwner, ModDimensions.SPACE_BIOME))
                 .when(biomeGetter).getOrThrow(ModDimensions.SPACE_BIOME);
         doReturn(Holder.Reference.createStandAlone(biomeOwner, ModBiomes.PLASMA_NEBULA))
@@ -970,6 +957,10 @@ class ModSpaceWorldGenTest {
                 .when(biomeGetter).getOrThrow(ModBiomes.VOID_WASTES);
         doReturn(Holder.Reference.createStandAlone(biomeOwner, ModBiomes.FROZEN_EXPANSE))
                 .when(biomeGetter).getOrThrow(ModBiomes.FROZEN_EXPANSE);
+        doReturn(Holder.Reference.createStandAlone(biomeOwner, ModBiomes.STELLAR_CORONA))
+                .when(biomeGetter).getOrThrow(ModBiomes.STELLAR_CORONA);
+        doReturn(Holder.Reference.createStandAlone(biomeOwner, ModBiomes.GRAVITY_RIFT))
+                .when(biomeGetter).getOrThrow(ModBiomes.GRAVITY_RIFT);
 
         ModStructures.bootstrapStructure(structureContext);
 
@@ -1088,6 +1079,11 @@ class ModSpaceWorldGenTest {
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.JELLY_HEART));
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.BATTLEFIELD_SALVAGE));
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.CARGO_POD));
+        assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.BEHEMOTH_MANIFEST));
+        assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.REACTOR_CORE_SALVAGE));
+        assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.RELAY_INTERCEPT));
+        assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.SOLAR_HARVEST));
+        assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.DEEP_OUTPOST_ARCHIVE));
         assertTrue(tables.containsKey(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.COLONY_LARDER));
 
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.SPACE_STATION_CORE).build());
@@ -1102,6 +1098,11 @@ class ModSpaceWorldGenTest {
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.JELLY_HEART).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.BATTLEFIELD_SALVAGE).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.CARGO_POD).build());
+        assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.BEHEMOTH_MANIFEST).build());
+        assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.REACTOR_CORE_SALVAGE).build());
+        assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.RELAY_INTERCEPT).build());
+        assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.SOLAR_HARVEST).build());
+        assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.DEEP_OUTPOST_ARCHIVE).build());
         assertNotNull(tables.get(com.lit.spaceships.datagen.provider.ModChestLootTableProvider.COLONY_LARDER).build());
     }
 

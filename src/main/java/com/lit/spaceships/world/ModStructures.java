@@ -64,6 +64,31 @@ public final class ModStructures {
             ResourceKey.create(Registries.STRUCTURE_SET,
                     ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "cosmic_vault"));
 
+    public static final ResourceKey<Structure> BEHEMOTH_FREIGHTER =
+            ResourceKey.create(Registries.STRUCTURE,
+                    ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "behemoth_freighter"));
+    public static final ResourceKey<StructureSet> BEHEMOTH_FREIGHTER_SET =
+            ResourceKey.create(Registries.STRUCTURE_SET,
+                    ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "behemoth_freighter"));
+    public static final ResourceKey<Structure> RELAY_ARRAY =
+            ResourceKey.create(Registries.STRUCTURE,
+                    ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "relay_array"));
+    public static final ResourceKey<StructureSet> RELAY_ARRAY_SET =
+            ResourceKey.create(Registries.STRUCTURE_SET,
+                    ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "relay_array"));
+    public static final ResourceKey<Structure> SOLAR_COLLECTOR =
+            ResourceKey.create(Registries.STRUCTURE,
+                    ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "solar_collector"));
+    public static final ResourceKey<StructureSet> SOLAR_COLLECTOR_SET =
+            ResourceKey.create(Registries.STRUCTURE_SET,
+                    ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "solar_collector"));
+    public static final ResourceKey<Structure> DEEP_OUTPOST =
+            ResourceKey.create(Registries.STRUCTURE,
+                    ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "deep_outpost"));
+    public static final ResourceKey<StructureSet> DEEP_OUTPOST_SET =
+            ResourceKey.create(Registries.STRUCTURE_SET,
+                    ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "deep_outpost"));
+
     public static final ResourceKey<Structure> PIRATE_OUTPOST =
             ResourceKey.create(Registries.STRUCTURE,
                     ResourceLocation.fromNamespaceAndPath(LitSpaceships.MODID, "pirate_outpost"));
@@ -191,6 +216,50 @@ public final class ModStructures {
                 UniformHeight.of(VerticalAnchor.absolute(64), VerticalAnchor.absolute(200)),
                 false));
 
+        // 10. Behemoth Freighter (Space Biome & Void Wastes - schwerer Frachter)
+        Holder<StructureTemplatePool> freighterBridge =
+                pools.getOrThrow(ModTemplatePools.BEHEMOTH_BRIDGE);
+        Structure.StructureSettings freighterSettings = new Structure.StructureSettings(
+                HolderSet.direct(
+                        biomes.getOrThrow(ModDimensions.SPACE_BIOME),
+                        biomes.getOrThrow(ModBiomes.VOID_WASTES)),
+                Map.of(), GenerationStep.Decoration.SURFACE_STRUCTURES, TerrainAdjustment.NONE);
+        context.register(BEHEMOTH_FREIGHTER, new JigsawStructure(
+                freighterSettings, freighterBridge, 4,
+                UniformHeight.of(VerticalAnchor.absolute(48), VerticalAnchor.absolute(184)), false));
+
+        // 11. Relay Array (Space Biome & Plasma Nebula - Antennen-Relais)
+        Holder<StructureTemplatePool> relayPool =
+                pools.getOrThrow(ModTemplatePools.RELAY_ARRAY_START);
+        Structure.StructureSettings relaySettings = new Structure.StructureSettings(
+                HolderSet.direct(
+                        biomes.getOrThrow(ModDimensions.SPACE_BIOME),
+                        biomes.getOrThrow(ModBiomes.PLASMA_NEBULA)),
+                Map.of(), GenerationStep.Decoration.SURFACE_STRUCTURES, TerrainAdjustment.NONE);
+        context.register(RELAY_ARRAY, new JigsawStructure(
+                relaySettings, relayPool, 1,
+                UniformHeight.of(VerticalAnchor.absolute(96), VerticalAnchor.absolute(240)), false));
+
+        // 12. Solar Collector (nur Stellar Corona - thermische Ernte)
+        Holder<StructureTemplatePool> solarPool =
+                pools.getOrThrow(ModTemplatePools.SOLAR_COLLECTOR_START);
+        Structure.StructureSettings solarSettings = new Structure.StructureSettings(
+                HolderSet.direct(biomes.getOrThrow(ModBiomes.STELLAR_CORONA)),
+                Map.of(), GenerationStep.Decoration.SURFACE_STRUCTURES, TerrainAdjustment.NONE);
+        context.register(SOLAR_COLLECTOR, new JigsawStructure(
+                solarSettings, solarPool, 1,
+                UniformHeight.of(VerticalAnchor.absolute(120), VerticalAnchor.absolute(288)), false));
+
+        // 13. Deep Outpost (nur Gravity Rift - Horchposten im Asteroiden)
+        Holder<StructureTemplatePool> outpostPool =
+                pools.getOrThrow(ModTemplatePools.DEEP_OUTPOST_START);
+        Structure.StructureSettings outpostSettings = new Structure.StructureSettings(
+                HolderSet.direct(biomes.getOrThrow(ModBiomes.GRAVITY_RIFT)),
+                Map.of(), GenerationStep.Decoration.SURFACE_STRUCTURES, TerrainAdjustment.NONE);
+        context.register(DEEP_OUTPOST, new JigsawStructure(
+                outpostSettings, outpostPool, 1,
+                UniformHeight.of(VerticalAnchor.absolute(48), VerticalAnchor.absolute(184)), false));
+
         // 5. Pirate Satellite Outpost (Space Biome & Void Wastes - Raeuber pluendern Wracks)
         Holder<StructureTemplatePool> pirateStartPool =
                 pools.getOrThrow(ModTemplatePools.PIRATE_OUTPOST_START);
@@ -303,6 +372,22 @@ public final class ModStructures {
         Holder<Structure> vault = structures.getOrThrow(COSMIC_VAULT);
         context.register(COSMIC_VAULT_SET, new StructureSet(vault,
                 new RandomSpreadStructurePlacement(64, 20, RandomSpreadType.LINEAR, 2095820113)));
+
+        Holder<Structure> freighter = structures.getOrThrow(BEHEMOTH_FREIGHTER);
+        context.register(BEHEMOTH_FREIGHTER_SET, new StructureSet(freighter,
+                new RandomSpreadStructurePlacement(56, 20, RandomSpreadType.LINEAR, 153091247)));
+
+        Holder<Structure> relay = structures.getOrThrow(RELAY_ARRAY);
+        context.register(RELAY_ARRAY_SET, new StructureSet(relay,
+                new RandomSpreadStructurePlacement(46, 16, RandomSpreadType.LINEAR, 107113411)));
+
+        Holder<Structure> solar = structures.getOrThrow(SOLAR_COLLECTOR);
+        context.register(SOLAR_COLLECTOR_SET, new StructureSet(solar,
+                new RandomSpreadStructurePlacement(52, 18, RandomSpreadType.LINEAR, 126711623)));
+
+        Holder<Structure> outpost = structures.getOrThrow(DEEP_OUTPOST);
+        context.register(DEEP_OUTPOST_SET, new StructureSet(outpost,
+                new RandomSpreadStructurePlacement(58, 22, RandomSpreadType.LINEAR, 119022117)));
 
         Holder<Structure> pirate = structures.getOrThrow(PIRATE_OUTPOST);
         context.register(PIRATE_OUTPOST_SET, new StructureSet(pirate,

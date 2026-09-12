@@ -1,0 +1,14 @@
+{
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 126711623,
+    "separation": 18,
+    "spacing": 52
+  },
+  "structures": [
+    {
+      "structure": "lit_spaceships:solar_collector",
+      "weight": 1
+    }
+  ]
+}

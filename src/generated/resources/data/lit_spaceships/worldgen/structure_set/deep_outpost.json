@@ -1,0 +1,14 @@
+{
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 119022117,
+    "separation": 22,
+    "spacing": 58
+  },
+  "structures": [
+    {
+      "structure": "lit_spaceships:deep_outpost",
+      "weight": 1
+    }
+  ]
+}

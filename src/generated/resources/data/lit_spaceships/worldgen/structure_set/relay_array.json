@@ -1,0 +1,14 @@
+{
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 107113411,
+    "separation": 16,
+    "spacing": 46
+  },
+  "structures": [
+    {
+      "structure": "lit_spaceships:relay_array",
+      "weight": 1
+    }
+  ]
+}

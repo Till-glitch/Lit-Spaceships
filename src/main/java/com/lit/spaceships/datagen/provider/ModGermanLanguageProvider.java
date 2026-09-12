@@ -186,6 +186,10 @@ public class ModGermanLanguageProvider extends LanguageProvider {
         add(ModI18n.Structure.THE_MONOLITH, "Der stille Monolith");
         add(ModI18n.Structure.JUMP_GATE, "Sprungtor-Ruinen");
         add(ModI18n.Structure.COLONY_DOME, "Verlassene Koloniekuppel");
+        add(ModI18n.Structure.BEHEMOTH_FREIGHTER, "Behemoth-Frachter");
+        add(ModI18n.Structure.RELAY_ARRAY, "Relais-Array");
+        add(ModI18n.Structure.SOLAR_COLLECTOR, "Solarkollektor");
+        add(ModI18n.Structure.DEEP_OUTPOST, "Tiefer Horchposten");
         add(ModI18n.Biome.DEEP_SPACE, "Tiefraum-Vakuum");
         add(ModI18n.Biome.NEBULA_STATIC, "Statische Elektrizitaet des Nebels haftet an deinem Anzug...");
         add(ModI18n.Biome.NEBULA_UPDRAFT, "Ein Plasma-Aufwind faengt dich...");

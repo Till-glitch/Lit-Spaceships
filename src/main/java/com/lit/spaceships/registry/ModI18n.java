@@ -181,6 +181,10 @@ public final class ModI18n {
         public static final String THE_MONOLITH = "structure." + LitSpaceships.MODID + ".the_monolith";
         public static final String JUMP_GATE = "structure." + LitSpaceships.MODID + ".jump_gate";
         public static final String COLONY_DOME = "structure." + LitSpaceships.MODID + ".colony_dome";
+        public static final String BEHEMOTH_FREIGHTER = "structure." + LitSpaceships.MODID + ".behemoth_freighter";
+        public static final String RELAY_ARRAY = "structure." + LitSpaceships.MODID + ".relay_array";
+        public static final String SOLAR_COLLECTOR = "structure." + LitSpaceships.MODID + ".solar_collector";
+        public static final String DEEP_OUTPOST = "structure." + LitSpaceships.MODID + ".deep_outpost";
     }
 
     public static final class Biome {

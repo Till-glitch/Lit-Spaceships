@@ -44,6 +44,18 @@ public final class ModTemplatePools {
             createKey("jump_gate/start");
     public static final ResourceKey<StructureTemplatePool> COLONY_DOME_START =
             createKey("colony_dome/start");
+    public static final ResourceKey<StructureTemplatePool> BEHEMOTH_BRIDGE =
+            createKey("behemoth_freighter/start");
+    public static final ResourceKey<StructureTemplatePool> BEHEMOTH_SECTIONS =
+            createKey("behemoth_freighter/sections");
+    public static final ResourceKey<StructureTemplatePool> BEHEMOTH_END =
+            createKey("behemoth_freighter/end");
+    public static final ResourceKey<StructureTemplatePool> RELAY_ARRAY_START =
+            createKey("relay_array/start");
+    public static final ResourceKey<StructureTemplatePool> SOLAR_COLLECTOR_START =
+            createKey("solar_collector/start");
+    public static final ResourceKey<StructureTemplatePool> DEEP_OUTPOST_START =
+            createKey("deep_outpost/start");
 
     private ModTemplatePools() {
     }
@@ -83,6 +95,33 @@ public final class ModTemplatePools {
         // Cosmic Vault (seltenste Struktur des Void)
         context.register(COSMIC_VAULT_START, new StructureTemplatePool(empty, List.of(
                 Pair.of(StructurePoolElement.single("lit_spaceships:cosmic_vault/vault"), 1)
+        ), StructureTemplatePool.Projection.RIGID));
+
+        // Behemoth Freighter (Bridge -> Sections -> Engineering)
+        context.register(BEHEMOTH_BRIDGE, new StructureTemplatePool(empty, List.of(
+                Pair.of(StructurePoolElement.single("lit_spaceships:behemoth_freighter/bridge"), 1)
+        ), StructureTemplatePool.Projection.RIGID));
+        context.register(BEHEMOTH_SECTIONS, new StructureTemplatePool(empty, List.of(
+                Pair.of(StructurePoolElement.single("lit_spaceships:behemoth_freighter/cargo_bay"), 3),
+                Pair.of(StructurePoolElement.single("lit_spaceships:behemoth_freighter/corridor_fractured"), 2)
+        ), StructureTemplatePool.Projection.RIGID));
+        context.register(BEHEMOTH_END, new StructureTemplatePool(empty, List.of(
+                Pair.of(StructurePoolElement.single("lit_spaceships:behemoth_freighter/engineering_bay"), 1)
+        ), StructureTemplatePool.Projection.RIGID));
+
+        // Relay Array (Antennen-Gitter mit Research-Beacon)
+        context.register(RELAY_ARRAY_START, new StructureTemplatePool(empty, List.of(
+                Pair.of(StructurePoolElement.single("lit_spaceships:relay_array/array"), 1)
+        ), StructureTemplatePool.Projection.RIGID));
+
+        // Solar Collector (Thermal-Plattform, stellar corona)
+        context.register(SOLAR_COLLECTOR_START, new StructureTemplatePool(empty, List.of(
+                Pair.of(StructurePoolElement.single("lit_spaceships:solar_collector/collector"), 1)
+        ), StructureTemplatePool.Projection.RIGID));
+
+        // Deep Outpost (hohler Asteroid, gravity rift)
+        context.register(DEEP_OUTPOST_START, new StructureTemplatePool(empty, List.of(
+                Pair.of(StructurePoolElement.single("lit_spaceships:deep_outpost/outpost"), 1)
         ), StructureTemplatePool.Projection.RIGID));
 
         // Pirate Satellite Outpost (mit Fallen-Kiste)

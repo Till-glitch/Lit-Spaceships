@@ -31,6 +31,13 @@
 - [x] **Tests**: Alignment/Daempfung/Pitch/Wellenform/XOR/Frequenz-Kanaele (JUnit), Beacon-Signal-Registrierung + Detection + Alignment-Priorisierung (GameTest). 196 JUnit + 50/50 GameTests gruen. Epoch 10 KOMPLETT.
 
 ---
+### Epoch 11: Megastructures & Modular Jigsaw Derelicts
+- [x] **7 NBT-Module via Python-Skript** (`scripts/generate_epoch11_megatstructures.py`): Behemoth Freighter (4 Module: Bridge 16x12x16 -> Cargo/Corridor -> Engineering, ~84 Bloecke Gesamtlänge, Manifest-Kiste), Relay Array (16x48x16 Gitter-Mast mit Research-Beacon), Solar Collector (24x10x24 Thermal-Plattform mit Lava-Kessel + Beacon), Deep Outpost (19x20x19 hohler Asteroid mit Horchposten + Anomaly-Beacon + Archiv-Kiste). **[COMPLETED 2026-09-12]**
+- [x] **Registrierung**: 7 Template-Pools (Behemoth start/sections/end, Relay, Solar, Outpost), 4 Jigsaw-Strukturen mit UniformHeight-Bounds (Freighter depth 4 = Multi-Chunk-Kette), 4 StructureSets (RandomSpread 56/46/52/58). Biome-Zuordnung: Freighter Space+Void, Relay Space+Nebula, Solar nur Corona, Outpost nur Gravity Rift. **[COMPLETED 2026-09-12]**
+- [x] **5 Loot-Tables** (Task 12.4): behemoth_manifest (Industrie-Templates/Mineralbloecke), reactor_core_salvage (Netherite/Plasmakerne), relay_intercept (Echo Shards/Compass), solar_harvest (Prismarin/Gold), deep_outpost_archive (Nether Star/Enchanted Books). **[COMPLETED 2026-09-12]**
+- [x] **Tests**: Pool-Key-Map-Verifikation (17 Pools), 5 Loot-Table-Entries, i18n en/de. 199 JUnit + 50/50 GameTests gruen. Epoch 11 KOMPLETT.
+
+---
 ### Epoch 9: Physicalized Decompression & Atmosphere Logic
 - [x] **Extreme-Biome-Planner** (pure, statistisch getestet): `planGravityShear` (Sog zur Akkretionsmitte, Staerke 0.018-0.06, Radius 96), `planSolarRadiation` (4% Roll, nur ungeschuetzt; 1 Schaden + 1 Ruestungsnutzung; Gold/Netherite schuetzt), `planIonStorm` (Uebelkeit ~1.5%, Elytra-Stall 5%, Blitz 0.8% nur mit Metallruestung). Wired in `BiomeAtmosphereService.onPlayerTick` mit i18n Action-Bar-Warnungen (en/de). **[COMPLETED 2026-09-12]**
 - [x] **DecompressionService + pressurized_hull-Tag**: Block-Zerstoerung an pressurisierten Huellen scannt 5x5x5 auf Kavernen-Luft (min 6 Bloecke) und erzeugt 60-Tick-Auswaerts-Sog (0.045/tick, Radius 6) auf Entities+Items. GameTest: Item wird 1.3+ Bloecke zur Bruchstelle getragen. **[COMPLETED 2026-09-12]** Epoch 9 KOMPLETT — 191 JUnit + 49/49 GameTests.
